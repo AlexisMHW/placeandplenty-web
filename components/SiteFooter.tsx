@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const footerLinks = [
   { label: "Home", href: "/" },
@@ -22,7 +23,17 @@ export default function SiteFooter() {
       <div className="mx-auto max-w-editorial px-6">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div>
-            <p className="font-display text-2xl">Place &amp; Plenty</p>
+            <div className="flex items-center gap-2.5">
+              <Image
+                src="/images/pp-mark.png"
+                alt=""
+                aria-hidden
+                width={28}
+                height={28}
+                className="rounded-md"
+              />
+              <p className="font-display text-2xl">Place &amp; Plenty</p>
+            </div>
             <p className="mt-1 font-body text-sm text-offwhite/70">
               Home hospitality, made simple.
             </p>

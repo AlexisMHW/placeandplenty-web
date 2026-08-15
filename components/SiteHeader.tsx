@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import CtaButton from "@/components/CtaButton";
 
 export default function SiteHeader() {
@@ -7,13 +8,16 @@ export default function SiteHeader() {
       <div className="mx-auto flex max-w-editorial items-center justify-between px-6 py-4">
         <Link
           href="/"
-          className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-forest"
+          className="flex items-center gap-2.5 font-display text-xl font-semibold tracking-tight text-forest"
         >
-          {/* Wordmark placeholder — swap for optimized SVG/PNG of the
-              confirmed lockup (olive-branch mark + "Place & Plenty") */}
-          <span aria-hidden className="text-gold">
-            &amp;
-          </span>
+          <Image
+            src="/images/pp-mark.png"
+            alt="Place & Plenty"
+            width={36}
+            height={36}
+            className="rounded-md"
+            priority
+          />
           <span>Place &amp; Plenty</span>
         </Link>
 
@@ -40,3 +44,4 @@ export default function SiteHeader() {
     </header>
   );
 }
+

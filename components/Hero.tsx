@@ -1,3 +1,4 @@
+import Image from "next/image";
 import CtaButton from "@/components/CtaButton";
 
 export default function Hero() {
@@ -25,15 +26,19 @@ export default function Hero() {
         </div>
 
         <div className="relative">
-          {/* App screenshot placeholder — clearly isolated for easy swap */}
-          <div className="mx-auto flex aspect-[9/16] max-w-xs items-center justify-center rounded-[2rem] border border-sage/40 bg-cream shadow-soft">
-            <p className="px-8 text-center font-body text-sm text-forest/50">
-              [ Placeholder: app screenshot — Beforehand Plan or HostReady
-              view ]
-            </p>
+          <div className="mx-auto max-w-xs overflow-hidden rounded-[2rem] border border-sage/40 shadow-soft">
+            <Image
+              src="/images/hero-app-screen.png"
+              alt="Place & Plenty app showing a gathering at 82% HostReady"
+              width={510}
+              height={1080}
+              className="h-full w-full object-cover"
+              priority
+            />
           </div>
         </div>
       </div>
     </section>
   );
 }
+
