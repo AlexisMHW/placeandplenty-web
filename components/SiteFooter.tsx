@@ -12,9 +12,10 @@ const footerLinks = [
 ];
 
 const socialLinks = [
-  { label: "Instagram", href: "https://instagram.com" },
-  { label: "Facebook", href: "https://facebook.com" },
-  { label: "TikTok", href: "https://tiktok.com" },
+  { label: "Instagram", href: "https://instagram.com/placeandplenty" },
+  { label: "Facebook", href: "https://facebook.com/placeandplenty" },
+  { label: "TikTok", href: "https://tiktok.com/@placeandplenty" },
+  { label: "YouTube", href: "https://youtube.com/@placeandplenty" },
 ];
 
 export default function SiteFooter() {
