@@ -70,6 +70,26 @@ create table founding_host_applications (
 );
 ```
 
+## The Coordinated Host (editorial content)
+
+Articles are edited through TinaCMS at `/admin` on the live site — no
+code required. See `HOW_TO_PUBLISH_AN_ARTICLE.md` for the founder-facing
+guide, and `THE_COORDINATED_HOST_EDITORIAL_BIBLE_V1.md` for voice/tone
+and content strategy.
+
+Content lives as Markdown/MDX files in `content/coordinated-host/` —
+fully portable, not locked into a proprietary format. The schema
+(what fields exist in the editor) is defined in `.tina/config.ts`.
+
+Setup requires two environment variables from your Tina Cloud project
+(app.tina.io): `NEXT_PUBLIC_TINA_CLIENT_ID` and `TINA_TOKEN`.
+
+**Still to build:** the six category hub pages, the five franchise hub
+pages, seasonal content hubs, and the full reusable component library
+(Make It Simple, What People Forget, Timeline, etc.) described in the
+platform directive — this V1 ships the CMS, schema, and one working
+article template so the founder can start publishing immediately.
+
 ## Deployment (Vercel + Bluehost domain)
 
 1. Push this repo to GitHub.
@@ -84,6 +104,6 @@ create table founding_host_applications (
 
 - [ ] Replace placeholder Privacy Policy / Terms with attorney-reviewed copy
 - [ ] Replace placeholder app screenshots with real ones
-- [ ] Confirm pricing before enabling `showPricing`
+- [x] Pricing approved (V1: Free $0 / Gathering Pass $9.99 per gathering / Plus $59.99 per year) — set `showPricing: true` on the relevant `LAUNCH_STATE` in `lib/launch-state.ts` when ready to display publicly
 - [ ] Wire up real App Store / Google Play URLs before `LAUNCH_STATE = "public"`
 - [ ] Set up Supabase → MailerLite sync

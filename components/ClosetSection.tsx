@@ -21,13 +21,13 @@ export default function ClosetSection() {
         <div className="grid gap-12 md:grid-cols-2 md:items-center">
           <div>
             <p className="mb-4 font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
-              Hosting Closet&trade;
+              My Hosting Closet
             </p>
             <h2 className="font-display text-4xl leading-tight text-forest md:text-5xl">
               You probably already have more than you think.
             </h2>
             <p className="mt-5 max-w-prose font-body text-lg leading-relaxed text-forest/80">
-              My Hosting Closet&trade; keeps track of the serving pieces,
+              My Hosting Closet keeps track of the serving pieces,
               linens, chairs, glassware, and gathering essentials you already
               own — so Place &amp; Plenty can help you use what you have
               before adding something else to the shopping list.

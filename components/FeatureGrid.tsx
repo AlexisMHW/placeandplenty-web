@@ -36,7 +36,7 @@ const features = [
     body: "Know what you need, what you already have, and what's covered.",
   },
   {
-    title: "My Hosting Closet™",
+    title: "My Hosting Closet",
     body: "Remember what you already have, gathering after gathering.",
   },
 ];

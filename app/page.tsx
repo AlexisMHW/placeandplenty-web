@@ -7,9 +7,13 @@ import FeatureGrid from "@/components/FeatureGrid";
 import UseCaseSection from "@/components/UseCaseSection";
 import CoordinatedHostTeaser from "@/components/CoordinatedHostTeaser";
 import PhilosophySection from "@/components/PhilosophySection";
+import PricingSection from "@/components/PricingSection";
 import CtaSection from "@/components/CtaSection";
+import { getCurrentCta } from "@/lib/launch-state";
 
 export default function HomePage() {
+  const { showPricing } = getCurrentCta();
+
   return (
     <>
       <Hero />
@@ -21,6 +25,7 @@ export default function HomePage() {
       <UseCaseSection />
       <CoordinatedHostTeaser />
       <PhilosophySection />
+      {showPricing && <PricingSection />}
       <CtaSection />
     </>
   );
