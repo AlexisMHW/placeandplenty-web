@@ -1,0 +1,33 @@
+fragment PostParts on Post {
+  __typename
+  title
+  deck
+  status
+  byline
+  publishDate
+  updatedDate
+  featuredImage
+  featuredImageAlt
+  category
+  franchise
+  occasion
+  tags
+  contentType
+  articleWeight
+  seoTitle
+  metaDescription
+  canonicalUrl
+  socialDescription
+  noindex
+  pinterestImage
+  pinterestHeadline
+  socialShareImage
+  connectedFeature
+  productCta
+  relatedProductMessage
+  relatedArticles
+  featured
+  contentHub
+  shortAnswer
+  body
+}
