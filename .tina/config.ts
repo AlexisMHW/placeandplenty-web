@@ -170,10 +170,9 @@ export default defineConfig({
 
           // --- Discovery ---
           {
-            type: "reference",
+            type: "string",
             name: "relatedArticles",
-            label: "Related articles",
-            collections: ["post"],
+            label: "Related articles (enter each article's slug/filename, without .mdx)",
             list: true,
           },
           { type: "boolean", name: "featured", label: "Featured article" },
