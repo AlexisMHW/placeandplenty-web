@@ -23,7 +23,7 @@ export async function generateMetadata({
     robots: post.noindex ? { index: false, follow: false } : undefined,
     openGraph: {
       title: post.seoTitle || post.title,
-      description: post.socialDescription || post.metaDescription || post.deck,
+      description: post.socialDescription || post.metaDescription || post.deck || undefined,
     },
   };
 }
