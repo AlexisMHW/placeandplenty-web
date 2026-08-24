@@ -62,7 +62,7 @@ export default defineConfig({
             type: "string",
             name: "byline",
             label: "Byline",
-            ui: { defaultItemValue: "The Coordinated Host by Place & Plenty" },
+            ui: { defaultValue: "The Coordinated Host by Place & Plenty" },
           },
           { type: "datetime", name: "publishDate", label: "Publish date" },
           { type: "datetime", name: "updatedDate", label: "Updated date" },
