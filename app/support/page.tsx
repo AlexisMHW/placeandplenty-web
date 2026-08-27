@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: "How do I create my first gathering?",
-    a: "Open Place & Plenty and tap “Tell us what's happening” to start a new gathering. From there, Figure It Out For Me builds your preparation plan.",
+    a: "Open Place & Plenty and start a new gathering — who's coming, when, and where. From there, Figure It Out For Me builds your preparation plan.",
   },
   {
     q: "What does HostReady™ actually measure?",
@@ -23,7 +23,11 @@ const faqs = [
   },
   {
     q: "How do I manage my subscription?",
-    a: "Subscription management is available from within the app under your account settings.",
+    a: "Gathering Passes and Place & Plenty Plus are bought through the App Store or Google Play, so they're managed in your Apple or Google account settings rather than in the app. Purchasing isn't switched on yet — when it is, that's where it will live. Current pricing is on our Terms page.",
+  },
+  {
+    q: "How do I delete my account?",
+    a: "In the app, go to Settings → Delete my account. If you no longer have it installed, you can request deletion by email — the Delete Account page below explains both routes and exactly what is removed.",
   },
   {
     q: "I'm having a technical issue with the app. What should I do?",
