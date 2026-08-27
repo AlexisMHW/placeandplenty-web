@@ -36,7 +36,7 @@ export default function SiteFooter() {
               <p className="font-display text-2xl">Place &amp; Plenty</p>
             </div>
             <p className="mt-1 font-body text-sm text-offwhite/70">
-              Home hospitality, made simple.
+              Home Hosting. Made Simple.
             </p>
             <p className="mt-4 font-body text-xs uppercase tracking-wide text-offwhite/50">
               placeandplenty.com

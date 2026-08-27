@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { getAllPosts } from "@/lib/tina-content";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/coordinated-host" },
+  openGraph: { url: "/coordinated-host" },
   title: "The Coordinated Host",
   description:
     "Practical help for having people over.",

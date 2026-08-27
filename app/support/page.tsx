@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/support" },
+  openGraph: { url: "/support" },
   title: "Support",
   description: "Get help with Place & Plenty — account, subscription, and technical support.",
 };

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/delete-account" },
+  openGraph: { url: "/delete-account" },
   title: "Delete Account",
   description: "How to request deletion of your Place & Plenty account.",
 };

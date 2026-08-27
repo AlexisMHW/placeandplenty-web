@@ -7,7 +7,7 @@ export default function Hero() {
       <div className="mx-auto grid max-w-editorial gap-12 px-6 py-20 md:grid-cols-2 md:items-center md:py-28">
         <div>
           <p className="mb-4 font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
-            Home hospitality, made simple
+            Home Hosting. Made Simple.
           </p>
           <h1 className="font-display text-5xl leading-[1.05] text-forest md:text-6xl">
             People are coming.

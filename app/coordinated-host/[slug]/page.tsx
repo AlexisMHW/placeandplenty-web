@@ -17,13 +17,21 @@ export async function generateMetadata({
   const post = await getPostBySlug(params.slug);
   if (!post || post.status !== "published") return {};
 
+  // Articles self-canonicalise to their own URL unless the author has
+  // deliberately pointed one elsewhere via the Tina `canonicalUrl` field
+  // (used when the same piece is syndicated). See app/layout.tsx.
+  const canonical = post.canonicalUrl || `/coordinated-host/${params.slug}`;
+
   return {
     title: post.seoTitle || post.title,
     description: post.metaDescription || post.deck,
     robots: post.noindex ? { index: false, follow: false } : undefined,
+    alternates: { canonical },
     openGraph: {
       title: post.seoTitle || post.title,
       description: post.socialDescription || post.metaDescription || post.deck || undefined,
+      url: canonical,
+      type: "article",
     },
   };
 }

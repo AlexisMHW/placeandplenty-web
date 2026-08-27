@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/terms" },
+  openGraph: { url: "/terms" },
   title: "Terms of Use",
   description: "Place & Plenty's Terms of Use.",
 };

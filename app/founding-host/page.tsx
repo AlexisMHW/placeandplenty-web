@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import FoundingHostForm from "@/components/FoundingHostForm";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/founding-host" },
+  openGraph: { url: "/founding-host" },
   title: "Become a Founding Host",
   description:
     "We're looking for a small group of real hosts to put Place & Plenty through real life before launch.",
