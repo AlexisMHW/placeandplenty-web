@@ -10,6 +10,7 @@ import {
   preparePhotoUpload,
   uploadPhotoBytes,
   registerPhoto,
+  isSafeExternalUrl,
   type GuestPageData,
   type RsvpResponseInput,
 } from "@/lib/guest-api";
@@ -790,6 +791,42 @@ export default function GuestPageClient({
                 )}
               </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      {/* --- Gifts / registry --- */}
+      {/* Read-only, so it stays available on an archived gathering — only
+          write-capable sections close. The server sends registryLinks
+          only when the host's switch is on, and the RPC behind it
+          re-checks that switch itself. Nothing is inferred here. */}
+      {data.showGiftsRegistry && data.registryLinks.length > 0 && (
+        <section className="mt-8 rounded-card border border-sage/30 bg-offwhite p-6 shadow-softer">
+          <h2 className="font-display text-xl text-forest">Gifts</h2>
+          <p className="mt-2 font-body text-sm text-forest/70">
+            If you&rsquo;d like to bring something, {data.hostDisplayName} put
+            these together. Never required.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {data.registryLinks
+              .filter((link) => isSafeExternalUrl(link.url))
+              .map((link) => (
+                <li key={link.id}>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="font-body font-semibold text-forest underline decoration-gold underline-offset-4 hover:text-olive"
+                  >
+                    {link.label}
+                  </a>
+                  {link.note && (
+                    <p className="mt-0.5 font-body text-sm text-forest/70">
+                      {link.note}
+                    </p>
+                  )}
+                </li>
+              ))}
           </ul>
         </section>
       )}

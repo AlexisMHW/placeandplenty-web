@@ -24,13 +24,16 @@ export default function GuestListForm() {
   const [status, setStatus] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle");
+  const [errorMessage, setErrorMessage] = useState(
+    "Something went wrong submitting that. Please try again."
+  );
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!firstName || !email) return;
     setStatus("submitting");
 
-    const { error } = await submitGuestListSignup({
+    const result = await submitGuestListSignup({
       first_name: firstName,
       email,
       upcoming_gathering_type: gatheringType || undefined,
@@ -38,7 +41,15 @@ export default function GuestListForm() {
       consent,
     });
 
-    if (error) {
+    if (!result.ok) {
+      // A returning subscriber is NOT an error: the table's trigger
+      // refreshes their row and PostgREST still answers 201, so they
+      // fall through to the success state below.
+      setErrorMessage(
+        result.reason === "invalid"
+          ? result.message
+          : "Something went wrong submitting that. Please try again."
+      );
       setStatus("error");
       return;
     }
@@ -78,6 +89,7 @@ export default function GuestListForm() {
             id="firstName"
             type="text"
             required
+            maxLength={120}
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             className="w-full rounded-md border border-sage/40 bg-white px-4 py-2.5 font-body text-forest"
@@ -94,6 +106,7 @@ export default function GuestListForm() {
             id="email"
             type="email"
             required
+            maxLength={320}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-md border border-sage/40 bg-white px-4 py-2.5 font-body text-forest"
@@ -139,7 +152,7 @@ export default function GuestListForm() {
 
       {status === "error" && (
         <p id="guest-list-error" className="mt-4 font-body text-sm text-error">
-          Something went wrong submitting that. Please try again.
+          {errorMessage}
         </p>
       )}
 

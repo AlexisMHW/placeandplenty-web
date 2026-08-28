@@ -112,6 +112,20 @@ export interface AssignedContribution {
   messages: ContributionMessage[];
 }
 
+/**
+ * A gift/registry link the host added. Read server-side through
+ * guest-page-lookup only — the guest_registry_links RPC is revoked for
+ * anon and authenticated, and must not be called from a browser.
+ * Always present in the response; empty when the host has the registry
+ * switched off, so a missing key never has to be guessed at.
+ */
+export interface RegistryLink {
+  id: string;
+  label: string;
+  url: string;
+  note: string | null;
+}
+
 export interface GuestPageData {
   partyName: string;
   plusOneAllowed: boolean;
@@ -128,6 +142,7 @@ export interface GuestPageData {
   displayLocation: string | null;
   displayDescription: string | null;
   showGiftsRegistry: boolean;
+  registryLinks: RegistryLink[];
   showPotluck: boolean;
   showSongRequest: boolean;
   showPhotoContributions: boolean;
@@ -143,6 +158,21 @@ export interface GuestPageData {
 
 export async function lookupGuestPage(token: string) {
   return call<GuestPageData>("guest-page-lookup", { token });
+}
+
+/**
+ * Registry URLs are host-supplied free text. Anything that is not plain
+ * http(s) is dropped rather than rendered — a `javascript:` href on a
+ * page shown to a stranger's guests is not a risk worth carrying for a
+ * gift link.
+ */
+export function isSafeExternalUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
 }
 
 /* ------------------------------------------------------------------ */
