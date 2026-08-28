@@ -1,67 +1,42 @@
-const features = [
-  {
-    title: "Figure It Out For Me",
-    body: "Tell us the basics. We'll help think through the rest.",
-  },
-  {
-    title: "Beforehand Plan",
-    body: "A preparation plan built backward from when people arrive.",
-  },
-  {
-    title: "HostReady™",
-    body: "Know what matters and whether you're on track.",
-  },
-  {
-    title: "Reminders & Alerts",
-    body: "A nudge when it's time to chill the drinks, and a clear alert if something time-sensitive is about to slip.",
-  },
-  {
-    title: "Host Mode™",
-    body: "Know what to do right now.",
-  },
-  {
-    title: "My Table",
-    body: "Food, quantities, dietary needs, and serving planning.",
-  },
-  {
-    title: "Who's Bringing What",
-    body: "Keep potluck and family contributions straight.",
-  },
-  {
-    title: "Co-Host",
-    body: "Share the gathering with the person helping make it happen.",
-  },
-  {
-    title: "Shopping",
-    body: "Know what you need, what you already have, and what's covered.",
-  },
-  {
-    title: "My Hosting Closet",
-    body: "Remember what you already have, gathering after gathering.",
-  },
-];
+import Link from "next/link";
+import Eyebrow from "@/components/Eyebrow";
+import { HEADLINE_FEATURES } from "@/lib/features";
+
+// The homepage feature row — the board's six, in the board's order.
+//
+// Names come from lib/features.ts rather than being typed here, because
+// this is exactly the surface §30 flags for stale terminology (My Address
+// Book, My Shopping List, standalone My Budget). One source, one rename.
 
 export default function FeatureGrid() {
   return (
-    <section id="features" className="bg-cream py-20 md:py-28">
+    <section id="features" className="bg-offwhite py-20 md:py-24">
       <div className="mx-auto max-w-editorial px-6">
-        <h2 className="font-display text-4xl text-forest md:text-5xl">
-          Everything you need to get ready
+        <Eyebrow>What it does</Eyebrow>
+
+        <h2 className="mt-4 max-w-2xl font-display text-3xl leading-tight text-forest md:text-4xl">
+          The part nobody sees, handled.
         </h2>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-card border border-sage/30 bg-offwhite p-6 shadow-softer transition-shadow duration-400 hover:shadow-soft"
-            >
-              <h3 className="font-display text-lg text-forest">{f.title}</h3>
-              <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">
+        <ul className="mt-12 grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+          {HEADLINE_FEATURES.map((f) => (
+            <li key={f.name}>
+              <span aria-hidden className="mb-3 block h-px w-8 bg-gold" />
+              <h3 className="font-display text-xl text-forest">{f.name}</h3>
+              <p className="mt-2 font-body text-base leading-relaxed text-forest/75">
                 {f.body}
               </p>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
+
+        <Link
+          href="/what-it-does"
+          className="mt-12 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
+        >
+          Everything it does
+          <span aria-hidden>&rarr;</span>
+        </Link>
       </div>
     </section>
   );

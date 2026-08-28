@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { BRAND_NAME, TAGLINE } from "@/lib/brand";
 
 // GUEST LAYOUT — deliberately quiet.
 //
@@ -43,7 +44,7 @@ export default function GuestLayout({
             className="rounded"
           />
           <span className="font-display text-base text-forest">
-            Place &amp; Plenty
+            {BRAND_NAME}
           </span>
         </div>
       </header>
@@ -52,7 +53,7 @@ export default function GuestLayout({
 
       <footer className="border-t border-sage/20 bg-offwhite py-8">
         <div className="mx-auto flex max-w-prose flex-col gap-2 px-6 font-body text-xs text-forest/50 sm:flex-row sm:items-center sm:justify-between">
-          <p>Home Hosting. Made Simple.</p>
+          <p>{TAGLINE}</p>
           <div className="flex gap-4">
             <Link href="/support" className="hover:text-forest">
               Need help?

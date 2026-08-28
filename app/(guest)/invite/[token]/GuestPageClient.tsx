@@ -633,7 +633,7 @@ export default function GuestPageClient({
                   )}
 
                   {item.status === "confirmed" && (
-                    <p className="mt-2 font-body text-sm text-olive">
+                    <p className="mt-2 font-body text-sm font-semibold text-forest">
                       You said yes to this.
                     </p>
                   )}
@@ -766,7 +766,7 @@ export default function GuestPageClient({
                     <p className="text-forest/50">Covered</p>
                   )}
                   {item.claimedByThisParty && (
-                    <p className="text-olive">You&rsquo;re bringing this</p>
+                    <p className="font-semibold text-forest">You&rsquo;re bringing this</p>
                   )}
                 </div>
                 {item.status === "needed" && canWrite && (

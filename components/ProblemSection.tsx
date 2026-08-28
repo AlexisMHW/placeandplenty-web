@@ -12,10 +12,10 @@ const problems = [
 
 export default function ProblemSection() {
   return (
-    <section className="bg-forest py-20 text-offwhite md:py-28">
+    <section className="bg-forest py-20 text-offwhite md:py-24">
       <div className="mx-auto max-w-editorial px-6">
         <div className="max-w-prose">
-          <h2 className="font-display text-4xl leading-tight md:text-5xl">
+          <h2 className="font-display text-3xl leading-tight md:text-4xl">
             Planning the gathering isn&rsquo;t always the hard part.
           </h2>
           <p className="mt-4 font-body text-lg text-offwhite/80">

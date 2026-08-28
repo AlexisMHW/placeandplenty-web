@@ -1,12 +1,12 @@
+import Eyebrow from "@/components/Eyebrow";
+
 export default function HostReadySection() {
   return (
-    <section className="bg-cream py-20 md:py-28">
+    <section className="bg-cream py-20 md:py-24">
       <div className="mx-auto grid max-w-editorial gap-12 px-6 md:grid-cols-2 md:items-center">
         <div>
-          <p className="mb-4 font-body text-xs font-bold uppercase tracking-[0.2em] text-olive">
-            HostReady&trade;
-          </p>
-          <h2 className="font-display text-4xl leading-tight text-forest md:text-5xl">
+          <Eyebrow className="mb-4">HostReady&trade;</Eyebrow>
+          <h2 className="font-display text-3xl leading-tight text-forest md:text-4xl">
             Know when you&rsquo;re actually ready.
           </h2>
           <p className="mt-5 max-w-prose font-body text-lg leading-relaxed text-forest/80">
@@ -14,7 +14,7 @@ export default function HostReadySection() {
             weighs what matters most, what&rsquo;s already handled, how much
             time is left, and whether anything critical is still unresolved.
           </p>
-          <p className="mt-6 font-display text-2xl italic text-olive">
+          <p className="mt-6 font-display text-2xl italic text-forest">
             You do not need 100%. You need enough of what matters handled.
           </p>
           <p className="mt-6 font-body text-base leading-relaxed text-forest/70">

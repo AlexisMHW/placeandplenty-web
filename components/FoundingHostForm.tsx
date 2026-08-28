@@ -163,7 +163,7 @@ export default function FoundingHostForm() {
       </div>
 
       {status === "error" && (
-        <p className="mt-4 font-body text-sm text-error">
+        <p role="alert" className="mt-4 font-body text-sm text-error">
           {errorMessage}
         </p>
       )}

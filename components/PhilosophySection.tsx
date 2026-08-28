@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function PhilosophySection() {
   return (
-    <section className="bg-cream py-24 md:py-32">
+    <section className="bg-parchment py-20 md:py-24">
       <div className="mx-auto grid max-w-editorial items-center gap-12 px-6 md:grid-cols-2">
         <div className="overflow-hidden rounded-card shadow-soft">
           <Image

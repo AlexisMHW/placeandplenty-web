@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Lato } from "next/font/google";
 import "./globals.css";
+import { BRAND_NAME, BRAND_TITLE, TAGLINE } from "@/lib/brand";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -52,24 +53,23 @@ const lato = Lato({
 export const metadata: Metadata = {
   metadataBase: new URL("https://placeandplenty.com"),
   title: {
-    default: "Place & Plenty | Home Hosting. Made Simple.",
-    template: "%s | Place & Plenty",
+    default: BRAND_TITLE,
+    template: `%s | ${BRAND_NAME}`,
   },
   description:
-    "Place & Plenty helps you figure out what needs to happen, when it needs to happen, and whether you're actually ready before people arrive. Home Hosting. Made Simple.",
+    `Place & Plenty helps you figure out what needs to happen, when it needs to happen, and whether you're actually ready before people arrive. ${TAGLINE}`,
   openGraph: {
-    title: "Place & Plenty | Home Hosting. Made Simple.",
+    title: BRAND_TITLE,
     description:
       "People are coming. We'll help you get ready. A preparation plan for home hosting — built backward from when your guests arrive.",
-    siteName: "Place & Plenty",
+    siteName: BRAND_NAME,
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Place & Plenty | Home Hosting. Made Simple.",
-    description:
-      "People are coming. We'll help you get ready. Home Hosting. Made Simple.",
+    title: BRAND_TITLE,
+    description: `People are coming. We'll help you get ready. ${TAGLINE}`,
   },
 };
 

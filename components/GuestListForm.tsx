@@ -151,7 +151,11 @@ export default function GuestListForm() {
       </div>
 
       {status === "error" && (
-        <p id="guest-list-error" className="mt-4 font-body text-sm text-error">
+        <p
+          id="guest-list-error"
+          role="alert"
+          className="mt-4 font-body text-sm text-error"
+        >
           {errorMessage}
         </p>
       )}

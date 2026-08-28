@@ -1,3 +1,4 @@
+import Eyebrow from "@/components/Eyebrow";
 const closetItems = [
   { label: "Dinner Plates", value: "18" },
   { label: "Wine Glasses", value: "12" },
@@ -16,14 +17,12 @@ const readiness = [
 
 export default function ClosetSection() {
   return (
-    <section className="bg-offwhite py-20 md:py-28">
+    <section className="bg-cream py-20 md:py-24">
       <div className="mx-auto max-w-editorial px-6">
         <div className="grid gap-12 md:grid-cols-2 md:items-center">
           <div>
-            <p className="mb-4 font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
-              My Hosting Closet
-            </p>
-            <h2 className="font-display text-4xl leading-tight text-forest md:text-5xl">
+            <Eyebrow className="mb-4">My Hosting Closet</Eyebrow>
+            <h2 className="font-display text-3xl leading-tight text-forest md:text-4xl">
               You probably already have more than you think.
             </h2>
             <p className="mt-5 max-w-prose font-body text-lg leading-relaxed text-forest/80">
@@ -32,7 +31,7 @@ export default function ClosetSection() {
               own — so Place &amp; Plenty can help you use what you have
               before adding something else to the shopping list.
             </p>
-            <p className="mt-4 font-display text-xl italic text-olive">
+            <p className="mt-4 font-display text-xl italic text-forest">
               Know what you have. Know what you need.
             </p>
           </div>
