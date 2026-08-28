@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.placeandplenty.app",
+      "sha256_cert_fingerprints": [
+        "4A:B2:3D:4D:4F:E2:48:C2:9B:B5:F3:32:79:B6:CA:CC:86:C9:1C:59:6D:83:FC:BA:B5:FB:78:14:E7:B9:F6:D1"
+      ]
+    }
+  }
+]
