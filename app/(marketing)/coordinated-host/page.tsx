@@ -16,7 +16,7 @@ export default async function CoordinatedHostPage() {
   return (
     <section className="bg-offwhite py-20 md:py-28">
       <div className="mx-auto max-w-prose px-6">
-        <p className="mb-3 font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
+        <p className="mb-3 font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
           by Place &amp; Plenty
         </p>
         <h1 className="font-display text-4xl text-forest">
@@ -40,7 +40,7 @@ export default async function CoordinatedHostPage() {
               <li key={post._sys.filename} className="py-6">
                 <Link
                   href={`/coordinated-host/${post._sys.filename}`}
-                  className="font-display text-xl text-forest hover:text-olive"
+                  className="font-display text-xl text-forest hover:text-sage"
                 >
                   {post.title}
                 </Link>

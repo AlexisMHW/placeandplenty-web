@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tinacms dev -c \"next dev\"",
-    "build": "tinacms build && node scripts/check-tina-codegen.mjs && node scripts/check-app-links.mjs && next build",
+    "build": "tinacms build && node scripts/fix-tina-cache-path.mjs && node scripts/check-tina-codegen.mjs && node scripts/check-app-links.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"

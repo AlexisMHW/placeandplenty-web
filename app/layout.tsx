@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Lato } from "next/font/google";
 import "./globals.css";
-import SiteHeader from "@/components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -17,6 +15,25 @@ const lato = Lato({
   display: "swap",
 });
 
+// ROOT LAYOUT — document shell only. Deliberately no header, no footer,
+// no <main>.
+//
+// Directive §7 wants guest web "lighter than the host app, less
+// expansive than the marketing website", and §33 says not to push app
+// download at a guest doing a task that works without an account. While
+// the header and footer lived here, an invitation arrived wearing the
+// full marketing chrome — including a "Join the Guest List" CTA aimed at
+// someone who had already been invited to something.
+//
+// So chrome belongs to the route groups, not to the document:
+//
+//   app/(marketing)/layout.tsx  header + footer, the public website
+//   app/(guest)/layout.tsx      a quiet mark, no nav, no marketing CTA
+//
+// Route groups do not appear in URLs. Moving a page between them changes
+// its chrome and nothing else. Anything genuinely global — fonts, the
+// <body> background, metadataBase — stays here.
+//
 // NOTE ON CANONICAL URLs — do not add `alternates` or `openGraph.url`
 // here. Next merges root metadata into every child route, so a canonical
 // set at this level makes EVERY page declare itself a duplicate of the
@@ -63,17 +80,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${playfair.variable} ${lato.variable}`}>
-      <body className="font-body antialiased">
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-forest focus:px-5 focus:py-2.5 focus:font-body focus:text-sm focus:font-semibold focus:text-offwhite"
-        >
-          Skip to content
-        </a>
-        <SiteHeader />
-        <main id="main-content">{children}</main>
-        <SiteFooter />
-      </body>
+      <body className="font-body antialiased">{children}</body>
     </html>
   );
 }

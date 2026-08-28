@@ -64,7 +64,7 @@ export default function DeleteAccountPage() {
   return (
     <section className="bg-offwhite py-16 md:py-24">
       <div className="mx-auto max-w-prose px-6">
-        <p className="mb-3 font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
+        <p className="mb-3 font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
           Your account, your call
         </p>
         <h1 className="font-display text-4xl leading-tight text-forest md:text-5xl">
@@ -104,7 +104,7 @@ export default function DeleteAccountPage() {
         <h2 className="mt-14 font-display text-2xl text-forest">
           What gets deleted
         </h2>
-        <ul className="mt-4 space-y-2 pl-5 font-body leading-relaxed text-forest/80 [&>li]:list-disc [&>li]:marker:text-gold">
+        <ul className="mt-4 space-y-2 pl-5 font-body leading-relaxed text-forest/80 [&>li]:list-disc [&>li]:marker:text-goldInk">
           <li>Your account and profile.</li>
           <li>The gatherings you own.</li>
           <li>Your guest records and My Guest Book.</li>

@@ -44,7 +44,7 @@ export default async function GalleryPage({
     const expired = data as Extract<GalleryResult, { state: "expired" }>;
     return (
       <Shell>
-        <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
+        <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
           {expired.gatheringName ?? "Place & Plenty"}
         </p>
         <p className="mt-4 font-display text-2xl text-forest">
@@ -65,7 +65,7 @@ export default async function GalleryPage({
   if (gallery.photoCount === 0) {
     return (
       <Shell>
-        <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
+        <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
           {gallery.gatheringName ?? "Place & Plenty"}
         </p>
         <p className="mt-4 font-display text-2xl text-forest">
@@ -81,7 +81,7 @@ export default async function GalleryPage({
 
   return (
     <div className="mx-auto max-w-editorial px-6 py-12 md:py-16">
-      <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
+      <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
         Gathering photos
       </p>
       <h1 className="mt-2 font-display text-3xl text-forest md:text-4xl">
@@ -143,7 +143,7 @@ function HomeLink() {
   return (
     <Link
       href="/"
-      className="mt-8 inline-block border-b border-gold font-body text-sm font-semibold uppercase tracking-wide text-gold transition-colors duration-400 hover:text-forest"
+      className="mt-8 inline-block border-b border-gold font-body text-sm font-semibold uppercase tracking-wide text-goldInk transition-colors duration-400 hover:text-forest"
     >
       Place &amp; Plenty
     </Link>

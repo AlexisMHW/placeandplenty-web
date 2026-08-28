@@ -26,8 +26,8 @@ html {
 }
 
 body {
-  background-color: #faf7f2;
-  color: #1e3a2e;
+  background-color: #faf8f3;
+  color: #1f3d2e;
   font-family: var(--font-lato);
 }
 
@@ -45,12 +45,12 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #c8a66a;
+  outline: 2px solid #c8a34a;
   outline-offset: 3px;
   border-radius: 2px;
 }
 
 ::selection {
-  background-color: #a7b39a;
-  color: #1e3a2e;
+  background-color: #e6ded0;
+  color: #1f3d2e;
 }

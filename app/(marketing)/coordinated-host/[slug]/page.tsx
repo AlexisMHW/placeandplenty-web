@@ -58,7 +58,7 @@ export default async function ArticlePage({
         </nav>
 
         {post.franchise && post.franchise !== "None" && (
-          <p className="mt-6 font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
+          <p className="mt-6 font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
             {post.franchise}
           </p>
         )}

@@ -30,7 +30,7 @@ export default function InviteIndexPage() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center bg-offwhite px-6 py-16">
       <div className="w-full max-w-md text-center">
-        <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
+        <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
           Place &amp; Plenty
         </p>
 

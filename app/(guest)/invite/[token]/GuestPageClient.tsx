@@ -388,7 +388,7 @@ export default function GuestPageClient({
         </div>
       )}
 
-      <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
+      <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
         {data.hostDisplayName} invited {data.partyName}
       </p>
       <h1 className="mt-2 font-display text-3xl text-forest md:text-4xl">
@@ -816,7 +816,7 @@ export default function GuestPageClient({
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer nofollow"
-                    className="font-body font-semibold text-forest underline decoration-gold underline-offset-4 hover:text-olive"
+                    className="font-body font-semibold text-forest underline decoration-gold underline-offset-4 hover:text-sage"
                   >
                     {link.label}
                   </a>
