@@ -4,6 +4,7 @@ import {
   PRIMARY_NAV,
   SECONDARY_NAV,
   UTILITY_NAV,
+  ACCOUNT_NAV,
   SOCIAL_LINKS,
 } from "@/lib/nav";
 import { BRAND_NAME, PROMISE, TAGLINE } from "@/lib/brand";
@@ -16,6 +17,7 @@ const columns = [
   { heading: "Explore", items: PRIMARY_NAV },
   { heading: "More", items: SECONDARY_NAV },
   { heading: "Legal", items: UTILITY_NAV },
+  { heading: "Account", items: ACCOUNT_NAV },
 ];
 
 export default function SiteFooter() {
@@ -46,7 +48,7 @@ export default function SiteFooter() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
             {columns.map((column) => (
               <nav key={column.heading} aria-label={column.heading}>
                 <h2 className="font-body text-xs font-bold uppercase tracking-[0.2em] text-offwhite/50">

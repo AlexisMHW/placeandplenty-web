@@ -30,13 +30,26 @@ export default function FeatureGrid() {
           ))}
         </ul>
 
-        <Link
-          href="/what-it-does"
-          className="mt-12 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
-        >
-          Everything it does
-          <span aria-hidden>&rarr;</span>
-        </Link>
+        {/* Two pathways out. Pricing needs its own, because the homepage
+            pricing SECTION is hidden pre-launch while /pricing is always
+            published — without this link there is no route to it from
+            the homepage at all. */}
+        <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3">
+          <Link
+            href="/what-it-does"
+            className="inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
+          >
+            Everything it does
+            <span aria-hidden>&rarr;</span>
+          </Link>
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
+          >
+            What it costs
+            <span aria-hidden>&rarr;</span>
+          </Link>
+        </div>
       </div>
     </section>
   );

@@ -1,24 +1,34 @@
 import Link from "next/link";
 import Image from "next/image";
+import { BotanicalCorner } from "@/components/Botanical";
 import { ideaCard, type GatheringIdea } from "@/lib/tina-content";
 
-// A photo-led Gathering Idea card. Directive §12: the homepage's seasonal
-// cards are photographic and link to Gathering Ideas — never to The
-// Coordinated Host.
+// A photo-led Gathering Idea card. §12/§13: the seasonal cards are
+// photographic and link to Gathering Ideas — never to The Coordinated
+// Host.
 //
 // THE NO-PHOTO CASE IS A DESIGN, NOT A BROKEN IMAGE.
 //
-// Card imagery comes from Tina (`cardImage`, falling back to `heroImage`),
-// so at any moment a real idea may have no photograph behind it yet —
-// that is the normal state for a freshly written piece, not an error. The
-// fallback is a deep forest panel with the headline set in the display
-// serif over a gold rule. It reads as an intentional editorial card, so a
-// founder publishing an idea before they have shot the photo gets
-// something presentable rather than a grey box, and the page never shifts
-// layout depending on whether an image happens to exist.
+// Card imagery comes from Tina (`cardImage`, falling back to
+// `heroImage`), so at any moment a real idea may have no photograph
+// behind it yet — the normal state for a freshly written piece, not an
+// error. The fallback is a deep forest panel with the headline in the
+// display serif, a gold rule, and a botanical sprig in the corner.
 //
-// Real photography is still the goal — §10 wants real homes, real tables,
-// warm natural light. The fallback exists so that goal is not a blocker.
+// The sprig matters here more than anywhere else on the site. A card
+// with no image and no texture is a coloured rectangle, and four of them
+// in a row is exactly the "generic cream/green SaaS composition" the
+// brand rules out. The botanical is what keeps an un-photographed card
+// reading as Place & Plenty rather than as a placeholder.
+//
+// It is EVERGREEN, not seasonal: an olive sprig, not autumn leaves. When
+// the founder uploads real fall photography the sprig disappears behind
+// it, and when the season rotates to winter nothing about the fallback
+// needs to change.
+//
+// Real photography is still the goal — the visual system wants real
+// homes, real tables, warm natural light. This exists so that goal is
+// never a blocker to publishing.
 
 export default function GatheringIdeaCard({
   idea,
@@ -46,7 +56,7 @@ export default function GatheringIdeaCard({
             priority={priority}
           />
           {/* Carries the text, so it is part of the contrast calculation:
-              forest at 85% under the caption keeps offwhite well above
+              forest at 90% under the caption keeps offwhite well above
               AA even over a bright photograph. */}
           <div
             aria-hidden
@@ -54,10 +64,16 @@ export default function GatheringIdeaCard({
           />
         </>
       ) : (
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-gradient-to-br from-forest via-forest to-sage/40"
-        />
+        <>
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-br from-forest via-forest to-sage/40"
+          />
+          <BotanicalCorner
+            className="-right-4 -top-4 text-offwhite"
+            size={150}
+          />
+        </>
       )}
 
       <div className="relative p-6">

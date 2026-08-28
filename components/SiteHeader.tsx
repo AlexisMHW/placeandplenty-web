@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import CtaButton from "@/components/CtaButton";
-import { PRIMARY_NAV, SECONDARY_NAV } from "@/lib/nav";
+import { PRIMARY_NAV, SECONDARY_NAV, ACCOUNT_NAV } from "@/lib/nav";
 
 // WHY THIS IS A CLIENT COMPONENT NOW.
 //
@@ -79,7 +79,13 @@ export default function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/login"
+            className="hidden font-body text-sm text-forest/80 transition-colors duration-400 hover:text-forest sm:block"
+          >
+            Log in
+          </Link>
           <div className="hidden sm:block">
             <CtaButton size="sm" />
           </div>
@@ -129,7 +135,7 @@ export default function SiteHeader() {
           className="mx-auto max-w-editorial px-6 py-5"
         >
           <ul className="flex flex-col">
-            {[...PRIMARY_NAV, ...SECONDARY_NAV].map((item) => (
+            {[...PRIMARY_NAV, ...SECONDARY_NAV, ...ACCOUNT_NAV].map((item) => (
               <li key={item.href} className="border-b border-sage/15 last:border-0">
                 <Link
                   href={item.href}

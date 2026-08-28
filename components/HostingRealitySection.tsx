@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Eyebrow from "@/components/Eyebrow";
 
 // §5, beat 5: "Hosting reality / 'Okay, people are coming. Now what?'"
@@ -47,7 +48,17 @@ const thoughts = [
   },
 ];
 
-export default function HostingRealitySection() {
+export default function HostingRealitySection({
+  compact = false,
+}: {
+  /**
+   * The homepage takes three of these and links onward; the full six
+   * belong on a page that is actually about this. Same content, two
+   * lengths — §5's homepage should introduce and hand off, not restate.
+   */
+  compact?: boolean;
+} = {}) {
+  const shown = compact ? thoughts.slice(0, 3) : thoughts;
   return (
     <section className="bg-parchment py-20 md:py-24">
       <div className="mx-auto max-w-editorial px-6">
@@ -63,7 +74,7 @@ export default function HostingRealitySection() {
         </p>
 
         <ul className="mt-12 grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          {thoughts.map((t) => (
+          {shown.map((t) => (
             <li key={t.line} className="border-l-2 border-gold/70 pl-5">
               <p className="font-display text-xl leading-snug text-forest">
                 {t.line}
@@ -79,6 +90,16 @@ export default function HostingRealitySection() {
           None of that is the fun part. All of it is the difference between
           a good evening and a long one.
         </p>
+
+        {compact && (
+          <Link
+            href="/how-it-works"
+            className="mt-8 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
+          >
+            See how Place &amp; Plenty handles it
+            <span aria-hidden>&rarr;</span>
+          </Link>
+        )}
       </div>
     </section>
   );

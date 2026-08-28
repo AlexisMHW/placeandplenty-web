@@ -1,9 +1,11 @@
+import { BotanicalDivider } from "@/components/Botanical";
 import Image from "next/image";
 
 export default function PhilosophySection() {
   return (
     <section className="bg-parchment py-20 md:py-24">
       <div className="mx-auto grid max-w-editorial items-center gap-12 px-6 md:grid-cols-2">
+        <BotanicalDivider className="mb-12" />
         <div className="overflow-hidden rounded-card shadow-soft">
           <Image
             src="/images/hero-tabletop.jpg"

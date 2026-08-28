@@ -28,6 +28,15 @@ export const SECONDARY_NAV: NavItem[] = [
   { label: "Support", href: "/support" },
 ];
 
+/**
+ * Account entry points (§7, §11). Kept out of PRIMARY_NAV so the desktop
+ * bar stays editorial, but present in the header's own slot and in the
+ * footer — a login link nobody can find is not an entry point.
+ */
+export const ACCOUNT_NAV: NavItem[] = [
+  { label: "Log in", href: "/login" },
+];
+
 /** Legal and account routes. Footer only — never in the main nav. */
 export const UTILITY_NAV: NavItem[] = [
   { label: "Privacy", href: "/privacy" },
@@ -57,4 +66,7 @@ export const STATIC_SITEMAP_ROUTES: string[] = [
   ...SECONDARY_NAV.map((n) => n.href),
   ...UTILITY_NAV.map((n) => n.href),
   "/founding-host",
+  // /login, /forgot-password, /reset-password, /get and every /host route
+  // are deliberately absent: each is noindex, and a sign-in form has
+  // nothing to offer search.
 ];

@@ -57,7 +57,17 @@ const loop = [
   },
 ];
 
-export default function GuestManagementSection() {
+export default function GuestManagementSection({
+  compact = false,
+}: {
+  /**
+   * On the homepage the loop and the invitation line carry the
+   * positioning; the My People / My Guest Book breakdown below them is
+   * the same content /what-it-does already gives in full, so the
+   * homepage links instead of repeating it.
+   */
+  compact?: boolean;
+} = {}) {
   return (
     <section className="bg-forest py-20 text-offwhite md:py-24">
       <div className="mx-auto max-w-editorial px-6">
@@ -112,6 +122,7 @@ export default function GuestManagementSection() {
           ))}
         </ol>
 
+        {!compact && (
         <div className="mt-12 grid gap-6 border-t border-offwhite/15 pt-10 sm:grid-cols-2">
           <div>
             <h3 className="font-display text-xl">My People</h3>
@@ -130,6 +141,7 @@ export default function GuestManagementSection() {
             </p>
           </div>
         </div>
+        )}
 
         <Link
           href="/what-it-does"

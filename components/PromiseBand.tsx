@@ -1,4 +1,5 @@
 import Eyebrow from "@/components/Eyebrow";
+import { BotanicalDivider } from "@/components/Botanical";
 import { PROMISE, RALLY } from "@/lib/brand";
 
 // The brand promise, stated once, in the words the board and §1 fix:
@@ -14,6 +15,9 @@ export default function PromiseBand() {
   return (
     <section className="bg-forest py-20 text-offwhite md:py-24">
       <div className="mx-auto max-w-editorial px-6">
+        {/* Section transition. One botanical moment, at the seam. */}
+        <BotanicalDivider tone="dark" className="mb-14" />
+
         <Eyebrow tone="dark">Our promise</Eyebrow>
 
         <p className="mt-6 max-w-3xl font-display text-3xl leading-snug md:text-4xl">
