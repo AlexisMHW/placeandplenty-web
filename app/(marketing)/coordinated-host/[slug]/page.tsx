@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
 import { getAllPosts, getPostBySlug } from "@/lib/tina-content";
+import { ArticleSchema } from "@/components/StructuredData";
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
@@ -48,7 +49,16 @@ export default async function ArticlePage({
   }
 
   return (
-    <article className="bg-offwhite py-16 md:py-24">
+    <>
+      <ArticleSchema
+        headline={post.title}
+        description={post.metaDescription || post.deck}
+        url={`https://placeandplenty.com/coordinated-host/${params.slug}`}
+        image={post.featuredImage}
+        datePublished={post.publishDate}
+        dateModified={post.updatedDate}
+      />
+      <article className="bg-offwhite py-16 md:py-24">
       <div className="mx-auto max-w-prose px-6">
         <nav className="font-body text-xs text-forest/60">
           <Link href="/coordinated-host" className="hover:text-forest">
@@ -102,7 +112,8 @@ export default async function ArticlePage({
             </p>
           </div>
         )}
-      </div>
-    </article>
+        </div>
+      </article>
+    </>
   );
 }

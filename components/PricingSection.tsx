@@ -24,13 +24,19 @@ export default function PricingSection({
   return (
     <section id="pricing" className="bg-offwhite py-20 md:py-24">
       <div className="mx-auto max-w-editorial px-6">
-        {showHeading && (
+        {showHeading ? (
           <>
             <Eyebrow>Pricing</Eyebrow>
             <h2 className="mt-4 max-w-2xl font-display text-3xl leading-tight text-forest md:text-4xl">
               Choose how you gather.
             </h2>
           </>
+        ) : (
+          // The tier names are h3. Without an h2 above them the document
+          // outline jumps h1 -> h3, which is how a screen-reader user
+          // loses the structure. /pricing supplies its own visible
+          // heading, so this one is for the outline only.
+          <h2 className="sr-only">Plans</h2>
         )}
 
         <p className="mt-4 max-w-prose font-body text-base text-forest/70">

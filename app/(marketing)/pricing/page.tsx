@@ -5,6 +5,7 @@ import PricingSection from "@/components/PricingSection";
 import AppDownload from "@/components/AppDownload";
 import CtaSection from "@/components/CtaSection";
 import { PRICING_TIERS, PLUS_LIMITS_NOTE } from "@/lib/pricing";
+import { PricingSchema, FaqSchema } from "@/components/StructuredData";
 
 // /pricing — PUBLISHED AND INDEXED, decided 28 Aug 2026.
 //
@@ -65,6 +66,10 @@ export const metadata: Metadata = {
 export default function PricingPage() {
   return (
     <>
+      <PricingSchema />
+      {/* Same array the page renders below — FAQ markup must never
+          describe questions a visitor cannot see. */}
+      <FaqSchema faqs={faqs} />
       <section className="bg-parchment py-16 md:py-20">
         <div className="mx-auto max-w-editorial px-6">
           <Eyebrow>Pricing</Eyebrow>

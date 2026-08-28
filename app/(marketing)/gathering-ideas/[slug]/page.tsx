@@ -10,6 +10,7 @@ import {
   getGatheringIdeaBySlug,
   relatedOf,
 } from "@/lib/tina-content";
+import { ArticleSchema } from "@/components/StructuredData";
 
 // A single Gathering Idea. §14: each one should be able to connect to
 // menu, look, setup, guest flow, prep, shopping, what to use from My
@@ -66,6 +67,13 @@ export default async function GatheringIdeaPage({
 
   return (
     <>
+      <ArticleSchema
+        headline={idea.title}
+        description={idea.metaDescription || idea.deck}
+        url={`https://placeandplenty.com/gathering-ideas/${params.slug}`}
+        image={idea.heroImage}
+        datePublished={idea.publishDate}
+      />
       <article>
         <header className="bg-parchment py-12 md:py-16">
           <div className="mx-auto max-w-prose px-6">

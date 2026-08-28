@@ -12,6 +12,7 @@ import PricingSection from "@/components/PricingSection";
 import CtaSection from "@/components/CtaSection";
 import { getHomepage } from "@/lib/tina-content";
 import { getCurrentCta } from "@/lib/launch-state";
+import { OrganizationSchema } from "@/components/StructuredData";
 
 // THE HOMEPAGE. Two rules govern its shape and they pull in opposite
 // directions, so both are worth stating.
@@ -59,6 +60,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <OrganizationSchema />
       <SeasonalHero content={content} />
       <SeasonalCards ideas={[...content.seasonalCards, ...extraIdeas]} />
       <PromiseBand />
