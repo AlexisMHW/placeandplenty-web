@@ -2,6 +2,8 @@ import Eyebrow from "@/components/Eyebrow";
 import {
   PRICING_TIERS,
   PLUS_LIMITS_NOTE,
+  FREE_LIMITS_NOTE,
+  PASS_LIMITS_NOTE,
   PURCHASE_AVAILABILITY_NOTE,
 } from "@/lib/pricing";
 
@@ -114,9 +116,14 @@ export default function PricingSection({
           ))}
         </ul>
 
-        <p className="mt-8 max-w-prose font-body text-sm leading-relaxed text-forest/70">
-          {PLUS_LIMITS_NOTE}
-        </p>
+        {/* §17 entitlement truth for all three tiers, not just Plus.
+            Free being bounded is the fact most likely to surprise
+            someone, so it is stated as plainly as the other two. */}
+        <div className="mt-8 max-w-prose space-y-2 font-body text-sm leading-relaxed text-forest/70">
+          <p>{FREE_LIMITS_NOTE}</p>
+          <p>{PASS_LIMITS_NOTE}</p>
+          <p>{PLUS_LIMITS_NOTE}</p>
+        </div>
       </div>
     </section>
   );

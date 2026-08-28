@@ -4,7 +4,12 @@ import Eyebrow from "@/components/Eyebrow";
 import PricingSection from "@/components/PricingSection";
 import AppDownload from "@/components/AppDownload";
 import CtaSection from "@/components/CtaSection";
-import { PRICING_TIERS, PLUS_LIMITS_NOTE } from "@/lib/pricing";
+import {
+  PRICING_TIERS,
+  PLUS_LIMITS_NOTE,
+  FREE_LIMITS_NOTE,
+  PASS_LIMITS_NOTE,
+} from "@/lib/pricing";
 import { PricingSchema, FaqSchema } from "@/components/StructuredData";
 
 // /pricing — PUBLISHED AND INDEXED, decided 28 Aug 2026.
@@ -27,12 +32,20 @@ import { PricingSchema, FaqSchema } from "@/components/StructuredData";
 
 const faqs = [
   {
+    q: "What do I get for free?",
+    a: FREE_LIMITS_NOTE,
+  },
+  {
     q: "Do I have to subscribe?",
     a: `No. Place & Plenty is free to start, and a Gathering Pass is ${PRICING_TIERS[1].priceLine} for one gathering with no subscription behind it. Plus is there for people who host often enough to want it.`,
   },
   {
     q: "What does Plus actually include?",
     a: PLUS_LIMITS_NOTE,
+  },
+  {
+    q: "Is a Gathering Pass a subscription?",
+    a: PASS_LIMITS_NOTE,
   },
   {
     q: "Does a draft count against my Plus limits?",

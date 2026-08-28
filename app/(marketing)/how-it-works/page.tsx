@@ -4,6 +4,7 @@ import Eyebrow from "@/components/Eyebrow";
 import HowItWorks from "@/components/HowItWorks";
 import ProblemSection from "@/components/ProblemSection";
 import HostReadySection from "@/components/HostReadySection";
+import GuestManagementSection from "@/components/GuestManagementSection";
 import CtaSection from "@/components/CtaSection";
 import { PROMISE } from "@/lib/brand";
 
@@ -74,6 +75,12 @@ export default function HowItWorksPage() {
 
       <ProblemSection />
       <HowItWorks />
+
+      {/* §8: the guest-management loop must be especially clear here,
+          and the invitation line has to appear. Both live in one
+          component so the positioning cannot drift between pages. */}
+      <GuestManagementSection />
+
       <HostReadySection />
 
       <section className="bg-offwhite py-20 md:py-24">

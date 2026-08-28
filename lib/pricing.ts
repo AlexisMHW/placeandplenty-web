@@ -46,9 +46,9 @@ export const PRICING_TIERS: PricingTier[] = [
     price: "$0",
     billing: "",
     priceLine: "$0",
-    description: "A simple way to start getting ready.",
+    description: "One gathering at a time, start to doorbell.",
     includes: [
-      "Plan a gathering from start to doorbell",
+      "One active gathering at a time",
       "Menu, shopping list and timeline",
       "Invite your people and track RSVPs",
       "My Guest Book — the people you host most",
@@ -62,7 +62,7 @@ export const PRICING_TIERS: PricingTier[] = [
     description:
       "Everything Place & Plenty can do, for one gathering. Not a subscription.",
     includes: [
-      "The full experience for a single gathering",
+      "Unlocks one gathering, and stays with it",
       "HostReady readiness score",
       "Contributions, registry links and song requests",
       "The gathering photo gallery",
@@ -91,6 +91,16 @@ export const PRICING_TIERS: PricingTier[] = [
  */
 export const PURCHASE_AVAILABILITY_NOTE =
   "Place & Plenty isn't available to buy yet. This is what it will cost when it is.";
+
+/**
+ * §17 entitlement truth, in one place. Free is bounded too — that was
+ * missing entirely and is the fact most likely to surprise someone.
+ */
+export const FREE_LIMITS_NOTE =
+  "Free covers one active gathering at a time. Finish it or close it and you can start the next one.";
+
+export const PASS_LIMITS_NOTE =
+  "A Gathering Pass unlocks one gathering and is bound to it. It isn't a subscription and there's nothing to cancel.";
 
 /** The bounded-Plus explainer. Never soften this into "unlimited". */
 export const PLUS_LIMITS_NOTE =

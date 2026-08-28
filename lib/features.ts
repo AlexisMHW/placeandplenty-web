@@ -1,97 +1,138 @@
-// Product capability names, in one place, so a rename in the app is one
-// edit here rather than a hunt through pages.
+// Product architecture, in one place.
 //
-// EVERY NAME BELOW IS VERIFIED, and that constraint is the point.
+// §9 OF THE FINAL RECONCILIATION IS THE AUTHORITY HERE, and it is
+// explicit about a distinction the previous version of this file got
+// wrong: **do not mix Hosting Hub cards with account/system-level
+// capabilities.**
 //
-// Directive §4 requires the website to match the current product, and §30
-// asks for a sweep of stale terminology — My Address Book, My Shopping
-// List, standalone My Budget, standalone My Invitations, 15-card Hosting
-// Hub. Those are gone. What replaced them is taken from the app audit
-// (P&P-V1-APP-CURRENT-STATE-POST-AUDIT.md §2 and §5) and the approved
-// Visual Identity board's campaign pillars and feature row.
+// The Hub is TWELVE cards, in three groups. HostReady, Figure It Out,
+// Next Up and My Guest Book are NOT Hub cards — they are system and
+// account-level capabilities that sit around the Hub, and presenting
+// them as peers of My Table misdescribes the product.
 //
-// WHAT IS DELIBERATELY NOT HERE: an enumeration of "the 12 cards".
+// Three names must never come back as standalone Hub cards (§9, §32):
 //
-// The audit states My Hosting Hub is now 12 cards rather than 15, and
-// names the three that were absorbed and the two that were renamed — but
-// it does not list all twelve. Publishing a guessed list would be exactly
-// the failure §4 warns about: a website product diagram that does not
-// match the app. So the site describes what Place & Plenty does, using
-// names that are confirmed, and does not claim to mirror the Hub's
-// navigation. If a real 12-card diagram is wanted, the list has to come
-// from App Claude first.
+//   My Invitations         -> a capability inside My People
+//   Guest Communications   -> a capability inside My People
+//   My Budget              -> absorbed into My Shopping as List | Budget,
+//                             with receipts and expenses preserved
 //
-// Confirmed renames, for anyone tempted to "correct" these back:
-//   My Address Book   -> My Guest Book
-//   My Shopping List  -> My Shopping        (List | Budget in one place)
-//   My Budget         -> inside My Shopping
-//   My Invitations    -> inside My People
-//   Guest Communications -> inside My People
+// Earlier renames, for anyone tempted to "correct" these back:
+//   My Address Book  -> My Guest Book
+//   My Shopping List -> My Shopping
 
 export interface Feature {
   name: string;
   body: string;
 }
 
+export interface FeatureGroup {
+  heading: string;
+  features: Feature[];
+}
+
+/** The 12-card Hosting Hub, in §9's groups and §9's order. */
+export const HOSTING_HUB: FeatureGroup[] = [
+  {
+    heading: "Food & the table",
+    features: [
+      {
+        name: "My Table",
+        body: "Plan your menu — dishes, quantities, dietary needs and how it all gets served.",
+      },
+      {
+        name: "My Shopping",
+        body: "What to get and what you’re spending, in one place. List and Budget, with receipts and co-host expenses.",
+      },
+      {
+        name: "My Hosting Closet",
+        body: "What you already have. Stop buying a fourth set of serving bowls.",
+      },
+    ],
+  },
+  {
+    heading: "Your people",
+    features: [
+      {
+        name: "My People",
+        body: "Invite, track and message guests. One place for RSVPs, households, and everything you know about who’s coming.",
+      },
+      {
+        name: "Who’s Bringing What",
+        body: "Track contributions without running a potluck out of a group chat.",
+      },
+      {
+        name: "My Co-Hosts",
+        body: "Share the load with the person actually helping you pull it off.",
+      },
+    ],
+  },
+  {
+    heading: "The look & the day",
+    features: [
+      {
+        name: "Space Mode",
+        body: "Work out how the room actually flows before you start moving furniture.",
+      },
+      {
+        name: "Find Help",
+        body: "Work out where an extra pair of hands would genuinely change the day.",
+      },
+      {
+        name: "My Style Board",
+        body: "Collect the look you’re going for, and keep track of what it needs.",
+      },
+      {
+        name: "My Music & Media",
+        body: "Sort the sound before people arrive, not during.",
+      },
+      {
+        name: "Host Mode",
+        body: "On the day itself: what to do right now, not the whole plan at once.",
+      },
+      {
+        name: "My Gathering Photos",
+        body: "The photos everyone took, in one place, without the group-chat scroll.",
+      },
+    ],
+  },
+];
+
 /**
- * The six from the approved board's feature row. Used on the homepage,
- * where the job is recognition rather than completeness.
+ * NOT Hosting Hub cards. §9: present these separately as system and
+ * account-level capabilities. They span gatherings or sit above them.
  */
-export const HEADLINE_FEATURES: Feature[] = [
+export const SYSTEM_CAPABILITIES: Feature[] = [
   {
     name: "Figure It Out For Me",
     body: "Tell us the basics. Get a plan, a menu and a timeline in minutes.",
   },
   {
-    name: "My Table",
-    body: "Menus, dishes and serving counts — all in one place.",
-  },
-  {
-    name: "My People",
-    body: "Invite people, track RSVPs, message guests, keep everyone in the loop.",
-  },
-  {
-    name: "My Shopping",
-    body: "Lists, budget, receipts and co-host contributions together.",
-  },
-  {
     name: "HostReady™",
-    body: "A live readiness score that tells you whether you're actually on track.",
+    body: "A readiness score that weighs what actually matters, not a checklist percentage.",
   },
-  {
-    name: "My Hosting Closet",
-    body: "See what you already own. Borrow less. Buy smarter.",
-  },
-];
-
-/**
- * The fuller set for /what-it-does. Still only confirmed names — see the
- * note at the top of this file before adding to it.
- */
-export const ALL_FEATURES: Feature[] = [
-  ...HEADLINE_FEATURES,
   {
     name: "Next Up",
     body: "The one thing to do next, worked out for you rather than guessed at.",
   },
   {
-    name: "Host Mode™",
-    body: "On the day itself, what to do right now — not the whole plan at once.",
-  },
-  {
-    name: "Space Mode",
-    body: "Work out how the room actually flows before you move furniture.",
-  },
-  {
     name: "My Guest Book",
-    body: "Keep the people you host most often in one place, gathering after gathering.",
+    body: "Keep the people you host most often in one place — so you’re not rebuilding the same guest list every time.",
   },
-  {
-    name: "Co-hosting",
-    body: "Share a gathering with the person actually helping you pull it off.",
-  },
-  {
-    name: "Contributions",
-    body: "Who's bringing what, without four separate group chats.",
-  },
+];
+
+/**
+ * The six shown on the homepage, where the job is recognition rather
+ * than completeness. Deliberately a MIX of Hub cards and system
+ * capabilities, because a first-time visitor does not yet have a mental
+ * model of the Hub to slot things into — the distinction is drawn
+ * properly on /what-it-does, where there is room to draw it.
+ */
+export const HEADLINE_FEATURES: Feature[] = [
+  SYSTEM_CAPABILITIES[0], // Figure It Out For Me
+  HOSTING_HUB[0].features[0], // My Table
+  HOSTING_HUB[1].features[0], // My People
+  HOSTING_HUB[0].features[1], // My Shopping
+  SYSTEM_CAPABILITIES[1], // HostReady
+  HOSTING_HUB[0].features[2], // My Hosting Closet
 ];
