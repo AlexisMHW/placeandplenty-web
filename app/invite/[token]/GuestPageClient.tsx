@@ -5,10 +5,15 @@ import {
   lookupGuestPage,
   submitRsvp,
   claimContribution,
+  respondToContribution,
   submitSongRequest,
+  preparePhotoUpload,
+  uploadPhotoBytes,
+  registerPhoto,
   type GuestPageData,
   type RsvpResponseInput,
 } from "@/lib/guest-api";
+import { toUploadableJpeg } from "@/lib/image";
 
 type LoadState =
   | { kind: "loading" }
@@ -23,9 +28,26 @@ interface PerGuestForm {
   accessibilityNotes: string;
 }
 
-export default function GuestPageClient({ token }: { token: string }) {
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
-  const [guestForms, setGuestForms] = useState<Record<string, PerGuestForm>>({});
+const ARCHIVED_NOTICE =
+  "This gathering has been archived and is no longer accepting updates.";
+
+export default function GuestPageClient({
+  token,
+  initialData,
+}: {
+  token: string;
+  // Rendered on the server so the invitation is visible immediately —
+  // this page is opened on a phone, from a message, by someone who has
+  // no patience for a spinner. Null when the server fetch failed; the
+  // client then retries rather than showing an error it cannot explain.
+  initialData?: GuestPageData | null;
+}) {
+  const [state, setState] = useState<LoadState>(
+    initialData ? { kind: "loaded", data: initialData } : { kind: "loading" }
+  );
+  const [guestForms, setGuestForms] = useState<Record<string, PerGuestForm>>(
+    () => (initialData ? buildForms(initialData) : {})
+  );
   const [plusOneName, setPlusOneName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [rsvpSubmitting, setRsvpSubmitting] = useState(false);
@@ -42,7 +64,18 @@ export default function GuestPageClient({ token }: { token: string }) {
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [respondError, setRespondError] = useState<string | null>(null);
+  const [messageDrafts, setMessageDrafts] = useState<Record<string, string>>({});
+  const [openMessageFor, setOpenMessageFor] = useState<string | null>(null);
+
+  const [photoCaption, setPhotoCaption] = useState("");
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoDone, setPhotoDone] = useState(false);
+
   useEffect(() => {
+    if (initialData) return; // already have it from the server
     let cancelled = false;
 
     async function load() {
@@ -57,22 +90,8 @@ export default function GuestPageClient({ token }: { token: string }) {
         setState({ kind: "error" });
         return;
       }
-
-      const data = result.data;
-      const initialForms: Record<string, PerGuestForm> = {};
-      data.partyMembers.forEach((m) => {
-        initialForms[m.gatheringGuestId] = {
-          status:
-            m.rsvpStatus === "yes" || m.rsvpStatus === "maybe" || m.rsvpStatus === "no"
-              ? m.rsvpStatus
-              : null,
-          dietaryNotes: m.dietaryNotes ?? "",
-          allergyNotes: m.allergyNotes ?? "",
-          accessibilityNotes: m.accessibilityNotes ?? "",
-        };
-      });
-      setGuestForms(initialForms);
-      setState({ kind: "loaded", data });
+      setGuestForms(buildForms(result.data));
+      setState({ kind: "loaded", data: result.data });
     }
 
     load();
@@ -81,6 +100,13 @@ export default function GuestPageClient({ token }: { token: string }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  async function refresh() {
+    const refreshed = await lookupGuestPage(token);
+    if (refreshed.ok && refreshed.data) {
+      setState({ kind: "loaded", data: refreshed.data });
+    }
+  }
 
   if (state.kind === "loading") {
     return (
@@ -122,6 +148,8 @@ export default function GuestPageClient({ token }: { token: string }) {
 
   const data = state.data;
   const isCancelled = !!data.cancellationMessage;
+  const canWrite = !isCancelled && !data.isArchived && !readOnly;
+  const firstMemberId = data.partyMembers[0]?.gatheringGuestId;
 
   function updateGuestForm(id: string, patch: Partial<PerGuestForm>) {
     setGuestForms((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
@@ -158,10 +186,7 @@ export default function GuestPageClient({ token }: { token: string }) {
 
     if (result.status === 409) {
       setReadOnly(true);
-      setRsvpError(
-        (result.data as any)?.message ||
-          "This gathering has been archived and is no longer accepting updates."
-      );
+      setRsvpError((result.data as any)?.message || ARCHIVED_NOTICE);
       return;
     }
     if (!result.ok) {
@@ -171,16 +196,21 @@ export default function GuestPageClient({ token }: { token: string }) {
     setRsvpSubmitted(true);
   }
 
-  async function handleClaim(contributionId: string, action: "claim" | "release") {
+  async function handleClaim(
+    contributionId: string,
+    action: "claim" | "release"
+  ) {
     setClaimError(null);
     setClaimingId(contributionId);
-    const guestId = data.partyMembers[0]?.gatheringGuestId;
-    const result = await claimContribution(token, contributionId, action, guestId);
+    // Household-level claim: no gatheringGuestId. See the note in
+    // lib/guest-api.ts — a per-guest claim vanishes from the server's
+    // own projection on the next refresh.
+    const result = await claimContribution(token, contributionId, action);
     setClaimingId(null);
 
     if (result.status === 409) {
       setReadOnly(true);
-      setClaimError("This gathering has been archived and is no longer accepting updates.");
+      setClaimError(ARCHIVED_NOTICE);
       return;
     }
     if (!result.ok || result.data?.success === false) {
@@ -193,11 +223,44 @@ export default function GuestPageClient({ token }: { token: string }) {
       }
     }
 
-    // Refresh regardless, per spec guidance on race conditions.
-    const refreshed = await lookupGuestPage(token);
-    if (refreshed.ok && refreshed.data) {
-      setState({ kind: "loaded", data: refreshed.data });
+    await refresh();
+  }
+
+  async function handleRespond(
+    contributionId: string,
+    action: "yes" | "no" | "message"
+  ) {
+    setRespondError(null);
+    const message = messageDrafts[contributionId]?.trim();
+    if (action === "message" && !message) {
+      setRespondError("Add a note first.");
+      return;
     }
+
+    setRespondingId(contributionId);
+    const result = await respondToContribution(
+      token,
+      contributionId,
+      action,
+      action === "message" ? message : undefined
+    );
+    setRespondingId(null);
+
+    if (result.status === 409) {
+      setReadOnly(true);
+      setRespondError(ARCHIVED_NOTICE);
+      return;
+    }
+    if (!result.ok) {
+      setRespondError("That didn't go through. Please try again.");
+      return;
+    }
+
+    if (action === "message") {
+      setMessageDrafts((prev) => ({ ...prev, [contributionId]: "" }));
+      setOpenMessageFor(null);
+    }
+    await refresh();
   }
 
   async function handleSongSubmit() {
@@ -207,18 +270,17 @@ export default function GuestPageClient({ token }: { token: string }) {
       return;
     }
     setSongSubmitting(true);
-    const guestId = data.partyMembers[0]?.gatheringGuestId;
     const result = await submitSongRequest(
       token,
       songTitle.trim(),
       songArtist.trim() || undefined,
-      guestId
+      firstMemberId
     );
     setSongSubmitting(false);
 
     if (result.status === 409) {
       setReadOnly(true);
-      setSongError("This gathering has been archived and is no longer accepting updates.");
+      setSongError(ARCHIVED_NOTICE);
       return;
     }
     if (result.status === 403) {
@@ -232,6 +294,59 @@ export default function GuestPageClient({ token }: { token: string }) {
     setSongSubmitted(true);
     setSongTitle("");
     setSongArtist("");
+  }
+
+  async function handlePhotoSelected(file: File | undefined) {
+    if (!file) return;
+    setPhotoError(null);
+    setPhotoBusy(true);
+
+    const jpeg = await toUploadableJpeg(file);
+    if (!jpeg) {
+      setPhotoBusy(false);
+      setPhotoError("We couldn't read that image. Try a different photo.");
+      return;
+    }
+
+    const prepared = await preparePhotoUpload(token);
+    if (prepared.status === 403) {
+      setPhotoBusy(false);
+      setPhotoError("Photo sharing isn't switched on for this gathering.");
+      return;
+    }
+    if (!prepared.ok || !prepared.data?.signedUrl) {
+      setPhotoBusy(false);
+      setPhotoError("That didn't go through. Please try again.");
+      return;
+    }
+
+    const uploaded = await uploadPhotoBytes(prepared.data.signedUrl, jpeg);
+    if (!uploaded) {
+      setPhotoBusy(false);
+      setPhotoError("The upload didn't finish. Please try again.");
+      return;
+    }
+
+    const registered = await registerPhoto(
+      token,
+      prepared.data.storagePath,
+      photoCaption.trim() || undefined,
+      firstMemberId
+    );
+    setPhotoBusy(false);
+
+    if (registered.status === 409) {
+      setReadOnly(true);
+      setPhotoError(ARCHIVED_NOTICE);
+      return;
+    }
+    if (!registered.ok) {
+      setPhotoError("That didn't go through. Please try again.");
+      return;
+    }
+
+    setPhotoCaption("");
+    setPhotoDone(true);
   }
 
   const formattedDate = data.displayDate
@@ -293,7 +408,9 @@ export default function GuestPageClient({ token }: { token: string }) {
 
       {isCancelled && (
         <div className="mt-8 rounded-card border border-error/40 bg-error/5 p-5">
-          <p className="font-display text-lg text-error">This gathering was cancelled</p>
+          <p className="font-display text-lg text-error">
+            This gathering was cancelled
+          </p>
           <p className="mt-2 font-body text-sm text-forest/80">
             {data.cancellationMessage}
           </p>
@@ -302,17 +419,19 @@ export default function GuestPageClient({ token }: { token: string }) {
 
       {!isCancelled && data.isArchived && data.archivedMessage && (
         <div className="mt-8 rounded-card border border-gold bg-cream p-5">
-          <p className="font-body text-sm text-forest/80">{data.archivedMessage}</p>
+          <p className="font-body text-sm text-forest/80">
+            {data.archivedMessage}
+          </p>
         </div>
       )}
 
       {data.rsvpDeadline && !isCancelled && (
         <p className="mt-6 font-body text-sm text-forest/60">
           Please respond by{" "}
-          {new Date(`${data.rsvpDeadline}T00:00:00`).toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-          })}
+          {new Date(`${data.rsvpDeadline}T00:00:00`).toLocaleDateString(
+            "en-US",
+            { month: "long", day: "numeric" }
+          )}
           .
         </p>
       )}
@@ -337,7 +456,8 @@ export default function GuestPageClient({ token }: { token: string }) {
                     className="border-b border-sage/20 pb-5 last:border-b-0"
                   >
                     <p className="font-body font-semibold text-forest">
-                      {member.firstName} {member.lastName}
+                      {member.firstName}
+                      {member.lastName ? ` ${member.lastName}` : ""}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(["yes", "maybe", "no"] as const).map((opt) => (
@@ -345,7 +465,9 @@ export default function GuestPageClient({ token }: { token: string }) {
                           key={opt}
                           type="button"
                           onClick={() =>
-                            updateGuestForm(member.gatheringGuestId, { status: opt })
+                            updateGuestForm(member.gatheringGuestId, {
+                              status: opt,
+                            })
                           }
                           className={`rounded-full border px-4 py-1.5 font-body text-sm capitalize transition-colors duration-400 ${
                             form.status === opt
@@ -362,6 +484,7 @@ export default function GuestPageClient({ token }: { token: string }) {
                       <div className="mt-3 grid gap-2 sm:grid-cols-3">
                         <input
                           type="text"
+                          aria-label={`Dietary notes for ${member.firstName}`}
                           placeholder="Dietary notes"
                           value={form.dietaryNotes}
                           maxLength={500}
@@ -374,6 +497,7 @@ export default function GuestPageClient({ token }: { token: string }) {
                         />
                         <input
                           type="text"
+                          aria-label={`Allergies for ${member.firstName}`}
                           placeholder="Allergies"
                           value={form.allergyNotes}
                           maxLength={500}
@@ -386,6 +510,7 @@ export default function GuestPageClient({ token }: { token: string }) {
                         />
                         <input
                           type="text"
+                          aria-label={`Accessibility notes for ${member.firstName}`}
                           placeholder="Accessibility notes"
                           value={form.accessibilityNotes}
                           maxLength={500}
@@ -404,10 +529,14 @@ export default function GuestPageClient({ token }: { token: string }) {
 
               {data.plusOneAllowed && (
                 <div>
-                  <label className="mb-1 block font-body text-sm font-semibold text-forest">
+                  <label
+                    htmlFor="plus-one"
+                    className="mb-1 block font-body text-sm font-semibold text-forest"
+                  >
                     Bringing someone? ({data.plusOneLimit} allowed)
                   </label>
                   <input
+                    id="plus-one"
                     type="text"
                     placeholder="Guest name"
                     value={plusOneName}
@@ -419,11 +548,17 @@ export default function GuestPageClient({ token }: { token: string }) {
 
               {!data.contactEmail.has && (
                 <div>
-                  <label className="mb-1 block font-body text-sm font-semibold text-forest">
+                  <label
+                    htmlFor="contact-email"
+                    className="mb-1 block font-body text-sm font-semibold text-forest"
+                  >
                     Email for updates about this gathering{" "}
-                    <span className="font-normal text-forest/50">(optional)</span>
+                    <span className="font-normal text-forest/50">
+                      (optional)
+                    </span>
                   </label>
                   <input
+                    id="contact-email"
                     type="email"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
@@ -438,7 +573,9 @@ export default function GuestPageClient({ token }: { token: string }) {
               )}
 
               {rsvpError && (
-                <p className="font-body text-sm text-error">{rsvpError}</p>
+                <p role="alert" className="font-body text-sm text-error">
+                  {rsvpError}
+                </p>
               )}
 
               <button
@@ -454,18 +591,170 @@ export default function GuestPageClient({ token }: { token: string }) {
         </section>
       )}
 
-      {/* --- Contributions --- */}
+      {/* --- Assigned to this party, by name --- */}
+      {data.assignedContributions.length > 0 && (
+        <section className="mt-8 rounded-card border border-gold bg-cream p-6 shadow-softer">
+          <h2 className="font-display text-xl text-forest">
+            {data.hostDisplayName} asked you to bring
+          </h2>
+
+          {respondError && (
+            <p role="alert" className="mt-2 font-body text-sm text-error">
+              {respondError}
+            </p>
+          )}
+
+          <ul className="mt-4 space-y-5">
+            {data.assignedContributions.map((item) => {
+              const busy = respondingId === item.id;
+              return (
+                <li
+                  key={item.id}
+                  className="border-b border-sage/20 pb-5 last:border-b-0"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="font-body font-semibold text-forest">
+                      {item.itemName}
+                      {item.quantity > 1 ? ` ×${item.quantity}` : ""}
+                      {item.unit ? ` (${item.unit})` : ""}
+                    </p>
+                    {item.assignedToName && (
+                      <p className="font-body text-xs text-forest/60">
+                        for {item.assignedToName}
+                      </p>
+                    )}
+                  </div>
+
+                  {item.hostNote && (
+                    <p className="mt-1 font-body text-sm italic text-forest/70">
+                      &ldquo;{item.hostNote}&rdquo;
+                    </p>
+                  )}
+
+                  {item.status === "confirmed" && (
+                    <p className="mt-2 font-body text-sm text-olive">
+                      You said yes to this.
+                    </p>
+                  )}
+                  {item.status === "declined" && (
+                    <p className="mt-2 font-body text-sm text-forest/60">
+                      You said you can&rsquo;t bring this.
+                    </p>
+                  )}
+
+                  {item.messages.length > 0 && (
+                    <ul className="mt-3 space-y-2 rounded-md bg-offwhite/70 p-3">
+                      {item.messages.map((m) => (
+                        <li key={m.id} className="font-body text-sm">
+                          <span className="font-semibold text-forest">
+                            {m.senderType === "host"
+                              ? data.hostDisplayName
+                              : "You"}
+                            :
+                          </span>{" "}
+                          <span className="text-forest/80">{m.message}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {canWrite && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => handleRespond(item.id, "yes")}
+                        className={`rounded-full border px-4 py-1.5 font-body text-sm transition-colors duration-400 disabled:opacity-60 ${
+                          item.status === "confirmed"
+                            ? "border-forest bg-forest text-offwhite"
+                            : "border-forest text-forest hover:bg-forest/5"
+                        }`}
+                      >
+                        I&rsquo;ve got it
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => handleRespond(item.id, "no")}
+                        className={`rounded-full border px-4 py-1.5 font-body text-sm transition-colors duration-400 disabled:opacity-60 ${
+                          item.status === "declined"
+                            ? "border-forest bg-forest/80 text-offwhite"
+                            : "border-sage/40 text-forest hover:bg-sage/10"
+                        }`}
+                      >
+                        I can&rsquo;t
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() =>
+                          setOpenMessageFor(
+                            openMessageFor === item.id ? null : item.id
+                          )
+                        }
+                        className="rounded-full border border-sage/40 px-4 py-1.5 font-body text-sm text-forest/80 hover:bg-sage/10 disabled:opacity-60"
+                      >
+                        Send a note
+                      </button>
+                    </div>
+                  )}
+
+                  {canWrite && openMessageFor === item.id && (
+                    <div className="mt-3 space-y-2">
+                      <label htmlFor={`note-${item.id}`} className="sr-only">
+                        Note about {item.itemName}
+                      </label>
+                      <textarea
+                        id={`note-${item.id}`}
+                        rows={2}
+                        maxLength={1000}
+                        placeholder="Anything the host should know?"
+                        value={messageDrafts[item.id] ?? ""}
+                        onChange={(e) =>
+                          setMessageDrafts((prev) => ({
+                            ...prev,
+                            [item.id]: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-sm text-forest"
+                      />
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => handleRespond(item.id, "message")}
+                        className="rounded-full bg-forest px-5 py-2 font-body text-sm font-semibold text-offwhite hover:bg-forest/90 disabled:opacity-60"
+                      >
+                        {busy ? "Sending…" : "Send note"}
+                      </button>
+                      <p className="font-body text-xs text-forest/50">
+                        A note isn&rsquo;t an answer — the host will still be
+                        waiting on a yes or no.
+                      </p>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {/* --- Open contributions anyone can pick up --- */}
       {data.showPotluck && data.contributions.length > 0 && (
         <section className="mt-8 rounded-card border border-sage/30 bg-offwhite p-6 shadow-softer">
-          <h2 className="font-display text-xl text-forest">Who&rsquo;s Bringing What</h2>
+          <h2 className="font-display text-xl text-forest">
+            Who&rsquo;s Bringing What
+          </h2>
           {claimError && (
-            <p className="mt-2 font-body text-sm text-error">{claimError}</p>
+            <p role="alert" className="mt-2 font-body text-sm text-error">
+              {claimError}
+            </p>
           )}
           <ul className="mt-4 divide-y divide-sage/20">
             {data.contributions.map((item) => (
               <li
                 key={item.id}
-                className="flex items-center justify-between py-3 font-body text-sm"
+                className="flex items-center justify-between gap-3 py-3 font-body text-sm"
               >
                 <div>
                   <p className="text-forest">
@@ -475,23 +764,26 @@ export default function GuestPageClient({ token }: { token: string }) {
                   {item.status !== "needed" && !item.claimedByThisParty && (
                     <p className="text-forest/50">Covered</p>
                   )}
+                  {item.claimedByThisParty && (
+                    <p className="text-olive">You&rsquo;re bringing this</p>
+                  )}
                 </div>
-                {item.status === "needed" && (
+                {item.status === "needed" && canWrite && (
                   <button
                     type="button"
-                    disabled={claimingId === item.id || readOnly}
+                    disabled={claimingId === item.id}
                     onClick={() => handleClaim(item.id, "claim")}
-                    className="rounded-full border border-forest px-4 py-1.5 font-body text-xs font-semibold text-forest hover:bg-forest/5 disabled:opacity-60"
+                    className="flex-shrink-0 rounded-full border border-forest px-4 py-1.5 font-body text-xs font-semibold text-forest hover:bg-forest/5 disabled:opacity-60"
                   >
                     I&rsquo;ll bring this
                   </button>
                 )}
-                {item.claimedByThisParty && (
+                {item.claimedByThisParty && canWrite && (
                   <button
                     type="button"
-                    disabled={claimingId === item.id || readOnly}
+                    disabled={claimingId === item.id}
                     onClick={() => handleClaim(item.id, "release")}
-                    className="rounded-full border border-sage/40 px-4 py-1.5 font-body text-xs text-forest/70 hover:bg-sage/10 disabled:opacity-60"
+                    className="flex-shrink-0 rounded-full border border-sage/40 px-4 py-1.5 font-body text-xs text-forest/70 hover:bg-sage/10 disabled:opacity-60"
                   >
                     Release
                   </button>
@@ -507,17 +799,27 @@ export default function GuestPageClient({ token }: { token: string }) {
         <section className="mt-8 rounded-card border border-sage/30 bg-offwhite p-6 shadow-softer">
           <h2 className="font-display text-xl text-forest">Request a Song</h2>
           {songSubmitted ? (
-            <p className="mt-3 font-body text-forest/80">Added to the playlist request.</p>
+            <p className="mt-3 font-body text-forest/80">
+              Added to the playlist request.
+            </p>
           ) : (
             <div className="mt-4 space-y-3">
+              <label htmlFor="song-title" className="sr-only">
+                Song title
+              </label>
               <input
+                id="song-title"
                 type="text"
                 placeholder="Song title"
                 value={songTitle}
                 onChange={(e) => setSongTitle(e.target.value)}
                 className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-sm text-forest"
               />
+              <label htmlFor="song-artist" className="sr-only">
+                Artist (optional)
+              </label>
               <input
+                id="song-artist"
                 type="text"
                 placeholder="Artist (optional)"
                 value={songArtist}
@@ -525,7 +827,9 @@ export default function GuestPageClient({ token }: { token: string }) {
                 className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-sm text-forest"
               />
               {songError && (
-                <p className="font-body text-sm text-error">{songError}</p>
+                <p role="alert" className="font-body text-sm text-error">
+                  {songError}
+                </p>
               )}
               <button
                 type="button"
@@ -539,6 +843,90 @@ export default function GuestPageClient({ token }: { token: string }) {
           )}
         </section>
       )}
+
+      {/* --- Photo contribution --- */}
+      {/* Adding a photo grants no right to browse the gallery. That is a
+          separate link the host shares deliberately. */}
+      {data.showPhotoContributions && canWrite && (
+        <section className="mt-8 rounded-card border border-sage/30 bg-offwhite p-6 shadow-softer">
+          <h2 className="font-display text-xl text-forest">Add a photo</h2>
+          <p className="mt-2 font-body text-sm text-forest/70">
+            Got a good one from the day? Share it with the host.
+          </p>
+
+          {photoDone ? (
+            <div className="mt-4">
+              <p className="font-body text-forest/80">
+                Thanks — your photo has been sent.
+              </p>
+              <button
+                type="button"
+                onClick={() => setPhotoDone(false)}
+                className="mt-3 rounded-full border border-sage/40 px-5 py-2 font-body text-sm text-forest hover:bg-sage/10"
+              >
+                Add another
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              <label htmlFor="photo-caption" className="sr-only">
+                Caption (optional)
+              </label>
+              <input
+                id="photo-caption"
+                type="text"
+                placeholder="Caption (optional)"
+                maxLength={300}
+                value={photoCaption}
+                onChange={(e) => setPhotoCaption(e.target.value)}
+                className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-sm text-forest"
+              />
+
+              <label
+                htmlFor="photo-file"
+                className={`block cursor-pointer rounded-full bg-forest px-6 py-3 text-center font-body font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90 ${
+                  photoBusy ? "pointer-events-none opacity-60" : ""
+                }`}
+              >
+                {photoBusy ? "Sending…" : "Choose a photo"}
+              </label>
+              <input
+                id="photo-file"
+                type="file"
+                accept="image/*"
+                disabled={photoBusy}
+                className="sr-only"
+                onChange={(e) => {
+                  handlePhotoSelected(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+
+              {photoError && (
+                <p role="alert" className="font-body text-sm text-error">
+                  {photoError}
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
+}
+
+function buildForms(data: GuestPageData): Record<string, PerGuestForm> {
+  const forms: Record<string, PerGuestForm> = {};
+  data.partyMembers.forEach((m) => {
+    forms[m.gatheringGuestId] = {
+      status:
+        m.rsvpStatus === "yes" || m.rsvpStatus === "maybe" || m.rsvpStatus === "no"
+          ? m.rsvpStatus
+          : null,
+      dietaryNotes: m.dietaryNotes ?? "",
+      allergyNotes: m.allergyNotes ?? "",
+      accessibilityNotes: m.accessibilityNotes ?? "",
+    };
+  });
+  return forms;
 }
