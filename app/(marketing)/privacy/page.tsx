@@ -1,15 +1,31 @@
-// PRIVACY POLICY — drafted 27 Aug 2026 from verified V1 behaviour.
+// PRIVACY POLICY — drafted 27 Aug 2026 from verified V1 behaviour,
+// extended 28 Aug 2026 to cover purchases made on this website.
 //
 // STATUS: PENDING LEGAL REVIEW. Every factual claim below was checked
 // against the live Supabase project (iyvdxvotthwrerirdzwd), the deployed
 // Edge Function sources, and the app's Current State audit. It has NOT
 // been reviewed by an attorney. Nothing on the page claims that it has.
 //
-// Items counsel must settle before this is final — each marked in the
-// copy with the words "under review":
-//   * the legal entity name and mailing address
+// THE WEB PAYMENT CHANNEL IS NOW COVERED. This page previously said
+// purchases were "handled entirely by Apple or Google", which stopped
+// being true the moment /checkout existed. Purchases now describes both
+// routes, the third-party list names the payment provider as a distinct
+// processor, and the deletion callout covers a web purchase record. The
+// provider itself is named at the point of payment rather than here, so
+// this page does not have to be redeployed to choose one.
+//
+// THE PHRASE "under review" WAS REMOVED FROM THE VISIBLE COPY on 28 Aug
+// 2026 — not because the items are settled, but because "under review"
+// reads to a customer as an unfinished website rather than as the legal
+// disclosure it is. The copy now states what will be true and by when.
+// THE UNDERLYING ITEMS ARE STILL OPEN and are tracked in
+// LAUNCH-BLOCKERS.md, which is the list to work from — not this comment.
+//
+// Counsel and the founder must still settle:
+//   * the registered entity name and postal address
 //   * whether a US state-specific rights section (CA/CO/CT/VA) is needed
 //   * whether any EU/UK transfer language is needed for the launch market
+//   * the payment provider's own processor terms, once one is chosen
 //
 // If app behaviour changes, this page changes with it. Specifically: it
 // currently states there is NO analytics, advertising, attribution or
@@ -72,8 +88,9 @@ export default function PrivacyPage() {
         <a href="mailto:support@placeandplenty.com">
           support@placeandplenty.com
         </a>
-        . Our legal entity name and mailing address are under review and
-        will be published here.
+        . Our registered entity name and postal address will be stated
+        here, and will be in place before Place &amp; Plenty is offered for
+        sale. Until then the address above reaches us and is answered.
       </p>
 
       <h2>What we collect</h2>
@@ -129,12 +146,34 @@ export default function PrivacyPage() {
 
       <h3>Purchases</h3>
       <p>
-        If you buy a Gathering Pass or Place &amp; Plenty Plus, the payment
-        itself is handled entirely by Apple or Google. We never see your card
-        details. We record what you are entitled to, the store transaction
-        identifiers, the product, and the relevant dates.
+        You can buy a Gathering Pass or Place &amp; Plenty Plus in more than
+        one place, and what we receive is the same in all of them:{" "}
+        <strong>we never see your card details.</strong>
       </p>
-
+      <ul>
+        <li>
+          <strong>On this website</strong> — the payment is handled by our
+          payment provider, which collects your card details directly and
+          processes the payment on our behalf. It returns a transaction
+          reference, the product bought and the result. Depending on the
+          rules where you live it may also collect a billing address or
+          postcode in order to calculate tax. Your card number never reaches
+          our servers.
+        </li>
+        <li>
+          <strong>In the App Store or Google Play</strong> — the payment is
+          handled entirely by Apple or Google under their own terms and
+          privacy policies, and they return a transaction identifier and the
+          product bought.
+        </li>
+      </ul>
+      <p>
+        Whichever you use, we record the same thing: what you are entitled
+        to, the transaction identifiers, the product, the channel it came
+        through, and the relevant dates. Your entitlement is attached to your
+        Place &amp; Plenty account rather than to a device or a store, which
+        is what lets a purchase made in one place work in the others.
+      </p>
       <h3>Notifications</h3>
       <p>
         If you turn on notifications, we store a push token for your device
@@ -192,6 +231,14 @@ export default function PrivacyPage() {
         <li>
           <strong>Apple and Google</strong> — process purchases and
           subscriptions under their own terms and privacy policies.
+        </li>
+        <li>
+          <strong>Our payment provider</strong> — processes purchases made on
+          this website. It receives your card and billing details directly
+          and handles them under its own terms and privacy policy as a
+          payment processor. It does not receive your gatherings, your guests
+          or anything else about how you use Place &amp; Plenty. The provider
+          is named on the checkout page at the point of payment.
         </li>
         <li>
           <strong>Vercel</strong> — hosts this website and keeps standard
@@ -256,9 +303,10 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>Retained, with no way to link it back to you:</strong> one
-          record per purchase — the store transaction identifiers, the
-          product, the entitlement type and scope, the store environment, and
-          the purchase, expiry, refund and revocation dates. These records
+          record per purchase, whether it was made on this website or in a
+          store — the transaction identifiers, the product, the entitlement
+          type and scope, the channel and environment, and the purchase,
+          expiry, refund and revocation dates. These records
           contain <strong>no user id, no gathering id and no email
           address</strong>. We keep them only for refund, tax, accounting and
           fraud obligations.
@@ -283,8 +331,10 @@ export default function PrivacyPage() {
           support@placeandplenty.com
         </a>{" "}
         and we will help. We will not treat you differently for exercising a
-        right. Any additional region-specific disclosures are under review
-        and will be added here.
+        right. Where the law where you live requires additional
+        disclosures, they will be set out here; in the meantime, write to
+        us and we will honour the underlying right whether or not it is
+        listed above.
       </p>
 
       <h2>Security</h2>

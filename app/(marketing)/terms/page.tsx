@@ -1,15 +1,25 @@
-// TERMS OF USE — drafted 27 Aug 2026 from verified V1 behaviour.
+// TERMS OF USE — drafted 27 Aug 2026 from verified V1 behaviour,
+// extended 28 Aug 2026 for web purchase and cross-platform feature
+// availability.
 //
 // STATUS: PENDING LEGAL REVIEW. Pricing and entitlement terms match the
 // approved V1 model (directive §20) and lib/pricing.ts. Nothing on the
 // page claims it has been reviewed by an attorney.
 //
-// Items counsel must settle before this is final — each marked in the
-// copy with the words "under review":
-//   * legal entity name and mailing address
+// THE PHRASE "under review" WAS REMOVED FROM THE VISIBLE COPY on 28 Aug
+// 2026 — not because the items are settled, but because "under review"
+// reads to a customer as an unfinished website rather than as the legal
+// disclosure it is. The copy now states what will be true and by when,
+// which is both more useful and no less honest. THE UNDERLYING ITEMS ARE
+// STILL OPEN and are tracked in LAUNCH-BLOCKERS.md, which is the list to
+// work from — not this comment.
+//
+// Counsel and the founder must still settle:
+//   * registered entity name and postal address
 //   * governing law and venue
 //   * whether an arbitration / class-action-waiver clause is wanted
 //   * whether the limitation-of-liability cap is enforceable as drafted
+//   * the payment provider named at checkout, once chosen
 //
 // DO NOT let this page drift from lib/pricing.ts or the store listings.
 // Never write "unlimited". There is no monthly Plus at V1.
@@ -216,9 +226,11 @@ export default function TermsPage() {
 
       <h2>Availability</h2>
       <p>
-        We are still building. Features may change, and parts of the service
-        may be unavailable from time to time. We will try not to surprise you
-        with removals of things you depend on.
+        Place &amp; Plenty changes over time. Features may be added,
+        altered or withdrawn, and parts of the service may be unavailable
+        from time to time — for maintenance, or because something outside
+        our control has gone wrong. We will try not to surprise you by
+        removing something you depend on.
       </p>
 
       <h2>Ending things</h2>
@@ -247,8 +259,7 @@ export default function TermsPage() {
         To the fullest extent the law allows, we are not liable for indirect
         or consequential losses, and our total liability to you is limited to
         the amount you paid us in the twelve months before the claim. Nothing
-        here limits liability that cannot be limited by law. The precise
-        wording of this section is under review.
+        here limits liability that cannot be limited by law.
       </p>
 
       <h2>Changes to these terms</h2>
@@ -260,8 +271,10 @@ export default function TermsPage() {
 
       <h2>Governing law</h2>
       <p>
-        The governing law and the venue for disputes are under review and
-        will be published here before public launch.
+        The governing law and the venue for disputes will be stated here,
+        and will be in place before Place &amp; Plenty is offered for sale.
+        Nothing in these terms waives any right you have under the law that
+        applies where you live.
       </p>
 
       <h2>Contact</h2>

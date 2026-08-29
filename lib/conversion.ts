@@ -38,7 +38,15 @@ export type ConversionPathId = "free" | "buy" | "ios" | "android";
 
 export interface ConversionPath {
   id: ConversionPathId;
+  /** Used in the four-path list, where it has to distinguish itself. */
   label: string;
+  /**
+   * Used where the path appears ALONE, as a single button. "Start Free on
+   * Web" earns its suffix beside "Download for iPhone"; on its own, in a
+   * browser, telling someone they can start free *on the web* is telling
+   * them where they already are.
+   */
+  shortLabel?: string;
   href: string;
   /** One line under the label. Says what happens, not why it is good. */
   detail: string;
@@ -49,6 +57,7 @@ export interface ConversionPath {
 const FREE: ConversionPath = {
   id: "free",
   label: "Start Free on Web",
+  shortLabel: "Start Free",
   href: "/signup",
   detail: "Create an account and plan your first gathering in the browser.",
 };
@@ -56,6 +65,7 @@ const FREE: ConversionPath = {
 const BUY: ConversionPath = {
   id: "buy",
   label: "Buy on Web",
+  shortLabel: "Buy a Pass or Plus",
   href: "/pricing",
   detail: "A Gathering Pass or Plus, bought here and yours everywhere.",
 };

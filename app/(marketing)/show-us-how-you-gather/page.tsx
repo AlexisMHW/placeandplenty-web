@@ -208,16 +208,16 @@ export default async function ShowUsPage() {
                 This is where your gatherings will be.
               </p>
               <p className="mx-auto mt-3 max-w-xl font-body text-base leading-relaxed text-forest/75">
-                The gallery fills with real gatherings from real homes, shared
-                by the people who hosted them and published only with their
-                permission. We would rather it start with yours than start with
-                something we made up.
+                Every gathering here is a real one, shared by the person who
+                hosted it and published only with their permission. That is
+                the whole point of the page, so the ones you see will always
+                be real — starting with yours.
               </p>
               <a
                 href="mailto:support@placeandplenty.com?subject=Show%20Us%20How%20You%20Gather"
                 className="mt-7 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
               >
-                Be the first
+                Share your gathering
               </a>
             </div>
           )}
