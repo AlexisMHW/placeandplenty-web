@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import Eyebrow from "@/components/Eyebrow";
+import { Display, Band } from "@/components/Display";
 import type { CommunityStory } from "@/lib/tina-content";
 
 // Show Us How You Gather. Directive §16's governing emotional rule is
@@ -23,14 +24,17 @@ export default function CommunityTeaser({
   stories: CommunityStory[];
 }) {
   return (
-    <section className="bg-parchment py-20 md:py-24">
-      <div className="mx-auto max-w-editorial px-6">
+    <Band tone="parchment">
+      <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <Eyebrow>Show Us How You Gather</Eyebrow>
-            <h2 className="mt-4 max-w-2xl font-display text-3xl leading-tight text-forest md:text-4xl">
+            <Display
+              emphasis="too"
+              className="mt-4 max-w-2xl text-3xl leading-tight text-forest md:text-4xl"
+            >
               Your gathering counts too.
-            </h2>
+            </Display>
             <p className="mt-4 max-w-prose font-body text-lg leading-relaxed text-forest/80">
               Real homes, real tables, real people. Backyards and apartments,
               paper plates and Grandma&rsquo;s china, six people or sixty.
@@ -85,6 +89,6 @@ export default function CommunityTeaser({
           </ul>
         )}
       </div>
-    </section>
+    </Band>
   );
 }

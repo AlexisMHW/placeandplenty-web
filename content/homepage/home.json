@@ -1,16 +1,24 @@
 {
   "title": "Homepage",
   "reasonLine": "Football is on. Birthdays are happening. The weather is finally tolerable. People are coming over.",
-  "heroHeadline": "Reasons people are hosting right now.",
-  "heroSubhead": "People are coming. We'll help you get ready.",
-  "heroBody": "Place & Plenty helps you figure out what needs to happen, when it needs to happen, who's handling it, and whether you're actually ready before people arrive.",
+  "heroHeadline": "Home Hosting. Made Simple.",
+  "heroSubhead": "Everything between “people are coming” and the doorbell ringing. Invitations, RSVPs, lists and more — handled in one place.",
+  "heroBody": "",
   "heroImage": "/images/hero-tabletop.jpg",
   "heroImageAlt": "A table set for dinner at home — green and gold plates, blush napkins and greenery down the middle.",
   "seasonalCards": [
-    { "idea": "content/gathering-ideas/game-day-without-the-scramble.mdx" },
-    { "idea": "content/gathering-ideas/a-backyard-dinner-before-it-gets-cold.mdx" },
-    { "idea": "content/gathering-ideas/the-halloween-get-together.mdx" },
-    { "idea": "content/gathering-ideas/friendsgiving-before-everyones-calendar-fills-up.mdx" }
+    {
+      "idea": "content/gathering-ideas/game-day-without-the-scramble.mdx"
+    },
+    {
+      "idea": "content/gathering-ideas/a-backyard-dinner-before-it-gets-cold.mdx"
+    },
+    {
+      "idea": "content/gathering-ideas/the-halloween-get-together.mdx"
+    },
+    {
+      "idea": "content/gathering-ideas/friendsgiving-before-everyones-calendar-fills-up.mdx"
+    }
   ],
   "featuredGatheringIdeas": [],
   "featuredArticles": [],

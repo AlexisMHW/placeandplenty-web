@@ -1,55 +1,53 @@
 import type { Metadata } from "next";
 import SeasonalHero from "@/components/SeasonalHero";
 import SeasonalCards from "@/components/SeasonalCards";
-import PromiseBand from "@/components/PromiseBand";
+import DifferenceBand from "@/components/DifferenceBand";
+import ConnectedBand from "@/components/ConnectedBand";
 import HostingRealitySection from "@/components/HostingRealitySection";
-import GuestManagementSection from "@/components/GuestManagementSection";
-import FeatureGrid from "@/components/FeatureGrid";
-import FounderNote from "@/components/FounderNote";
 import FeaturedArticles from "@/components/FeaturedArticles";
 import CommunityTeaser from "@/components/CommunityTeaser";
+import FounderNote from "@/components/FounderNote";
 import PricingSection from "@/components/PricingSection";
 import CtaSection from "@/components/CtaSection";
 import { getHomepage } from "@/lib/tina-content";
 import { getCurrentCta } from "@/lib/launch-state";
 import { OrganizationSchema } from "@/components/StructuredData";
 
-// THE HOMEPAGE. Its job is to INTRODUCE and HAND OFF — not to restate
-// the site. Beginning, middle, end.
+// THE HOMEPAGE, composed to the approved home page reference.
 //
-//   introduce      SeasonalHero, SeasonalCards   -> Gathering Ideas
-//   the story      PromiseBand
-//   the turn       HostingRealitySection         -> How It Works
-//   the difference GuestManagementSection        -> What It Does
-//   the product    FeatureGrid                   -> What It Does
-//   proof          FeaturedArticles              -> The Coordinated Host
-//                  CommunityTeaser               -> Show Us How You Gather
-//                  FounderNote                   -> About
-//   convert        PricingSection (launch-gated) -> Pricing
-//                  CtaSection
+// The reference's order, and what each band is for:
 //
-// WHAT WAS REMOVED, AND WHY. The page previously also carried HowItWorks
-// (the full four steps, which /how-it-works exists for) and
-// HostReadySection (a long explainer that appears on BOTH /how-it-works
-// and /what-it-does). Three full sections of the homepage were verbatim
-// copies of pages one click away, which is how a homepage becomes an
-// endless scroll that still says nothing a visitor could not get better
-// elsewhere.
+//   SeasonalHero        brand line, photographic, full-bleed
+//   SeasonalCards       "Reasons people are hosting right now" + 4 cards
+//   HostingRealitySection  the turn — okay, now what?
+//   DifferenceBand      the positioning: invitations, RSVPs, the loop
+//   ConnectedBand       web and app, one account, one record
+//   FeaturedArticles    editorial rail
+//   CommunityTeaser     Show Us How You Gather
+//   FounderNote         Hi, I'm Alexis
+//   PricingSection      launch-gated
+//   CtaSection          conversion
 //
-// HostingRealitySection and GuestManagementSection now render in
-// `compact` form here: the homepage takes the sharp version and links
-// on, while the pages that are genuinely about those subjects keep the
-// full treatment. Same components, no duplicated copy to drift.
+// EVERY BAND EXCEPT THE HERO IS INSET (see Band in components/Display).
+// Sections sit as panels on the cream page ground with a margin and soft
+// corners, which is the reference's most distinctive structural move and
+// the thing that separates editorial composition from a stack of
+// full-width stripes. The hero is full-bleed because a photograph that
+// stops short of the edge stops being an establishing shot.
 //
-// EVERY SECTION EXITS SOMEWHERE. That is the rule this page is built on
-// — a section with no pathway out is a dead end, and enough of them in a
-// row is just scrolling.
+// PRODUCT TRUTH OVERRIDES THE REFERENCE WHERE THEY DISAGREE. The
+// reference's feature grid says "My Shopping List" (§9/§32: My
+// Shopping), its Space Mode copy describes the guest experience rather
+// than Space Mode, and its footer links to Careers, Press and a Help
+// Center that do not exist. Composition, weight, photography, botanicals
+// and pacing come from the reference; names and claims come from the
+// reconciliation document.
 //
-// §6/§13 — SEASONAL CONTENT IS CONTENT, NOT CODE. Hero words and
-// photograph, the four seasonal cards, featured articles and featured
-// community stories all come from Tina, so rotating fall to holiday is
-// picks in the editor. The section ORDER stays here: §6 keeps structure,
-// layout and order in code, and there is no page builder.
+// SEASONAL CONTENT IS STILL CONTENT (§6, §13). Hero words and
+// photograph, the four cards, featured articles and community stories
+// are Tina fields, so a fall-to-holiday rotation is picks in the editor.
+// The order lives here because §6 keeps structure in code and there is
+// no page builder.
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -61,9 +59,8 @@ export default async function HomePage() {
   const { showPricing } = getCurrentCta();
 
   // Featured ideas are a separate Tina list from the seasonal cards, so
-  // the founder can promote an evergreen idea without displacing a
-  // seasonal one. Showing the same idea twice on one page reads as a
-  // mistake rather than emphasis.
+  // an evergreen idea can be promoted without displacing a seasonal one.
+  // Showing the same idea twice reads as a mistake rather than emphasis.
   const seasonalSlugs = new Set(
     content.seasonalCards.map((i) => i._sys.filename)
   );
@@ -76,12 +73,14 @@ export default async function HomePage() {
       <OrganizationSchema />
 
       <SeasonalHero content={content} />
-      <SeasonalCards ideas={[...content.seasonalCards, ...extraIdeas]} />
-      <PromiseBand />
+      <SeasonalCards
+        ideas={[...content.seasonalCards, ...extraIdeas]}
+        reasonLine={content.reasonLine}
+      />
 
       <HostingRealitySection compact />
-      <GuestManagementSection compact />
-      <FeatureGrid />
+      <DifferenceBand />
+      <ConnectedBand />
 
       <FeaturedArticles posts={content.featuredArticles} />
       <CommunityTeaser stories={content.featuredCommunityStories} />

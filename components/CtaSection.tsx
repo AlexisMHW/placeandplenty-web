@@ -1,6 +1,7 @@
 import GuestListForm from "@/components/GuestListForm";
 import Eyebrow from "@/components/Eyebrow";
 import { BotanicalSprig } from "@/components/Botanical";
+import { Display } from "@/components/Display";
 
 // The guest-list band. Forest, as on the approved board, so the page ends
 // on the brand rather than fading out on another cream section.
@@ -19,9 +20,12 @@ export default function CtaSection() {
             size={64}
           />
           <Eyebrow tone="dark">Join the Guest List</Eyebrow>
-          <h2 className="mt-4 font-display text-3xl leading-tight md:text-4xl">
-            Let&rsquo;s take the guesswork out of guest work.
-          </h2>
+          <Display
+            emphasis="guest work"
+            className="mt-4 text-3xl leading-tight md:text-4xl"
+          >
+            Let’s take the guesswork out of guest work.
+          </Display>
           <p className="mt-4 max-w-prose font-body text-lg leading-relaxed text-offwhite/80">
             Hosting ideas, seasonal checklists, and the occasional reminder
             that you already own enough serving bowls. In your inbox, not

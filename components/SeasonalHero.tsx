@@ -1,44 +1,50 @@
 import Image from "next/image";
 import CtaButton from "@/components/CtaButton";
+import { Display, Ornament } from "@/components/Display";
+import { BotanicalSprig } from "@/components/Botanical";
 import type { Homepage } from "@/lib/tina-content";
-import { TAGLINE } from "@/lib/brand";
+import { TAGLINE, PROMISE } from "@/lib/brand";
 
-// THE HOMEPAGE HERO. Directive §12: the homepage is built around
-// "Reasons people are hosting right now", and §35 settles that this is
-// not reopened. So the largest words on the page are that question's
-// answer, not a product tagline and not a feature.
+// THE HOMEPAGE HERO, composed to the approved home page reference.
 //
-// Photographic and full-bleed by intent (§9, §32): a visitor should think
-// "this understands what it takes to get ready for people", not "this is
-// another task-management dashboard". The product screenshot that used to
-// sit here has moved down the page, into context.
+// WHAT CHANGED, AND WHY IT IS NOT A CONTRADICTION. The hero's largest
+// words are now the brand line — "Home Hosting. Made *Simple*." — with
+// the seasonal question moved to the section immediately below it, which
+// is exactly the order the reference shows. §12 says the homepage is
+// BUILT AROUND "reasons people are hosting right now"; it still is —
+// that is the first content section and the thing the page is organised
+// by. The hero says who this is, the band underneath says why you are
+// here today.
 //
-// EVERY WORD AND THE PHOTOGRAPH ARE TINA FIELDS (§13, §24). A seasonal
-// swap — fall to holiday to January — is content, not a redesign, and the
-// founder makes it without Claude Code. The fallbacks below are the
-// approved fall/launch copy, so the page is never blank if a field is
-// cleared, but they are a floor rather than the source of truth.
+// Every word remains a Tina field, so this is a default rather than a
+// hardcoding: a founder who wants the seasonal line back as the headline
+// types it into heroHeadline and it wins.
 //
-// CONTRAST. The headline sits on a photograph, so legibility cannot be
-// left to whichever image is uploaded next. A forest scrim runs under the
-// text at 80–92% and the type is offwhite, which stays past AA over
-// anything, including a bright one. That is why the overlay is a fixed
-// part of the component and not a per-image setting.
+// FULL-BLEED, NOT INSET. Every other band on the page sits as a panel
+// with a margin (see Band in components/Display.tsx). The hero is the
+// one exception, because a photograph that stops short of the edge stops
+// being an establishing shot.
+//
+// CONTRAST IS BUILT IN, NOT LEFT TO THE PHOTOGRAPH. The scrim runs
+// forest 92% -> 45% left to right and the type is offwhite, which holds
+// past AA over any image a founder uploads later — including a bright
+// one. That is why the overlay is part of the component and not a
+// per-image setting.
 
 const FALLBACK = {
-  reasonLine:
-    "Football is on. Birthdays are happening. The weather is finally tolerable. People are coming over.",
-  headline: "Reasons people are hosting right now.",
-  subhead: "People are coming. We'll help you get ready.",
+  eyebrow: "For the gatherers and the planners",
   image: "/images/hero-tabletop.jpg",
   imageAlt:
     "A table set for dinner at home — green and gold plates, blush napkins, greenery down the middle.",
 };
 
 export default function SeasonalHero({ content }: { content: Homepage }) {
-  const headline = content.heroHeadline || FALLBACK.headline;
-  const reasonLine = content.reasonLine || FALLBACK.reasonLine;
-  const subhead = content.heroSubhead || FALLBACK.subhead;
+  // The tagline is the default headline. `emphasis` italicises the last
+  // word the way the reference does; when a founder overrides the
+  // headline the emphasis simply will not match and the line renders
+  // upright, which is the right failure.
+  const headline = content.heroHeadline || TAGLINE;
+  const subhead = content.heroSubhead || PROMISE;
   const image = content.heroImage || FALLBACK.image;
   const imageAlt = content.heroImage
     ? content.heroImageAlt || ""
@@ -56,38 +62,43 @@ export default function SeasonalHero({ content }: { content: Homepage }) {
       />
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-r from-forest/92 via-forest/80 to-forest/45"
+        className="absolute inset-0 bg-gradient-to-r from-forest/92 via-forest/78 to-forest/40"
       />
 
-      <div className="relative mx-auto max-w-editorial px-6 py-24 md:py-36">
+      {/* Botanical linework in the corner, as the reference has it —
+          large, pale, and out of the way of the type. */}
+      <BotanicalSprig
+        className="pointer-events-none absolute -right-6 top-6 hidden text-offwhite/20 lg:block"
+        size={190}
+      />
+
+      <div className="relative mx-auto max-w-editorial px-6 py-24 md:py-36 lg:py-44">
         <div className="max-w-2xl">
-          <p className="font-body text-xs font-bold uppercase tracking-[0.25em] text-offwhite/75">
-            {TAGLINE}
+          <p className="font-body text-xs font-bold uppercase tracking-[0.28em] text-offwhite/75">
+            {FALLBACK.eyebrow}
           </p>
 
-          <h1 className="mt-5 font-display text-4xl leading-[1.08] text-offwhite sm:text-5xl md:text-6xl">
+          <Display
+            as="h1"
+            emphasis="Simple"
+            className="mt-6 text-5xl leading-[1.04] text-offwhite sm:text-6xl md:text-7xl"
+          >
             {headline}
-          </h1>
+          </Display>
 
-          <span aria-hidden className="mt-7 block h-px w-16 bg-gold" />
+          <Ornament tone="dark" className="mt-8" />
 
-          {/* The seasonal line is the part that changes most often, so it
-              is given its own weight rather than buried in a paragraph. */}
-          <p className="mt-7 font-display text-xl leading-relaxed text-offwhite/95 sm:text-2xl">
-            {reasonLine}
-          </p>
-
-          <p className="mt-5 max-w-prose font-body text-base leading-relaxed text-offwhite/80 sm:text-lg">
+          <p className="mt-8 max-w-prose font-body text-lg leading-relaxed text-offwhite/85 sm:text-xl">
             {subhead}
           </p>
 
           {content.heroBody && (
-            <p className="mt-3 max-w-prose font-body text-base leading-relaxed text-offwhite/70">
+            <p className="mt-4 max-w-prose font-body text-base leading-relaxed text-offwhite/70">
               {content.heroBody}
             </p>
           )}
 
-          <div className="mt-9 flex flex-wrap items-center gap-4">
+          <div className="mt-10">
             <CtaButton onDark labelOverride={content.ctaLabelOverride} />
           </div>
         </div>

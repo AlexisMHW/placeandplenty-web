@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Eyebrow from "@/components/Eyebrow";
+import { Display } from "@/components/Display";
 
 // THE COMPETITIVE POSITIONING SECTION. §3 is unusually direct about this
 // one: "This is not a minor feature section. It is a core positioning
@@ -73,10 +74,12 @@ export default function GuestManagementSection({
       <div className="mx-auto max-w-editorial px-6">
         <Eyebrow tone="dark">Invitations, RSVPs &amp; your people</Eyebrow>
 
-        <h2 className="mt-4 max-w-3xl font-display text-3xl leading-tight md:text-4xl">
-          Most apps stop at the invitation. That’s about where the work
-          starts.
-        </h2>
+        <Display
+          emphasis="starts"
+          className="mt-4 max-w-3xl text-3xl leading-tight md:text-4xl"
+        >
+          Most apps stop at the invitation. That’s about where the work starts.
+        </Display>
 
         <p className="mt-5 max-w-prose font-body text-lg leading-relaxed text-offwhite/80">
           Place &amp; Plenty doesn’t begin with the invitation. It begins with

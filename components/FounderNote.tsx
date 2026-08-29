@@ -1,38 +1,68 @@
 import Link from "next/link";
 import Image from "next/image";
-import Eyebrow from "@/components/Eyebrow";
+import { Display, Band } from "@/components/Display";
+import { BotanicalSprig } from "@/components/Botanical";
 import { FOUNDER_PHOTO } from "@/lib/founder";
 
-// The homepage founder teaser. Directive §17 is explicit about restraint:
-// ONE strong About image, an optional smaller homepage teaser, no résumé,
-// no corporate CEO bio, no repetition. This is that optional teaser and
-// it stays short — three sentences and a link. The story itself lives on
-// /about and is not duplicated here.
+// The founder band, composed to the reference: photograph running full
+// height on the left, copy on cream at the right, a large botanical
+// sprig in the right margin.
+//
+// §16 asks for restraint — one strong About image, an optional smaller
+// homepage teaser, no résumé, no repetition. This is that teaser. It
+// stays short: a greeting, one italic line, one paragraph, one close.
+// The story itself lives on /about and is not duplicated here.
+//
+// FIRST PERSON, as §16 requires and as the reference writes it. "Hi, I'm
+// Alexis" is the founder speaking, not a profile written about her — the
+// same perspective error that had to be corrected on /about.
+//
+// The photograph is the approved warm at-home founder photo, defined
+// once in lib/founder.ts so About and this share alt text and neither
+// can drift to stock.
 
 export default function FounderNote() {
   return (
-    <section className="bg-cream py-20 md:py-24">
-      <div className="mx-auto grid max-w-editorial items-center gap-10 px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-14">
-        <div className="order-2 md:order-1">
-          <Eyebrow>About / Founder</Eyebrow>
+    <Band tone="cream">
+      <BotanicalSprig
+        className="pointer-events-none absolute -right-4 top-1/2 hidden -translate-y-1/2 text-olive/35 lg:block"
+        size={230}
+      />
 
-          <h2 className="mt-5 font-display text-3xl leading-tight text-forest md:text-4xl">
-            Why I created Place &amp; Plenty
-          </h2>
+      <div className="relative grid items-stretch gap-0 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="relative min-h-[20rem] lg:min-h-[26rem]">
+          <Image
+            src={FOUNDER_PHOTO.src}
+            alt={FOUNDER_PHOTO.alt}
+            fill
+            sizes="(min-width: 1024px) 42vw, 100vw"
+            className="object-cover object-top"
+          />
+        </div>
 
-          <p className="mt-5 font-body text-lg leading-relaxed text-forest/80">
-            I was looking at a calendar full of birthdays, holidays, family
-            gatherings and life — and I needed a better way to manage all of
-            it.
+        <div className="px-6 py-14 md:px-12 md:py-16 lg:pr-24">
+          <p className="font-body text-xs font-bold uppercase tracking-[0.22em] text-forest/70">
+            Founder &amp; host
           </p>
 
-          <p className="mt-4 font-body text-lg leading-relaxed text-forest/80">
-            I didn&rsquo;t need another place to make a pretty invitation. So
-            I built the thing I actually needed.
+          <Display className="mt-4 text-3xl leading-tight text-forest md:text-4xl">
+            Hi, I&rsquo;m Alexis.
+          </Display>
+
+          <p className="mt-4 font-display text-xl italic leading-snug text-forest/85">
+            I built Place &amp; Plenty for hosts like you.
           </p>
 
-          <p className="mt-6 font-display text-xl italic text-forest">
-            xo, Alexis
+          <p className="mt-5 max-w-prose font-body text-base leading-relaxed text-forest/80">
+            I looked at a calendar full of birthdays, holidays and family
+            gatherings and realised how much of it landed on me. I
+            didn&rsquo;t need another place to make a pretty invitation — I
+            needed one place to manage everything between &ldquo;people are
+            coming&rdquo; and the doorbell ringing. So I built it.
+          </p>
+
+          <p className="mt-5 font-display text-lg italic leading-snug text-forest">
+            Less scrambling. More gathering.
           </p>
 
           <Link
@@ -43,20 +73,7 @@ export default function FounderNote() {
             <span aria-hidden>&rarr;</span>
           </Link>
         </div>
-
-        <div className="order-1 md:order-2">
-          <div className="overflow-hidden rounded-card border border-sage/30 shadow-soft">
-            <Image
-              src={FOUNDER_PHOTO.src}
-              alt={FOUNDER_PHOTO.alt}
-              width={FOUNDER_PHOTO.width}
-              height={FOUNDER_PHOTO.height}
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="h-full w-full object-cover"
-            />
-          </div>
-        </div>
       </div>
-    </section>
+    </Band>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Eyebrow from "@/components/Eyebrow";
+import { Display, Band } from "@/components/Display";
 
 // §5, beat 5: "Hosting reality / 'Okay, people are coming. Now what?'"
 //
@@ -60,13 +61,16 @@ export default function HostingRealitySection({
 } = {}) {
   const shown = compact ? thoughts.slice(0, 3) : thoughts;
   return (
-    <section className="bg-parchment py-20 md:py-24">
-      <div className="mx-auto max-w-editorial px-6">
+    <Band tone="parchment">
+      <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
         <Eyebrow>The bit after you send the text</Eyebrow>
 
-        <h2 className="mt-4 max-w-2xl font-display text-3xl leading-tight text-forest md:text-4xl">
+        <Display
+          emphasis="Now what?"
+          className="mt-4 max-w-2xl text-3xl leading-tight text-forest md:text-4xl"
+        >
           Okay. People are coming. Now what?
-        </h2>
+        </Display>
 
         <p className="mt-5 max-w-prose font-body text-lg leading-relaxed text-forest/80">
           Deciding to have people over takes about four seconds. Everything
@@ -101,6 +105,6 @@ export default function HostingRealitySection({
           </Link>
         )}
       </div>
-    </section>
+    </Band>
   );
 }
