@@ -86,11 +86,19 @@ export const PRICING_TIERS: PricingTier[] = [
 
 /**
  * Shown wherever pricing appears, so no surface reads as a storefront
- * while the purchase path does not exist. Update this — and only this —
- * when monetization ships.
+ * while the purchase path does not exist.
+ *
+ * TONE: this states a fact about timing, not an apology. "Isn't
+ * available yet" centres the absence and makes an established product
+ * sound like it is still being decided; "opens with the app release"
+ * says the same thing as a schedule. The constraint from §17/§32 is
+ * only that nothing may imply a purchase can be made TODAY — it does
+ * not require sounding tentative about it.
+ *
+ * Update this — and only this — when monetization ships.
  */
 export const PURCHASE_AVAILABILITY_NOTE =
-  "Place & Plenty isn't available to buy yet. This is what it will cost when it is.";
+  "These are the plans. Purchasing opens with the app release.";
 
 /**
  * §17 entitlement truth, in one place. Free is bounded too — that was

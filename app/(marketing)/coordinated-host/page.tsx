@@ -29,9 +29,10 @@ export default async function CoordinatedHostPage() {
         {posts.length === 0 ? (
           <div className="mt-10 rounded-card border border-sage/30 bg-cream p-6 font-body text-sm text-forest/70">
             <p>
-              Articles are coming soon — including things like how much ice
-              you need for a party, a Thanksgiving preparation timeline, and
-              how to organize a potluck.
+              New pieces are published through the season — host maths,
+              timelines, and the things that actually decide whether an
+              evening runs easily. Join the Guest List and they&rsquo;ll
+              come to you.
             </p>
           </div>
         ) : (

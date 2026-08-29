@@ -60,8 +60,8 @@ const faqs = [
     a: "Yes, and without an account. Responding to an invitation, claiming a dish, requesting a song and adding photos are all free for guests — pricing is for the person doing the hosting.",
   },
   {
-    q: "Can I buy it right now?",
-    a: "Not yet. Place & Plenty isn’t available for purchase while we finish getting it ready. This page is here so the cost is clear in advance, not to sell you anything today.",
+    q: "When can I buy it?",
+    a: "Purchasing opens with the app release. The plans and prices here are settled — this page exists so there’s nothing to work out when it does.",
   },
 ];
 

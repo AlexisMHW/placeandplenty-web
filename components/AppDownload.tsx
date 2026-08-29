@@ -79,7 +79,7 @@ export default function AppDownload() {
             <p className="mt-3 font-body text-base leading-relaxed text-offwhite/80">
               {live
                 ? "Plan on the couch, shop from the aisle, and check what's left on the way home."
-                : "Place & Plenty isn’t in the app stores yet. Join the Guest List and we’ll tell you the day it is."}
+                : "Place & Plenty is built for the phone in your pocket — that’s where hosting actually happens. Join the Guest List and you’ll hear the moment the apps go live."}
             </p>
 
             {live && (

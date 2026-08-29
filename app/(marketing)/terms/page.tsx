@@ -15,6 +15,7 @@
 // Never write "unlimited". There is no monthly Plus at V1.
 
 import type { Metadata } from "next";
+import { PRICING_TIERS } from "@/lib/pricing";
 import Link from "next/link";
 import LegalPage, { LegalCallout } from "@/components/LegalPage";
 
@@ -97,19 +98,21 @@ export default function TermsPage() {
       <h2>Pricing and purchases</h2>
 
       <LegalCallout heading="What things cost">
+        {/* Rendered from lib/pricing.ts, never typed here. The
+            "+ applicable taxes and fees" qualifier is part of the value,
+            so this page cannot quietly disagree with /pricing. It said
+            "plus applicable tax" until 28 Aug 2026 — the exact wording
+            that is ruled out — and it survived a text sweep because the
+            phrase was split across a line break. */}
         <ul>
-          <li>
-            <strong>Free — $0.</strong> A simple way to start getting ready.
-          </li>
-          <li>
-            <strong>Gathering Pass — $9.99 per gathering</strong>, plus
-            applicable tax. Unlocks the full experience for one gathering. Not
-            a subscription.
-          </li>
-          <li>
-            <strong>Place &amp; Plenty Plus — $59.99 per year</strong>, plus
-            applicable tax.
-          </li>
+          {PRICING_TIERS.map((tier) => (
+            <li key={tier.name}>
+              <strong>
+                {tier.name} — {tier.priceLine}
+              </strong>{" "}
+              {tier.description}
+            </li>
+          ))}
         </ul>
       </LegalCallout>
 

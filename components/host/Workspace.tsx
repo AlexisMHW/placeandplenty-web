@@ -96,19 +96,24 @@ export function Panel({
 }
 
 /**
- * A read-only notice.
+ * The read/write split, stated once per surface.
  *
- * THE WEB APP READS CANONICAL DATA BUT DOES NOT YET WRITE IT. Saying so
- * once, plainly, on each surface is far better than shipping controls
- * that look editable and silently do nothing — and it is the honest
- * version of §30's warning against calling a placeholder complete.
+ * THE WEB APP READS CANONICAL DATA AND DOES NOT WRITE IT. Saying so
+ * plainly beats shipping controls that look editable and silently do
+ * nothing — §30's warning against calling a placeholder complete.
+ *
+ * TONE: this describes a workflow, not a shortfall. "Editing on web is
+ * coming; for now, changes are made in the app" makes an established
+ * product sound half-built. The split is genuinely useful — the phone is
+ * where hosting happens, the desktop is where you see the whole thing —
+ * so it reads as the design it is.
  */
 export function ReadOnlyNote({ what }: { what: string }) {
   return (
     <p className="mt-6 rounded-card border border-sage/30 bg-cream px-4 py-3 font-body text-sm leading-relaxed text-forest/75">
-      This is your live {what} — the same record the app is reading right
-      now. Editing on web is coming; for now, changes are made in the
-      Place &amp; Plenty app and appear here immediately.
+      Your live {what} — the same record the app is reading right now.
+      Make changes in the Place &amp; Plenty app and they appear here
+      instantly.
     </p>
   );
 }

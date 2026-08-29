@@ -134,7 +134,7 @@ export default async function GatheringIdeaPage({
               {idea.body ? (
                 <TinaMarkdown content={idea.body} />
               ) : (
-                <p>This idea is still being written.</p>
+                <p>The full write-up for this one lands shortly.</p>
               )}
             </div>
 

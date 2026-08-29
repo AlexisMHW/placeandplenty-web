@@ -67,12 +67,12 @@ export default async function MyGatheringsPage() {
       {gatherings.length === 0 ? (
         <div className="mt-10 rounded-card border border-sage/30 bg-cream p-8">
           <h2 className="font-display text-xl text-forest">
-            Nothing here yet.
+            Your gatherings will show up here.
           </h2>
           <p className="mt-2 max-w-prose font-body text-base leading-relaxed text-forest/75">
-            Gatherings you create in the Place &amp; Plenty app show up here
-            automatically — it&rsquo;s the same account and the same
-            gatherings, so there&rsquo;s nothing to sync or import.
+            Anything you create in the Place &amp; Plenty app appears here
+            automatically — same account, same gatherings, nothing to sync
+            or import.
           </p>
           <Link
             href="/get"

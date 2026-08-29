@@ -72,12 +72,13 @@ export default async function ShowUsPage() {
           {stories.length === 0 ? (
             <div className="rounded-card border border-sage/30 bg-cream p-8">
               <p className="font-display text-xl text-forest">
-                This is where your gatherings will go.
+                This is where your gatherings go.
               </p>
               <p className="mt-2 max-w-prose font-body text-base leading-relaxed text-forest/75">
-                Nobody has been featured yet — someone has to be first.
-                Everything below explains exactly what we&rsquo;d be asking
-                permission for.
+                Send us the one you actually had — the backyard, the
+                folding chair, the football spread. Everything below
+                explains exactly what we&rsquo;d ask permission for before
+                anything is published.
               </p>
             </div>
           ) : (

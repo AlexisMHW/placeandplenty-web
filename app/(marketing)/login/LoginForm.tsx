@@ -196,8 +196,8 @@ export default function LoginForm({ next }: { next?: string }) {
       </button>
 
       <p className="mt-6 font-body text-sm leading-relaxed text-forest/70">
-        Don&rsquo;t have an account yet? Place &amp; Plenty accounts are
-        created in the app — once you have one, it works here too.{" "}
+        New to Place &amp; Plenty? Accounts are created in the app, and
+        work here straight away.{" "}
         <Link
           href="/get"
           className="underline decoration-gold underline-offset-4 hover:text-forest"

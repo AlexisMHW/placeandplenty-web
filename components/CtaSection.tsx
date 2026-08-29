@@ -23,8 +23,9 @@ export default function CtaSection() {
             Let&rsquo;s take the guesswork out of guest work.
           </h2>
           <p className="mt-4 max-w-prose font-body text-lg leading-relaxed text-offwhite/80">
-            Helpful hosting ideas, checklists and inspiration — and first word
-            when Place &amp; Plenty is ready for you.
+            Hosting ideas, seasonal checklists, and the occasional reminder
+            that you already own enough serving bowls. In your inbox, not
+            very often.
           </p>
         </div>
         <GuestListForm />

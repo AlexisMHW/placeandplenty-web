@@ -13,8 +13,7 @@ import { WorkspaceHeader, Panel } from "@/components/host/Workspace";
 //   SUBSCRIPTION — there is no purchase flow anywhere yet. The app has
 //   no monetization client. §19 forbids claiming subscription management
 //   capability that does not exist, so this page does not offer to
-//   "manage your plan"; it says what the plans cost and that buying is
-//   not live.
+//   "manage your plan"; it states the plans and when purchasing opens.
 //
 //   DELETION — in-app deletion exists and is the primary route, and
 //   /delete-account documents both routes. Linking there rather than
@@ -61,23 +60,21 @@ export default async function AccountPage() {
             ))}
           </dl>
           <p className="mt-4 font-body text-sm leading-relaxed text-forest/65">
-            Details are changed in the app for now, and update here
-            immediately.
+            Change these in the app and they update here instantly.
           </p>
         </Panel>
 
         <Panel>
           <h3 className="font-display text-xl text-forest">Your plan</h3>
           <p className="mt-3 font-body text-base leading-relaxed text-forest/75">
-            Place &amp; Plenty isn&rsquo;t available to buy yet, so there
-            isn&rsquo;t a subscription to manage. When it is, this is where
-            it will live.
+            Your plan and billing live here. Purchasing opens with the app
+            release.
           </p>
           <Link
             href="/pricing"
             className="mt-4 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
           >
-            See what it will cost
+            See the plans
             <span aria-hidden>&rarr;</span>
           </Link>
         </Panel>

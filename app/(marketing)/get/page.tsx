@@ -67,12 +67,12 @@ export default function GetPage() {
           <h1 className="font-display text-3xl leading-tight text-forest md:text-4xl">
             {hasAnyStoreLink()
               ? "Get Place & Plenty"
-              : "Place & Plenty isn’t out yet."}
+              : "Place & Plenty, on your phone."}
           </h1>
           <p className="mt-4 font-body text-lg leading-relaxed text-forest/80">
             {hasAnyStoreLink()
               ? "Choose your phone below, or open this page on the device you want it on."
-              : "It’s close. Join the Guest List and we’ll tell you the day it lands — no other email, and nothing else to do."}
+              : "The apps arrive with our public release. Join the Guest List and you’ll hear the moment they do — that’s the only email we’ll send you about it."}
           </p>
 
           {!hasAnyStoreLink() && (

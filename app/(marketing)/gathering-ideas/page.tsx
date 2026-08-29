@@ -64,13 +64,12 @@ export default async function GatheringIdeasPage() {
           {groups.length === 0 ? (
             <div className="rounded-card border border-sage/30 bg-cream p-8">
               <p className="font-display text-xl text-forest">
-                The first Gathering Ideas are being written.
+                Ideas rotate with the season.
               </p>
               <p className="mt-2 max-w-prose font-body text-base leading-relaxed text-forest/75">
-                Game Day Without the Scramble, A Backyard Dinner Before It
-                Gets Cold, The Halloween Get-Together, and Friendsgiving are
-                on the way. Join the Guest List below and we&rsquo;ll send
-                them as they land.
+                Game day, backyard dinners, Halloween, Friendsgiving — and
+                whatever the calendar turns up next. Join the Guest List
+                below and they&rsquo;ll come to you.
               </p>
             </div>
           ) : (
