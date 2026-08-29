@@ -60,9 +60,18 @@ export default function SeasonalHero({ content }: { content: Homepage }) {
         priority
         className="object-cover"
       />
+      {/* TWO LAYERS, AND BOTH ARE NEEDED. A single left-to-right gradient
+          was not enough over a bright, high-key photograph: the headline
+          held, but the subhead sat on the warm middle of the image and
+          washed out badly. The flat base darkens the whole frame just
+          enough to make any uploaded photo behave; the gradient then does
+          the real work behind the type. Together they hold past AA over
+          anything a founder uploads later, which is why the scrim is part
+          of the component rather than a per-image setting. */}
+      <div aria-hidden className="absolute inset-0 bg-forest/45" />
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-r from-forest/92 via-forest/78 to-forest/40"
+        className="absolute inset-0 bg-gradient-to-r from-forest/95 via-forest/75 to-transparent"
       />
 
       {/* Botanical linework in the corner, as the reference has it —

@@ -164,7 +164,8 @@ function unwrap<T>(
 ): T[] {
   return (list ?? [])
     .map((entry) => (entry ? (entry[key] as T | null) : null))
-    .filter((doc): doc is T => gate(doc));
+    .filter((doc): doc is T => gate(doc))
+    .map(normaliseMedia);
 }
 
 const liveGate = (d: unknown) =>
@@ -204,7 +205,7 @@ export async function getHomepage(): Promise<Homepage> {
     heroHeadline: doc.heroHeadline,
     heroSubhead: doc.heroSubhead,
     heroBody: doc.heroBody,
-    heroImage: doc.heroImage,
+    heroImage: resolveMedia(doc.heroImage),
     heroImageAlt: doc.heroImageAlt,
     ctaLabelOverride: doc.ctaLabelOverride,
     seasonalCards: unwrap<GatheringIdea>(doc.seasonalCards, "idea", liveGate),
@@ -260,13 +261,14 @@ export async function getAllPosts(): Promise<Post[]> {
   return edges
     .map((edge) => edge?.node)
     .filter((n): n is Post => isLive(n))
+    .map(normaliseMedia)
     .sort(byPublishDateDesc);
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   try {
     const result = await client.queries.post({ relativePath: `${slug}.mdx` });
-    return result.data.post as unknown as Post;
+    return normaliseMedia(result.data.post as unknown as Post);
   } catch {
     // Tina throws rather than returning null for a path that is not a
     // document. A bad slug is a 404, not a 500.
@@ -282,6 +284,7 @@ export async function getAllGatheringIdeas(): Promise<GatheringIdea[]> {
   return edges
     .map((edge) => edge?.node)
     .filter((n): n is GatheringIdea => isLive(n))
+    .map(normaliseMedia)
     .sort(byPublishDateDesc);
 }
 
@@ -292,7 +295,7 @@ export async function getGatheringIdeaBySlug(
     const result = await client.queries.gatheringIdea({
       relativePath: `${slug}.mdx`,
     });
-    return result.data.gatheringIdea as unknown as GatheringIdea;
+    return normaliseMedia(result.data.gatheringIdea as unknown as GatheringIdea);
   } catch {
     return null;
   }
@@ -306,6 +309,7 @@ export async function getAllCommunityStories(): Promise<CommunityStory[]> {
   return edges
     .map((edge) => edge?.node)
     .filter((n): n is CommunityStory => isLiveStory(n))
+    .map(normaliseMedia)
     .sort(byPublishDateDesc);
 }
 
@@ -316,10 +320,91 @@ export async function getCommunityStoryBySlug(
     const result = await client.queries.communityStory({
       relativePath: `${slug}.mdx`,
     });
-    return result.data.communityStory as unknown as CommunityStory;
+    return normaliseMedia(result.data.communityStory as unknown as CommunityStory);
   } catch {
     return null;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Media paths                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Resolve an image field to a URL that actually loads.
+ *
+ * THE BUG THIS FIXES WAS LIVE IN PRODUCTION. tina/config.ts sets
+ * `media.tina` with `mediaRoot: "images/content"`, so the Cloud client
+ * rewrites EVERY image field value to
+ * `https://assets.tina.io/<clientId>/<value>` when it reads a document —
+ * including values that were hand-written into a JSON file and point at
+ * a file committed in `public/`.
+ *
+ * The homepage's `heroImage` was exactly that: `/images/hero-tabletop.jpg`,
+ * a real file in this repository, rewritten to a Tina CDN URL that has
+ * never existed. It returned 404, so the site's single most important
+ * photograph — one of only two real photographs it has — rendered as an
+ * empty forest panel on the live homepage.
+ *
+ * THE RULE IS PRECISE, not a guess: Tina only ever hosts what was
+ * uploaded through it, and everything it hosts lives under its
+ * `mediaRoot`. So a CDN URL whose path is NOT under `images/content/`
+ * cannot be a Tina asset, and the value it was built from must be a
+ * local public path. Send it back to `/`.
+ *
+ * Genuine Tina uploads pass through untouched — they need
+ * `remotePatterns` in next.config.js, which they now have.
+ */
+const TINA_CDN = "https://assets.tina.io/";
+const TINA_MEDIA_ROOT = "images/content/";
+
+export function resolveMedia(
+  value: string | null | undefined
+): string | null {
+  if (!value) return null;
+  if (!value.startsWith(TINA_CDN)) return value;
+
+  // https://assets.tina.io/<clientId>/<path>
+  const rest = value.slice(TINA_CDN.length);
+  const slash = rest.indexOf("/");
+  if (slash < 0) return value;
+
+  const path = rest.slice(slash + 1);
+  if (path.startsWith(TINA_MEDIA_ROOT)) return value; // a real upload
+
+  return `/${path}`;
+}
+
+/**
+ * Rewrite every image field on a document through resolveMedia().
+ *
+ * APPLIED AT THE READ BOUNDARY, not at the twelve call sites that render
+ * a picture. This file already applies its two gates — published, and
+ * consent — in exactly one place for exactly this reason: a rule that
+ * has to be remembered at every call site is a rule that will be missed
+ * at the thirteenth. A component should never have to know that Tina
+ * rewrites paths.
+ *
+ * Mutates in place. These objects are freshly deserialised from the Tina
+ * client on every read and are owned by this module until it returns
+ * them.
+ */
+const IMAGE_FIELDS = [
+  "heroImage",
+  "cardImage",
+  "featuredImage",
+  "pinterestImage",
+  "socialShareImage",
+] as const;
+
+function normaliseMedia<T>(doc: T): T {
+  if (!doc || typeof doc !== "object") return doc;
+  const record = doc as Record<string, unknown>;
+  for (const field of IMAGE_FIELDS) {
+    const value = record[field];
+    if (typeof value === "string") record[field] = resolveMedia(value);
+  }
+  return doc;
 }
 
 /* ------------------------------------------------------------------ */

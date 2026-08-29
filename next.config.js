@@ -3,6 +3,21 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     formats: ["image/avif", "image/webp"],
+
+    // TINA CLOUD SERVES UPLOADED MEDIA FROM ITS OWN CDN, and without
+    // this entry next/image refuses to optimise any of it — the
+    // optimiser returns 400 and the picture never appears. That was the
+    // state on 28 Aug 2026: every image a founder uploaded through the
+    // editor would have failed to render, silently, with a broken
+    // homepage hero as the visible symptom. See lib/tina-content.ts for
+    // the other half of this.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "assets.tina.io",
+        pathname: "/**",
+      },
+    ],
   },
 
   async redirects() {

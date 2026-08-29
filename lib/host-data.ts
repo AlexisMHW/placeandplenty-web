@@ -35,6 +35,20 @@ export interface GatheringSummary {
   owner_user_id: string;
   invitation_mode: string;
   invitation_status: string;
+  /**
+   * THE GATHERING'S IDENTITY. §16 of the visual directive is emphatic:
+   * "The gathering's invitation/artwork is the identity of the
+   * gathering... Do not replace the gathering identity with generic P&P
+   * photography." So this is carried on the summary rather than fetched
+   * per surface — the list, the hero and the header all show the same
+   * artwork, and a gathering is recognisable at a glance the way it is
+   * on the phone.
+   *
+   * The bucket is private, so a path is not a URL. See signArtwork().
+   */
+  invitation_artwork_path: string | null;
+  /** PDFs are allowed in the bucket and cannot render in an <img>. */
+  invitation_artwork_mime_type: string | null;
 }
 
 /** Gatherings the signed-in user owns or co-hosts. Soonest first. */
@@ -43,7 +57,7 @@ export async function getMyGatherings(): Promise<GatheringSummary[]> {
   const { data, error } = await supabase
     .from("gatherings")
     .select(
-      "id, name, gathering_type, gathering_date, arrival_time, status, readiness_state, current_hostready_score, expected_guest_count, adult_count, child_count, location_name, owner_user_id, invitation_mode, invitation_status"
+      "id, name, gathering_type, gathering_date, arrival_time, status, readiness_state, current_hostready_score, expected_guest_count, adult_count, child_count, location_name, owner_user_id, invitation_mode, invitation_status, invitation_artwork_path, invitation_artwork_mime_type"
     )
     .order("gathering_date", { ascending: true });
 
@@ -58,7 +72,7 @@ export async function getGathering(
   const { data, error } = await supabase
     .from("gatherings")
     .select(
-      "id, name, gathering_type, gathering_date, arrival_time, status, readiness_state, current_hostready_score, expected_guest_count, adult_count, child_count, location_name, owner_user_id, invitation_mode, invitation_status"
+      "id, name, gathering_type, gathering_date, arrival_time, status, readiness_state, current_hostready_score, expected_guest_count, adult_count, child_count, location_name, owner_user_id, invitation_mode, invitation_status, invitation_artwork_path, invitation_artwork_mime_type"
     )
     .eq("id", id)
     .maybeSingle();
@@ -499,4 +513,68 @@ export async function getHelpCandidates(
     .order("priority", { ascending: true });
   if (error) return [];
   return (data ?? []) as HelpTask[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Invitation artwork                                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Signed URLs for a batch of invitation artwork paths.
+ *
+ * THE BUCKET IS PRIVATE, so a stored path is not something a browser can
+ * load. Signing happens on the server, per request, for exactly the
+ * paths a page is about to render — never by making the bucket public,
+ * which would put every host's invitation artwork on a guessable URL.
+ *
+ * ONE ROUND TRIP FOR THE WHOLE LIST. `createSignedUrls` takes an array,
+ * which matters on the Host Home: signing eight gatherings one at a time
+ * is eight sequential network calls before anything renders.
+ *
+ * PDF ARTWORK IS DELIBERATELY NOT SIGNED. The bucket accepts
+ * application/pdf, and a PDF cannot render in an <img> — a signed URL
+ * for one produces a broken image rather than an identity. Those fall
+ * through to the designed plate, which is the honest result.
+ *
+ * An hour is long enough for a page view and short enough that a URL
+ * copied out of devtools stops working the same afternoon.
+ */
+const ARTWORK_TTL_SECONDS = 3600;
+
+export async function signArtwork(
+  gatherings: Pick<
+    GatheringSummary,
+    "id" | "invitation_artwork_path" | "invitation_artwork_mime_type"
+  >[]
+): Promise<Map<string, string>> {
+  const renderable = gatherings.filter(
+    (g) =>
+      g.invitation_artwork_path &&
+      g.invitation_artwork_mime_type !== "application/pdf"
+  );
+  if (renderable.length === 0) return new Map();
+
+  const supabase = createClient();
+  const { data, error } = await supabase.storage
+    .from("invitation-artwork")
+    .createSignedUrls(
+      renderable.map((g) => g.invitation_artwork_path as string),
+      ARTWORK_TTL_SECONDS
+    );
+
+  // A failure here costs a picture, not a page. Every surface falls back
+  // to the designed identity plate.
+  if (error || !data) return new Map();
+
+  const byPath = new Map<string, string>();
+  for (const row of data) {
+    if (row.signedUrl && row.path) byPath.set(row.path, row.signedUrl);
+  }
+
+  const byGathering = new Map<string, string>();
+  for (const g of renderable) {
+    const url = byPath.get(g.invitation_artwork_path as string);
+    if (url) byGathering.set(g.id, url);
+  }
+  return byGathering;
 }

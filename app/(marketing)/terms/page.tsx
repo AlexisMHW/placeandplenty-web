@@ -135,22 +135,63 @@ export default function TermsPage() {
         implying there are none.
       </p>
 
+      <h3>One account, several ways to buy</h3>
+      <p>
+        You can buy a Gathering Pass or Place &amp; Plenty Plus on
+        placeandplenty.com, through the Apple App Store, or through Google
+        Play. Whichever you choose, what you buy is attached to your Place
+        &amp; Plenty account rather than to a device, a browser or a store, so
+        an entitlement bought on the web is available in the app and one
+        bought through a store is available on the web. There are no separate
+        web and app plans, and buying on one platform does not require buying
+        again on another.
+      </p>
+
+      <h3>Feature availability across platforms</h3>
+      <p>
+        <strong>
+          Some Plus features require the Place &amp; Plenty mobile app. Plus
+          access follows your account across platforms, but feature
+          availability may vary between web and mobile.
+        </strong>{" "}
+        In particular, Host Mode and Space Mode are available only in the
+        mobile app, because they depend on mobile-device capabilities:
+        gathering-day push notifications in the first case and the device
+        camera in the second. Other features may also be limited to a
+        particular platform where they depend on that platform&rsquo;s
+        capabilities, and the set of such features may change over time.
+      </p>
+      <p>
+        Your purchase gives you access to your plan on your account. It is not
+        a promise that every feature is available on every platform. Subject
+        to applicable law, we are not responsible for your inability to use a
+        feature that requires the mobile app where that inability results
+        solely from your choice not to install or use the app on a compatible
+        device. If a feature you expected is not available on the platform you
+        are using, write to us before assuming it is missing.
+      </p>
+
       <h3>How you are billed</h3>
       <p>
-        Purchases are made through the Apple App Store or Google Play and are
-        governed by that store&rsquo;s terms as well as these. We never see
-        your card details. An annual subscription renews automatically unless
-        you turn renewal off in your store account before the term ends, and
-        you manage or cancel it there — not with us.
+        Purchases made on placeandplenty.com are billed by us through our
+        payment provider and are managed in your account here. Purchases made
+        through the Apple App Store or Google Play are billed by that store,
+        governed by that store&rsquo;s terms as well as these, and are managed
+        and cancelled in that store rather than with us. We never see your
+        card details in either case. An annual subscription renews
+        automatically unless you turn renewal off before the term ends,
+        wherever you bought it.
       </p>
 
       <h3>Refunds</h3>
       <p>
-        Refunds are handled by the store you bought from, under its policy.
-        We cannot issue a refund for a store purchase directly, but if
-        something has gone wrong, write to us and we will help you sort it
-        out.
+        Refunds for a purchase made through the Apple App Store or Google Play
+        are handled by that store, under its own policy, and we cannot issue
+        one directly. Refunds for a purchase made on placeandplenty.com are
+        handled by us. Either way, if something has gone wrong, write to us
+        and we will help you sort it out.
       </p>
+
 
       <h2>AI features — please read this one</h2>
       <p>

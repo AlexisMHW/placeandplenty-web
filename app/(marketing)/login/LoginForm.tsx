@@ -15,10 +15,14 @@ import { callbackUrl, safeNext } from "@/lib/auth-redirects";
 // on a shared or unfamiliar computer, but it fails silently when mail is
 // slow, and defaulting to it makes signing in feel unreliable.
 //
-// NO SIGN-UP HERE. Accounts are created in the app, which is where
-// onboarding, entitlements and the profile trigger all live. A web
-// sign-up would create profiles that have never seen any of that. The
-// page says so plainly rather than showing a dead "create account" tab.
+// SIGN-UP LIVES AT /signup, and it is a real web account. This file
+// used to say accounts could only be made in the app, on the reasoning
+// that a web sign-up would create profiles that had never seen
+// onboarding or entitlement setup. Checked against the live database,
+// that reasoning does not hold: `on_auth_user_created` fires for every
+// client and writes the canonical profile, and Free is the absence of an
+// entitlement row rather than something to provision. Creating an
+// account on the web is now a V1 requirement, so this page links to it.
 //
 // ERROR HANDLING: Supabase returns "Invalid login credentials" for both
 // a wrong password and an unknown email, on purpose — telling a stranger
@@ -196,15 +200,15 @@ export default function LoginForm({ next }: { next?: string }) {
       </button>
 
       <p className="mt-6 font-body text-sm leading-relaxed text-forest/70">
-        New to Place &amp; Plenty? Accounts are created in the app, and
-        work here straight away.{" "}
+        New to Place &amp; Plenty?{" "}
         <Link
-          href="/get"
-          className="underline decoration-gold underline-offset-4 hover:text-forest"
+          href="/signup"
+          className="font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4"
         >
-          Get the app
-        </Link>
-        .
+          Create a free account
+        </Link>{" "}
+        — it takes a minute, and it&rsquo;s the same account you&rsquo;ll use
+        in the app.
       </p>
     </form>
   );

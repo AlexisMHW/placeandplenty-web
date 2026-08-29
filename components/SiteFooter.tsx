@@ -1,8 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
-import CtaButton from "@/components/CtaButton";
-import { Display } from "@/components/Display";
-import { BotanicalSprig } from "@/components/Botanical";
+import { BotanicalBough } from "@/components/Botanical";
+import Icon, { type IconName } from "@/components/Icon";
 import {
   PRIMARY_NAV,
   SECONDARY_NAV,
@@ -10,83 +8,81 @@ import {
   ACCOUNT_NAV,
   SOCIAL_LINKS,
 } from "@/lib/nav";
-import { BRAND_NAME, PROMISE, TAGLINE } from "@/lib/brand";
-import { hasAnyStoreLink } from "@/lib/app-links";
+import Wordmark from "@/components/Wordmark";
+import { BRAND_NAME, TAGLINE } from "@/lib/brand";
 
-// The footer, composed to the reference: a closing CTA on the left, the
-// app download in the middle, link columns on the right, then a rule
-// above the wordmark and copyright.
+// THE FOOTER, composed to the references.
 //
-// TWO THINGS THE REFERENCE SHOWS THAT ARE NOT COPIED, both for the same
-// reason — §7 and §18 forbid placeholders and dead links:
+// Every reference shows the same closing structure and it is a link
+// footer, not a second sales pitch: the monogram with the tagline under
+// it on the left, three or four short link columns, the social row, a
+// botanical bough in the outer corner, and a thin rule above the
+// copyright line.
 //
-//   Careers / Press / Help Center / Contact Us — none of these routes
-//   exist. A footer column linking to nothing is the clearest possible
-//   signal that a site is a mock-up. Ours lists what is actually there.
+// WHY THE CTA CAME OUT OF HERE. The home page reference puts a "Ready to
+// host with ease?" block inside the footer; every other reference puts
+// it in a band ABOVE the footer instead. The band won, because with
+// CtaBand now closing every page (see components/CtaBand.tsx) a footer
+// CTA would be the second call to action in the same screenful — which
+// reads as pleading rather than as confidence, and §18 is explicit that
+// the posture is "we have been here doing the work".
 //
-//   App Store and Google Play badges — the listings do not exist. The
-//   download block keeps the reference's position and shape and says
-//   what is true; the badges appear by themselves the moment
-//   lib/app-links.ts holds real URLs.
+// WHAT THE REFERENCES SHOW THAT IS DELIBERATELY NOT COPIED. Careers,
+// Press, Help Center, Contact Us. None of those routes exist, and §7 and
+// §18 forbid placeholders — a footer column linking to nothing is the
+// clearest possible signal that a site is a mock-up. The columns below
+// list what is actually there.
 //
-// Link columns come from lib/nav.ts, so a new page reaches the header,
-// the footer and the sitemap by construction rather than by memory.
+// Links come from lib/nav.ts, so a new page reaches the header, the
+// footer and the sitemap by construction rather than by memory.
 
-const columns = [
+const COLUMNS = [
   { heading: "Explore", items: PRIMARY_NAV },
-  { heading: "More", items: SECONDARY_NAV },
-  { heading: "Legal", items: [...UTILITY_NAV, ...ACCOUNT_NAV] },
+  { heading: "Company", items: SECONDARY_NAV },
+  { heading: "Support", items: [...UTILITY_NAV, ...ACCOUNT_NAV] },
 ];
 
-export default function SiteFooter() {
-  const storesLive = hasAnyStoreLink();
+// The social row uses the house line set rather than brand glyphs. Each
+// platform's real logo is trademarked artwork with its own presentation
+// rules, and an approximation drawn by hand is the kind of thing that is
+// both legally sloppy and visually obvious. The accessible name carries
+// the platform; the icon carries the medium.
+const SOCIAL_ICONS: Record<string, IconName> = {
+  Instagram: "camera",
+  Facebook: "chat",
+  TikTok: "music",
+  YouTube: "photo",
+};
 
+export default function SiteFooter() {
   return (
     <footer className="relative overflow-hidden bg-forest text-offwhite">
-      <BotanicalSprig
-        className="pointer-events-none absolute -right-6 bottom-0 hidden text-offwhite/10 lg:block"
-        size={210}
+      <BotanicalBough
+        className="pointer-events-none absolute -right-10 bottom-0 hidden text-gold/20 lg:block"
+        width={260}
+        flip
       />
 
       <div className="relative mx-auto max-w-editorial px-6 py-16">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-14">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)] lg:gap-20">
+          {/* ---- brand block ---------------------------------------- */}
           <div>
-            <Display
-              emphasis="ease"
-              className="text-3xl leading-tight md:text-4xl"
-            >
-              Ready to host with ease?
-            </Display>
-            <p className="mt-3 font-body text-sm text-gold">
-              Plan your next gathering in minutes.
-            </p>
-            <div className="mt-6">
-              <CtaButton onDark size="sm" />
-            </div>
-          </div>
-
-          <div>
-            <h2 className="font-body text-xs font-bold uppercase tracking-[0.2em] text-offwhite/55">
-              The app
-            </h2>
-            <p className="mt-4 max-w-xs font-body text-sm leading-relaxed text-offwhite/80">
-              {storesLive
-                ? "Your guests, lists and updates — right in your pocket."
-                : "Place & Plenty is built for the phone in your pocket. Join the Guest List and you’ll hear the moment the apps go live."}
-            </p>
-            <Link
-              href="/get"
-              className="mt-4 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-xs font-semibold uppercase tracking-[0.14em] text-offwhite transition-colors duration-400 hover:text-gold"
-            >
-              {storesLive ? "Get the app" : "About the app"}
-              <span aria-hidden>&rarr;</span>
+            {/* ONE MARK, NOT TWO. This carried the PNG badge AND the
+                typographic "P & P" side by side, which read as the logo
+                printed twice. The masthead's Wordmark is the lockup — the
+                monogram with the sprig in the ampersand and the name
+                beneath it — so the footer uses the same one. */}
+            <Link href="/" className="inline-block" aria-label="Place & Plenty, home">
+              <Wordmark tone="offwhite" />
             </Link>
+            <p className="mt-5 font-body text-sm text-offwhite/75">{TAGLINE}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3">
-            {columns.map((column) => (
+          {/* ---- link columns --------------------------------------- */}
+          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
+            {COLUMNS.map((column) => (
               <nav key={column.heading} aria-label={column.heading}>
-                <h2 className="font-body text-xs font-bold uppercase tracking-[0.2em] text-offwhite/55">
+                <h2 className="font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
                   {column.heading}
                 </h2>
                 <ul className="mt-4 space-y-2.5">
@@ -103,49 +99,38 @@ export default function SiteFooter() {
                 </ul>
               </nav>
             ))}
-          </div>
-        </div>
 
-        <div className="mt-14 flex flex-col gap-5 border-t border-offwhite/15 pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/images/pp-mark.png"
-              alt=""
-              aria-hidden
-              width={28}
-              height={28}
-              className="rounded-md"
-            />
             <div>
-              <p className="font-display text-lg leading-none">{BRAND_NAME}</p>
-              <p className="mt-1 font-body text-xs text-offwhite/60">
-                {TAGLINE}
-              </p>
+              <h2 className="font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
+                Connect
+              </h2>
+              <ul className="mt-4 flex flex-wrap gap-3">
+                {SOCIAL_LINKS.map((s) => (
+                  <li key={s.label}>
+                    <a
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-offwhite/25 text-offwhite/80 transition-colors duration-400 hover:border-gold hover:text-offwhite"
+                    >
+                      <span className="sr-only">{s.label}</span>
+                      <Icon name={SOCIAL_ICONS[s.label] || "heart"} size={17} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-
-          <p className="max-w-sm font-body text-xs leading-relaxed text-offwhite/50">
-            {PROMISE}
-          </p>
-
-          <div className="flex flex-wrap gap-5 font-body text-xs text-offwhite/70">
-            {SOCIAL_LINKS.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition-colors duration-400 hover:text-offwhite"
-              >
-                {s.label}
-              </a>
-            ))}
-          </div>
         </div>
 
-        <p className="mt-8 font-body text-xs text-offwhite/45">
-          © {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.
-        </p>
+        <div className="mt-14 flex flex-col gap-3 border-t border-offwhite/15 pt-7 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-body text-xs text-offwhite/50">
+            © {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.
+          </p>
+          <p className="font-body text-xs text-offwhite/50">
+            One account on the web and in the app.
+          </p>
+        </div>
       </div>
     </footer>
   );

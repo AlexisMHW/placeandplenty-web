@@ -59,8 +59,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // A signed-in host has no use for the login page.
-  if (pathname === "/login" && user) {
+  // A signed-in host has no use for the login or sign-up pages. /signup
+  // is included because a second account created while already holding
+  // one is the beginning of the duplicate-identity problem the whole
+  // one-account rule exists to prevent.
+  if ((pathname === "/login" || pathname === "/signup") && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/host";
     url.search = "";

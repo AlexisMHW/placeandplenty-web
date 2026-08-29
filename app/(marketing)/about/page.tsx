@@ -1,197 +1,267 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
-import Eyebrow from "@/components/Eyebrow";
-import CtaSection from "@/components/CtaSection";
+import PageHero from "@/components/PageHero";
+import CtaBand from "@/components/CtaBand";
+import Photo from "@/components/Photo";
+import Stamp from "@/components/Stamp";
+import { Band, Display } from "@/components/Display";
+import { IconPlate, type IconName } from "@/components/Icon";
+import { BotanicalBough } from "@/components/Botanical";
 import { FOUNDER_PHOTO } from "@/lib/founder";
-import { ESSENCE, PROMISE, RALLY, TAGLINE } from "@/lib/brand";
+import { ESSENCE } from "@/lib/brand";
 
-// ABOUT — founder-led, personal, first person (§16).
+// ABOUT, composed to `about_me.png`.
 //
-// PERSPECTIVE WAS THE BUG. The previous version narrated the calendar in
-// the third person — "Her son's 17th", "Her husband's 40th" — inside a
-// page that was otherwise written as "I". §28 lists that perspective
-// error explicitly. Every line below is first person, because this is
-// the founder's own account and not a profile written about her.
+//   PageHero      the founder photograph fills the right half; the left
+//                 carries "Hi, I'm Alexis." over three italic lines
+//   MY STORY      heading left, the story right, bough between
+//   MY APPROACH   five principles in a row behind hairlines
+//   WHY I BUILT   photograph left, the reason right, seal at the corner
+//   CtaBand
 //
-// "A few years ago" is gone too. §16 says not to use a vague phrase that
-// may misstate the actual origin timing, and nobody has told me when
-// this started. The page now opens on the calendar itself, which needs
-// no date to be true.
+// FIRST PERSON THROUGHOUT. §16 and §9 of the visual directive both
+// require it and the page had it wrong before — a founder page written
+// in the third person reads as a company describing an employee. Every
+// sentence below is Alexis speaking.
 //
-// THE KEY LINE (§16) is used verbatim and given its own weight:
+// THE KEY LINE IS VERBATIM, because §16 quotes it exactly:
+//
 //   "I didn't need another place to make a pretty invitation. I needed
 //    something that could help me manage everything between 'people are
 //    coming' and the doorbell ringing. So I built it."
 //
-// THE CALENDAR IS THE WHOLE ARGUMENT, so it is a list rather than prose.
-// Granny's 80th and a first birthday landing in the same stretch is the
-// thing a reader recognises; compressed into a sentence it reads as a
-// list of occasions instead of a year that is genuinely too much to hold
-// in your head.
+// WHAT IS DELIBERATELY ABSENT. No dates, no "a few years ago", no
+// company history, no résumé, no titles held. §16 forbids the vague
+// origin phrasing outright — it misstates the timing — and §9 of the
+// visual directive rules out turning this into a CEO biography.
 //
-// WHAT THIS PAGE IS NOT (§16, §32): no CEO biography, no résumé, no
-// credentials, no company milestones, no stock photography, and exactly
-// ONE founder photograph.
+// THE FOUNDER PHOTOGRAPH IS THE APPROVED ONE and must never be swapped
+// for stock (§16). It comes from lib/founder.ts, which is also the file
+// to change if the founder confirms the other candidate.
 
 export const metadata: Metadata = {
   title: "About",
-  description: `I built Place & Plenty because I needed it — for a calendar full of birthdays, holidays and family hosting. ${TAGLINE}`,
+  description:
+    "I’m Alexis. I built Place & Plenty because I needed something that could help me manage everything between “people are coming” and the doorbell ringing.",
   alternates: { canonical: "/about" },
-  openGraph: {
-    title: "About | Place & Plenty",
-    description:
-      "Built from real life, not from a desire to make event-planning software.",
-    url: "/about",
-    images: [FOUNDER_PHOTO.src],
-  },
+  openGraph: { url: "/about" },
 };
 
-const calendar = [
-  "Granny’s 80th birthday",
-  "My son’s 17th",
-  "Thanksgiving",
-  "Christmas",
-  "My youngest son’s first birthday",
-  "My husband’s 40th",
-  "My own 39th",
-  "Valentine’s Day",
-  "And the ordinary rhythm of a family that has people over",
+const PRINCIPLES: { icon: IconName; title: string; body: string }[] = [
+  {
+    icon: "heart",
+    title: "People first",
+    body: "The preparation serves the people. The people are the point.",
+  },
+  {
+    icon: "check",
+    title: "Thoughtful planning",
+    body: "The right plan makes everything feel easier, and more enjoyable.",
+  },
+  {
+    icon: "house",
+    title: "Real life, real homes",
+    body: "Not every home is perfect. That’s fine. What matters is how we make people feel in it.",
+  },
+  {
+    icon: "leaf",
+    title: "Simple is powerful",
+    body: "Clear tools and smart guidance, so there’s less chaos and you can be present.",
+  },
+  {
+    icon: "cohosts",
+    title: "Better together",
+    body: "Hosting is better when we support and inspire each other.",
+  },
 ];
 
 export default function AboutPage() {
   return (
     <>
-      <section className="bg-parchment py-16 md:py-20">
-        <div className="mx-auto grid max-w-editorial items-center gap-10 px-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-14">
-          <div>
-            <Eyebrow>About / Founder</Eyebrow>
-            <h1 className="mt-4 font-display text-4xl leading-tight text-forest md:text-5xl">
-              Why I created Place &amp; Plenty
-            </h1>
-            <p className="mt-5 font-body text-lg leading-relaxed text-forest/80">
-              Place &amp; Plenty didn&rsquo;t start with a desire to build
-              event-planning software. It started with my own calendar.
+      <PageHero
+        eyebrow="About the founder"
+        headline="Hi, I’m Alexis."
+        emphasisLine="The organised host behind Place & Plenty."
+        image={FOUNDER_PHOTO.src}
+        imageAlt={FOUNDER_PHOTO.alt}
+        body={
+          <>
+            <p>
+              I built Place &amp; Plenty to help you host with more ease and
+              less stress — so you can focus on what matters most:
             </p>
-          </div>
+            <p className="mt-3 font-display text-xl italic text-goldInk">
+              the people at your table.
+            </p>
+          </>
+        }
+      />
 
-          <div>
-            <div className="overflow-hidden rounded-card border border-sage/30 shadow-soft">
-              <Image
-                src={FOUNDER_PHOTO.src}
-                alt={FOUNDER_PHOTO.alt}
-                width={FOUNDER_PHOTO.width}
-                height={FOUNDER_PHOTO.height}
-                sizes="(min-width: 768px) 45vw, 100vw"
-                priority
-                className="h-full w-full object-cover"
-              />
+      {/* ---- my story ------------------------------------------------ */}
+      <Band tone="cream">
+        <div className="relative">
+          <BotanicalBough
+            className="pointer-events-none absolute -right-10 top-1/2 hidden -translate-y-1/2 text-olive/40 lg:block"
+            width={220}
+            flip
+          />
+
+          <div className="relative mx-auto max-w-editorial px-6 py-16 md:py-20">
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
+              <div>
+                <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
+                  My story
+                </p>
+                <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.2rem]">
+                  A lifelong love of people, planning, and the little details.
+                </Display>
+                <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
+              </div>
+
+              <div className="max-w-prose space-y-5 font-body text-base leading-relaxed text-forest/80">
+                <p>
+                  I have always been the one who brings people together. Family
+                  dinners, celebrations with friends, the ordinary Tuesday that
+                  turns into eleven people in my kitchen — I have loved making
+                  the kind of moment where everyone feels welcome and cared
+                  for.
+                </p>
+                <p>
+                  I also knew what it costs. My son’s 17th. My youngest son’s
+                  first birthday. My husband’s 40th. My own 39th. Granny’s 80th.
+                  Thanksgiving, Christmas, Valentine’s. Every one of them was
+                  worth it, and every one of them was too many lists, too many
+                  moving parts, and too many “did I forget” moments at eleven at
+                  night.
+                </p>
+                <p className="border-l-2 border-gold pl-5 font-display text-lg italic leading-relaxed text-forest">
+                  I didn’t need another place to make a pretty invitation. I
+                  needed something that could help me manage everything between
+                  “people are coming” and the doorbell ringing. So I built it.
+                </p>
+                <p>
+                  Place &amp; Plenty is that thing — a home hosting companion
+                  that keeps it all in one place, tells you where you actually
+                  stand, and gets out of the way so you can enjoy the gathering
+                  you spent all week on.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </Band>
 
-      <section className="bg-offwhite py-16 md:py-20">
-        <div className="mx-auto max-w-prose px-6">
-          <div className="font-body text-lg leading-relaxed text-forest/85">
-            <p>
-              I looked at what was coming and realised how much of it landed
-              on me:
-            </p>
-
-            <ul className="mt-6 space-y-2 border-l-2 border-gold pl-5">
-              {calendar.map((item) => (
-                <li key={item} className="text-forest/85">
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <p className="mt-8">
-              Every one of those is a good thing. Together they&rsquo;re a
-              year of menus, shopping, guest lists, invitations, who&rsquo;s
-              bringing what, what I already owned and couldn&rsquo;t find,
-              how the room would work, whether it would rain, and the
-              hundred small things that have to happen before anyone knocks.
-            </p>
-
-            <p className="mt-5">
-              I needed one place to manage all of it. I went looking for
-              that, and what I kept finding was invitations.
-            </p>
-          </div>
-
-          {/* §16's key founder line, verbatim. */}
-          <blockquote className="mt-12 border-l-2 border-gold pl-6">
-            <p className="font-display text-2xl leading-snug text-forest md:text-3xl">
-              I didn&rsquo;t need another place to make a pretty invitation.
-              I needed something that could help me manage everything
-              between &ldquo;people are coming&rdquo; and the doorbell
-              ringing. So I built it.
-            </p>
-          </blockquote>
-
-          <div className="mt-12 font-body text-lg leading-relaxed text-forest/85">
-            <p>
-              That&rsquo;s still the whole idea. The invitation was never the
-              hard part — and if you&rsquo;ve already made yours somewhere
-              else, bring it over. Place &amp; Plenty starts where the actual
-              work starts.
-            </p>
-
-            <p className="mt-5">
-              I built it for the person who wants everyone to have a good
-              time and would also like to enjoy it herself. It isn&rsquo;t
-              about hosting more impressively. It&rsquo;s about scrambling
-              less, so that when people finally walk in I have something left
-              to give them.
-            </p>
-
-            <p className="mt-5">
-              The colours came from my own house. The photos are real tables.
-              The features exist because I needed them on a Tuesday.
-            </p>
-          </div>
-
-          <p className="mt-12 font-display text-2xl italic leading-snug text-forest">
-            {ESSENCE}
+      {/* ---- my approach --------------------------------------------- */}
+      <Band tone="plain">
+        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
+          <p className="text-center font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
+            My approach
           </p>
+          <Display className="mt-4 text-center text-3xl leading-tight text-forest md:text-[2.2rem]">
+            Hosting with heart. Organised with intention.
+          </Display>
 
-          <p className="mt-10 font-display text-2xl italic text-forest">
-            {RALLY}
-          </p>
-
-          <p className="mt-8 font-display text-xl text-forest">xo, Alexis</p>
-          <p className="mt-1 font-body text-xs uppercase tracking-[0.18em] text-forest/60">
-            Founder, Place &amp; Plenty
-          </p>
+          <ul className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
+            {PRINCIPLES.map((p, i) => (
+              <li
+                key={p.title}
+                className={`px-4 text-center lg:px-5 ${
+                  i > 0 ? "lg:border-l lg:border-sage/25" : ""
+                }`}
+              >
+                <IconPlate name={p.icon} className="mx-auto" />
+                <h3 className="mt-5 font-display text-lg text-forest">
+                  {p.title}
+                </h3>
+                <p className="mx-auto mt-2.5 max-w-[15rem] font-body text-sm leading-relaxed text-forest/70">
+                  {p.body}
+                </p>
+              </li>
+            ))}
+          </ul>
         </div>
-      </section>
+      </Band>
 
-      <section className="bg-forest py-16 text-offwhite md:py-20">
-        <div className="mx-auto max-w-editorial px-6">
-          <p className="font-display text-3xl md:text-4xl">{TAGLINE}</p>
-          <p className="mt-4 max-w-prose font-body text-lg leading-relaxed text-offwhite/80">
-            {PROMISE}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4 font-body text-sm">
-            <Link
-              href="/what-it-does"
-              className="border-b border-gold pb-0.5 font-semibold uppercase tracking-[0.12em] transition-colors duration-400 hover:text-gold"
-            >
-              See what it does &rarr;
-            </Link>
-            <Link
-              href="/gathering-ideas"
-              className="border-b border-gold pb-0.5 font-semibold uppercase tracking-[0.12em] transition-colors duration-400 hover:text-gold"
-            >
-              Find a reason to gather &rarr;
-            </Link>
+      {/* ---- why I built this ----------------------------------------- */}
+      <Band tone="cream">
+        <div className="grid items-stretch gap-0 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <Photo
+            src={null}
+            caption="A grazing table at home — cheeses, olives, candles, greenery in glass jars"
+            tone="sage"
+            className="aspect-[4/3] w-full md:aspect-auto md:min-h-[26rem]"
+            sizes="(min-width: 768px) 45vw, 100vw"
+          />
+
+          <div className="relative flex items-center px-6 py-14 md:px-12 md:py-16">
+            <Stamp
+              top="Home hosting"
+              bottom="Made simple"
+              size={116}
+              className="absolute right-6 top-8 hidden xl:block"
+            />
+
+            <div>
+              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
+                Why I built this
+              </p>
+              <Display className="mt-4 max-w-lg text-2xl leading-tight text-forest md:text-[2rem]">
+                I wanted hosting to feel less overwhelming — and more you.
+              </Display>
+              <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
+
+              <div className="mt-6 max-w-prose space-y-4 font-body text-base leading-relaxed text-forest/80">
+                <p>
+                  You shouldn’t have to juggle a dozen apps, sticky notes and
+                  group texts just to get people together.
+                </p>
+                <p>
+                  Place &amp; Plenty brings it into one place — so you can plan
+                  with confidence, stay organised, and be in the room for the
+                  part you actually did it for.
+                </p>
+                <p className="font-display text-lg italic text-goldInk">
+                  I built it for you, because I needed it too.
+                </p>
+              </div>
+
+              <p className="mt-8 font-body text-sm uppercase tracking-[0.18em] text-forest/60">
+                {ESSENCE}
+              </p>
+            </div>
           </div>
         </div>
-      </section>
+      </Band>
 
-      <CtaSection />
+      {/* The founder photograph appears twice on this page and nowhere
+          else on the site — §16's "one strong About image, an optional
+          smaller teaser". This is the smaller one, in the sign-off. */}
+      <Band tone="parchment">
+        <div className="mx-auto flex max-w-editorial flex-col items-center gap-6 px-6 py-12 text-center">
+          <div className="relative h-20 w-20 overflow-hidden rounded-full">
+            <Image
+              src={FOUNDER_PHOTO.src}
+              alt=""
+              aria-hidden
+              fill
+              sizes="80px"
+              className="object-cover object-top"
+            />
+          </div>
+          <p className="max-w-xl font-display text-xl italic leading-relaxed text-forest">
+            Let’s make hosting simple — and unforgettable.
+          </p>
+          <p className="font-body text-sm uppercase tracking-[0.22em] text-forest/60">
+            Alexis · Founder
+          </p>
+        </div>
+      </Band>
+
+      <CtaBand
+        headline="Ready to host with more ease"
+        emphasisLine="and less stress?"
+        body="Create your account and start planning in the browser. It’s free to begin, and it’s the same account you’ll use in the app."
+      />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PRICING_TIERS } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/support" },
@@ -8,30 +9,68 @@ export const metadata: Metadata = {
   description: "Get help with Place & Plenty — account, subscription, and technical support.",
 };
 
+// THE V1 SUPPORT FAQ — DELIBERATELY SHORT.
+//
+// Founder instruction, 28 Aug 2026: keep it concise, and keep it to the
+// questions that reduce sign-up and purchase friction. Not a knowledge
+// base, and not a second copy of the pages it links to.
+//
+// The ten it covers, in the order someone actually hits them:
+// web vs app · bring-your-own invitations · RSVPs · Who's Bringing What ·
+// My People vs My Guest Book · Free vs Pass vs Plus · cross-platform
+// entitlements · co-host access · billing · deleting an account.
+//
+// WHAT WAS REMOVED AND WHY. "How do I create my first gathering",
+// "what does HostReady measure" and "I'm having a technical issue" are
+// product tutorials and a contact prompt, not friction. The contact
+// route is already the first thing on this page. Anything explained in
+// full elsewhere is LINKED rather than restated — a duplicated answer is
+// an answer that will eventually contradict its original.
+
 const faqs = [
   {
-    q: "How do I create my first gathering?",
-    a: "Open Place & Plenty and start a new gathering — who's coming, when, and where. From there, Figure It Out For Me builds your preparation plan.",
+    q: "Do I have to download the app?",
+    a: "No. You can create an account, plan and run your whole gathering in the browser — menu, people, shopping, contributions and your HostReady score. The app is there for gathering day and for planning from the sofa, not as a step you have to take first.",
   },
   {
-    q: "What does HostReady™ actually measure?",
-    a: "HostReady™ weighs what matters most for your specific gathering, what's already handled, how much time remains, and whether anything critical is still unresolved — not just a percentage of tasks checked off.",
+    q: "I already made my invitations somewhere else. Can I still use this?",
+    a: "Yes, and this is one of the main reasons people switch. Bring the artwork you made on Canva, bought on Etsy, sent on Paperless Post or already printed and posted — or bring nothing at all. Place & Plenty begins at “people are coming”, not at the invitation.",
   },
   {
-    q: "Can I share a gathering with someone helping me host?",
-    a: "Yes — Co-Host lets you share a gathering with the person helping make it happen.",
+    q: "How do RSVPs work?",
+    a: "Guests reply from their invitation link without needing an account. Their answer lands on the actual guest record in My People, alongside their household, dietary notes and anything they said they would bring — not in a separate form you then have to copy across.",
   },
   {
-    q: "How do I manage my subscription?",
-    a: "Gathering Passes and Place & Plenty Plus are bought through the App Store or Google Play, so they're managed in your Apple or Google account settings rather than in the app. Purchasing isn't switched on yet — when it is, that's where it will live. Current pricing is on our Terms page.",
+    q: "How does Who’s Bringing What work?",
+    a: "You say what is needed, guests claim what they are bringing, and it all sits on the same gathering. No parallel spreadsheet and no four separate texts about the same casserole.",
+  },
+  {
+    q: "What’s the difference between My People and My Guest Book?",
+    a: "My People is the guest list for one gathering. My Guest Book is your reusable list of the people you host most often, kept at the account level — so the next gathering does not start from an empty page.",
+  },
+  {
+    q: "What do I get for free, and what do the paid plans add?",
+    a: `Free covers one active gathering at a time. A Gathering Pass is ${PRICING_TIERS[1].priceLine} and unlocks one gathering, staying with it. Plus is ${PRICING_TIERS[2].priceLine} and covers up to 6 active gatherings at once and up to 12 locked-in per year. Full detail is on the Pricing page.`,
+  },
+  {
+    q: "If I buy on my phone, do I still have it on the web?",
+    a: "Yes, and the other way round. What you buy attaches to your Place & Plenty account rather than to a device or a store, so a Pass or Plus bought through Apple or Google works on the web, and one bought on the web works in the app. Nothing to repurchase and nothing to transfer.",
+  },
+  {
+    q: "If I buy Plus on the web, is anything still app-only?",
+    a: "Yes, two things. Host Mode and Space Mode need the mobile app — Host Mode runs on gathering-day notifications while you are moving around the house, and Space Mode starts with a camera pointed at a room. Your Plus access follows your account either way, but feature availability varies between web and mobile, so you would need the app to use those two.",
+  },
+  {
+    q: "Can someone help me host without seeing everything?",
+    a: "Yes. Invite them as a co-host on that gathering and they get access to that gathering only — not to your other gatherings, your Guest Book or your account.",
+  },
+  {
+    q: "Where do I manage or cancel what I’ve bought?",
+    a: "Wherever you bought it. A purchase made on placeandplenty.com is managed in your account here. One made through the App Store or Google Play is managed in that store, because those are the only places it can be changed or cancelled.",
   },
   {
     q: "How do I delete my account?",
-    a: "In the app, go to Settings → Delete my account. If you no longer have it installed, you can request deletion by email — the Delete Account page below explains both routes and exactly what is removed.",
-  },
-  {
-    q: "I'm having a technical issue with the app. What should I do?",
-    a: "Contact us using the method below with details about what happened, your device type, and the app version, and we'll help you troubleshoot.",
+    a: "In the app under Settings → Delete my account, or by email if you no longer have it installed. The Delete Account page below sets out both routes and exactly what is removed and what is kept.",
   },
 ];
 

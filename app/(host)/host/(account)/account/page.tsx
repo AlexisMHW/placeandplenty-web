@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getUser } from "@/lib/supabase-server";
 import { getProfile } from "@/lib/host-data";
 import { WorkspaceHeader, Panel } from "@/components/host/Workspace";
+import PlanPanel from "@/components/host/PlanPanel";
 
 // ACCOUNT / PROFILE / SETTINGS (§11).
 //
@@ -10,10 +11,13 @@ import { WorkspaceHeader, Panel } from "@/components/host/Workspace";
 // capabilities. Both are handled here with what is actually TRUE today,
 // which is not the same as what a settings page usually shows:
 //
-//   SUBSCRIPTION — there is no purchase flow anywhere yet. The app has
-//   no monetization client. §19 forbids claiming subscription management
-//   capability that does not exist, so this page does not offer to
-//   "manage your plan"; it states the plans and when purchasing opens.
+//   ENTITLEMENT STATE — now read from the canonical
+//   `gathering_entitlements` rows rather than described in the abstract.
+//   PlanPanel shows what this account actually holds, which channel it
+//   came from, and where it is managed. That last part is a fact about
+//   Apple and Google rather than a choice of ours: a store subscription
+//   can only be cancelled in that store, and §19 forbids claiming
+//   management capability we do not have.
 //
 //   DELETION — in-app deletion exists and is the primary route, and
 //   /delete-account documents both routes. Linking there rather than
@@ -46,6 +50,8 @@ export default async function AccountPage() {
       />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <PlanPanel />
+
         <Panel>
           <h3 className="font-display text-xl text-forest">Your details</h3>
           <dl className="mt-4 divide-y divide-sage/20">
@@ -62,21 +68,6 @@ export default async function AccountPage() {
           <p className="mt-4 font-body text-sm leading-relaxed text-forest/65">
             Change these in the app and they update here instantly.
           </p>
-        </Panel>
-
-        <Panel>
-          <h3 className="font-display text-xl text-forest">Your plan</h3>
-          <p className="mt-3 font-body text-base leading-relaxed text-forest/75">
-            Your plan and billing live here. Purchasing opens with the app
-            release.
-          </p>
-          <Link
-            href="/pricing"
-            className="mt-4 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
-          >
-            See the plans
-            <span aria-hidden>&rarr;</span>
-          </Link>
         </Panel>
 
         <Panel>

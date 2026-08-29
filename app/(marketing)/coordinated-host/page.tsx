@@ -1,60 +1,229 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
+import PageHero from "@/components/PageHero";
+import CtaBand from "@/components/CtaBand";
+import GuestListForm from "@/components/GuestListForm";
+import { Band, Display } from "@/components/Display";
+import { EditorialCard, FeatureLede } from "@/components/Cards";
+import Icon, { type IconName } from "@/components/Icon";
+import { BotanicalDivider } from "@/components/Botanical";
 import { getAllPosts } from "@/lib/tina-content";
 
+// THE COORDINATED HOST, composed to `the_coordinated_host.png`.
+//
+//   PageHero      EDITORIAL eyebrow, the masthead, an italic strapline
+//   FeatureLede   the horizontal featured story straddling the hero
+//   TOPIC STRIP   four editorial entry points behind hairlines
+//   THE GRID      four-across article cards, photo-led
+//   NEWSLETTER    the closing subscribe panel
+//   CtaBand
+//
+// §12 IS THE BRIEF: this should read as a real Place & Plenty
+// publication, not a blog placeholder and never "articles coming soon".
+// It no longer says that — there are three cornerstone pieces published
+// in approved franchises, and the page is built as a magazine front:
+// one story given the lead, the rest in a grid, and a masthead that
+// looks like it has been running for a while.
+//
+// CATEGORY AND FRANCHISE STAY SEPARATE, per §14 of the reconciliation.
+// Category is the broad subject; franchise is the recurring named series
+// (Host Math, Space & Flow, The Real-Life Version, and so on). The card
+// kicker shows the franchise where a piece has one and falls back to the
+// category, because the franchise is the thing a returning reader is
+// looking for.
+//
+// THE GRID ADAPTS TO WHAT IS PUBLISHED. Three pieces do not fill a
+// four-across grid, so the lead is pulled out and the remainder run
+// beneath it. §7 forbids placeholders, which includes empty cards
+// padding a row to look busier than the library is.
+
 export const metadata: Metadata = {
-  alternates: { canonical: "/coordinated-host" },
-  openGraph: { url: "/coordinated-host" },
   title: "The Coordinated Host",
   description:
-    "Practical help for having people over.",
+    "Thoughtful hosting, simplified. Practical guidance, real numbers and honest advice for hosts who care about connection — and the details.",
+  alternates: { canonical: "/coordinated-host" },
+  openGraph: { url: "/coordinated-host" },
 };
+
+const TOPICS: { icon: IconName; title: string; body: string; href: string }[] = [
+  {
+    icon: "envelope",
+    title: "Invitations",
+    body: "Design, send and track with ease — or bring the artwork you already have.",
+    href: "/what-it-does",
+  },
+  {
+    icon: "rsvp",
+    title: "RSVPs",
+    body: "Keep guests in the loop without chasing anyone through a group chat.",
+    href: "/how-it-works",
+  },
+  {
+    icon: "gift",
+    title: "Who’s Bringing What",
+    body: "Coordinate contributions without the chaos, the doubling-up or the guesswork.",
+    href: "/what-it-does",
+  },
+  {
+    icon: "book",
+    title: "Guest Book",
+    body: "Capture the memories that last, and the people worth inviting again.",
+    href: "/what-it-does",
+  },
+];
 
 export default async function CoordinatedHostPage() {
   const posts = await getAllPosts();
+  const [lead, ...rest] = posts;
 
   return (
-    <section className="bg-offwhite py-20 md:py-28">
-      <div className="mx-auto max-w-prose px-6">
-        <p className="mb-3 font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
-          by Place &amp; Plenty
-        </p>
-        <h1 className="font-display text-4xl text-forest">
-          The Coordinated Host
-        </h1>
-        <p className="mt-4 font-body text-lg text-forest/80">
-          Practical help for having people over.
-        </p>
+    <>
+      <PageHero
+        eyebrow="Editorial"
+        headline="The Coordinated Host."
+        emphasisLine="Thoughtful hosting, simplified."
+        emphasisSize="small"
+        image={null}
+        imageCaption="An olive-branch centrepiece on a laid table, candles and glassware, evening light"
+        body={
+          <p>
+            Ideas, guidance and real-world tools for hosts who care about
+            connection — and the details.
+          </p>
+        }
+        action={
+          <Link
+            href="#the-journal"
+            className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
+          >
+            Explore the Journal
+          </Link>
+        }
+      />
 
-        {posts.length === 0 ? (
-          <div className="mt-10 rounded-card border border-sage/30 bg-cream p-6 font-body text-sm text-forest/70">
-            <p>
-              New pieces are published through the season — host maths,
-              timelines, and the things that actually decide whether an
-              evening runs easily. Join the Guest List and they&rsquo;ll
-              come to you.
-            </p>
+      {/* ---- the lead story, straddling the hero --------------------- */}
+      {lead && (
+        <div className="relative z-10 bg-offwhite px-3 sm:px-5">
+          <div className="mx-auto -mt-10 max-w-editorial md:-mt-14">
+            <FeatureLede
+              href={`/coordinated-host/${lead._sys.filename}`}
+              title={lead.title}
+              deck={lead.deck}
+              image={lead.featuredImage}
+              imageAlt={lead.featuredImageAlt}
+              photoCaption={
+                lead.featuredImageAlt ||
+                `${lead.title} — a real home, warm natural light`
+              }
+              meta={
+                <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-forest/55">
+                  {[lead.category, lead.franchise].filter(Boolean).join(" · ")}
+                </p>
+              }
+            />
           </div>
-        ) : (
-          <ul className="mt-10 divide-y divide-sage/20">
-            {posts.map((post: any) => (
-              <li key={post._sys.filename} className="py-6">
+        </div>
+      )}
+
+      {/* ---- topic strip --------------------------------------------- */}
+      <Band tone="parchment">
+        <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
+          <BotanicalDivider className="mb-6" />
+          <Display className="text-center text-2xl leading-snug text-forest md:text-3xl">
+            Hosting, made simple
+          </Display>
+          <p className="mx-auto mt-3 max-w-2xl text-center font-body text-base leading-relaxed text-forest/70">
+            Practical guidance, real numbers, and tools that make every
+            gathering feel less like a scramble.
+          </p>
+
+          <ul className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
+            {TOPICS.map((t, i) => (
+              <li
+                key={t.title}
+                className={`lg:px-6 ${i > 0 ? "lg:border-l lg:border-sage/30" : ""}`}
+              >
+                <Icon name={t.icon} size={28} className="text-forest/70" />
+                <h3 className="mt-4 font-body text-xs font-bold uppercase tracking-[0.18em] text-forest">
+                  {t.title}
+                </h3>
+                <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">
+                  {t.body}
+                </p>
                 <Link
-                  href={`/coordinated-host/${post._sys.filename}`}
-                  className="font-display text-xl text-forest hover:text-sage"
+                  href={t.href}
+                  className="mt-3 inline-block font-body text-xs font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4 transition-colors duration-400 hover:text-sage"
                 >
-                  {post.title}
+                  Explore <span aria-hidden>&rarr;</span>
                 </Link>
-                {post.deck && (
-                  <p className="mt-1 font-body text-sm text-forest/70">
-                    {post.deck}
-                  </p>
-                )}
               </li>
             ))}
           </ul>
-        )}
-      </div>
-    </section>
+        </div>
+      </Band>
+
+      {/* ---- the grid ------------------------------------------------- */}
+      <Band tone="plain" id="the-journal">
+        <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
+          <h2 className="flex items-center gap-4 font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/65">
+            <span aria-hidden className="h-px w-8 flex-shrink-0 bg-gold" />
+            Latest from the journal
+          </h2>
+
+          {rest.length === 0 ? (
+            <p className="mt-6 font-body text-base text-forest/70">
+              More pieces are on the way. The lead story is above.
+            </p>
+          ) : (
+            // Three across, not four. The library is small and one piece
+            // is the lead, so a four-column grid left the remainder
+            // stranded at the left edge of a mostly empty row.
+            <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {rest.map((post, i) => (
+                <li key={post._sys.filename}>
+                  <EditorialCard
+                    href={`/coordinated-host/${post._sys.filename}`}
+                    kicker={post.franchise || post.category}
+                    title={post.title}
+                    deck={post.deck}
+                    image={post.featuredImage}
+                    imageAlt={post.featuredImageAlt}
+                    photoCaption={
+                      post.featuredImageAlt ||
+                      `${post.title} — a real home, warm natural light`
+                    }
+                    priority={i < 2}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Band>
+
+      {/* ---- newsletter ----------------------------------------------- */}
+      <Band tone="cream">
+        <div className="mx-auto max-w-editorial px-6 py-12 md:py-14">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-12">
+            <div>
+              <Display className="text-2xl leading-snug text-forest md:text-[1.9rem]">
+                Good hosting starts here.
+              </Display>
+              <p className="mt-3 max-w-prose font-body text-base leading-relaxed text-forest/75">
+                Ideas, hosting tips and seasonal inspiration — delivered to
+                your inbox, and not very often.
+              </p>
+            </div>
+            <GuestListForm />
+          </div>
+        </div>
+      </Band>
+
+      <CtaBand
+        headline="Read it here."
+        emphasisLine="Then plan it in P&P."
+        body="Every piece here ends somewhere practical. Start free on the web and put it to work on your next gathering."
+      />
+    </>
   );
 }

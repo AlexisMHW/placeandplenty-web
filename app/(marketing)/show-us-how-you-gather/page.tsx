@@ -1,187 +1,274 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
-import Eyebrow from "@/components/Eyebrow";
-import CtaSection from "@/components/CtaSection";
+import PageHero from "@/components/PageHero";
+import CtaBand from "@/components/CtaBand";
+import Photo from "@/components/Photo";
+import { Band, Display } from "@/components/Display";
+import Icon, { type IconName } from "@/components/Icon";
+import { BotanicalSprig } from "@/components/Botanical";
 import { getAllCommunityStories } from "@/lib/tina-content";
 
-// SHOW US HOW YOU GATHER — §16.
+// SHOW US HOW YOU GATHER, composed to `show_us_how_you_gather.png`.
 //
-// The governing emotional rule is "Your gathering counts too", and the
-// section is explicitly NOT a perfect-party showcase. The copy names
-// paper plates, mismatched chairs and apartments on purpose; if it ever
-// starts reading like a styling gallery, that is the thing to fix.
+//   PageHero      the OUR COMMUNITY / OUR INSPIRATION seal on the photo
+//   THREE STEPS   snap, share, inspire — with the submit card as the
+//                 fourth cell, exactly as the reference lays it out
+//   THE GALLERY   the community grid
+//   WHAT COUNTS   the "your gathering counts too" band
+//   CtaBand
 //
-// CONSENT IS THE LOAD-BEARING PART. §16: submission is not blanket
-// marketing consent, and permission has to cover identifiable adults,
-// children, private homes, submitted photos, and stories or quotes. Two
-// things follow, and neither is decorative:
+// §13's EMOTIONAL RULE IS "Your gathering counts too", and it governs
+// every word here. Not a competition, not a styled-shoot showcase.
+// Apartments, backyards, paper plates, Grandma's china, mismatched
+// chairs, a birthday on a Tuesday.
 //
-//   1. Nothing renders here without `consentConfirmed` — enforced in
-//      lib/tina-content.ts, so it cannot be forgotten at a call site.
-//   2. The submission copy below SAYS what is being asked for, in plain
-//      words, before anyone sends anything. A permission checkbox that
-//      is only explained in a privacy policy is not informed consent.
+// THE GALLERY IS EMPTY, AND IT SAYS SO HONESTLY. This is the one place
+// on the site where the missing-content problem cannot be solved with a
+// designed placeholder, and §13 is explicit about why: "Do not fabricate
+// fake real-user stories as production content." Ten invented gatherings
+// with invented cities and invented like counts — which is what the
+// reference shows — would be the single most dishonest thing this
+// website could ship, because the whole premise of the page is that
+// these are real people.
 //
-// Submissions arrive by email today. That is deliberate: a form that
-// accepts photographs of people's homes and children needs storage,
-// retention and deletion decided first, and none of that is built. Email
-// is honest about where the photos are going.
+// So the grid architecture is built and renders from Tina the moment
+// approved stories exist, and until then the space is an invitation
+// rather than a fake gallery. That is a deliberate difference from the
+// reference, and the only one on this page.
+//
+// CONSENT IS A SEPARATE GATE FROM PUBLISHING, enforced in
+// lib/tina-content.ts rather than here. Publishing is an editorial act;
+// consent is someone else's decision, and one must never stand in for
+// the other. A story with `consentConfirmed` unset does not render even
+// if it is marked published.
 
 export const metadata: Metadata = {
   title: "Show Us How You Gather",
   description:
-    "Real homes, real tables, real people. Share how you gather — backyards, apartments, paper plates and Grandma's china.",
+    "Real hosts. Real gatherings. Real inspiration. Share how you bring people together — apartments, backyards, birthdays and everything in between.",
   alternates: { canonical: "/show-us-how-you-gather" },
-  openGraph: {
-    title: "Show Us How You Gather | Place & Plenty",
-    description: "Real homes, real tables, real people. Your gathering counts too.",
-    url: "/show-us-how-you-gather",
-  },
+  openGraph: { url: "/show-us-how-you-gather" },
 };
 
-// support@ is the only verified Place & Plenty address (it is what the
-// app's Settings, /support and /delete-account all use). A separate
-// hello@ or community@ would look tidier and might not exist, so
-// submissions ride on the address that is known to be monitored, with a
-// subject line that sorts them.
-const SUBMIT_EMAIL = "support@placeandplenty.com";
+const STEPS: { icon: IconName; title: string; body: string }[] = [
+  {
+    icon: "camera",
+    title: "Snap a few photos",
+    body: "The moments, the details, and the vibe. Phone photos are exactly right.",
+  },
+  {
+    icon: "heart",
+    title: "Share your story",
+    body: "Tell us about your gathering — what you planned, what you loved, and what you learned.",
+  },
+  {
+    icon: "sparkle",
+    title: "Inspire others",
+    body: "Your ideas might be just what another host is looking for this weekend.",
+  },
+];
+
+const COUNTS = [
+  "A birthday on a Tuesday",
+  "Paper plates and a folding table",
+  "Grandma’s china, finally used",
+  "Six people in a one-bedroom",
+  "The backyard, before it gets cold",
+  "Mismatched chairs from three rooms",
+];
 
 export default async function ShowUsPage() {
   const stories = await getAllCommunityStories();
 
   return (
     <>
-      <section className="bg-parchment py-16 md:py-20">
-        <div className="mx-auto max-w-editorial px-6">
-          <Eyebrow>Show Us How You Gather</Eyebrow>
-          <h1 className="mt-4 max-w-2xl font-display text-4xl leading-tight text-forest md:text-5xl">
-            Your gathering counts too.
-          </h1>
-          <p className="mt-5 max-w-prose font-body text-lg leading-relaxed text-forest/80">
-            Not the perfect party. The real one — the backyard, the
-            apartment, the folding chair from the garage, the football
-            spread, the birthday nobody planned until Thursday. Paper plates
-            and Grandma&rsquo;s china both count.
+      <PageHero
+        eyebrow="Show Us How You Gather"
+        headline="Real hosts. Real gatherings."
+        emphasisLine="Real inspiration."
+        image={null}
+        imageCaption="Hands holding a phone, photographing a laid table from above"
+        stamp={{ top: "Our community", bottom: "Our inspiration", tone: "dark" }}
+        body={
+          <p>
+            From cozy nights in to once-in-a-lifetime celebrations — see how
+            our community brings people together, in the homes they actually
+            have.
           </p>
-        </div>
-      </section>
+        }
+        action={
+          <Link
+            href="#share"
+            className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
+          >
+            Share Your Gathering
+          </Link>
+        }
+      />
 
-      <section className="bg-offwhite py-16 md:py-20">
-        <div className="mx-auto max-w-editorial px-6">
-          {stories.length === 0 ? (
-            <div className="rounded-card border border-sage/30 bg-cream p-8">
-              <p className="font-display text-xl text-forest">
-                This is where your gatherings go.
+      {/* ---- three steps + the submit card --------------------------- */}
+      <Band tone="parchment" id="share">
+        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
+          <Display
+            emphasis="someone needs"
+            className="text-center text-3xl leading-tight text-forest md:text-[2.3rem]"
+          >
+            Your gathering could be the inspiration someone needs.
+          </Display>
+
+          <div className="mt-12 grid gap-8 lg:grid-cols-4 lg:gap-6">
+            {STEPS.map((s, i) => (
+              <div
+                key={s.title}
+                className={`flex gap-4 lg:px-4 ${
+                  i > 0 ? "lg:border-l lg:border-sage/30" : ""
+                }`}
+              >
+                <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-cream text-forest">
+                  <Icon name={s.icon} size={22} />
+                </span>
+                <div>
+                  <h2 className="font-display text-base text-forest">
+                    {i + 1}. {s.title}
+                  </h2>
+                  <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">
+                    {s.body}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            <div className="rounded-2xl border border-sage/30 bg-cream p-6">
+              <p className="font-body text-sm leading-relaxed text-forest/80">
+                It only takes a few minutes, but the inspiration lasts a long
+                time.
               </p>
-              <p className="mt-2 max-w-prose font-body text-base leading-relaxed text-forest/75">
-                Send us the one you actually had — the backyard, the
-                folding chair, the football spread. Everything below
-                explains exactly what we&rsquo;d ask permission for before
-                anything is published.
+              <a
+                href="mailto:support@placeandplenty.com?subject=Show%20Us%20How%20You%20Gather"
+                className="mt-4 block w-full rounded-lg bg-forest px-5 py-3 text-center font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
+              >
+                Share Your Gathering
+              </a>
+              <p className="mt-3 font-body text-xs leading-relaxed text-forest/60">
+                Send photos and a few lines to{" "}
+                <span className="font-semibold">support@placeandplenty.com</span>
+                . We&rsquo;ll reply about permission before anything appears.
               </p>
             </div>
-          ) : (
-            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {stories.map((story) => (
+          </div>
+        </div>
+      </Band>
+
+      {/* ---- the gallery ---------------------------------------------- */}
+      <Band tone="plain">
+        <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
+          <h2 className="flex items-center gap-4 font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/65">
+            <span aria-hidden className="h-px w-8 flex-shrink-0 bg-gold" />
+            The community gallery
+          </h2>
+
+          {stories.length > 0 ? (
+            <ul className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              {stories.map((story, i) => (
                 <li key={story._sys.filename}>
                   <Link
                     href={`/show-us-how-you-gather/${story._sys.filename}`}
-                    className="group block h-full overflow-hidden rounded-card border border-sage/30 bg-offwhite shadow-softer transition-shadow duration-400 hover:shadow-soft"
+                    className="group block overflow-hidden rounded-2xl border border-sage/25 shadow-softer transition-shadow duration-400 hover:shadow-soft"
                   >
-                    {story.heroImage && (
-                      <div className="relative aspect-[4/3] overflow-hidden">
-                        <Image
-                          src={story.heroImage}
-                          alt={story.heroImageAlt || ""}
-                          fill
-                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                          className="object-cover transition-transform duration-400 group-hover:scale-[1.03]"
-                        />
+                    <div className="relative">
+                      <Photo
+                        src={story.heroImage}
+                        alt={story.heroImageAlt}
+                        caption={story.title}
+                        tone="forest"
+                        className="aspect-[4/5] w-full"
+                        imageClassName="transition-transform duration-400 group-hover:scale-[1.03]"
+                        sizes="(min-width: 1280px) 22vw, (min-width: 640px) 45vw, 100vw"
+                        priority={i < 2}
+                      />
+                      <div className="absolute bottom-3 left-3 rounded-lg bg-offwhite/95 px-3 py-2">
+                        <p className="font-display text-sm leading-tight text-forest">
+                          {story.title}
+                        </p>
+                        {story.gatheringType && (
+                          <p className="mt-0.5 font-body text-[0.62rem] uppercase tracking-[0.14em] text-forest/60">
+                            {story.gatheringType}
+                          </p>
+                        )}
                       </div>
-                    )}
-                    <div className="p-6">
-                      {story.gatheringType && (
-                        <p className="font-body text-xs font-bold uppercase tracking-[0.18em] text-forest/75">
-                          {story.gatheringType}
-                        </p>
-                      )}
-                      <h2 className="mt-2 font-display text-xl leading-snug text-forest">
-                        {story.title}
-                      </h2>
-                      {story.contributorName && (
-                        <p className="mt-2 font-body text-sm text-forest/60">
-                          from {story.contributorName}
-                        </p>
-                      )}
                     </div>
                   </Link>
                 </li>
               ))}
             </ul>
+          ) : (
+            <div className="mt-8 rounded-2xl border border-sage/30 bg-cream px-6 py-14 text-center">
+              <BotanicalSprig className="mx-auto text-olive" size={56} />
+              <p className="mx-auto mt-5 max-w-lg font-display text-2xl leading-snug text-forest">
+                This is where your gatherings will be.
+              </p>
+              <p className="mx-auto mt-3 max-w-xl font-body text-base leading-relaxed text-forest/75">
+                The gallery fills with real gatherings from real homes, shared
+                by the people who hosted them and published only with their
+                permission. We would rather it start with yours than start with
+                something we made up.
+              </p>
+              <a
+                href="mailto:support@placeandplenty.com?subject=Show%20Us%20How%20You%20Gather"
+                className="mt-7 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
+              >
+                Be the first
+              </a>
+            </div>
           )}
         </div>
-      </section>
+      </Band>
 
-      <section className="bg-cream py-16 md:py-20">
-        <div className="mx-auto max-w-prose px-6">
-          <h2 className="font-display text-2xl text-forest md:text-3xl">
-            Share yours
-          </h2>
-          <p className="mt-4 font-body text-lg leading-relaxed text-forest/80">
-            Email us at{" "}
-            <a
-              href={`mailto:${SUBMIT_EMAIL}?subject=Show%20Us%20How%20You%20Gather`}
-              className="underline decoration-gold underline-offset-4 hover:text-forest"
-            >
-              {SUBMIT_EMAIL}
-            </a>{" "}
-            and tell us:
+      {/* ---- your gathering counts too --------------------------------- */}
+      <Band tone="cream">
+        <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
+          <Display
+            emphasis="counts too"
+            className="text-2xl leading-snug text-forest md:text-[2rem]"
+          >
+            Your gathering counts too.
+          </Display>
+          <p className="mt-4 max-w-2xl font-body text-base leading-relaxed text-forest/75">
+            This is not a perfect-party competition. It is the actual range of
+            how people have people over — and the ordinary end of it is the
+            part most worth seeing.
           </p>
 
-          <ul className="mt-5 space-y-2 pl-5 font-body text-base leading-relaxed text-forest/80 [&>li]:list-disc [&>li]:marker:text-gold">
-            <li>What kind of gathering it was</li>
-            <li>A few photos</li>
-            <li>A short story or caption — a couple of sentences is plenty</li>
-            <li>What worked</li>
-            <li>What you&rsquo;d do differently</li>
-            <li>
-              If you used Place &amp; Plenty, what it helped with (optional)
-            </li>
+          <ul className="mt-8 flex flex-wrap gap-3">
+            {COUNTS.map((c) => (
+              <li
+                key={c}
+                className="rounded-full border border-sage/40 bg-offwhite px-4 py-2 font-body text-sm text-forest/80"
+              >
+                {c}
+              </li>
+            ))}
           </ul>
 
-          <div className="mt-8 rounded-card border border-gold bg-offwhite p-6">
-            <p className="font-body text-xs font-bold uppercase tracking-wide text-forest/70">
-              Before you send photos
-            </p>
-            <p className="mt-2 font-body text-base leading-relaxed text-forest/80">
-              Sending something is not the same as agreeing to have it
-              published, so we ask separately and we ask plainly.
-            </p>
-            <p className="mt-3 font-body text-base leading-relaxed text-forest/80">
-              If we&rsquo;d like to feature your gathering, we&rsquo;ll write
-              back and ask for permission covering{" "}
-              <strong className="font-semibold text-forest">
-                the photos themselves, anyone recognisable in them, any
-                children, your home, and your words
-              </strong>
-              . Nothing goes on the website, Instagram, Pinterest or anywhere
-              else until you say yes to that.
-            </p>
-            <p className="mt-3 font-body text-base leading-relaxed text-forest/80">
-              You can ask us to use a first name only, or no name at all. You
-              can change your mind later and we&rsquo;ll take it down.
-            </p>
-            <p className="mt-3 font-body text-sm leading-relaxed text-forest/70">
-              Please only send photos you took, or have the photographer&rsquo;s
-              permission to share — and please ask the other adults in them
-              first.
+          <div className="mt-10 max-w-2xl border-l-2 border-gold pl-5">
+            <h3 className="font-display text-lg text-forest">
+              About permission
+            </h3>
+            <p className="mt-2 font-body text-sm leading-relaxed text-forest/75">
+              Nothing is published without explicit consent — for the photos,
+              for anyone identifiable in them, for children, for your home, and
+              for anything you are quoted saying. We will always confirm before
+              a story appears, and you can ask us to take it down at any time.
             </p>
           </div>
         </div>
-      </section>
+      </Band>
 
-      <CtaSection />
+      <CtaBand
+        headline="Host it."
+        emphasisLine="Then show us."
+        body="Plan your next gathering free on the web, and tell us how it went."
+      />
     </>
   );
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
-import { BotanicalCorner } from "@/components/Botanical";
+import Photo from "@/components/Photo";
 import { ideaCard, type GatheringIdea } from "@/lib/tina-content";
 
 // A Gathering Idea card, composed to the approved reference.
@@ -40,29 +39,21 @@ export default function GatheringIdeaCard({
       href={card.href}
       className="group flex h-full flex-col overflow-hidden rounded-card border border-sage/30 bg-offwhite shadow-softer transition-shadow duration-400 hover:shadow-soft"
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-forest">
-        {card.image ? (
-          <Image
-            src={card.image}
-            alt={card.imageAlt}
-            fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition-transform duration-400 group-hover:scale-[1.04]"
-            priority={priority}
-          />
-        ) : (
-          <>
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-gradient-to-br from-forest via-forest to-sage/40"
-            />
-            <BotanicalCorner
-              className="left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-offwhite"
-              size={120}
-            />
-          </>
-        )}
-      </div>
+      {/* NO CAPTION ON THE PLATE HERE. The headline sits directly
+          beneath the image, so printing it on the plate as well read as
+          the same words twice — the one place the plate's caption makes
+          a card worse rather than better. The shot brief for these four
+          lives in PHOTOGRAPHY-MANIFEST.md. */}
+      <Photo
+        src={card.image}
+        alt={card.imageAlt}
+        compact
+        tone="forest"
+        className="aspect-[4/3] w-full"
+        imageClassName="transition-transform duration-400 group-hover:scale-[1.04]"
+        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+        priority={priority}
+      />
 
       <div className="flex flex-1 flex-col border-t border-sage/25 p-5 text-center">
         <h3 className="font-display text-xl leading-snug text-forest transition-colors duration-400 group-hover:text-sage">

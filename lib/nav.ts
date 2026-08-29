@@ -32,8 +32,13 @@ export const SECONDARY_NAV: NavItem[] = [
  * Account entry points (§7, §11). Kept out of PRIMARY_NAV so the desktop
  * bar stays editorial, but present in the header's own slot and in the
  * footer — a login link nobody can find is not an entry point.
+ *
+ * SIGN-UP IS FIRST because creating a free web account is the founder's
+ * V1 conversion and the only one this website completes end to end. Both
+ * are noindex, so neither reaches the sitemap.
  */
 export const ACCOUNT_NAV: NavItem[] = [
+  { label: "Start free", href: "/signup" },
   { label: "Log in", href: "/login" },
 ];
 

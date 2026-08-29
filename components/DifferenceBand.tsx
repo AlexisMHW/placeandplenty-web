@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Display, Band } from "@/components/Display";
 import { BotanicalSprig } from "@/components/Botanical";
+import Icon, { type IconName } from "@/components/Icon";
 
 // THE PLACE & PLENTY DIFFERENCE — the reference's two-column band, and
 // the site's competitive positioning in one place.
@@ -37,118 +38,51 @@ const DIFFERENCE = [
   {
     name: "Invitations",
     body: "Use ours, or bring artwork you already made.",
-    icon: "envelope",
+    icon: "envelope" as IconName,
   },
   {
     name: "RSVPs",
     body: "Track responses, plus ones, and dietary needs.",
-    icon: "people",
+    icon: "rsvp" as IconName,
   },
   {
     name: "Who’s Bringing What",
     body: "Contributions that keep the table balanced.",
-    icon: "dish",
+    icon: "dish" as IconName,
   },
   {
     name: "My Guest Book",
     body: "The people you host most, kept for next time.",
-    icon: "book",
+    icon: "book" as IconName,
   },
   {
     name: "HostReady™",
     body: "A readiness score for every gathering.",
-    icon: "shield",
+    icon: "gauge" as IconName,
   },
   {
     name: "My Shopping",
     body: "Lists and budget together, so you buy less.",
-    icon: "bag",
+    icon: "cart" as IconName,
   },
   {
     name: "My Hosting Closet",
     body: "What you already own, and where it lives.",
-    icon: "door",
+    icon: "closet" as IconName,
   },
   {
     name: "My People",
     body: "Guests, contacts and notes in one place.",
-    icon: "group",
+    icon: "people" as IconName,
   },
 ] as const;
 
-// Line-art icons, drawn to one weight so the grid reads as a set. Gold
-// stroke on cream, as the reference has them.
-function Icon({ name }: { name: string }) {
-  const common = {
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.3,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-  };
-  const paths: Record<string, JSX.Element> = {
-    envelope: (
-      <>
-        <rect x="3" y="6" width="18" height="12" rx="1.5" {...common} />
-        <path d="M3.5 7l8.5 6 8.5-6" {...common} />
-      </>
-    ),
-    people: (
-      <>
-        <circle cx="9" cy="9" r="3" {...common} />
-        <circle cx="16" cy="10.5" r="2.2" {...common} />
-        <path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5" {...common} />
-        <path d="M15 19c0-2 1-3.6 2.5-4.3" {...common} />
-      </>
-    ),
-    dish: (
-      <>
-        <path d="M4 15h16" {...common} />
-        <path d="M5.5 15a6.5 6.5 0 0113 0" {...common} />
-        <path d="M12 6.5V5" {...common} />
-        <path d="M3 18h18" {...common} />
-      </>
-    ),
-    book: (
-      <>
-        <path d="M4 5.5h6a2 2 0 012 2V19a2 2 0 00-2-2H4z" {...common} />
-        <path d="M20 5.5h-6a2 2 0 00-2 2V19a2 2 0 012-2h6z" {...common} />
-      </>
-    ),
-    shield: (
-      <>
-        <path d="M12 3.5l7 2.5v5.5c0 4-3 7.4-7 9-4-1.6-7-5-7-9V6z" {...common} />
-        <path d="M9 12l2.2 2.2L15.5 10" {...common} />
-      </>
-    ),
-    bag: (
-      <>
-        <path d="M5.5 8h13l-1 11.5h-11z" {...common} />
-        <path d="M9 8V6.5a3 3 0 016 0V8" {...common} />
-      </>
-    ),
-    door: (
-      <>
-        <rect x="6" y="3.5" width="12" height="17" rx="1.2" {...common} />
-        <circle cx="14.5" cy="12" r="0.9" fill="currentColor" stroke="none" />
-      </>
-    ),
-    group: (
-      <>
-        <circle cx="12" cy="8" r="3" {...common} />
-        <circle cx="5.5" cy="10.5" r="2.2" {...common} />
-        <circle cx="18.5" cy="10.5" r="2.2" {...common} />
-        <path d="M6.5 19c0-3 2.5-5.2 5.5-5.2S17.5 16 17.5 19" {...common} />
-      </>
-    ),
-  };
-
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" className="h-7 w-7 text-goldInk">
-      {paths[name]}
-    </svg>
-  );
-}
+// ICONS COME FROM THE SHARED SET (components/Icon.tsx). This band used
+// to carry its own eight hand-drawn glyphs, which was right when it was
+// the only iconographic surface on the site and wrong the moment What It
+// Does, How It Works and About grew their own. One icon language, drawn
+// once, at one stroke weight — two sets at slightly different weights is
+// exactly the kind of drift a visitor notices without being able to name.
 
 export default function DifferenceBand() {
   return (
@@ -204,7 +138,7 @@ export default function DifferenceBand() {
           <ul className="mt-9 grid grid-cols-2 gap-x-8 gap-y-9 lg:grid-cols-4">
             {DIFFERENCE.map((item) => (
               <li key={item.name}>
-                <Icon name={item.icon} />
+                <Icon name={item.icon} size={28} className="text-goldInk" />
                 <h3 className="mt-3 font-display text-base leading-snug text-forest">
                   {item.name}
                 </h3>

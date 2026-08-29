@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Display, Band } from "@/components/Display";
 import { BotanicalSprig } from "@/components/Botanical";
+import ConversionPaths from "@/components/ConversionPaths";
+import { CROSS_PLATFORM_PROMISE } from "@/lib/entitlements";
 
 // "One seamless experience. Web and app, connected." — the reference's
 // forest band, and now a true statement rather than an aspiration: the
@@ -20,6 +22,14 @@ import { BotanicalSprig } from "@/components/Botanical";
 // composition. So the third column keeps the reference's shape and says
 // what Space Mode actually is — and why it stays native (§29 requires a
 // product reason, not "the app already has it").
+//
+// THE FOUR CONVERSION PATHS LIVE HERE, and this is the right band for
+// them rather than an arbitrary one: it is the band that has just
+// finished explaining that web and app are the same product on the same
+// account. The choice between "start on the web" and "get it on your
+// phone" is only a comfortable choice once someone believes that, which
+// is why the promise sits directly above the buttons rather than in the
+// footer somewhere.
 
 const COLUMNS = [
   {
@@ -77,9 +87,15 @@ export default function ConnectedBand() {
             ))}
           </ul>
 
+          <p className="mt-8 max-w-prose border-l-2 border-gold pl-5 font-body text-base leading-relaxed text-offwhite/85">
+            {CROSS_PLATFORM_PROMISE}
+          </p>
+
+          <ConversionPaths tone="dark" showNote={false} className="mt-8" />
+
           <Link
             href="/how-it-works"
-            className="mt-10 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-offwhite transition-colors duration-400 hover:text-gold"
+            className="mt-8 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-offwhite transition-colors duration-400 hover:text-gold"
           >
             See how it works
             <span aria-hidden>&rarr;</span>
