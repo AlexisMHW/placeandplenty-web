@@ -1,11 +1,30 @@
 import { getShoppingItems, getExpenses } from "@/lib/host-data";
+import { WorkspaceHeader, EmptyState, Panel } from "@/components/host/Workspace";
 import {
-  WorkspaceHeader,
-  EmptyState,
-  Panel,
-  ReadOnlyNote,
-} from "@/components/host/Workspace";
+  AddForm,
+  Field,
+  ActionButton,
+  StatusSelect,
+} from "@/components/host/Editable";
+import StaleScoreNote from "@/components/host/StaleScoreNote";
+import {
+  addShoppingItem,
+  setShoppingStatus,
+  deleteShoppingItem,
+} from "@/lib/host-actions";
 import { formatCurrency, shoppingLabel } from "@/lib/host-format";
+
+// The shopping_status enum, in the order a host actually moves through
+// it. "not_needed" sits last because it is the exit, not a step.
+const STATUS_OPTIONS = [
+  "need",
+  "have",
+  "bought",
+  "borrow",
+  "rent",
+  "hire",
+  "not_needed",
+].map((value) => ({ value, label: shoppingLabel(value) }));
 
 // MY SHOPPING — List and Budget in one place (§9).
 //
@@ -86,8 +105,7 @@ export default async function ShoppingPage({
       {items.length === 0 ? (
         <EmptyState
           title="The list is empty."
-          body="As you plan the menu, the things you need show up here."
-          hint="Items are added in the app."
+          body="As you plan the menu, the things you need show up here — and you can add anything else yourself."
         />
       ) : (
         <>
@@ -102,9 +120,9 @@ export default async function ShoppingPage({
                   {rows.map((item) => (
                     <li
                       key={item.id}
-                      className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3"
+                      className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 py-3"
                     >
-                      <p className="font-body text-base text-forest">
+                      <p className="min-w-0 font-body text-base text-forest">
                         {item.name}
                         {item.quantity != null && (
                           <span className="text-forest/60">
@@ -113,9 +131,6 @@ export default async function ShoppingPage({
                             {item.unit ? ` ${item.unit}` : ""}
                           </span>
                         )}
-                      </p>
-                      <p className="font-body text-sm text-forest/65">
-                        {shoppingLabel(item.status)}
                         {item.estimated_cost != null && (
                           <span className="text-forest/50">
                             {" "}
@@ -123,6 +138,31 @@ export default async function ShoppingPage({
                           </span>
                         )}
                       </p>
+
+                      <div className="flex items-center gap-4">
+                        <StatusSelect
+                          label={`Status for ${item.name}`}
+                          value={item.status}
+                          options={STATUS_OPTIONS}
+                          action={setShoppingStatus.bind(
+                            null,
+                            params.id,
+                            item.id
+                          )}
+                        />
+                        <ActionButton
+                          action={deleteShoppingItem.bind(
+                            null,
+                            params.id,
+                            item.id
+                          )}
+                          confirm={`Remove ${item.name} from the list?`}
+                          title={`Remove ${item.name}`}
+                          className="font-body text-sm text-forest/55 underline decoration-sage/50 underline-offset-4 transition-colors duration-400 hover:text-error"
+                        >
+                          Remove
+                        </ActionButton>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -160,9 +200,29 @@ export default async function ShoppingPage({
             </>
           )}
 
-          <ReadOnlyNote what="shopping list and budget" />
         </>
       )}
+
+      <AddForm
+        label="Add to the list"
+        submitLabel="Add item"
+        action={addShoppingItem.bind(null, params.id)}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field name="name" label="Item" required placeholder="Ice" />
+          <Field name="category" label="Aisle" placeholder="Drinks" />
+          <Field name="quantity" label="How many" type="number" placeholder="4" />
+          <Field name="unit" label="Unit" placeholder="bags" />
+          <Field
+            name="estimated_cost"
+            label="Rough cost"
+            type="number"
+            placeholder="12.00"
+          />
+        </div>
+      </AddForm>
+
+      <StaleScoreNote />
     </div>
   );
 }

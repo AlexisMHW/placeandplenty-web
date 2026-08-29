@@ -10,10 +10,8 @@ import { usePathname } from "next/navigation";
 // describe the product identically. A host who learned the app on their
 // phone should not have to relearn where anything is.
 //
-// WHAT IS AND IS NOT HERE, per §29's core-parity rule. Everything listed
-// is a desktop-useful planning surface. Two Hub cards are deliberately
-// absent, and §29 requires a product reason rather than "the app has
-// it":
+// TEN OF THE TWELVE HUB CARDS ARE HERE. Two are deliberately absent, and
+// §29 requires a product reason rather than "the app already has it":
 //
 //   Host Mode  — it is the gathering-day surface, driven by phone
 //                notifications and used while moving around the house.
@@ -50,6 +48,19 @@ const GROUPS = [
       { label: "Who’s Bringing What", segment: "contributions" },
       { label: "My Co-Hosts", segment: "co-hosts" },
     ],
+  },
+  {
+    heading: "The look & the day",
+    items: [
+      { label: "My Style Board", segment: "style" },
+      { label: "My Music & Media", segment: "music" },
+      { label: "My Gathering Photos", segment: "photos" },
+      { label: "Find Help", segment: "find-help" },
+    ],
+  },
+  {
+    heading: "Settings",
+    items: [{ label: "Gathering details", segment: "settings" }],
   },
 ];
 

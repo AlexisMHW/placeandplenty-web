@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { getClosetItems } from "@/lib/host-data";
-import {
-  WorkspaceHeader,
-  EmptyState,
-  ReadOnlyNote,
-} from "@/components/host/Workspace";
+import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
+import { AddForm, Field, ActionButton } from "@/components/host/Editable";
+import { addClosetItem, archiveClosetItem } from "@/lib/host-actions";
 
 // MY HOSTING CLOSET (§9, food & the table) — "what you already have".
 //
@@ -47,7 +45,7 @@ export default async function ClosetPage() {
         <EmptyState
           title="Nothing in the closet yet."
           body="The Hosting Closet remembers what you own — platters, chairs, the good glasses — so a shopping list can tell you what you actually need."
-          hint="Add things in the app. If the closet is part of a plan you don't have yet, it will be empty here too."
+          hint="If the closet is part of a plan you don't have, it stays empty here too."
         />
       ) : (
         <>
@@ -92,6 +90,14 @@ export default async function ClosetPage() {
                             {item.notes}
                           </p>
                         )}
+                        <ActionButton
+                          action={archiveClosetItem.bind(null, item.id)}
+                          confirm={`Remove ${item.name} from your closet?`}
+                          title={`Remove ${item.name}`}
+                          className="mt-2 font-body text-xs text-forest/55 underline decoration-sage/50 underline-offset-4 transition-colors duration-400 hover:text-error"
+                        >
+                          I don&rsquo;t have this any more
+                        </ActionButton>
                       </li>
                     );
                   })}
@@ -100,9 +106,23 @@ export default async function ClosetPage() {
             ))}
           </div>
 
-          <ReadOnlyNote what="hosting closet" />
         </>
       )}
+
+      <AddForm
+        label="Add something you own"
+        submitLabel="Add to my closet"
+        action={addClosetItem}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field name="name" label="What is it" required placeholder="Large serving platter" />
+          <Field name="category" label="Kind of thing" placeholder="Serveware" />
+          <Field name="quantity_owned" label="How many" type="number" placeholder="2" />
+          <Field name="color" label="Colour" placeholder="White" />
+          <Field name="material" label="Material" placeholder="Stoneware" />
+          <Field name="notes" label="Where it lives" placeholder="Top of the hall cupboard" />
+        </div>
+      </AddForm>
 
       <p className="mt-10 font-body text-sm text-forest/60">
         Curious what it&rsquo;s for?{" "}

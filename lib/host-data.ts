@@ -318,3 +318,185 @@ export async function getProfile(): Promise<Profile | null> {
   if (error) throw error;
   return (data as Profile) ?? null;
 }
+
+/* ------------------------------------------------------------------ */
+/* The look & the day                                                 */
+/* ------------------------------------------------------------------ */
+
+export interface StyleBoard {
+  id: string;
+  theme: string | null;
+  palette: unknown;
+  mood_descriptors: string[] | null;
+  vision_notes: string | null;
+}
+
+export interface StyleImage {
+  id: string;
+  storage_path: string | null;
+  caption: string | null;
+}
+
+export interface StyleComponent {
+  id: string;
+  component_name: string | null;
+  component_type: string | null;
+  descriptor: string | null;
+  search_terms: string | null;
+}
+
+/**
+ * My Style Board. gathering_style is one row per gathering, so
+ * maybeSingle() is correct — a gathering with no board yet returns null
+ * rather than an empty array to interpret.
+ */
+export async function getStyleBoard(gatheringId: string): Promise<{
+  board: StyleBoard | null;
+  images: StyleImage[];
+  components: StyleComponent[];
+}> {
+  const supabase = createClient();
+
+  const [boardRes, imagesRes, componentsRes] = await Promise.all([
+    supabase
+      .from("gathering_style")
+      .select("id, theme, palette, mood_descriptors, vision_notes")
+      .eq("gathering_id", gatheringId)
+      .maybeSingle(),
+    supabase
+      .from("gathering_style_images")
+      .select("id, storage_path, caption")
+      .eq("gathering_id", gatheringId)
+      .order("display_order", { ascending: true }),
+    supabase
+      .from("gathering_style_components")
+      .select("id, component_name, component_type, descriptor, search_terms")
+      .eq("gathering_id", gatheringId),
+  ]);
+
+  if (boardRes.error) throw boardRes.error;
+
+  return {
+    board: (boardRes.data as StyleBoard) ?? null,
+    // Images and components are supporting detail: a failure to read
+    // them should not blank the board itself.
+    images: (imagesRes.data ?? []) as StyleImage[],
+    components: (componentsRes.data ?? []) as StyleComponent[],
+  };
+}
+
+export interface MusicMedia {
+  id: string;
+  music_styles: string[] | null;
+  playlist_url: string | null;
+  moments_notes: string | null;
+  explicit_allowed: boolean | null;
+  must_play_notes: string | null;
+  do_not_play_notes: string | null;
+  special_songs_notes: string | null;
+  audio_needs: string[] | null;
+  visual_needs: string[] | null;
+}
+
+export async function getMusicMedia(
+  gatheringId: string
+): Promise<MusicMedia | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("gathering_music_media")
+    .select(
+      "id, music_styles, playlist_url, moments_notes, explicit_allowed, must_play_notes, do_not_play_notes, special_songs_notes, audio_needs, visual_needs"
+    )
+    .eq("gathering_id", gatheringId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as MusicMedia) ?? null;
+}
+
+export interface SongRequest {
+  id: string;
+  song_title: string;
+  artist: string | null;
+  created_at: string;
+}
+
+/** Guest song requests for this gathering. */
+export async function getSongRequests(
+  gatheringId: string
+): Promise<SongRequest[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("guest_song_requests")
+    .select("id, song_title, artist, created_at")
+    .eq("gathering_id", gatheringId)
+    .order("created_at", { ascending: false });
+  // The table has RLS and may not grant a host read on every project
+  // state; a failure here should not take down the page.
+  if (error) return [];
+  return (data ?? []) as SongRequest[];
+}
+
+export interface GatheringPhoto {
+  id: string;
+  storage_path: string;
+  caption: string | null;
+  hidden_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+/**
+ * My Gathering Photos.
+ *
+ * NOTE ON WHAT IS AND IS NOT RETURNED. The table stores
+ * uploaded_by_guest_id, but guest_gallery_by_token deliberately does not
+ * expose contributor names to other guests — being named was never the
+ * contributor's choice. A HOST legitimately needs attribution to
+ * moderate, so the column exists; it is simply not selected here,
+ * because this surface only lists and links photos and has no moderation
+ * controls yet. Add it when moderation is built, not before.
+ */
+export async function getGatheringPhotos(
+  gatheringId: string
+): Promise<GatheringPhoto[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("gathering_photos")
+    .select("id, storage_path, caption, hidden_at, expires_at, created_at")
+    .eq("gathering_id", gatheringId)
+    .order("created_at", { ascending: false });
+  if (error) return [];
+  return (data ?? []) as GatheringPhoto[];
+}
+
+export interface HelpTask {
+  id: string;
+  title: string;
+  status: string;
+  priority: string | null;
+  due_at: string | null;
+  description: string | null;
+  assigned_to_user_id: string | null;
+  assigned_to_guest_id: string | null;
+}
+
+/**
+ * Find Help — "where would an extra pair of hands actually change the
+ * day". Backed by tasks: the ones still open and marked critical or
+ * important are precisely the ones worth handing to someone.
+ */
+export async function getHelpCandidates(
+  gatheringId: string
+): Promise<HelpTask[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select(
+      "id, title, status, priority, due_at, description, assigned_to_user_id, assigned_to_guest_id"
+    )
+    .eq("gathering_id", gatheringId)
+    .in("status", ["not_started", "in_progress", "blocked"])
+    .order("priority", { ascending: true });
+  if (error) return [];
+  return (data ?? []) as HelpTask[];
+}

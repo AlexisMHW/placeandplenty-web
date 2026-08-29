@@ -1,9 +1,7 @@
 import { getGuestBook } from "@/lib/host-data";
-import {
-  WorkspaceHeader,
-  EmptyState,
-  ReadOnlyNote,
-} from "@/components/host/Workspace";
+import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
+import { AddForm, Field } from "@/components/host/Editable";
+import { addGuestBookPerson } from "@/lib/host-actions";
 
 // MY GUEST BOOK — account-level reusable people (§10, §11).
 //
@@ -46,7 +44,6 @@ export default async function GuestBookPage() {
         <EmptyState
           title="Your guest book is empty."
           body="The people you invite get saved here, so the next gathering doesn't start from a blank list."
-          hint="People are added in the app, or as you build a guest list."
         />
       ) : (
         <>
@@ -104,9 +101,31 @@ export default async function GuestBookPage() {
             ))}
           </div>
 
-          <ReadOnlyNote what="guest book" />
         </>
       )}
+
+      <AddForm
+        label="Add someone"
+        submitLabel="Add to my guest book"
+        action={addGuestBookPerson}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field name="first_name" label="First name" required placeholder="Dana" />
+          <Field name="last_name" label="Last name" placeholder="Whitfield" />
+          <Field
+            name="household_name"
+            label="Household"
+            placeholder="The Whitfields"
+          />
+          <Field name="email" label="Email" type="email" placeholder="optional" />
+          <Field name="phone" label="Phone" placeholder="optional" />
+          <Field
+            name="dietary_notes"
+            label="Anything to remember"
+            placeholder="No shellfish"
+          />
+        </div>
+      </AddForm>
     </div>
   );
 }

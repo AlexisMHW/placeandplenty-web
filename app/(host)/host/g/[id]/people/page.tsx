@@ -1,10 +1,16 @@
 import { getGatheringGuests } from "@/lib/host-data";
-import {
-  WorkspaceHeader,
-  EmptyState,
-  ReadOnlyNote,
-} from "@/components/host/Workspace";
+import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
+import { StatusSelect } from "@/components/host/Editable";
+import { setRsvpStatus } from "@/lib/host-actions";
 import { rsvpLabel } from "@/lib/host-format";
+
+// The rsvp_status enum. A host setting this is the "they told me at
+// school pickup" case, which is how a large share of real RSVPs arrive —
+// it writes the SAME column the guest web RSVP writes, so there is one
+// answer per guest however it was given.
+const RSVP_OPTIONS = ["yes", "maybe", "no", "invited", "no_response"].map(
+  (value) => ({ value, label: rsvpLabel(value) })
+);
 
 // MY PEOPLE — the gathering guest command centre (§10).
 //
@@ -59,7 +65,7 @@ export default async function PeoplePage({
         <EmptyState
           title="No one on the list yet."
           body="Add the people you're inviting and their replies land here as they come in."
-          hint="Guests are added in the app, or pulled from My Guest Book."
+          hint="Add guests in the app, or pull them from My Guest Book."
         />
       ) : (
         <>
@@ -117,11 +123,19 @@ export default async function PeoplePage({
                               </p>
                             )}
                           </div>
-                          {g.guest?.email && (
-                            <p className="font-body text-sm text-forest/55">
-                              {g.guest.email}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-4">
+                            {g.guest?.email && (
+                              <p className="hidden font-body text-sm text-forest/55 sm:block">
+                                {g.guest.email}
+                              </p>
+                            )}
+                            <StatusSelect
+                              label={`RSVP for ${name}`}
+                              value={g.rsvp_status}
+                              options={RSVP_OPTIONS}
+                              action={setRsvpStatus.bind(null, params.id, g.id)}
+                            />
+                          </div>
                         </div>
                         {notes.length > 0 && (
                           <ul className="mt-1.5 flex flex-wrap gap-2">
@@ -143,7 +157,10 @@ export default async function PeoplePage({
             ))}
           </div>
 
-          <ReadOnlyNote what="guest list" />
+          <p className="mt-8 font-body text-sm leading-relaxed text-forest/65">
+            Setting an RSVP here writes the same record a guest&rsquo;s own
+            reply does — one answer per guest, however it reached you.
+          </p>
         </>
       )}
     </div>

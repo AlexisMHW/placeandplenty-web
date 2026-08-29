@@ -1,10 +1,27 @@
 import { getContributions, getGatheringGuests } from "@/lib/host-data";
+import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
 import {
-  WorkspaceHeader,
-  EmptyState,
-  ReadOnlyNote,
-} from "@/components/host/Workspace";
+  AddForm,
+  Field,
+  ActionButton,
+  StatusSelect,
+} from "@/components/host/Editable";
+import {
+  addContribution,
+  setContributionStatus,
+  deleteContribution,
+} from "@/lib/host-actions";
 import { contributionLabel } from "@/lib/host-format";
+
+const STATUS_OPTIONS = [
+  "needed",
+  "asked",
+  "claimed",
+  "confirmed",
+  "completed",
+  "declined",
+  "cancelled",
+].map((value) => ({ value, label: contributionLabel(value) }));
 
 // WHO'S BRINGING WHAT (§9, your people).
 //
@@ -96,7 +113,6 @@ export default async function ContributionsPage({
         <EmptyState
           title="Nothing asked for yet."
           body="Ask for what you actually need — a green vegetable, bread, ice — and guests can claim it from their invitation."
-          hint="Contributions are set up in the app."
         />
       ) : (
         <>
@@ -141,9 +157,30 @@ export default async function ContributionsPage({
                             </p>
                           )}
                         </div>
-                        <p className="font-body text-sm text-forest/65">
-                          {contributionLabel(c.status)}
-                        </p>
+                        <div className="flex items-center gap-4">
+                          <StatusSelect
+                            label={`Status for ${c.item_name}`}
+                            value={c.status}
+                            options={STATUS_OPTIONS}
+                            action={setContributionStatus.bind(
+                              null,
+                              params.id,
+                              c.id
+                            )}
+                          />
+                          <ActionButton
+                            action={deleteContribution.bind(
+                              null,
+                              params.id,
+                              c.id
+                            )}
+                            confirm={`Remove "${c.item_name}" from what you're asking for?`}
+                            title={`Remove ${c.item_name}`}
+                            className="font-body text-sm text-forest/55 underline decoration-sage/50 underline-offset-4 transition-colors duration-400 hover:text-error"
+                          >
+                            Remove
+                          </ActionButton>
+                        </div>
                       </li>
                     );
                   })}
@@ -152,9 +189,37 @@ export default async function ContributionsPage({
             ))}
           </div>
 
-          <ReadOnlyNote what="contributions" />
         </>
       )}
+
+      <AddForm
+        label="Ask for something"
+        submitLabel="Add to the list"
+        action={addContribution.bind(null, params.id)}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            name="item_name"
+            label="What you need"
+            required
+            placeholder="A green vegetable"
+          />
+          <Field name="category" label="Course" placeholder="Side" />
+          <Field name="quantity" label="How many" type="number" placeholder="1" />
+          <Field name="unit" label="Unit" placeholder="dish" />
+          <Field
+            name="notes"
+            label="Anything to say about it"
+            placeholder="For eight, please"
+            className="sm:col-span-2"
+          />
+        </div>
+      </AddForm>
+
+      <p className="mt-6 font-body text-sm leading-relaxed text-forest/65">
+        Anything left as &ldquo;still needed&rdquo; is what guests can claim
+        from their invitation.
+      </p>
     </div>
   );
 }
