@@ -14,7 +14,12 @@ list of missing production assets and intended placement."*
 The site now has **every image slot the approved references show**, built
 at the right size, in the right place, in the right aspect ratio.
 
-**48 of them have no photograph yet.** None of them is blank. Each one
+**36 image slots have no photograph yet, and 29 photographs close all of
+them** — seven shots do double duty (the four Gathering Ideas appear on
+both the homepage and /gathering-ideas; three How It Works cards can
+reuse Hub shots). Counted from the built output, not estimated.
+
+None of them is blank. Each one
 renders a designed plate — the house palette, botanical linework, and the
 subject the photograph is meant to be, set in small caps. It reads as a
 brand surface rather than as a hole, and dropping in the real image moves

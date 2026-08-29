@@ -210,8 +210,10 @@ Everything else on that page follows its reference.
 
 ## 5. PHOTOGRAPHY
 
-**48 image slots have no photograph.** Every one is built at the right
-size, ratio and position, and none is blank — each renders a designed
+**36 image slots have no photograph, and 29 photographs close all of
+them** — counted from the built output rather than estimated; seven
+shots do double duty. Every slot is built at the right size, ratio and
+position, and none is blank — each renders a designed
 plate: house palette, woven hairline field, botanical linework, and where
 the slot is large enough, the subject the photograph should be.
 
@@ -266,7 +268,7 @@ board shows a *different* candidate. See manifest §8.
 
 **Blocking a complete V1**
 
-1. **Photography** — 48 slots. The largest remaining visible gap, and the
+1. **Photography** — 36 slots, 29 photographs. The largest remaining visible gap, and the
    manifest is written to make it a shooting list rather than a project.
 2. **A payment processor** for web checkout. Everything either side is
    built.
