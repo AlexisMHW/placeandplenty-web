@@ -58,7 +58,7 @@ const CONNECTED: { name: string; icon: IconName; body: string }[] = [
   },
   {
     name: "Figure It Out",
-    icon: "sparkles",
+    icon: "sparkle",
     body: "AI-assisted planning help when you want ideas or need the pieces of the gathering to make more sense together.",
   },
   {
