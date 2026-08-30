@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import PageHero from "@/components/PageHero";
 import CtaBand from "@/components/CtaBand";
 import { Band, Display } from "@/components/Display";
-import { PROMISE } from "@/lib/brand";
 import hero from "../../../how-it-works/how-it-works-hero.png";
 import planWithConfidence from "../../../how-it-works/how-it-works-plan-with-confidence.png";
 import readyForTheDay from "../../../how-it-works/how-it-works-ready-for-the-day.png";
@@ -45,22 +43,16 @@ const STORY = [
 export default function HowItWorksPage() {
   return (
     <>
-      <PageHero
-        eyebrow="How It Works"
-        headline="From ‘people are coming’"
-        emphasisLine="to ‘come on in.’"
-        image={hero.src}
-        imageAlt="A warm, real-home Place & Plenty hosting scene showing the beginning of the hosting journey."
-        body={
-          <>
-            <p>{PROMISE}</p>
-            <p className="mt-3">
-              Place &amp; Plenty follows the way hosting actually unfolds — from the first details to gathering day — without making you rebuild the plan in five different places.
-            </p>
-          </>
-        }
-        action={
-          <div className="flex flex-wrap gap-3">
+      <section className="bg-cream">
+        <div className="mx-auto max-w-editorial px-6 py-8 md:py-10">
+          <Image
+            src={hero}
+            alt="How Place & Plenty works, from planning to gathering day."
+            className="h-auto w-full rounded-[2rem] shadow-soft"
+            priority
+            sizes="(min-width: 1200px) 1200px, 100vw"
+          />
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link href="/signup" className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90">
               Start Hosting Free
             </Link>
@@ -68,8 +60,8 @@ export default function HowItWorksPage() {
               See What It Does
             </Link>
           </div>
-        }
-      />
+        </div>
+      </section>
 
       <Band tone="cream">
         <div className="mx-auto max-w-editorial px-6 py-16 text-center md:py-20">
