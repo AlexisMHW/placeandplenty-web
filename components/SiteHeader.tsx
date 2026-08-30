@@ -107,7 +107,7 @@ export default function SiteHeader() {
 
       <div
         id="site-menu"
-        hidden={!open]
+        hidden={!open}
         className="border-t border-sage/25 bg-offwhite xl:hidden"
       >
         <nav aria-label="All pages" className="mx-auto max-w-editorial px-6 py-5">
