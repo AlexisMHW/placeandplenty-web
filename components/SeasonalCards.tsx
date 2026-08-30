@@ -46,18 +46,15 @@ export default function SeasonalCards({
                 href={card.href}
                 className="group overflow-hidden rounded-card border border-sage/30 bg-offwhite shadow-softer transition-shadow duration-400 hover:shadow-soft"
               >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <Image
-                    src={image}
-                    alt={card.imageAlt || card.headline}
-                    fill
-                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover transition-transform duration-400 group-hover:scale-[1.03]"
-                    priority={i < 2}
-                  />
-                </div>
-                <div className="border-t border-sage/25 p-5 text-center">
-                  <h3 className="font-display text-xl leading-snug text-forest">{card.headline}</h3>
+                <Image
+                  src={image}
+                  alt={card.imageAlt || card.headline}
+                  className="h-auto w-full"
+                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                  priority={i < 2}
+                />
+                <div className="border-t border-sage/25 px-5 py-5 text-center">
+                  <h3 className="min-h-[3.25rem] font-display text-xl leading-snug text-forest">{card.headline}</h3>
                   {card.deck && (
                     <p className="mt-2 font-body text-xs uppercase leading-relaxed tracking-[0.1em] text-forest/60">
                       {card.deck}
