@@ -3,119 +3,184 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import FounderBand from "@/components/FounderBand";
 import CtaBand from "@/components/CtaBand";
-import GuestManagementSection from "@/components/GuestManagementSection";
+import Photo from "@/components/Photo";
 import { Band, Display } from "@/components/Display";
-import { SplitCard } from "@/components/Cards";
 import Icon, { type IconName } from "@/components/Icon";
 import { BotanicalDivider } from "@/components/Botanical";
 import { PROMISE } from "@/lib/brand";
 
-// HOW IT WORKS, composed to `how_it_works Page.png`.
-//
-// The reference's order, and what each band is for:
-//
-//   PageHero        the split editorial opening every page shares
-//   THE PATH        five steps on a dashed line — the hosting journey
-//   ALL IN ONE      the capability grid, copy left, six split cards right
-//   GuestManagement §8's connected loop, in full
-//   FounderBand     a person stands behind this
-//   CtaBand         the close
-//
-// WHAT THE REFERENCE SHOWS THAT PRODUCT TRUTH OVERRIDES. Its grid says
-// "My Shopping List", which §9 renamed to My Shopping, and it gives
-// Guest Communications a card of its own, which §9 forbids as a
-// standalone Hub card. Composition, pacing and weight come from the
-// reference; names come from lib/features.ts and the reconciliation.
-//
-// WHY FIVE STEPS AND NOT THREE. §8 warns specifically against "generic
-// Step 1 / Step 2 / Step 3 SaaS filler without real hosting context".
-// The reference draws five and they are the actual arc of hosting
-// something — invite, plan, organise, gather, remember. The fifth step
-// matters most for the product: the gathering does not end when everyone
-// leaves, and My Guest Book is the reason someone comes back.
-
 export const metadata: Metadata = {
   title: "How It Works",
   description:
-    "The simple path from invite to incredible. How Place & Plenty handles everything between “people are coming” and the doorbell ringing.",
+    "From people are coming to come on in. See how Place & Plenty supports the real hosting journey from first details through gathering day.",
   alternates: { canonical: "/how-it-works" },
   openGraph: { url: "/how-it-works" },
 };
 
-const STEPS: {
+type JourneyStage = {
+  number: string;
   icon: IconName;
+  eyebrow: string;
   title: string;
   body: string;
-}[] = [
+  bullets: string[];
+  primaryCaption: string;
+  secondaryCaption?: string;
+  tone: "cream" | "parchment";
+};
+
+const JOURNEY: JourneyStage[] = [
   {
-    icon: "envelope",
-    title: "Invite",
-    body: "Send invitations — ours or your own — add your people, and collect RSVPs in one place.",
-  },
-  {
-    icon: "table",
-    title: "Plan",
-    body: "Build your menu, set the vibe, and work out quantities. Figure It Out For Me does the heavy lifting.",
-  },
-  {
+    number: "01",
     icon: "check",
-    title: "Organise",
-    body: "Shopping, prep, contributions and your HostReady score — all in one place instead of five.",
+    eyebrow: "Start the gathering",
+    title: "Give the gathering a place to begin.",
+    body: "Start with the basics — what you’re hosting, when it’s happening, where people are coming, and roughly how many people you expect. Place & Plenty turns those first details into the gathering everything else connects to.",
+    bullets: [
+      "Date, time and location",
+      "Gathering type and basic details",
+      "Starting guest count",
+      "One gathering record across web and mobile",
+    ],
+    primaryCaption:
+      "Place & Plenty Create Gathering screen with date, time, location and guest-count fields",
+    tone: "cream",
   },
   {
+    number: "02",
+    icon: "envelope",
+    eyebrow: "Bring in your people",
+    title: "Invite them your way. Keep the people part connected.",
+    body: "Send a Place & Plenty invitation or bring the invitation you already made. RSVPs feed the same gathering, My People keeps this guest list organised, and the people you host repeatedly can live in My Guest Book for next time.",
+    bullets: [
+      "Invitations — ours or yours",
+      "RSVP tracking",
+      "My People for this gathering",
+      "Reusable people in My Guest Book",
+    ],
+    primaryCaption:
+      "Place & Plenty Invitations screen on web and mobile with RSVP summary",
+    secondaryCaption:
+      "My People guest list showing RSVP status, household details and guest notes",
+    tone: "parchment",
+  },
+  {
+    number: "03",
+    icon: "table",
+    eyebrow: "Plan the food",
+    title: "Build the menu around the people you’re actually feeding.",
+    body: "Plan dishes in My Table, account for serving counts and dietary needs, and use Figure It Out For Me when you want help making the pieces make sense together.",
+    bullets: [
+      "My Table menu planning",
+      "Serving counts",
+      "Allergies and dietary needs",
+      "Figure It Out For Me guidance",
+    ],
+    primaryCaption:
+      "My Table screen showing menu sections, dishes, serving counts and dietary notes",
+    tone: "cream",
+  },
+  {
+    number: "04",
+    icon: "gift",
+    eyebrow: "Share the load",
+    title: "Let people help without running the gathering from a group chat.",
+    body: "Track what guests are bringing, see what is still uncovered, and invite co-hosts when someone else needs to help manage the plan — without losing one source of truth.",
+    bullets: [
+      "Who’s Bringing What",
+      "Contribution status",
+      "My Co-Hosts",
+      "Shared visibility without duplicate planning",
+    ],
+    primaryCaption:
+      "Who’s Bringing What screen showing guests, contribution items and status without food-photo thumbnails",
+    secondaryCaption:
+      "My Co-Hosts screen showing invited co-hosts and shared gathering access",
+    tone: "parchment",
+  },
+  {
+    number: "05",
+    icon: "cart",
+    eyebrow: "Know what you need",
+    title: "Shop from the plan — and from what you already own.",
+    body: "My Shopping gathers what the gathering needs. My Hosting Closet helps you check the glasses, platters, linens, serving pieces and décor already in your house before another thing goes into the cart.",
+    bullets: [
+      "My Shopping list and spending",
+      "Budget visibility",
+      "My Hosting Closet inventory",
+      "Fewer duplicate purchases",
+    ],
+    primaryCaption:
+      "My Shopping screen with organised grocery and supply categories plus budget context",
+    secondaryCaption:
+      "My Hosting Closet screen beside a real hosting cabinet with matching glassware, linens and serving pieces",
+    tone: "cream",
+  },
+  {
+    number: "06",
+    icon: "grid",
+    eyebrow: "Get the space ready",
+    title: "Make the house work for the gathering you’re actually having.",
+    body: "Use Space Mode to think through layout and flow, My Style Board to keep the look together, and Find Help when the gathering needs something outside your own four walls.",
+    bullets: [
+      "Space Mode",
+      "My Style Board",
+      "Find Help",
+      "Real-life flow, seating and setup",
+    ],
+    primaryCaption:
+      "Space Mode screen using a real room photo to suggest gathering-specific layout and flow",
+    secondaryCaption:
+      "Candid gathering scene with guests naturally clustering around a kitchen island while nearby seating remains open",
+    tone: "parchment",
+  },
+  {
+    number: "07",
     icon: "heart",
-    title: "Gather",
-    body: "Feel ready, present, and actually able to enjoy the people you invited.",
+    eyebrow: "Get ready for the day",
+    title: "Know what matters now — and what can wait.",
+    body: "HostReady shows how prepared the gathering is. Next Up surfaces the most useful actions. When gathering day arrives, Host Mode helps simplify the view so you can stop managing everything at once.",
+    bullets: [
+      "HostReady score",
+      "Next Up priorities",
+      "Weather contingency when relevant",
+      "Host Mode for gathering day",
+    ],
+    primaryCaption:
+      "Gathering Overview with HostReady score, Next Up actions and current gathering details",
+    secondaryCaption:
+      "Host Mode screen showing a simplified gathering-day view",
+    tone: "cream",
   },
   {
+    number: "08",
     icon: "book",
-    title: "Remember",
-    body: "Keep the photos, the notes and the people — so next time doesn’t start from scratch.",
+    eyebrow: "Gather — and keep what matters",
+    title: "The gathering ends. Your hosting life doesn’t start over.",
+    body: "Keep gathering photos, keep the people you host most often, and use Gather Again when the next version of a gathering deserves a head start instead of a blank page.",
+    bullets: [
+      "My Gathering Photos",
+      "My Guest Book",
+      "Gather Again",
+      "A history that makes the next gathering easier",
+    ],
+    primaryCaption:
+      "My Gathering Photos and My Guest Book screens showing saved gathering memories and reusable people",
+    secondaryCaption:
+      "Gather Again action creating a new gathering from a previous one without repurposing the original",
+    tone: "parchment",
   },
 ];
 
-const CAPABILITIES: {
-  icon: IconName;
-  title: string;
-  body: string;
-  photoCaption: string;
-}[] = [
-  {
-    icon: "rsvp",
-    title: "Invitations & RSVPs",
-    body: "Send, track and manage replies. Or bring the invitation you already made and track RSVPs against it.",
-    photoCaption: "A phone showing an invitation, held at a set table",
-  },
-  {
-    icon: "people",
-    title: "My People",
-    body: "Your guest command centre for this gathering — who’s coming, who they’re coming with, what they can’t eat, and every message you’ve sent them.",
-    photoCaption: "Guests around a kitchen island, mid-conversation",
-  },
-  {
-    icon: "cart",
-    title: "My Shopping",
-    body: "One list with everything you need — food, supplies, the ice you always forget — with the budget beside it.",
-    photoCaption: "A basket of groceries on a counter, warm daylight",
-  },
-  {
-    icon: "gift",
-    title: "Who’s Bringing What",
-    body: "Coordinate contributions and potluck items without running the whole thing out of a group chat.",
-    photoCaption: "A guest arriving at the door holding a covered dish",
-  },
-  {
-    icon: "book",
-    title: "My Guest Book",
-    body: "The people you host most often, kept in one place, so you never rebuild the same guest list twice.",
-    photoCaption: "An open notebook and pen beside a candle",
-  },
-  {
-    icon: "grid",
-    title: "…and the rest of it",
-    body: "Menus, the space, the music, your hosting closet, co-hosts, photos, and the readiness score that ties it together.",
-    photoCaption: "A table mid-setup — plates stacked, greenery, candles unlit",
-  },
+const JOURNEY_LABELS = [
+  "Start",
+  "People",
+  "Food",
+  "Share",
+  "Shop",
+  "Space",
+  "Ready",
+  "Remember",
 ];
 
 export default function HowItWorksPage() {
@@ -123,122 +188,173 @@ export default function HowItWorksPage() {
     <>
       <PageHero
         eyebrow="How It Works"
-        headline="Home hosting."
-        emphasisLine="Made simple."
-        imageCaption="A long table set for dinner at home — candles lit, greenery down the middle"
+        headline="From ‘people are coming’"
+        emphasisLine="to ‘come on in.’"
+        imageCaption="A relaxed real-home gathering table being finished before guests arrive — warm light, everyday serving pieces, not formal"
         image={null}
         body={
           <>
             <p>{PROMISE}</p>
             <p className="mt-3">
-              We help you plan, stay organised, and actually enjoy your own
-              gathering.
+              Place &amp; Plenty follows the way hosting actually unfolds —
+              people, food, shopping, space, help, readiness, and the day
+              itself — without making you rebuild the plan in five different
+              places.
             </p>
           </>
         }
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90"
+            >
+              Start Hosting Free
+            </Link>
+            <Link
+              href="/what-it-does"
+              className="inline-flex items-center justify-center rounded-lg border border-forest/25 bg-offwhite/70 px-6 py-3 font-body text-sm font-semibold text-forest transition-colors duration-300 hover:bg-offwhite"
+            >
+              See What It Does
+            </Link>
+          </div>
+        }
       />
 
-      {/* ---- the path ------------------------------------------------ */}
       <Band tone="parchment">
-        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
-          <Display
-            emphasis="incredible"
-            className="text-center text-3xl leading-tight text-forest md:text-[2.4rem]"
-          >
-            The simple path from invite to incredible.
-          </Display>
-
-          <ol className="relative mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6">
-            {/* The dashed connector, desktop only. It is decoration: the
-                list is already ordered, and a rule that only exists at one
-                breakpoint must not carry meaning. */}
-            <span
-              aria-hidden
-              className="absolute left-0 right-0 top-7 hidden border-t border-dashed border-sage/50 lg:block"
-            />
-
-            {STEPS.map((step, i) => (
-              <li key={step.title} className="relative text-center">
-                <span className="relative z-10 inline-flex h-14 w-14 items-center justify-center rounded-full bg-forest text-offwhite ring-8 ring-parchment">
-                  <Icon name={step.icon} size={22} />
+        <div className="mx-auto max-w-editorial px-6 py-12 md:py-14">
+          <p className="text-center font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/55">
+            The hosting journey
+          </p>
+          <ol className="mt-7 grid grid-cols-4 gap-x-3 gap-y-6 md:grid-cols-8 md:gap-4">
+            {JOURNEY_LABELS.map((label, i) => (
+              <li key={label} className="text-center">
+                <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-sage/30 bg-offwhite font-display text-sm text-forest shadow-softer">
+                  {i + 1}
                 </span>
-                <h3 className="mt-5 font-display text-lg text-forest">
-                  {i + 1}. {step.title}
-                </h3>
-                <p className="mx-auto mt-2 max-w-[16rem] font-body text-sm leading-relaxed text-forest/70">
-                  {step.body}
-                </p>
+                <span className="mt-2 block font-body text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-forest/65">
+                  {label}
+                </span>
               </li>
             ))}
           </ol>
         </div>
       </Band>
 
-      {/* ---- everything in one place --------------------------------- */}
-      <Band tone="cream">
-        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:gap-14">
-            <div className="lg:sticky lg:top-28 lg:self-start">
-              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
-                P&amp;P brings it all together
-              </p>
-              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.3rem]">
-                Everything you need.
-              </Display>
-              <p className="font-display text-3xl italic leading-tight text-sage md:text-[2.3rem]">
-                All in one place.
-              </p>
-              <p className="mt-6 max-w-prose font-body text-base leading-relaxed text-forest/75">
-                From the first invitation to the last thank you, Place &amp;
-                Plenty keeps the details organised so you can spend the evening
-                on what you actually invited people for.
-              </p>
-              <Link
-                href="/what-it-does"
-                className="mt-7 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
-              >
-                Explore What It Does
-              </Link>
+      <section aria-label="How Place and Plenty follows the hosting journey">
+        {JOURNEY.map((stage, index) => {
+          const reverse = index % 2 === 1;
+          const ground = stage.tone === "cream" ? "bg-cream" : "bg-parchment";
+
+          return (
+            <div key={stage.number} className={ground}>
+              <div className="mx-auto grid max-w-editorial gap-10 px-6 py-16 md:py-20 lg:grid-cols-2 lg:items-center lg:gap-16">
+                <div className={reverse ? "lg:order-2" : ""}>
+                  <div className="flex items-center gap-3">
+                    <span className="font-display text-sm text-gold">{stage.number}</span>
+                    <Icon name={stage.icon} size={19} className="text-forest/65" />
+                    <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.22em] text-forest/60">
+                      {stage.eyebrow}
+                    </p>
+                  </div>
+
+                  <Display
+                    as="h2"
+                    className="mt-5 text-3xl leading-tight text-forest md:text-[2.5rem]"
+                  >
+                    {stage.title}
+                  </Display>
+
+                  <p className="mt-5 max-w-prose font-body text-base leading-relaxed text-forest/75">
+                    {stage.body}
+                  </p>
+
+                  <ul className="mt-7 grid gap-3 sm:grid-cols-2">
+                    {stage.bullets.map((bullet) => (
+                      <li
+                        key={bullet}
+                        className="flex items-start gap-2.5 font-body text-sm leading-relaxed text-forest/70"
+                      >
+                        <span className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-gold" />
+                        {bullet}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {stage.number === "02" && (
+                    <div className="mt-8 rounded-2xl border border-sage/25 bg-offwhite/70 p-5 shadow-softer">
+                      <p className="font-display text-xl leading-snug text-forest">
+                        Got your own invitations? Bring them over. Yeah, we
+                        handle that too.
+                      </p>
+                      <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">
+                        Place &amp; Plenty begins with the gathering — not with
+                        forcing you to remake an invitation you already love.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className={reverse ? "lg:order-1" : ""}>
+                  <div className="relative">
+                    <Photo
+                      src={null}
+                      alt={null}
+                      caption={stage.primaryCaption}
+                      tone={index % 2 === 0 ? "forest" : "sage"}
+                      className="aspect-[4/3] w-full overflow-hidden rounded-3xl shadow-soft"
+                      sizes="(min-width: 1024px) 46vw, 100vw"
+                    />
+
+                    {stage.secondaryCaption && (
+                      <Photo
+                        src={null}
+                        alt={null}
+                        caption={stage.secondaryCaption}
+                        tone="sage"
+                        compact
+                        className="absolute -bottom-7 right-3 hidden aspect-[4/3] w-[42%] overflow-hidden rounded-2xl border-4 border-offwhite shadow-soft md:block"
+                        sizes="22vw"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {index < JOURNEY.length - 1 && (
+                <div className="mx-auto max-w-editorial px-6">
+                  <BotanicalDivider />
+                </div>
+              )}
             </div>
+          );
+        })}
+      </section>
 
-            <ul className="grid gap-4 sm:grid-cols-2">
-              {CAPABILITIES.map((c) => (
-                <li key={c.title}>
-                  <SplitCard
-                    icon={c.icon}
-                    title={c.title}
-                    body={c.body}
-                    photoCaption={c.photoCaption}
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <BotanicalDivider className="mt-14" />
-
-          <p className="mt-8 text-center">
-            <Link
-              href="/what-it-does"
-              className="font-body text-sm font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4 transition-colors duration-400 hover:text-sage"
-            >
-              See everything Place &amp; Plenty can do{" "}
-              <span aria-hidden>&rarr;</span>
-            </Link>
+      <Band tone="cream">
+        <div className="mx-auto max-w-editorial px-6 py-16 text-center md:py-20">
+          <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
+            Want the feature-by-feature view?
           </p>
+          <Display className="mx-auto mt-4 max-w-3xl text-3xl leading-tight text-forest md:text-[2.5rem]">
+            How It Works follows the gathering. What It Does shows you the
+            whole toolkit.
+          </Display>
+          <Link
+            href="/what-it-does"
+            className="mt-7 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90"
+          >
+            Explore What It Does
+          </Link>
         </div>
       </Band>
-
-      {/* §8 requires the connected loop and the invitation line here, in
-          full rather than as a mention. */}
-      <GuestManagementSection />
 
       <FounderBand />
 
       <CtaBand
-        headline="Ready to host"
-        emphasisLine="with more ease?"
-        body="Create your account and plan your next gathering in the browser. Nothing to download, nothing to install."
+        headline="From ‘people are coming’"
+        emphasisLine="to ‘come on in.’"
+        body="Start free in the browser, keep the whole gathering connected, and bring the app with you when it matters."
       />
     </>
   );
