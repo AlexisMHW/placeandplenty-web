@@ -5,26 +5,23 @@ import { Display, Ornament } from "@/components/Display";
 import { BotanicalSprig } from "@/components/Botanical";
 import type { Homepage } from "@/lib/tina-content";
 import { TAGLINE, PROMISE } from "@/lib/brand";
+import homepageHero from "../homepage/hero-fall-gathering.png.png";
 
 const FALLBACK = {
   eyebrow: "For the gatherers and the planners",
-  image: "/images/hero-tabletop.jpg",
   imageAlt:
-    "A table set for dinner at home — green and gold plates, blush napkins, greenery down the middle.",
+    "A warm candlelit fall gathering table in a real home, set for people to arrive.",
 };
 
 export default function SeasonalHero({ content }: { content: Homepage }) {
   const headline = content.heroHeadline || TAGLINE;
   const subhead = content.heroSubhead || PROMISE;
-  const image = content.heroImage || FALLBACK.image;
-  const imageAlt = content.heroImage
-    ? content.heroImageAlt || ""
-    : FALLBACK.imageAlt;
+  const imageAlt = content.heroImageAlt || FALLBACK.imageAlt;
 
   return (
     <section className="relative isolate overflow-hidden bg-forest">
       <Image
-        src={image}
+        src={homepageHero}
         alt={imageAlt}
         fill
         sizes="100vw"
