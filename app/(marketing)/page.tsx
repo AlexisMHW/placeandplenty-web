@@ -30,9 +30,9 @@ export default async function HomePage() {
   );
 
   const railPosts =
-    content.featuredArticles.length > 0
-      ? content.featuredArticles
-      : allPosts.slice(0, 3);
+    content.featuredArticles.length >= 4
+      ? content.featuredArticles.slice(0, 4)
+      : allPosts.slice(0, 4);
 
   const cards =
     content.seasonalCards.length > 0
