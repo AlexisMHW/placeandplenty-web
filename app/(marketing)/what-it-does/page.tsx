@@ -97,45 +97,69 @@ export default function WhatItDoesPage() {
   return (
     <>
       <section className="bg-cream">
-        <div className="mx-auto max-w-editorial px-6 py-20 text-center md:py-28">
-          <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">What It Does</p>
-          <Display as="h1" emphasis="one place" className="mx-auto mt-5 max-w-4xl text-4xl leading-tight text-forest sm:text-5xl md:text-6xl">
+        <div className="mx-auto max-w-editorial px-6 py-20 text-center md:py-24">
+          <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
+            What It Does
+          </p>
+          <Display
+            as="h1"
+            emphasis="one place"
+            className="mx-auto mt-5 max-w-4xl text-4xl leading-tight text-forest sm:text-5xl md:text-6xl"
+          >
             Everything you need. All in one place.
           </Display>
           <p className="mx-auto mt-6 max-w-2xl font-body text-lg leading-relaxed text-forest/75">
             Place &amp; Plenty keeps the real moving pieces of home hosting connected — from the people and the food to the shopping, space, invitations and gathering day.
           </p>
-          <Link href="#features" className="mt-8 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90">
+          <Link
+            href="#features"
+            className="mt-8 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90"
+          >
             Explore the Features
           </Link>
         </div>
       </section>
 
       <Band tone="parchment" id="features">
-        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
+        <div className="mx-auto max-w-[88rem] px-5 py-14 sm:px-6 md:py-18">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">The toolkit</p>
-            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">The places your gathering lives.</Display>
-            <p className="mt-4 font-body text-base leading-relaxed text-forest/70">Each feature has a job. Together, they keep you from rebuilding the same gathering in five different places.</p>
+            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
+              The toolkit
+            </p>
+            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">
+              The places your gathering lives.
+            </Display>
+            <p className="mt-4 font-body text-base leading-relaxed text-forest/70">
+              Each feature has a job. Together, they keep you from rebuilding the same gathering in five different places.
+            </p>
           </div>
 
-          <div className="mt-14 space-y-8 md:space-y-10">
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map((feature) => (
-              <article key={feature.number} className="overflow-hidden rounded-[2rem] border border-sage/20 bg-offwhite shadow-softer">
+              <article
+                key={feature.number}
+                className="overflow-hidden rounded-2xl border border-sage/20 bg-offwhite shadow-softer"
+              >
                 {feature.image ? (
                   <Image
                     src={feature.image}
                     alt={`${feature.name} Place & Plenty feature card`}
                     className="h-auto w-full"
-                    sizes="(min-width: 1200px) 1200px, 100vw"
+                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                     priority={feature.number === "01"}
                   />
                 ) : (
-                  <div className="flex aspect-[16/10] w-full items-center justify-center bg-gradient-to-br from-cream via-parchment to-sage/20 px-6 text-center">
+                  <div className="flex aspect-[16/10] w-full items-center justify-center bg-gradient-to-br from-cream via-parchment to-sage/20 px-4 text-center">
                     <div>
-                      <p className="font-body text-xs font-bold uppercase tracking-[0.22em] text-gold">{feature.number} / 13</p>
-                      <h2 className="mt-4 font-display text-3xl text-forest md:text-5xl">{feature.name}</h2>
-                      <p className="mt-4 font-body text-sm uppercase tracking-[0.14em] text-forest/50">Final visual pending</p>
+                      <p className="font-body text-[0.65rem] font-bold uppercase tracking-[0.2em] text-gold">
+                        {feature.number} / 13
+                      </p>
+                      <h2 className="mt-3 font-display text-xl leading-tight text-forest sm:text-2xl">
+                        {feature.name}
+                      </h2>
+                      <p className="mt-3 font-body text-[0.65rem] uppercase tracking-[0.12em] text-forest/45">
+                        Final visual pending
+                      </p>
                     </div>
                   </div>
                 )}
@@ -149,9 +173,15 @@ export default function WhatItDoesPage() {
         <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-14">
             <div>
-              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">Everything Works Together</p>
-              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">The useful parts that connect the whole plan.</Display>
-              <p className="mt-5 font-body text-base leading-relaxed text-forest/75">These are not extra photo cards. They are the intelligence, continuity and utility that work across the rest of Place &amp; Plenty.</p>
+              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
+                Everything Works Together
+              </p>
+              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">
+                The useful parts that connect the whole plan.
+              </Display>
+              <p className="mt-5 font-body text-base leading-relaxed text-forest/75">
+                These are not extra photo cards. They are the intelligence, continuity and utility that work across the rest of Place &amp; Plenty.
+              </p>
             </div>
 
             <ul className="grid gap-4 sm:grid-cols-2">
@@ -175,9 +205,15 @@ export default function WhatItDoesPage() {
               <Icon name="phone" size={40} />
             </div>
             <div>
-              <h2 className="font-display text-2xl leading-snug text-forest md:text-[1.75rem]">One account. Web + mobile.</h2>
-              <p className="mt-4 max-w-3xl font-body text-base leading-relaxed text-forest/75">{CROSS_PLATFORM_PROMISE}</p>
-              <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-forest/65">Host Mode and Space Mode stay naturally phone-first because one belongs with you on gathering day and the other begins with your camera. The rest of the plan stays connected around them.</p>
+              <h2 className="font-display text-2xl leading-snug text-forest md:text-[1.75rem]">
+                One account. Web + mobile.
+              </h2>
+              <p className="mt-4 max-w-3xl font-body text-base leading-relaxed text-forest/75">
+                {CROSS_PLATFORM_PROMISE}
+              </p>
+              <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-forest/65">
+                Host Mode and Space Mode stay naturally phone-first because one belongs with you on gathering day and the other begins with your camera. The rest of the plan stays connected around them.
+              </p>
             </div>
           </div>
         </div>
