@@ -29,18 +29,19 @@ export default function DifferenceBand() {
       <div className="relative mx-auto max-w-editorial px-6 py-16 md:py-20">
         <div className="max-w-3xl">
           <p className="font-body text-xs font-bold uppercase tracking-[0.22em] text-forest/65">
-            More than a planning checklist
+            The Place & Plenty difference
           </p>
           <Display
-            emphasis="together"
+            emphasis="real life"
             className="mt-4 text-3xl leading-tight text-forest md:text-[2.65rem]"
           >
-            The useful part is what Place & Plenty remembers together.
+            The hosting platform built for real life.
           </Display>
           <p className="mt-5 max-w-2xl font-body text-lg leading-relaxed text-forest/80">
-            Your menu, guests, shopping, contributions, what you already own,
-            and what still needs doing are not separate little lists. They work
-            together around one gathering.
+            Place & Plenty brings the moving pieces of hosting together — your
+            people, menu, shopping, contributions, what you already own, and what
+            still needs doing — so you can focus on the gathering instead of the
+            scramble.
           </p>
         </div>
 
