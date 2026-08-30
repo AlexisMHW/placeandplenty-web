@@ -48,7 +48,7 @@ const FEATURES: Feature[] = [
 const CONNECTED: { name: string; icon: IconName; body: string }[] = [
   {
     name: "HostReady Score",
-    icon: "check",
+    icon: "gauge",
     body: "A live view of how prepared your gathering is, based on what has been decided and what is still open.",
   },
   {
@@ -68,7 +68,7 @@ const CONNECTED: { name: string; icon: IconName; body: string }[] = [
   },
   {
     name: "Weather Contingency",
-    icon: "weather",
+    icon: "sun",
     body: "Keeps an eye on the gathering context so an outdoor plan can have a backup before the weather becomes the emergency.",
   },
   {
@@ -78,12 +78,12 @@ const CONNECTED: { name: string; icon: IconName; body: string }[] = [
   },
   {
     name: "Gather Again",
-    icon: "refresh",
+    icon: "arrow",
     body: "Starts a new gathering from a previous one without repurposing the original gathering or erasing its history.",
   },
   {
     name: "Guest Communications",
-    icon: "message",
+    icon: "chat",
     body: "Keeps gathering updates connected to the people who need them instead of scattering the conversation across unrelated threads.",
   },
   {
@@ -123,9 +123,13 @@ export default function WhatItDoesPage() {
             {FEATURES.map((feature) => (
               <article key={feature.number} className="overflow-hidden rounded-[2rem] border border-sage/20 bg-offwhite shadow-softer">
                 {feature.image ? (
-                  <div className="relative aspect-[16/10] w-full">
-                    <Image src={feature.image} alt={`${feature.name} Place & Plenty feature card`} fill className="object-cover" sizes="(min-width: 1200px) 1200px, 100vw" />
-                  </div>
+                  <Image
+                    src={feature.image}
+                    alt={`${feature.name} Place & Plenty feature card`}
+                    className="h-auto w-full"
+                    sizes="(min-width: 1200px) 1200px, 100vw"
+                    priority={feature.number === "01"}
+                  />
                 ) : (
                   <div className="flex aspect-[16/10] w-full items-center justify-center bg-gradient-to-br from-cream via-parchment to-sage/20 px-6 text-center">
                     <div>
