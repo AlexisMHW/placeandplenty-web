@@ -1,167 +1,161 @@
 import type { Metadata } from "next";
+import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
-import PageHero from "@/components/PageHero";
-import CtaBand from "@/components/CtaBand";
-import FounderBand from "@/components/FounderBand";
-import GuestManagementSection from "@/components/GuestManagementSection";
 import { Band, Display } from "@/components/Display";
-import { SplitCard } from "@/components/Cards";
-import Icon from "@/components/Icon";
-import { HOSTING_HUB, SYSTEM_CAPABILITIES } from "@/lib/features";
+import Icon, { type IconName } from "@/components/Icon";
 import { CROSS_PLATFORM_PROMISE } from "@/lib/entitlements";
-
-// WHAT IT DOES, composed to `What_it_does.png`.
-//
-//   PageHero        split opening, phone in the photograph
-//   THE TOOLS       the twelve-card Hub as a 4-across grid of split cards
-//   AROUND THE HUB  the four system capabilities, presented separately
-//   GuestManagement the guest-management advantage band, in full
-//   FounderBand
-//   CtaBand
-//
-// THE CARD COMPOSITION IS THE REFERENCE'S. Icon and copy on the left of
-// each card, a photograph filling the right ~38%, cards on parchment
-// with a hairline border and a soft lift, four across at desktop. That
-// is copied closely because it is what makes twelve cards legible at a
-// glance instead of reading as a wall.
-//
-// THE CARD CONTENT IS NOT THE REFERENCE'S, and this is the single most
-// important correction on the page. The reference's twelve are: My
-// Table, My People, My Shopping List, Who's Bringing What, My Hosting
-// Closet, My Music & Media, My Style Board, My Invitations, My Co-Hosts,
-// Host Mode, My Guest Book, And So Much More.
-//
-// §9 and §32 rule out four of those outright — My Invitations and My
-// Guest Book are not Hub cards, "My Shopping List" is now My Shopping,
-// and "And So Much More" is a filler tile standing where a real card
-// belongs. The approved twelve are in lib/features.ts and six of them
-// (Space Mode, Find Help, My Gathering Photos among them) do not appear
-// in the reference at all.
-//
-// So: the reference's grid, the reconciliation's cards. §9's three
-// groups are kept as row headings rather than flattened, because the
-// grouping IS the architecture — food, people, the day — and a flat
-// twelve is exactly the undifferentiated grid §12 warns against.
+import myTable from "../../../what-it-does/what-it-does-01-my-table.png";
+import hostingCloset from "../../../what-it-does/what-it-does-02-my-hosting-closet.png";
+import coHosts from "../../../what-it-does/what-it-does-03-my-co-hosts.png";
+import myPeople from "../../../what-it-does/what-it-does-04-my-people.png";
+import musicMedia from "../../../what-it-does/what-it-does-05-my-music-media.png";
+import hostMode from "../../../what-it-does/what-it-does-06-host-mode.png";
+import myShopping from "../../../what-it-does/what-it-does-07-my-shopping.png";
+import styleBoard from "../../../what-it-does/what-it-does-08-my-style-board.png";
+import guestBook from "../../../what-it-does/what-it-does-09-my-guest-book.png";
+import invitations from "../../../what-it-does/what-it-does-11-my-invitations.png";
 
 export const metadata: Metadata = {
   title: "What It Does",
   description:
-    "The twelve places to put a gathering, plus the readiness score, the plan and the people who carry over. Everything Place & Plenty holds between “people are coming” and the doorbell.",
+    "See the Place & Plenty home-hosting toolkit — the people, food, shopping, space, invitations, gathering day and everything that keeps the plan connected.",
   alternates: { canonical: "/what-it-does" },
   openGraph: { url: "/what-it-does" },
 };
 
+type Feature = {
+  number: string;
+  name: string;
+  image?: StaticImageData;
+};
+
+const FEATURES: Feature[] = [
+  { number: "01", name: "My Table", image: myTable },
+  { number: "02", name: "My Hosting Closet", image: hostingCloset },
+  { number: "03", name: "My Co-Hosts", image: coHosts },
+  { number: "04", name: "My People", image: myPeople },
+  { number: "05", name: "My Music & Media", image: musicMedia },
+  { number: "06", name: "Host Mode", image: hostMode },
+  { number: "07", name: "My Shopping", image: myShopping },
+  { number: "08", name: "My Style Board", image: styleBoard },
+  { number: "09", name: "My Guest Book", image: guestBook },
+  { number: "10", name: "Who’s Bringing What" },
+  { number: "11", name: "My Invitations", image: invitations },
+  { number: "12", name: "Space Mode" },
+  { number: "13", name: "My Gathering Photos" },
+];
+
+const CONNECTED: { name: string; icon: IconName; body: string }[] = [
+  {
+    name: "HostReady Score",
+    icon: "check",
+    body: "A live view of how prepared your gathering is, based on what has been decided and what is still open.",
+  },
+  {
+    name: "Next Up",
+    icon: "arrow",
+    body: "Surfaces the next useful things to handle instead of asking you to stare at the whole plan at once.",
+  },
+  {
+    name: "Figure It Out",
+    icon: "sparkles",
+    body: "AI-assisted planning help when you want ideas or need the pieces of the gathering to make more sense together.",
+  },
+  {
+    name: "Find Help",
+    icon: "search",
+    body: "A practical path to the outside help a gathering may need, from rentals and food to childcare, entertainment and other services.",
+  },
+  {
+    name: "Weather Contingency",
+    icon: "weather",
+    body: "Keeps an eye on the gathering context so an outdoor plan can have a backup before the weather becomes the emergency.",
+  },
+  {
+    name: "Budget inside My Shopping",
+    icon: "cart",
+    body: "Keeps spending context close to the list so the shopping plan and the money do not become two separate systems.",
+  },
+  {
+    name: "Gather Again",
+    icon: "refresh",
+    body: "Starts a new gathering from a previous one without repurposing the original gathering or erasing its history.",
+  },
+  {
+    name: "Guest Communications",
+    icon: "message",
+    body: "Keeps gathering updates connected to the people who need them instead of scattering the conversation across unrelated threads.",
+  },
+  {
+    name: "RSVP Tracking",
+    icon: "rsvp",
+    body: "Responses stay tied to the gathering and feed the people side of the plan as guests reply.",
+  },
+];
+
 export default function WhatItDoesPage() {
   return (
     <>
-      <PageHero
-        eyebrow="What It Does"
-        headline="Everything you need."
-        emphasisLine="All in one place."
-        image={null}
-        imageCaption="A host at home holding a phone showing her HostReady score, flowers and candles behind"
-        body={
-          <>
-            <p>Place &amp; Plenty is your home hosting companion.</p>
-            <p className="mt-3">
-              From the first invitation to the last thank you, it holds the
-              whole run-up in one place — the food, the people, the shopping,
-              the space, and the question of whether you are actually ready.
-            </p>
-          </>
-        }
-        action={
-          <Link
-            href="#the-hub"
-            className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
-          >
+      <section className="bg-cream">
+        <div className="mx-auto max-w-editorial px-6 py-20 text-center md:py-28">
+          <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">What It Does</p>
+          <Display as="h1" emphasis="one place" className="mx-auto mt-5 max-w-4xl text-4xl leading-tight text-forest sm:text-5xl md:text-6xl">
+            Everything you need. All in one place.
+          </Display>
+          <p className="mx-auto mt-6 max-w-2xl font-body text-lg leading-relaxed text-forest/75">
+            Place &amp; Plenty keeps the real moving pieces of home hosting connected — from the people and the food to the shopping, space, invitations and gathering day.
+          </p>
+          <Link href="#features" className="mt-8 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90">
             Explore the Features
           </Link>
-        }
-      />
+        </div>
+      </section>
 
-      {/* ---- the twelve-card Hub ------------------------------------- */}
-      <Band tone="parchment" id="the-hub">
+      <Band tone="parchment" id="features">
         <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
-          <Display
-            emphasis="put-together"
-            className="text-center text-3xl leading-tight text-forest md:text-[2.4rem]"
-          >
-            The tools behind a put-together get-together.
-          </Display>
-          <p className="mx-auto mt-4 max-w-2xl text-center font-body text-base leading-relaxed text-forest/70">
-            Every gathering opens onto the same hub, grouped the way hosting
-            actually splits up: the food, the people, and the day itself.
-          </p>
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">The toolkit</p>
+            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">The places your gathering lives.</Display>
+            <p className="mt-4 font-body text-base leading-relaxed text-forest/70">Each feature has a job. Together, they keep you from rebuilding the same gathering in five different places.</p>
+          </div>
 
-          <div className="mt-14 space-y-12">
-            {HOSTING_HUB.map((group) => (
-              <section key={group.heading}>
-                <h3 className="flex items-center gap-4 font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/65">
-                  <span aria-hidden className="h-px w-8 flex-shrink-0 bg-gold" />
-                  {group.heading}
-                </h3>
-
-                {/* THREE ACROSS, NOT FOUR. §9's groups are 3 / 3 / 6, and
-                    a four-column grid left an empty cell at the end of the
-                    first two rows — a hole where a card should be, which
-                    reads as something missing rather than as a group that
-                    happens to have three members. Three columns fills both
-                    small groups exactly and wraps the third into 3 + 3. */}
-                <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {group.features.map((f) => (
-                    <li key={f.name}>
-                      <SplitCard
-                        icon={f.icon}
-                        title={f.name}
-                        body={f.body}
-                        image={f.image}
-                        photoCaption={f.photo}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </section>
+          <div className="mt-14 space-y-8 md:space-y-10">
+            {FEATURES.map((feature) => (
+              <article key={feature.number} className="overflow-hidden rounded-[2rem] border border-sage/20 bg-offwhite shadow-softer">
+                {feature.image ? (
+                  <div className="relative aspect-[16/10] w-full">
+                    <Image src={feature.image} alt={`${feature.name} Place & Plenty feature card`} fill className="object-cover" sizes="(min-width: 1200px) 1200px, 100vw" />
+                  </div>
+                ) : (
+                  <div className="flex aspect-[16/10] w-full items-center justify-center bg-gradient-to-br from-cream via-parchment to-sage/20 px-6 text-center">
+                    <div>
+                      <p className="font-body text-xs font-bold uppercase tracking-[0.22em] text-gold">{feature.number} / 13</p>
+                      <h2 className="mt-4 font-display text-3xl text-forest md:text-5xl">{feature.name}</h2>
+                      <p className="mt-4 font-body text-sm uppercase tracking-[0.14em] text-forest/50">Final visual pending</p>
+                    </div>
+                  </div>
+                )}
+              </article>
             ))}
           </div>
         </div>
       </Band>
 
-      {/* ---- what sits around the Hub -------------------------------- */}
       <Band tone="cream">
         <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-14">
+          <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-14">
             <div>
-              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
-                Around the hub
-              </p>
-              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.2rem]">
-                Four things that work
-              </Display>
-              <p className="font-display text-3xl italic leading-tight text-sage md:text-[2.2rem]">
-                across every gathering.
-              </p>
-              <p className="mt-6 max-w-prose font-body text-base leading-relaxed text-forest/75">
-                These are not cards inside a gathering. They sit above it — the
-                plan that gets written for you, the score that tells you where
-                you stand, the next thing to do, and the people who carry over
-                from one gathering to the next.
-              </p>
+              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">Everything Works Together</p>
+              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">The useful parts that connect the whole plan.</Display>
+              <p className="mt-5 font-body text-base leading-relaxed text-forest/75">These are not extra photo cards. They are the intelligence, continuity and utility that work across the rest of Place &amp; Plenty.</p>
             </div>
 
             <ul className="grid gap-4 sm:grid-cols-2">
-              {SYSTEM_CAPABILITIES.map((f) => (
-                <li
-                  key={f.name}
-                  className="rounded-2xl border border-sage/25 bg-offwhite p-6"
-                >
-                  <Icon name={f.icon} size={26} className="text-forest/70" />
-                  <h3 className="mt-4 font-display text-lg text-forest">
-                    {f.name}
-                  </h3>
-                  <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">
-                    {f.body}
-                  </p>
+              {CONNECTED.map((item) => (
+                <li key={item.name} className="rounded-2xl border border-sage/25 bg-offwhite p-6 shadow-softer">
+                  <Icon name={item.icon} size={24} className="text-forest/70" />
+                  <h3 className="mt-4 font-display text-xl text-forest">{item.name}</h3>
+                  <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">{item.body}</p>
                 </li>
               ))}
             </ul>
@@ -169,9 +163,6 @@ export default function WhatItDoesPage() {
         </div>
       </Band>
 
-      <GuestManagementSection />
-
-      {/* ---- one account, wherever you use it ------------------------ */}
       <Band tone="sage">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <div className="grid items-center gap-8 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
@@ -180,33 +171,13 @@ export default function WhatItDoesPage() {
               <Icon name="phone" size={40} />
             </div>
             <div>
-              <h2 className="font-display text-2xl leading-snug text-forest md:text-[1.75rem]">
-                All of it works in your browser, and all of it works on your
-                phone.
-              </h2>
-              <p className="mt-4 max-w-3xl font-body text-base leading-relaxed text-forest/75">
-                {CROSS_PLATFORM_PROMISE}
-              </p>
-              <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-forest/65">
-                Two things stay phone-first for a reason rather than an
-                oversight: <strong className="font-semibold">Host Mode</strong>{" "}
-                runs on gathering-day notifications while you are moving around
-                the house, and{" "}
-                <strong className="font-semibold">Space Mode</strong> starts
-                with a camera pointed at a room. Everything else is here.
-              </p>
+              <h2 className="font-display text-2xl leading-snug text-forest md:text-[1.75rem]">One account. Web + mobile.</h2>
+              <p className="mt-4 max-w-3xl font-body text-base leading-relaxed text-forest/75">{CROSS_PLATFORM_PROMISE}</p>
+              <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-forest/65">Host Mode and Space Mode stay naturally phone-first because one belongs with you on gathering day and the other begins with your camera. The rest of the plan stays connected around them.</p>
             </div>
           </div>
         </div>
       </Band>
-
-      <FounderBand tone="forest" />
-
-      <CtaBand
-        headline="Ready to host"
-        emphasisLine="with more ease?"
-        body="Start free in your browser. Add a Gathering Pass or Plus whenever you want more — on the web or in the app, it lands on the same account."
-      />
     </>
   );
 }
