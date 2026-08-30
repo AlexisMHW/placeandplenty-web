@@ -31,19 +31,19 @@ export default function FeaturedArticles({ posts }: { posts: Post[] }) {
         </div>
 
         {posts.length > 0 && (
-          <ul className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
-            {posts.slice(0, 3).map((post) => {
+          <ul className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {posts.slice(0, 4).map((post) => {
               const image = ARTICLE_IMAGES[post._sys.filename];
               return (
                 <li key={post._sys.filename}>
-                  <Link href={`/coordinated-host/${post._sys.filename}`} className="group flex h-full overflow-hidden rounded-card border border-sage/30 bg-parchment transition-shadow duration-400 hover:shadow-softer">
-                    <div className="relative w-[38%] flex-shrink-0 overflow-hidden bg-forest">
+                  <Link href={`/coordinated-host/${post._sys.filename}`} className="group flex h-full flex-col overflow-hidden rounded-card border border-sage/30 bg-parchment transition-shadow duration-400 hover:shadow-softer">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-forest">
                       {image ? (
-                        <Image src={image} alt={post.featuredImageAlt || post.title} fill sizes="(min-width: 1024px) 12vw, 38vw" className="object-cover transition-transform duration-400 group-hover:scale-[1.04]" />
+                        <Image src={image} alt={post.featuredImageAlt || post.title} fill sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition-transform duration-400 group-hover:scale-[1.04]" />
                       ) : null}
                     </div>
 
-                    <div className="flex min-w-0 flex-1 flex-col justify-center p-5">
+                    <div className="flex flex-1 flex-col justify-center p-5">
                       {post.franchise && post.franchise !== "None" && (
                         <p className="font-body text-[0.65rem] font-bold uppercase tracking-[0.16em] text-forest/60">
                           {post.franchise}
