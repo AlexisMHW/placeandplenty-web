@@ -9,6 +9,7 @@ import { PRIMARY_PATH } from "@/lib/conversion";
 
 const DESKTOP_NAV = [
   ...PRIMARY_NAV,
+  SECONDARY_NAV.find((item) => item.href === "/show-us-how-you-gather")!,
   SECONDARY_NAV.find((item) => item.href === "/about")!,
 ];
 
@@ -35,14 +36,14 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-sage/25 bg-offwhite/95 backdrop-blur">
-      <div className="mx-auto flex max-w-[86rem] items-center justify-between gap-5 px-6 py-3.5">
+      <div className="mx-auto flex max-w-[92rem] items-center justify-between gap-4 px-5 py-3.5">
         <Link href="/" className="flex-shrink-0" aria-label="Place & Plenty, home">
           <Wordmark />
         </Link>
 
         <nav
           aria-label="Primary"
-          className="hidden items-center gap-5 font-body text-[0.86rem] text-forest/80 xl:flex"
+          className="hidden items-center gap-4 font-body text-[0.8rem] text-forest/80 xl:flex"
         >
           {DESKTOP_NAV.map((item) => (
             <Link
@@ -56,16 +57,16 @@ export default function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex flex-shrink-0 items-center gap-3">
+        <div className="flex flex-shrink-0 items-center gap-2">
           <Link
             href="/login"
-            className="hidden rounded-lg border border-forest/30 px-4 py-2 font-body text-sm text-forest transition-colors duration-400 hover:bg-forest/5 sm:block"
+            className="hidden rounded-lg border border-forest/30 px-3.5 py-2 font-body text-sm text-forest transition-colors duration-400 hover:bg-forest/5 sm:block"
           >
             Log In
           </Link>
           <Link
             href={PRIMARY_PATH.href}
-            className="hidden rounded-lg bg-forest px-4 py-2 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90 sm:block"
+            className="hidden rounded-lg bg-forest px-3.5 py-2 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90 sm:block"
           >
             Start Free
           </Link>
