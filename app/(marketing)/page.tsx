@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import SeasonalHero from "@/components/SeasonalHero";
 import SeasonalCards from "@/components/SeasonalCards";
 import DifferenceBand from "@/components/DifferenceBand";
-import ConnectedBand from "@/components/ConnectedBand";
 import FeaturedArticles from "@/components/FeaturedArticles";
 import CommunityTeaser from "@/components/CommunityTeaser";
 import FounderBand from "@/components/FounderBand";
-import CtaBand from "@/components/CtaBand";
 import { getHomepage, getAllPosts, getAllGatheringIdeas } from "@/lib/tina-content";
 import { OrganizationSchema } from "@/components/StructuredData";
 
@@ -47,9 +45,7 @@ export default async function HomePage() {
       <SeasonalCards ideas={cards} reasonLine={content.reasonLine} />
 
       <DifferenceBand />
-      <ConnectedBand />
 
-      <FeaturedArticles posts={railPosts} />
       <CommunityTeaser stories={content.featuredCommunityStories} />
 
       <FounderBand
@@ -60,11 +56,7 @@ export default async function HomePage() {
         tone="cream"
       />
 
-      <CtaBand
-        headline="Host your next gathering"
-        emphasisLine="with Place & Plenty."
-        body="Start free in your browser. Bring the people, the menu, the lists and the little things into one place — then spend less time scrambling and more time gathering."
-      />
+      <FeaturedArticles posts={railPosts} />
     </>
   );
 }
