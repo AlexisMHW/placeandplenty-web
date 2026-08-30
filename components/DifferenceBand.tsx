@@ -3,86 +3,20 @@ import { Display, Band } from "@/components/Display";
 import { BotanicalSprig } from "@/components/Botanical";
 import Icon, { type IconName } from "@/components/Icon";
 
-// THE PLACE & PLENTY DIFFERENCE — the reference's two-column band, and
-// the site's competitive positioning in one place.
-//
-// §3 calls guest management "a core positioning advantage, not a minor
-// feature section", and §28 lists the invitation line as needing to be
-// visible positioning rather than FAQ copy. The reference agrees: it
-// gives this the widest, most detailed treatment on the page, with the
-// invitation line set in italic serif as a statement.
-//
-// THREE NAMES IN THE REFERENCE ARE STALE AND ARE NOT COPIED.
-//
-//   "My Shopping List"  -> My Shopping. §9/§32 forbid the old name; the
-//                          list and the budget are one card now.
-//   Two sign-in buttons -> one. There is one Supabase identity; a
-//                          separate "Host Login" would imply two.
-//   Space Mode as "your guests stay in the app" -> that describes the
-//                          guest experience, not Space Mode, which is
-//                          about how a ROOM works. Not repeated.
-//
-// The reference's own instruction is that it governs look, weight,
-// composition, photography, botanicals and pacing — product truth comes
-// from the reconciliation document. This band follows its composition
-// exactly and its labels only where they are still correct.
-//
-// GROUPING: the eight are shown as one grid because this is a
-// DIFFERENTIATOR list, not a Hosting Hub diagram. §9's rule against
-// mixing Hub cards with system-level capabilities governs /what-it-does,
-// where the page claims to describe the product's architecture. Here the
-// claim is "this is what sets us apart", and HostReady belongs in that
-// sentence next to My People.
+const GUEST_FLOW: { name: string; icon: IconName }[] = [
+  { name: "Invitations", icon: "envelope" },
+  { name: "RSVPs", icon: "rsvp" },
+  { name: "My People", icon: "people" },
+  { name: "Who’s Bringing What", icon: "dish" },
+  { name: "My Guest Book", icon: "book" },
+];
 
-const DIFFERENCE = [
-  {
-    name: "Invitations",
-    body: "Use ours, or bring artwork you already made.",
-    icon: "envelope" as IconName,
-  },
-  {
-    name: "RSVPs",
-    body: "Track responses, plus ones, and dietary needs.",
-    icon: "rsvp" as IconName,
-  },
-  {
-    name: "Who’s Bringing What",
-    body: "Contributions that keep the table balanced.",
-    icon: "dish" as IconName,
-  },
-  {
-    name: "My Guest Book",
-    body: "The people you host most, kept for next time.",
-    icon: "book" as IconName,
-  },
-  {
-    name: "HostReady™",
-    body: "A readiness score for every gathering.",
-    icon: "gauge" as IconName,
-  },
-  {
-    name: "My Shopping",
-    body: "Lists and budget together, so you buy less.",
-    icon: "cart" as IconName,
-  },
-  {
-    name: "My Hosting Closet",
-    body: "What you already own, and where it lives.",
-    icon: "closet" as IconName,
-  },
-  {
-    name: "My People",
-    body: "Guests, contacts and notes in one place.",
-    icon: "people" as IconName,
-  },
-] as const;
-
-// ICONS COME FROM THE SHARED SET (components/Icon.tsx). This band used
-// to carry its own eight hand-drawn glyphs, which was right when it was
-// the only iconographic surface on the site and wrong the moment What It
-// Does, How It Works and About grew their own. One icon language, drawn
-// once, at one stroke weight — two sets at slightly different weights is
-// exactly the kind of drift a visitor notices without being able to name.
+const CLOSET_EXAMPLES = [
+  "12 wine glasses",
+  "2 serving platters",
+  "Cloth napkins",
+  "Large beverage dispenser",
+];
 
 export default function DifferenceBand() {
   return (
@@ -92,62 +26,132 @@ export default function DifferenceBand() {
         size={220}
       />
 
-      <div className="relative mx-auto grid max-w-editorial gap-12 px-6 py-16 md:py-20 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] lg:gap-16">
-        <div>
-          <Display className="text-3xl leading-tight text-forest md:text-4xl">
-            The hosting platform built for real life.
-          </Display>
-
-          <p className="mt-5 max-w-prose font-body text-lg leading-relaxed text-forest/80">
-            Place &amp; Plenty brings everything together so you can focus on
-            what matters — your people.
+      <div className="relative mx-auto max-w-editorial px-6 py-16 md:py-20">
+        <div className="max-w-3xl">
+          <p className="font-body text-xs font-bold uppercase tracking-[0.22em] text-forest/65">
+            More than a planning checklist
           </p>
-
-          {/* The invitation line. §10: prominent enough to function as
-              competitive positioning, not hidden FAQ copy. Italic serif,
-              as the reference sets it. */}
-          <div className="mt-10 border-l-2 border-gold pl-6">
-            <p className="font-display text-2xl italic leading-snug text-forest">
-              Got your own invitations? Bring them over. Yeah, we handle that
-              too.
-            </p>
-            <p className="mt-4 max-w-prose font-body text-base leading-relaxed text-forest/75">
-              Made it on Canva. Bought it on Etsy. Sent it on Paperless Post.
-              Printed and posted it three weeks ago. Bring the artwork, or
-              bring nothing at all — Place &amp; Plenty handles everything
-              after it.
-            </p>
-          </div>
-
-          <Link
-            href="/what-it-does"
-            className="mt-8 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
+          <Display
+            emphasis="together"
+            className="mt-4 text-3xl leading-tight text-forest md:text-[2.65rem]"
           >
-            See everything it does
-            <span aria-hidden>&rarr;</span>
-          </Link>
+            The useful part is what Place & Plenty remembers together.
+          </Display>
+          <p className="mt-5 max-w-2xl font-body text-lg leading-relaxed text-forest/80">
+            Your menu, guests, shopping, contributions, what you already own,
+            and what still needs doing are not separate little lists. They work
+            together around one gathering.
+          </p>
         </div>
 
-        <div>
-          <p className="flex items-center gap-4 font-body text-xs font-bold uppercase tracking-[0.22em] text-forest/70">
-            <span aria-hidden className="h-px flex-1 bg-gold/60" />
-            The Place &amp; Plenty difference
-            <span aria-hidden className="h-px flex-1 bg-gold/60" />
-          </p>
-
-          <ul className="mt-9 grid grid-cols-2 gap-x-8 gap-y-9 lg:grid-cols-4">
-            {DIFFERENCE.map((item) => (
-              <li key={item.name}>
-                <Icon name={item.icon} size={28} className="text-goldInk" />
-                <h3 className="mt-3 font-display text-base leading-snug text-forest">
-                  {item.name}
-                </h3>
-                <p className="mt-1.5 font-body text-sm leading-relaxed text-forest/70">
-                  {item.body}
+        <div className="mt-12 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+          <section className="rounded-2xl border border-sage/30 bg-offwhite p-7 shadow-softer md:p-9">
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.18em] text-forest/60">
+                  Your people, connected
                 </p>
-              </li>
-            ))}
-          </ul>
+                <h3 className="mt-2 font-display text-2xl leading-snug text-forest">
+                  An invitation is the beginning, not the whole product.
+                </h3>
+              </div>
+              <span className="hidden h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-forest text-offwhite sm:inline-flex">
+                <Icon name="people" size={23} />
+              </span>
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center gap-2.5">
+              {GUEST_FLOW.map((item, index) => (
+                <div key={item.name} className="contents">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-sage/30 bg-parchment px-3.5 py-2 font-body text-sm font-semibold text-forest">
+                    <Icon name={item.icon} size={16} className="text-goldInk" />
+                    {item.name}
+                  </span>
+                  {index < GUEST_FLOW.length - 1 && (
+                    <span aria-hidden className="font-body text-sm text-forest/40">
+                      →
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-8 font-body text-base leading-relaxed text-forest/75">
+              Invite them, know who is coming, keep track of what they are
+              bringing, and save the people you host most for next time. No
+              rebuilding the same guest list every time people come over.
+            </p>
+
+            <div className="mt-8 border-l-2 border-gold pl-5">
+              <p className="font-display text-xl italic leading-snug text-forest">
+                Got your own invitations? Bring them over. Yeah, we handle that
+                too.
+              </p>
+            </div>
+          </section>
+
+          <section className="relative overflow-hidden rounded-2xl bg-forest p-7 text-offwhite shadow-lift md:p-9">
+            <BotanicalSprig
+              className="pointer-events-none absolute -right-5 -top-4 text-offwhite/12"
+              size={145}
+            />
+
+            <div className="relative">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-offwhite/10 text-gold">
+                  <Icon name="closet" size={22} />
+                </span>
+                <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.18em] text-gold">
+                  My Hosting Closet
+                </p>
+              </div>
+
+              <Display
+                emphasis="again"
+                className="mt-5 text-3xl leading-tight text-offwhite"
+              >
+                Stop buying things you already own again.
+              </Display>
+
+              <p className="mt-4 font-body text-base leading-relaxed text-offwhite/80">
+                Keep the serving pieces, linens, glasses, decor and hosting
+                basics you already have in one place — then let your gathering
+                plan start with what is already in your house.
+              </p>
+
+              <div className="mt-7 rounded-xl border border-offwhite/15 bg-offwhite/7 p-5">
+                <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-offwhite/60">
+                  Already in your Hosting Closet
+                </p>
+                <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  {CLOSET_EXAMPLES.map((item) => (
+                    <li key={item} className="flex items-center gap-2.5 font-body text-sm text-offwhite/90">
+                      <Icon name="check" size={16} className="flex-shrink-0 text-gold" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <p className="mt-6 font-display text-xl italic leading-snug text-gold">
+                The smartest shopping list sometimes starts with: don’t buy it.
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-2xl font-body text-sm leading-relaxed text-forest/70">
+            HostReady™ can see the bigger picture too — what is decided, what is
+            still open, and what deserves your attention next.
+          </p>
+          <Link
+            href="/what-it-does"
+            className="inline-flex flex-shrink-0 items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
+          >
+            See what it does
+            <span aria-hidden>→</span>
+          </Link>
         </div>
       </div>
     </Band>
