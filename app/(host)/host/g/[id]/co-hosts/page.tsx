@@ -1,20 +1,26 @@
-import { getCoHosts } from "@/lib/host-data";
-import {
-  WorkspaceHeader,
-  EmptyState,
-  ReadOnlyNote,
-} from "@/components/host/Workspace";
+import { notFound } from "next/navigation";
+import { getUser } from "@/lib/supabase-server";
+import { getCoHosts, getGathering } from "@/lib/host-data";
+import { WorkspaceHeader } from "@/components/host/Workspace";
+import CoHostManager from "@/components/host/CoHostManager";
 
 // MY CO-HOSTS (§9, your people) — "share the load".
 //
 // gathering_member_status is: invited | accepted | declined | removed.
-// Removed members are filtered out rather than shown greyed: they are
-// history, and a list of people who used to have access is not something
-// a host is trying to read on this screen.
+//
+// ONLY THE OWNER MANAGES MEMBERSHIP, and that is enforced in the
+// database rather than here: create_gathering_invitation() and
+// remove_gathering_member() both raise 'not authorized' for anyone who
+// is not the owner. The page still checks, because a co-host should see
+// who else is helping without being shown controls that would refuse
+// them — an affordance that always fails is worse than no affordance.
 //
 // ONLY THE EMAIL AND THE STATE ARE SHOWN. gathering_members carries an
 // acceptance_token_hash, which is a credential — it is not selected in
 // lib/host-data.ts at all, so it cannot reach the page even by accident.
+// The RAW token is different: it exists for one server-action round trip
+// after an invitation is minted, is handed to the owner who minted it,
+// and is never stored on the web side.
 
 export const metadata = { title: "My Co-Hosts" };
 
@@ -29,11 +35,16 @@ export default async function CoHostsPage({
 }: {
   params: { id: string };
 }) {
-  const members = (await getCoHosts(params.id)).filter(
-    (m) => m.status !== "removed"
-  );
+  const [gathering, members, user] = await Promise.all([
+    getGathering(params.id),
+    getCoHosts(params.id),
+    getUser(),
+  ]);
 
-  const accepted = members.filter((m) => m.status === "accepted");
+  if (!gathering) notFound();
+
+  const isOwner = Boolean(user && user.id === gathering.owner_user_id);
+  const isArchived = gathering.status === "archived";
 
   return (
     <div>
@@ -42,39 +53,59 @@ export default async function CoHostsPage({
         description="The people helping you pull this off."
       />
 
-      {members.length === 0 ? (
-        <EmptyState
-          title="You’re running this one solo."
-          body="Invite a co-host and they can see the plan, the list and the guests — and change them."
-          hint="Co-hosts are invited in the app."
-        />
+      {isOwner && !isArchived ? (
+        <CoHostManager gatheringId={params.id} members={members} />
       ) : (
-        <>
-          <p className="mt-6 font-body text-base text-forest/75">
-            {accepted.length === 0
-              ? "No one has accepted yet."
-              : `${accepted.length} ${accepted.length === 1 ? "person is" : "people are"} sharing this gathering with you.`}
-          </p>
-
-          <ul className="mt-6 divide-y divide-sage/20">
-            {members.map((m) => (
-              <li
-                key={m.id}
-                className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3.5"
-              >
-                <p className="font-body text-base text-forest">
-                  {m.invited_email}
-                </p>
-                <p className="font-body text-sm text-forest/65">
-                  {LABELS[m.status] ?? m.status}
-                </p>
-              </li>
-            ))}
-          </ul>
-
-          <ReadOnlyNote what="co-hosts" />
-        </>
+        <ReadOnlyList members={members} isArchived={isArchived} />
       )}
     </div>
+  );
+}
+
+/**
+ * What a co-host sees, and what anyone sees on an archived gathering.
+ *
+ * An archived gathering rejects every write at the database level, so
+ * offering an invite form there would be a form that cannot succeed.
+ */
+function ReadOnlyList({
+  members,
+  isArchived,
+}: {
+  members: Awaited<ReturnType<typeof getCoHosts>>;
+  isArchived: boolean;
+}) {
+  const active = members.filter((m) => m.status !== "removed");
+
+  return (
+    <>
+      {active.length === 0 ? (
+        <p className="mt-6 font-body text-base text-forest/75">
+          No one else is helping with this one.
+        </p>
+      ) : (
+        <ul className="mt-6 divide-y divide-sage/20">
+          {active.map((m) => (
+            <li
+              key={m.id}
+              className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3.5"
+            >
+              <p className="font-body text-base text-forest">
+                {m.invited_email}
+              </p>
+              <p className="font-body text-sm text-forest/65">
+                {LABELS[m.status] ?? m.status}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <p className="mt-6 rounded-card border border-sage/30 bg-cream px-4 py-3 font-body text-sm leading-relaxed text-forest/75">
+        {isArchived
+          ? "This gathering is archived, so who can reach it is settled. Unarchive it in the app to change that."
+          : "Only the host who created this gathering can invite or remove co-hosts."}
+      </p>
+    </>
   );
 }

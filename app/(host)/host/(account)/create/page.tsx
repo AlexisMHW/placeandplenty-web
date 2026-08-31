@@ -1,24 +1,44 @@
 import Link from "next/link";
-import CreateGatheringForm from "@/components/host/CreateGatheringForm";
-import { WorkspaceHeader } from "@/components/host/Workspace";
+import Icon from "@/components/Icon";
+import CreateGatheringWizard from "@/components/host/CreateGatheringWizard";
 
-export const metadata = { title: "Create Gathering" };
+// /host/create — the same eight questions the app asks, on a desktop.
+//
+// It sits inside the (account) group so it wears the account shell: this
+// is something a host does BEFORE they have a gathering, so a gathering
+// workspace has nothing to wrap it in.
+//
+// The page itself is deliberately thin. Everything about the flow — the
+// order of the questions, when a draft is first written, the invitation
+// decision, and the single guarded draft → active transition at the end
+// — lives in the wizard component and in lib/host-actions.ts, where it
+// can be read next to the rules it is reconciled against.
+
+export const metadata = { title: "Start a gathering" };
 
 export default function CreateGatheringPage() {
   return (
-    <div className="mx-auto max-w-[72rem] px-6 py-10 md:py-14">
-      <WorkspaceHeader
-        title="Create a Gathering"
-        description="Start here or in the app. It is the same account, the same gathering, and the same plan either way."
+    <div className="mx-auto max-w-5xl px-1 py-2">
+      <Link
+        href="/host"
+        className="inline-flex items-center gap-2 font-body text-sm text-forest/70 transition-colors duration-400 hover:text-forest"
       >
-        <Link
-          href="/host"
-          className="font-body text-sm font-semibold text-forest/70 underline decoration-gold decoration-2 underline-offset-4 hover:text-forest"
-        >
-          Back to My Gatherings
-        </Link>
-      </WorkspaceHeader>
-      <CreateGatheringForm />
+        <span aria-hidden className="rotate-180">
+          <Icon name="arrow" size={15} />
+        </span>
+        My Host Hub
+      </Link>
+
+      <h1 className="mt-5 font-display text-4xl leading-tight text-forest">
+        Start a gathering
+      </h1>
+      <p className="mt-3 max-w-prose font-body leading-relaxed text-forest/75">
+        Eight questions, the same ones the app asks. Answer what you know —
+        the rest can wait, and nothing is shared with anyone until you
+        finish.
+      </p>
+
+      <CreateGatheringWizard />
     </div>
   );
 }

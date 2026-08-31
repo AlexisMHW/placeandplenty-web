@@ -111,7 +111,7 @@ function StatTile({
 export default async function HostHomePage() {
   const [gatherings, guestBook, closet, profile] = await Promise.all([
     getMyGatherings(),
-    getGuestBook().catch(() => []),
+    getGuestBook().catch(() => ({ saved: [], history: [] })),
     getClosetItems().catch(() => []),
     getProfile(),
   ]);
@@ -247,10 +247,17 @@ export default async function HostHomePage() {
             </ul>
           )}
 
-          <p className="mt-5 rounded-xl border border-dashed border-sage/45 px-5 py-4 text-center font-body text-sm text-forest/70">
-            Gatherings are created in the Place &amp; Plenty app, and appear
-            here the moment they are.
-          </p>
+          {/* This used to say gatherings are created in the app and
+              appear here. They can now be created here too, on the same
+              eight questions and into the same row, so the note has
+              become the door. */}
+          <Link
+            href="/host/create"
+            className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-dashed border-sage/55 px-5 py-4 text-center font-body text-sm font-semibold text-forest transition-colors duration-400 hover:border-forest hover:bg-forest/5"
+          >
+            <Icon name="plus" size={16} />
+            Start a gathering
+          </Link>
 
           {past.length > 0 && (
             <details className="mt-5">
@@ -343,9 +350,9 @@ export default async function HostHomePage() {
             <StatTile
               icon="book"
               label="My Guest Book"
-              value={String(guestBook.length)}
+              value={String(guestBook.saved.length)}
               sub={
-                guestBook.length === 1
+                guestBook.saved.length === 1
                   ? "person you host"
                   : "people you host most"
               }

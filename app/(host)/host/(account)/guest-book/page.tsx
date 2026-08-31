@@ -1,12 +1,12 @@
 import { getGuestBook } from "@/lib/host-data";
 import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
 import { AddForm, Field } from "@/components/host/Editable";
+import GuestBookEntry from "@/components/host/GuestBookEntry";
 import { addGuestBookPerson } from "@/lib/host-actions";
 
 // MY GUEST BOOK — account-level reusable people (§10, §11).
 //
-// THE DISTINCTION THIS PAGE EXISTS TO MAKE, and which §10 says must be
-// obvious:
+// THE DISTINCTION THIS PAGE EXISTS TO MAKE:
 //
 //   My Guest Book = reusable people, across every gathering
 //   My People     = the people for ONE gathering
@@ -16,22 +16,24 @@ import { addGuestBookPerson } from "@/lib/host-actions";
 // a guest to a gathering with an RSVP. That is what makes "you don't
 // rebuild the same list every time" true rather than a claim.
 //
-// `is_saved` separates people the host deliberately kept from those
-// created in passing for a single gathering. Both are shown, because
-// hiding the unsaved ones would make the book look emptier than the
-// account really is — but the saved ones lead.
+// WHAT CHANGED, AND WHY. This page used to render every `guests` row as
+// a Guest Book entry, with the unsaved ones under a heading reading
+// "Added for a gathering". That made the book look larger than it is and
+// blurred the one thing it means. My Guest Book is the people the host
+// DELIBERATELY KEPT — `is_saved = true` — and that is now the page.
+//
+// THE UNSAVED ROWS ARE STILL HERE, and deleting them was never an
+// option: `gathering_guests` references them, and they carry the RSVP,
+// the dietary note and the contribution for a real gathering that
+// happened. They live under "Previously invited", clearly separate,
+// described as history rather than as saved entries, and each one can be
+// promoted into the book with a single press. Nothing is hidden and
+// nothing is misrepresented.
 
 export const metadata = { title: "My Guest Book" };
 
 export default async function GuestBookPage() {
-  const guests = await getGuestBook();
-  const saved = guests.filter((g) => g.is_saved);
-  const occasional = guests.filter((g) => !g.is_saved);
-
-  const sections = [
-    { key: "saved", heading: "Saved", rows: saved },
-    { key: "occasional", heading: "Added for a gathering", rows: occasional },
-  ].filter((s) => s.rows.length > 0);
+  const { saved, history } = await getGuestBook();
 
   return (
     <div className="mx-auto max-w-[70rem] px-6 py-10 md:py-14">
@@ -40,67 +42,28 @@ export default async function GuestBookPage() {
         description="Keep the people you host most often in one place."
       />
 
-      {guests.length === 0 ? (
+      {saved.length === 0 ? (
         <EmptyState
           title="Your guest book is empty."
-          body="The people you invite get saved here, so the next gathering doesn't start from a blank list."
+          body="The people you keep here come back on every guest list, so the next gathering doesn't start from a blank page."
+          hint={
+            history.length > 0
+              ? "Someone you've already invited is below — keep them and they'll be here next time."
+              : undefined
+          }
         />
       ) : (
         <>
           <p className="mt-6 font-body text-base text-forest/75">
-            {guests.length} {guests.length === 1 ? "person" : "people"} you can
+            {saved.length} {saved.length === 1 ? "person" : "people"} you can
             invite again without typing anything twice.
           </p>
 
-          <div className="mt-8 space-y-10">
-            {sections.map((section) => (
-              <section key={section.key}>
-                <h3 className="font-body text-xs font-bold uppercase tracking-[0.18em] text-forest/70">
-                  {section.heading} · {section.rows.length}
-                </h3>
-                <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {section.rows.map((g) => {
-                    const notes = [g.dietary_notes, g.allergy_notes].filter(
-                      Boolean
-                    );
-                    return (
-                      <li
-                        key={g.id}
-                        className="rounded-card border border-sage/30 bg-parchment p-4"
-                      >
-                        <p className="font-display text-lg text-forest">
-                          {[g.first_name, g.last_name].filter(Boolean).join(" ")}
-                        </p>
-                        {g.household_name && (
-                          <p className="font-body text-sm text-forest/65">
-                            {g.household_name}
-                          </p>
-                        )}
-                        {g.email && (
-                          <p className="mt-1 font-body text-sm text-forest/55">
-                            {g.email}
-                          </p>
-                        )}
-                        {notes.length > 0 && (
-                          <ul className="mt-2 flex flex-wrap gap-1.5">
-                            {notes.map((n, i) => (
-                              <li
-                                key={i}
-                                className="rounded-full border border-sage/40 px-2.5 py-0.5 font-body text-xs text-forest/70"
-                              >
-                                {n}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
+          <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {saved.map((g) => (
+              <GuestBookEntry key={g.id} guest={g} saved />
             ))}
-          </div>
-
+          </ul>
         </>
       )}
 
@@ -119,13 +82,34 @@ export default async function GuestBookPage() {
           />
           <Field name="email" label="Email" type="email" placeholder="optional" />
           <Field name="phone" label="Phone" placeholder="optional" />
+          <Field name="dietary_notes" label="Dietary" placeholder="No shellfish" />
+          <Field name="allergy_notes" label="Allergies" placeholder="optional" />
           <Field
-            name="dietary_notes"
-            label="Anything to remember"
-            placeholder="No shellfish"
+            name="accessibility_notes"
+            label="Accessibility"
+            placeholder="Step-free access"
           />
         </div>
       </AddForm>
+
+      {history.length > 0 && (
+        <section className="mt-14 border-t border-sage/25 pt-10">
+          <h2 className="font-display text-xl text-forest">
+            Previously invited
+          </h2>
+          <p className="mt-1.5 max-w-prose font-body text-base text-forest/70">
+            People added for one gathering and never kept. Their replies and
+            what they brought are all still on those gatherings — this is
+            simply the list of who you haven&rsquo;t added to the book yet.
+          </p>
+
+          <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {history.map((g) => (
+              <GuestBookEntry key={g.id} guest={g} saved={false} />
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

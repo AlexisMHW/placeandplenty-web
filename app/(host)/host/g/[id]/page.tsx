@@ -13,6 +13,7 @@ import Icon, { type IconName } from "@/components/Icon";
 import HostReadyDial from "@/components/host/HostReadyDial";
 import { BotanicalSprig } from "@/components/Botanical";
 import { formatCurrency } from "@/lib/host-format";
+import { usesOwnArtwork } from "@/lib/invitations";
 
 // GATHERING COMMAND CENTRAL, composed to `host_web_gathering.png`.
 //
@@ -374,7 +375,7 @@ export default async function GatheringOverviewPage({
             marketing copy — gatherings.invitation_mode records it. */}
         <Card title="Invitations" href={`${base}/people`} action="Go to My People">
           <p className="font-body text-sm leading-relaxed text-forest/75">
-            {gathering.invitation_mode === "own_artwork"
+            {usesOwnArtwork(gathering.invitation_mode)
               ? "You’re using your own invitation artwork for this one, and it’s the face of this gathering everywhere in Place & Plenty. Everything else works exactly the same."
               : "You can use a Place & Plenty invitation or bring your own artwork — either way the guest list, RSVPs and contributions all work the same."}
           </p>

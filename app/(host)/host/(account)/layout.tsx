@@ -50,7 +50,7 @@ export default async function AccountShellLayout({
           label: "My Guest Book",
           href: "/host/guest-book",
           icon: "book",
-          count: guestBook?.length ?? null,
+          count: guestBook?.saved.length ?? null,
         },
       ],
     },

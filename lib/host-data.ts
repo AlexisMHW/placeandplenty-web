@@ -1,4 +1,8 @@
 import { createClient } from "@/lib/supabase-server";
+import {
+  INVITATION_ARTWORK_BUCKET,
+  isRenderableArtwork,
+} from "@/lib/invitations";
 
 // Data access for the authenticated host web app.
 //
@@ -259,25 +263,51 @@ export interface SavedGuest {
   guest_type: string;
   dietary_notes: string | null;
   allergy_notes: string | null;
+  accessibility_notes: string | null;
   is_saved: boolean;
+}
+
+export interface GuestBook {
+  /** The reusable book: people the host deliberately kept. */
+  saved: SavedGuest[];
+  /**
+   * People created in passing for one gathering and never saved. Kept
+   * in the database forever so RSVP history survives; shown separately
+   * so they are never mistaken for Guest Book entries.
+   */
+  history: SavedGuest[];
 }
 
 /**
  * My Guest Book — account-level reusable people (§10). Distinct from My
- * People, which is `gathering_guests` for one gathering. `is_saved`
- * separates people the host deliberately kept from those created in
- * passing for a single gathering.
+ * People, which is `gathering_guests` for one gathering.
+ *
+ * `is_saved` IS THE WHOLE DISTINCTION, and this function returns the two
+ * groups apart rather than one list with a flag. My Guest Book means the
+ * people you keep; a one-off guest typed in for a single dinner is not
+ * one of them, however much the row looks the same.
+ *
+ * The unsaved rows are still returned, because deleting them is not an
+ * option — `gathering_guests` references them and they carry the RSVP,
+ * the dietary note and the contribution for a real gathering. They
+ * belong under "Previously invited", where they can be promoted into the
+ * book, and nowhere else.
  */
-export async function getGuestBook(): Promise<SavedGuest[]> {
+export async function getGuestBook(): Promise<GuestBook> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("guests")
     .select(
-      "id, first_name, last_name, household_name, email, phone, guest_type, dietary_notes, allergy_notes, is_saved"
+      "id, first_name, last_name, household_name, email, phone, guest_type, dietary_notes, allergy_notes, accessibility_notes, is_saved"
     )
     .order("first_name", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as SavedGuest[];
+
+  const rows = (data ?? []) as SavedGuest[];
+  return {
+    saved: rows.filter((g) => g.is_saved),
+    history: rows.filter((g) => !g.is_saved),
+  };
 }
 
 export interface ClosetItem {
@@ -291,27 +321,174 @@ export interface ClosetItem {
   size_label: string | null;
   capacity_label: string | null;
   archived_at: string | null;
+  /** Private bucket path. Not a URL — see signClosetPhotos(). */
+  storage_path: string | null;
+  mime_type: string | null;
 }
 
+const CLOSET_COLUMNS =
+  "id, name, category, quantity_owned, notes, color, material, size_label, capacity_label, archived_at, storage_path, mime_type";
+
 /**
- * My Hosting Closet. Its RLS policy carries an entitlement gate —
- * `user_can_access_closet(auth.uid())` — so an unentitled user gets an
- * empty list rather than an error. The page distinguishes "you own
- * nothing yet" from "this is a paid feature" rather than showing an
- * empty state that quietly misrepresents the second as the first.
+ * My Hosting Closet — everything the host currently owns.
+ *
+ * AN EMPTY RESULT HERE MEANS EMPTY, and that is new. The RLS policy on
+ * `hosting_closet_items` used to be
+ *
+ *   owner_user_id = auth.uid() AND user_can_access_closet(auth.uid())
+ *
+ * which gated ordinary inventory behind a purchase, so an unentitled
+ * host got zero rows — indistinguishable from owning nothing. The policy
+ * is now `owner_user_id = auth.uid()`, full stop. Basic Closet is a Free
+ * capability; what is paid is the SMART layer that matches a gathering's
+ * needs against these rows. No surface built on this function may show a
+ * paywall.
  */
 export async function getClosetItems(): Promise<ClosetItem[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("hosting_closet_items")
-    .select(
-      "id, name, category, quantity_owned, notes, color, material, size_label, capacity_label, archived_at"
-    )
+    .select(CLOSET_COLUMNS)
     .is("archived_at", null)
     .order("category", { ascending: true })
     .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []) as ClosetItem[];
+}
+
+/**
+ * Things the host has marked as no longer owned.
+ *
+ * Archived rather than deleted, because `gathering_closet_items` rows
+ * from past gatherings still point at them — the provenance of "you
+ * already had this" outlives the platter.
+ */
+export async function getArchivedClosetItems(): Promise<ClosetItem[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("hosting_closet_items")
+    .select(CLOSET_COLUMNS)
+    .not("archived_at", "is", null)
+    .order("archived_at", { ascending: false });
+  if (error) return [];
+  return (data ?? []) as ClosetItem[];
+}
+
+/**
+ * Signed URLs for closet item photos, one round trip for the whole page.
+ *
+ * The `hosting-closet` bucket is PRIVATE and its policies key on the
+ * first path segment being the owner's user id, so a stored path is not
+ * something a browser can load. Same reasoning as signArtwork(): sign on
+ * the server, for exactly the paths about to be rendered, never by
+ * making the bucket public.
+ */
+export async function signClosetPhotos(
+  items: Pick<ClosetItem, "id" | "storage_path">[]
+): Promise<Map<string, string>> {
+  const withPhotos = items.filter((i) => i.storage_path);
+  if (withPhotos.length === 0) return new Map();
+
+  const supabase = createClient();
+  const { data, error } = await supabase.storage
+    .from("hosting-closet")
+    .createSignedUrls(
+      withPhotos.map((i) => i.storage_path as string),
+      ARTWORK_TTL_SECONDS
+    );
+
+  // A failure here costs a thumbnail, not a page.
+  if (error || !data) return new Map();
+
+  const byPath = new Map<string, string>();
+  for (const row of data) {
+    if (row.signedUrl && row.path) byPath.set(row.path, row.signedUrl);
+  }
+
+  const byItem = new Map<string, string>();
+  for (const i of withPhotos) {
+    const url = byPath.get(i.storage_path as string);
+    if (url) byItem.set(i.id, url);
+  }
+  return byItem;
+}
+
+export interface GatheringClosetUse {
+  id: string;
+  quantity_planned: number | null;
+  notes: string | null;
+  item: {
+    id: string;
+    name: string;
+    category: string | null;
+    quantity_owned: number | null;
+  } | null;
+}
+
+/**
+ * What this gathering is using from the host's Hosting Closet.
+ *
+ * REFERENCE, NEVER TRANSFER. `gathering_closet_items` records that a
+ * gathering is drawing on an account-level item; the item itself stays
+ * in the closet and remains available to every future gathering. That
+ * row is also the PROVENANCE behind a reduced shopping quantity — the
+ * reason the list says "buy 4" instead of "buy 12".
+ *
+ * A CO-HOST SEES THIS AND NOT THE REST OF THE CLOSET. The SELECT policy
+ * on hosting_closet_items grants an accepted member only the items
+ * attached to a gathering they share, so this join returns the six
+ * platters in use and nothing else the host owns. That boundary is in
+ * the database, not in this query.
+ */
+export async function getGatheringClosetUse(
+  gatheringId: string
+): Promise<GatheringClosetUse[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("gathering_closet_items")
+    .select(
+      "id, quantity_planned, notes, item:hosting_closet_items(id, name, category, quantity_owned)"
+    )
+    .eq("gathering_id", gatheringId);
+  if (error) return [];
+  return (data ?? []) as unknown as GatheringClosetUse[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Smart Closet entitlement                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Whether the SMART Closet layer is available for one gathering.
+ *
+ * THE TWO QUESTIONS ARE NOT THE SAME QUESTION, which is the correction
+ * this whole sweep turns on:
+ *
+ *   "May I use My Hosting Closet?"   always yes for a signed-in account
+ *   "May Place & Plenty work out      a Gathering Pass bound to THIS
+ *    what I still need?"              gathering, or account Plus
+ *
+ * So this is gathering-scoped and takes a gathering id. There is no
+ * account-level version of the second question that a Pass can answer,
+ * because a Pass is not an account capability — see
+ * gathering_can_access_smart_closet() in the database.
+ *
+ * A co-host of a Pass gathering gets `true` here, and gets no
+ * account-level Plus anywhere else. That is deliberate.
+ */
+export async function gatheringHasSmartCloset(
+  gatheringId: string
+): Promise<boolean> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc(
+    "gathering_can_access_smart_closet",
+    { p_gathering_id: gatheringId }
+  );
+  // Fail closed. Showing a locked state to someone who has paid is a
+  // support ticket; showing an unlocked one to someone who has not is a
+  // broken promise when they tap it.
+  if (error) return false;
+  return data === true;
 }
 
 export interface Profile {
@@ -550,13 +727,13 @@ export async function signArtwork(
   const renderable = gatherings.filter(
     (g) =>
       g.invitation_artwork_path &&
-      g.invitation_artwork_mime_type !== "application/pdf"
+      isRenderableArtwork(g.invitation_artwork_mime_type)
   );
   if (renderable.length === 0) return new Map();
 
   const supabase = createClient();
   const { data, error } = await supabase.storage
-    .from("invitation-artwork")
+    .from(INVITATION_ARTWORK_BUCKET)
     .createSignedUrls(
       renderable.map((g) => g.invitation_artwork_path as string),
       ARTWORK_TTL_SECONDS

@@ -1,4 +1,9 @@
-import { getShoppingItems, getExpenses } from "@/lib/host-data";
+import {
+  getShoppingItems,
+  getExpenses,
+  getGatheringClosetUse,
+  gatheringHasSmartCloset,
+} from "@/lib/host-data";
 import { WorkspaceHeader, EmptyState, Panel } from "@/components/host/Workspace";
 import {
   AddForm,
@@ -48,9 +53,11 @@ export default async function ShoppingPage({
 }: {
   params: { id: string };
 }) {
-  const [items, expenses] = await Promise.all([
+  const [items, expenses, closetUse, smartCloset] = await Promise.all([
     getShoppingItems(params.id),
     getExpenses(params.id),
+    getGatheringClosetUse(params.id),
+    gatheringHasSmartCloset(params.id),
   ]);
 
   const outstanding = items.filter((i) => i.status === "need");
@@ -221,6 +228,60 @@ export default async function ShoppingPage({
           />
         </div>
       </AddForm>
+
+      {/* ---- FROM YOUR HOSTING CLOSET --------------------------------
+          §1/§2: the closet ITSELF is Free. What a Gathering Pass or Plus
+          buys is Place & Plenty comparing this gathering's needs against
+          what the host already owns and reducing the shopping quantity
+          accordingly — with the provenance kept, which is what the rows
+          below are.
+
+          So this section shows real data on every plan (an empty list
+          when nothing has been matched yet) and states the entitlement
+          in terms of the CAPABILITY rather than the closet. It must
+          never read as "your closet is locked". -------------------- */}
+      <section className="mt-12">
+        <h3 className="font-display text-xl text-forest">
+          From your Hosting Closet
+        </h3>
+
+        {closetUse.length > 0 ? (
+          <ul className="mt-4 divide-y divide-sage/20">
+            {closetUse.map((use) => (
+              <li
+                key={use.id}
+                className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="font-body text-base text-forest">
+                    {use.item?.name ?? "Something you own"}
+                  </p>
+                  {use.notes && (
+                    <p className="font-body text-sm text-forest/60">
+                      {use.notes}
+                    </p>
+                  )}
+                </div>
+                <p className="font-body text-sm text-forest/65">
+                  {use.quantity_planned ?? 1} of{" "}
+                  {use.item?.quantity_owned ?? use.quantity_planned ?? 1} you
+                  already have
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 max-w-prose font-body text-base text-forest/70">
+            Nothing from your closet is being used for this one yet.
+          </p>
+        )}
+
+        <p className="mt-4 rounded-card border border-sage/30 bg-cream px-4 py-3 font-body text-sm leading-relaxed text-forest/75">
+          {smartCloset
+            ? "This gathering is unlocked, so Place & Plenty works out what you already own and only asks you to buy the difference. Matching happens in the app."
+            : "Your Hosting Closet is always yours. Smart matching — working out what you already have and what you still need for this gathering — is available with a Gathering Pass or Place & Plenty Plus."}
+        </p>
+      </section>
 
       <StaleScoreNote />
     </div>

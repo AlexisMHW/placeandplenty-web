@@ -26,6 +26,24 @@
 
 export const TAX_QUALIFIER = "+ applicable taxes and fees";
 
+/**
+ * MY HOSTING CLOSET IS SPLIT ACROSS THE TIERS, and getting the split
+ * right in copy is a product requirement rather than a nicety.
+ *
+ *   Free        organise what you own — full inventory, on every plan
+ *   Pass/Plus   let Place & Plenty work out what you still need
+ *
+ * The closet itself is never the paid thing. What is paid is the smart
+ * matching over it: comparing a gathering's needs against the inventory,
+ * reducing the shopping quantity, and keeping the provenance for why.
+ *
+ * So the Free tier lists the Closet, and the paid tiers list MATCHING.
+ * Never write "My Hosting Closet" in a paid tier's includes list as
+ * though the closet arrives with the purchase.
+ */
+export const CLOSET_TIER_RULE =
+  "Free organises what you own. A Gathering Pass or Plus works out what you still need.";
+
 export interface PricingTier {
   name: string;
   /** Bare amount, e.g. "$9.99". Never rendered alone for a paid tier. */
@@ -52,6 +70,7 @@ export const PRICING_TIERS: PricingTier[] = [
       "Menu, shopping list and timeline",
       "Invite your people and track RSVPs",
       "My Guest Book — the people you host most",
+      "My Hosting Closet — organise what you already own",
     ],
   },
   {
@@ -65,6 +84,7 @@ export const PRICING_TIERS: PricingTier[] = [
       "Unlocks one gathering, and stays with it",
       "HostReady readiness score",
       "Contributions, registry links and song requests",
+      "Smart Closet matching — what you have, what you still need",
       "The gathering photo gallery",
     ],
   },
@@ -78,6 +98,7 @@ export const PRICING_TIERS: PricingTier[] = [
       "Up to 6 active gatherings at one time",
       "Up to 12 locked-in gatherings per year",
       "Drafts don't count toward either limit",
+      "Smart Closet matching on every gathering",
       "Account features stay on all year",
     ],
     highlight: true,

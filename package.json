@@ -7,7 +7,9 @@
     "build": "tinacms build && node scripts/fix-tina-cache-path.mjs && node scripts/check-tina-codegen.mjs && node scripts/check-app-links.mjs && next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/**/*.test.ts\"",
+    "test:db": "echo \"Run supabase/tests/native-rebuild-contract.sql as one statement batch against the project (Supabase SQL editor, supabase db execute, psql, or the Supabase MCP).\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.5",
