@@ -35,11 +35,11 @@ const faqs = [
   { q: "What do I get for free?", a: FREE_LIMITS_NOTE },
   {
     q: "Can I buy on the website, or do I have to use the app?",
-    a: `${PURCHASE_AVAILABILITY_NOTE} You can still create your account and plan entirely in the browser; a purchase made in the mobile app attaches to that same account and is recognized on the web.`,
+    a: `${PURCHASE_AVAILABILITY_NOTE} You can create your account and plan entirely in the browser now. When paid purchasing opens, the entitlement will attach to this same account and be recognized across web and mobile.`,
   },
   {
     q: "If I buy on my phone, does it work on the web?",
-    a: "Yes. What you own is attached to your Place & Plenty account, not to the device you bought it on. Sign in on the web with the same account and the entitlement is already there — nothing to repurchase or transfer.",
+    a: "Yes. Paid access belongs to your Place & Plenty account, not to one device. Sign in on the web with the same account and the entitlement is recognized there — nothing to transfer or repurchase.",
   },
   {
     q: "Do I have to subscribe?",
@@ -60,8 +60,8 @@ const faqs = [
     a: `Your account-level Plus features keep working, and an additional gathering can use a Gathering Pass at ${PRICING_TIERS[1].priceLine}.`,
   },
   {
-    q: "Where do I manage or cancel what I’ve bought?",
-    a: "Purchases currently happen through Apple or Google, so subscription management and cancellation live in that store. Your Place & Plenty access itself follows the account on web and mobile.",
+    q: "Where will I manage or cancel what I buy?",
+    a: "A Plus subscription bought through Apple or Google is managed in that store. When web card checkout is enabled, web purchases will be managed through your Place & Plenty account. Access itself follows the same account across web and mobile.",
   },
   {
     q: "Can guests use it without paying?",
@@ -240,7 +240,7 @@ export default function PricingPage() {
       <CtaBand
         headline="Less scrambling."
         emphasisLine="More gathering."
-        body="Start free in the browser. When you add a Pass or Plus through the mobile app, that access follows the same account back here."
+        body="Start free in the browser today. Paid purchasing opens with the app release, and that access will follow this same account across web and mobile."
         showQr
       />
     </>
