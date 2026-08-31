@@ -4,24 +4,11 @@ import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
 import { AddForm, Field, ActionButton } from "@/components/host/Editable";
 import { addClosetItem, archiveClosetItem } from "@/lib/host-actions";
 
-// MY HOSTING CLOSET (§9, food & the table) — "what you already have".
-//
-// AN EMPTY RESULT HERE IS AMBIGUOUS, AND THE PAGE MUST NOT PRETEND
-// OTHERWISE. The RLS policy is:
-//
-//   owner_user_id = auth.uid() AND user_can_access_closet(auth.uid())
-//
-// so a user without the entitlement gets zero rows — exactly the same
-// response as a user who genuinely owns nothing. Showing "your closet is
-// empty, add something" to someone who cannot access the feature would
-// be actively misleading: they would go looking for an add button that
-// is not there for them.
-//
-// The web app cannot distinguish the two cases from the row count alone,
-// so the empty state names both possibilities plainly rather than
-// guessing. Resolving it properly needs an entitlement read the app
-// already does; that is a follow-up, and saying so is better than
-// shipping copy that is wrong for one of the two groups.
+// MY HOSTING CLOSET — account-level reusable inventory.
+// Basic inventory organization is available on Free: hosts can add,
+// edit/archive and organize what they own. Gathering Pass and Plus add
+// smart gathering-specific intelligence (what is covered, what is missing,
+// and Shopping reductions) but do not gate the Closet itself.
 
 export const metadata = { title: "My Hosting Closet" };
 
@@ -38,14 +25,14 @@ export default async function ClosetPage() {
     <div className="mx-auto max-w-[70rem] px-6 py-10 md:py-14">
       <WorkspaceHeader
         title="My Hosting Closet"
-        description="What you already own, so you stop buying it twice."
+        description="Keep what you already own in one place, so you stop buying it twice."
       />
 
       {items.length === 0 ? (
         <EmptyState
           title="Nothing in the closet yet."
-          body="The Hosting Closet remembers what you own — platters, chairs, the good glasses — so a shopping list can tell you what you actually need."
-          hint="If the closet is part of a plan you don't have, it stays empty here too."
+          body="Add the platters, chairs, serving pieces, linens and other hosting things you already own. Place & Plenty can use them while you plan and shop."
+          hint="Basic Hosting Closet organization is included with Free."
         />
       ) : (
         <>
@@ -105,7 +92,6 @@ export default async function ClosetPage() {
               </section>
             ))}
           </div>
-
         </>
       )}
 
