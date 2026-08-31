@@ -191,29 +191,76 @@ export const ALLOWED_ARTWORK_MIME_TYPES = [
  */
 export const MAX_ARTWORK_BYTES = 10 * 1024 * 1024;
 
+/**
+ * WHAT THE HOST IS TOLD BEFORE THEY CHOOSE, on both surfaces, sitting
+ * directly beneath the control that opens the file browser.
+ *
+ * It is a constant rather than a phrase typed into a component because
+ * the two numbers in it are the two rules below, and a hint that drifts
+ * from the rule it describes is worse than no hint: it teaches a host
+ * something the upload will then contradict. The native side carries the
+ * same sentence as `detail.invitations.uploadHint`.
+ */
+export const ARTWORK_LIMITS_HINT = "PDF, JPG or PNG · Max 10 MB";
+
 /** A PDF is real artwork, and cannot be put in an <img>. */
 export function isRenderableArtwork(mimeType: string | null): boolean {
   return !!mimeType && mimeType !== "application/pdf";
 }
 
 /**
- * The one honest answer for a file the bucket would refuse, or null when
- * there is nothing wrong with it.
+ * THE THREE WAYS A FILE CAN BE REFUSED, named the way the native picker
+ * names them (`InvitationFilePickerError`'s message is one of these) so
+ * the two surfaces reject the same file for the same stated reason.
+ *
+ * They are distinct because "too big" and "wrong kind" are different
+ * problems with different fixes, and a host told only "that file
+ * didn't work" has to guess which one they have.
  */
+export type ArtworkRejectionCode =
+  | "unsupported_file_type"
+  | "file_too_large"
+  | "empty_file";
+
+export const ARTWORK_REJECTION_MESSAGES: Record<ArtworkRejectionCode, string> =
+  {
+    unsupported_file_type:
+      "That file type isn't supported. Use a PDF, JPG or PNG.",
+    file_too_large: "That file is larger than 10 MB. Try a smaller export.",
+    empty_file: "That file is empty. Choose another one.",
+  };
+
+/**
+ * Why the bucket would refuse this file, or null when it would not.
+ *
+ * CHECKED BEFORE A SINGLE BYTE IS SENT. The bucket enforces both rules
+ * itself and remains the authority — this exists so a host on a slow
+ * connection is told in the moment they pick the file rather than after
+ * watching ten megabytes upload into a rejection.
+ */
+export function artworkRejectionCode(file: {
+  type: string;
+  size: number;
+}): ArtworkRejectionCode | null {
+  if (!(ALLOWED_ARTWORK_MIME_TYPES as readonly string[]).includes(file.type)) {
+    return "unsupported_file_type";
+  }
+  if (file.size === 0) {
+    return "empty_file";
+  }
+  if (file.size > MAX_ARTWORK_BYTES) {
+    return "file_too_large";
+  }
+  return null;
+}
+
+/** The same answer, as the sentence the host actually reads. */
 export function artworkRejectionReason(file: {
   type: string;
   size: number;
 }): string | null {
-  if (!(ALLOWED_ARTWORK_MIME_TYPES as readonly string[]).includes(file.type)) {
-    return "That needs to be a JPG, a PNG or a PDF.";
-  }
-  if (file.size === 0) {
-    return "That file is empty.";
-  }
-  if (file.size > MAX_ARTWORK_BYTES) {
-    return "That file is larger than 10MB. A smaller export usually looks identical.";
-  }
-  return null;
+  const code = artworkRejectionCode(file);
+  return code ? ARTWORK_REJECTION_MESSAGES[code] : null;
 }
 
 /**

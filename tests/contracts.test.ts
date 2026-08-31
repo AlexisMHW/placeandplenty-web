@@ -4,7 +4,10 @@ import assert from "node:assert/strict";
 import { mergeGuestCounts } from "../lib/guest-counts.ts";
 import {
   ALLOWED_ARTWORK_MIME_TYPES,
+  ARTWORK_LIMITS_HINT,
+  ARTWORK_REJECTION_MESSAGES,
   artworkObjectPath,
+  artworkRejectionCode,
   artworkRejectionReason,
   INVITATION_ARTWORK_BUCKET,
   INVITATION_MODES,
@@ -568,5 +571,86 @@ describe("invitation artwork — one bucket, one path convention", () => {
 
   test("the bucket is named once, and it is the canonical one", () => {
     assert.equal(INVITATION_ARTWORK_BUCKET, "invitation-artwork");
+  });
+});
+
+describe("invitation artwork — one rule, told the same way on both surfaces", () => {
+  test("the hint under the control is the approved sentence, exactly", () => {
+    // Pinned character for character, middle dot and all, because the
+    // native app shows the same sentence and a reword on one surface
+    // silently stops being the same product. It also has to agree with
+    // the two rules below it — see the assertions that follow.
+    assert.equal(ARTWORK_LIMITS_HINT, "PDF, JPG or PNG · Max 10 MB");
+  });
+
+  test("the hint tells the truth about the types it names", () => {
+    // Each format the sentence promises is actually accepted.
+    assert.equal(artworkRejectionCode({ type: "application/pdf", size: 1 }), null);
+    assert.equal(artworkRejectionCode({ type: "image/jpeg", size: 1 }), null);
+    assert.equal(artworkRejectionCode({ type: "image/png", size: 1 }), null);
+    // JPG and JPEG are one mime type; there is no second value to allow.
+    assert.equal(ALLOWED_ARTWORK_MIME_TYPES.includes("image/jpeg"), true);
+  });
+
+  test("the hint tells the truth about the size it names", () => {
+    assert.equal(MAX_ARTWORK_BYTES, 10 * 1024 * 1024);
+    assert.match(ARTWORK_LIMITS_HINT, /10 MB/);
+  });
+
+  test("wrong kind and too big are different answers, not one shrug", () => {
+    // A host told only "that didn't work" has to guess which rule they
+    // broke, and the two have different fixes.
+    const big = { type: "image/png", size: MAX_ARTWORK_BYTES + 1 };
+    const wrong = { type: "image/gif", size: 1000 };
+    assert.equal(artworkRejectionCode(big), "file_too_large");
+    assert.equal(artworkRejectionCode(wrong), "unsupported_file_type");
+    assert.notEqual(artworkRejectionReason(big), artworkRejectionReason(wrong));
+  });
+
+  test("the rejection codes are the ones the native picker throws", () => {
+    // InvitationFilePickerError carries exactly these three strings, so
+    // both surfaces can name the same refusal.
+    assert.deepEqual(Object.keys(ARTWORK_REJECTION_MESSAGES).sort(), [
+      "empty_file",
+      "file_too_large",
+      "unsupported_file_type",
+    ]);
+    for (const message of Object.values(ARTWORK_REJECTION_MESSAGES)) {
+      assert.equal(message.length > 0, true);
+    }
+    assert.equal(
+      new Set(Object.values(ARTWORK_REJECTION_MESSAGES)).size,
+      3,
+      "each refusal needs its own sentence"
+    );
+  });
+
+  test("exactly 10 MB is accepted; one byte more is not", () => {
+    // The boundary is the bucket's own file_size_limit, so "at the
+    // limit" must pass here or the two disagree about the same file.
+    assert.equal(
+      artworkRejectionCode({ type: "image/png", size: MAX_ARTWORK_BYTES }),
+      null
+    );
+    assert.equal(
+      artworkRejectionCode({ type: "image/png", size: MAX_ARTWORK_BYTES + 1 }),
+      "file_too_large"
+    );
+  });
+
+  test("an empty file is refused before it is uploaded", () => {
+    assert.equal(
+      artworkRejectionCode({ type: "application/pdf", size: 0 }),
+      "empty_file"
+    );
+  });
+
+  test("type is judged before size, so a huge GIF is still a GIF", () => {
+    // Telling a host to shrink a file they cannot use either way would
+    // send them off to do the wrong work.
+    assert.equal(
+      artworkRejectionCode({ type: "image/gif", size: MAX_ARTWORK_BYTES * 3 }),
+      "unsupported_file_type"
+    );
   });
 });

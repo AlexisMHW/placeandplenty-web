@@ -12,6 +12,7 @@ import {
 } from "@/lib/gathering-creation";
 import {
   ALLOWED_ARTWORK_MIME_TYPES,
+  ARTWORK_REJECTION_MESSAGES,
   isInvitationMode,
   isInvitationStyle,
   type InvitationDecision,
@@ -1395,7 +1396,14 @@ export async function saveInvitationArtwork(
   originalFilename: string
 ): Promise<ActionResult> {
   if (!(ALLOWED_ARTWORK_MIME_TYPES as readonly string[]).includes(mimeType)) {
-    return { ok: false, message: "That needs to be a JPG, a PNG or a PDF." };
+    // The same sentence the browser would already have shown. The size
+    // rule is not re-checked here because the bytes never pass through
+    // this process — the bucket's own file_size_limit is what enforces
+    // it, and it is the same 10 MB both surfaces check up front.
+    return {
+      ok: false,
+      message: ARTWORK_REJECTION_MESSAGES.unsupported_file_type,
+    };
   }
   if (storagePath.split("/")[0] !== gatheringId) {
     return { ok: false, message: "That file didn't save. Please try again." };

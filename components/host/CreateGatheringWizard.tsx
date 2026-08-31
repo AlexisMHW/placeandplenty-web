@@ -30,6 +30,7 @@ import {
 import { gatheringTypeLabel } from "@/lib/host-format";
 import {
   ALLOWED_ARTWORK_MIME_TYPES,
+  ARTWORK_LIMITS_HINT,
   artworkObjectPath,
   artworkRejectionReason,
   INVITATION_ARTWORK_BUCKET,
@@ -695,10 +696,16 @@ export default function CreateGatheringWizard() {
                               : "Choose a file"}
                         </button>
 
-                        <p className="mt-2.5 font-body text-xs leading-relaxed text-forest/65">
-                          JPG, PNG or PDF, up to 10MB. You can also add or
-                          change this later on the gathering&apos;s
-                          Invitations screen.
+                        {/* Directly beneath the control, and present
+                            before anything is chosen — the rules are
+                            worth more as an instruction than as an
+                            error. Same sentence the app shows. */}
+                        <p className="mt-2.5 font-body text-xs text-forest/70">
+                          {ARTWORK_LIMITS_HINT}
+                        </p>
+                        <p className="mt-1.5 font-body text-xs leading-relaxed text-forest/60">
+                          You can also add or change this later on the
+                          gathering&apos;s Invitations screen.
                         </p>
 
                         {artworkError && (
