@@ -44,47 +44,14 @@ import {
 
 // CREATING A GATHERING ON THE WEB.
 //
-// THE SAME EIGHT QUESTIONS THE PHONE ASKS, IN THE SAME ORDER, WRITING
-// THE SAME ROW. This is a reconciliation, not a new flow: the questions,
-// their order, the rule for when each one may be left, the moment the
-// draft is first written, the invitation decision and its three modes,
-// and the single guarded draft → active transition at the end are all
-// the native wizard's, and are the parts that must not drift.
+// The data/lifecycle contract is intentionally unchanged by this file's
+// visual convergence pass: same eight questions, same one draft row,
+// same canonical invitation RPCs, same autosave timing and the same single
+// guarded draft -> active transition at true completion.
 //
-//   1  What's happening?              name + kind
-//   2  When are people coming?        date + arrival time
-//   3  How many people?               adults + children
-//   4  Where?                         place
-//   5  Have you invited your people?  the invitation decision
-//   6  What's your budget?            skippable, and skipping is an answer
-//   7  How are you feeding everyone?  the canonical food styles
-//   8  Anything we should know?       notes
-//
-// WHAT IS WEB-APPROPRIATE, AND ONLY THIS. The phone shows one question
-// per screen because it has one screen. A desktop has room to show the
-// host where they are in the conversation and let them go back to an
-// answer without stepping through the ones in between, so the eight
-// questions sit in a rail beside the one being answered. The date and
-// time use the browser's own pickers instead of the app's scroll
-// wheels, and the headcounts are a field with quick chips rather than an
-// overflow sheet. Same conversation, furniture that suits the room.
-//
-// THE DRAFT IS ONE ROW AND IT STAYS A DRAFT. Nothing is written until
-// the wizard holds every field the row requires (name, kind, date,
-// arrival time, at least one guest). From then on every step transition
-// UPDATEs that same id — never inserts a second — and the row remains
-// `status = 'draft'` for the whole of the wizard. It becomes active in
-// exactly one place: finaliseGatheringCreation(), once, when the host
-// finishes. A half-answered gathering is a draft, and the host's Free
-// gathering slot is not spent by one.
-//
-// AUTOSAVE FAILURES ARE MOSTLY SILENT, ON PURPOSE, with one exception.
-// A background update that fails leaves the wizard entirely usable and
-// the final save is the real safety net. But the FIRST save is the
-// insert, and that is the one Postgres can refuse outright — the Free
-// tier's one-open-gathering rule lives there — so a failure with no
-// draft yet is shown immediately rather than discovered at the end,
-// after five more questions.
+// Web gets desktop-appropriate furniture without becoming a different
+// product: a rail on wide screens, compact progress on narrow screens,
+// and one selector-field language for date, time and headcount.
 
 const TOTAL_STEPS = 8;
 
@@ -99,7 +66,6 @@ const STEP_TITLES = [
   "Anything we should know?",
 ];
 
-/** The rail's short names. The questions above are the headings. */
 const STEP_LABELS = [
   "The gathering",
   "Date & time",
@@ -111,16 +77,6 @@ const STEP_LABELS = [
   "Notes",
 ];
 
-/** Headcounts almost every home gathering lands inside. */
-const QUICK_COUNTS = [0, 2, 4, 6, 8, 10, 12, 16, 20];
-
-/**
- * A unique segment for one artwork upload. `crypto.randomUUID` needs a
- * secure context, which a host on http://localhost or https:// always
- * has — the fallback exists so a stray context cannot turn "choose a
- * file" into a thrown error, which is the shape of the bug the app hit
- * on Hermes.
- */
 function newFileId(): string {
   try {
     if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -132,14 +88,33 @@ function newFileId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function formatDateDisplay(value: string | null): string {
+  if (!value) return "Choose a date";
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
+function formatTimeDisplay(value: string | null): string {
+  if (!value) return "Choose a time";
+  const [hourText, minuteText] = value.split(":");
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return value;
+  const period = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+}
+
 export default function CreateGatheringWizard() {
   const router = useRouter();
 
   const [step, setStep] = useState(1);
-  // The furthest question the host has legitimately reached. The rail
-  // can only go back to somewhere they have already been — otherwise it
-  // would be a way around the gates on steps 1, 3 and 5, which the
-  // phone's one-question-at-a-time flow has no way to offer.
   const [furthest, setFurthest] = useState(1);
   const [input, setInput] = useState<CreateGatheringInput>(() => ({
     ...EMPTY_GATHERING_INPUT,
@@ -156,9 +131,6 @@ export default function CreateGatheringWizard() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, start] = useTransition();
 
-  // The host's own artwork. `artwork` is what is actually recorded on
-  // the gathering; `artworkUrl` is a short-lived signed URL for showing
-  // it back, and is null for a PDF, which cannot go in an <img>.
   const fileInput = useRef<HTMLInputElement>(null);
   const [artwork, setArtwork] = useState<{
     filename: string;
@@ -175,13 +147,6 @@ export default function CreateGatheringWizard() {
     setInput((prev) => ({ ...prev, [key]: value }));
   }
 
-  /* -------------------------------------------------------------- */
-  /* When a step may be left                                        */
-  /* -------------------------------------------------------------- */
-
-  // The native rules exactly. Steps 2, 4, 6, 7 and 8 are free to leave:
-  // a date and time are already filled in, and a place, a budget, a food
-  // style and a note are all things a host is allowed not to know yet.
   function canLeave(current: number): boolean {
     switch (current) {
       case 1:
@@ -197,10 +162,6 @@ export default function CreateGatheringWizard() {
     }
   }
 
-  /* -------------------------------------------------------------- */
-  /* The one draft row                                              */
-  /* -------------------------------------------------------------- */
-
   async function persistDraft(current: CreateGatheringInput): Promise<string | null> {
     if (!hasEnoughToSaveDraft(current)) return draftId;
 
@@ -208,9 +169,6 @@ export default function CreateGatheringWizard() {
     const result = await saveGatheringDraft(
       current,
       draftId,
-      // The browser's timezone, so the gathering's wall-clock times mean
-      // what the host meant — the same value the app reads off the
-      // device. Only used on the insert.
       firstSave ? Intl.DateTimeFormat().resolvedOptions().timeZone : null
     );
 
@@ -218,7 +176,6 @@ export default function CreateGatheringWizard() {
       if (firstSave) setDraftId(result.value);
       return result.value;
     }
-    // See the header: the insert is the one the database can refuse.
     if (firstSave) setError(result.message);
     return draftId;
   }
@@ -248,7 +205,6 @@ export default function CreateGatheringWizard() {
     go(Math.max(step - 1, 1));
   }
 
-  /** The rail. Only somewhere the host has already been. */
   function jumpTo(target: number) {
     if (target === step || target > furthest) return;
     go(target);
@@ -257,8 +213,6 @@ export default function CreateGatheringWizard() {
   async function pickStyle(id: string) {
     setStyleId(id);
     if (!draftId) return;
-    // Non-blocking. The step transition persists the choice again, so a
-    // failure here costs nothing.
     await recordInvitationDecision(
       draftId,
       "not_yet",
@@ -267,25 +221,6 @@ export default function CreateGatheringWizard() {
     );
   }
 
-  /* -------------------------------------------------------------- */
-  /* The host's own artwork                                         */
-  /* -------------------------------------------------------------- */
-
-  // THE SAME TWO STEPS THE APP TAKES, AGAINST THE SAME BUCKET. The file
-  // goes straight from here into `invitation-artwork` under
-  // `<gathering_id>/…` as the signed-in user — the bucket's RLS is what
-  // permits or refuses it, on the server, exactly as on the phone — and
-  // then save_invitation_artwork() records the path and sets
-  // invitation_mode='uploaded' atomically. Artwork added here shows up
-  // in the app, and artwork added in the app shows up here, because
-  // there is only one place either of them looks.
-  //
-  // Replacing means uploading to a fresh key: the bucket has INSERT and
-  // DELETE policies and no UPDATE, so an object cannot be overwritten in
-  // place. Removing the superseded object is `remove_invitation_artwork`
-  // on the gathering's own Invitations surface — the app's wizard does
-  // not do it either, and doing it here would delete the artwork the
-  // gathering is still pointing at if the new save failed.
   async function handleArtworkChosen(file: File | null | undefined) {
     if (!file) return;
     setArtworkError(null);
@@ -297,24 +232,14 @@ export default function CreateGatheringWizard() {
       );
       return;
     }
-    // Checked here so a host is told before a ten-megabyte upload rather
-    // than after it. The bucket enforces the same limits regardless.
-    // The name is passed because a browser reports no type at all for
-    // some files, and the phone resolves those by extension — the two
-    // have to reach the same verdict about the same file.
+
     const rejection = artworkRejectionReason(file);
     if (rejection) {
       setArtworkError(rejection);
       return;
     }
 
-    // Stored as the RESOLVED type, never the reported one: an
-    // octet-stream-labelled PNG saved under that label downloads as a
-    // blob instead of rendering, and the gathering loses its face.
-    // Non-null by construction — the rejection check above already
-    // refused anything that does not resolve.
-    const mimeType =
-      resolveArtworkMimeType(file.type, file.name) ?? file.type;
+    const mimeType = resolveArtworkMimeType(file.type, file.name) ?? file.type;
 
     setUploading(true);
     try {
@@ -345,9 +270,6 @@ export default function CreateGatheringWizard() {
 
       setArtwork({ filename: file.name, mimeType });
 
-      // A private bucket, so a path is not a URL. An hour is longer than
-      // anyone spends on this step and short enough that a URL copied
-      // out of devtools stops working the same afternoon.
       if (isRenderableArtwork(mimeType)) {
         const { data } = await supabase.storage
           .from(INVITATION_ARTWORK_BUCKET)
@@ -358,18 +280,10 @@ export default function CreateGatheringWizard() {
       }
     } finally {
       setUploading(false);
-      // So choosing the same file twice still fires a change event.
       if (fileInput.current) fileInput.current.value = "";
     }
   }
 
-  /* -------------------------------------------------------------- */
-  /* Who is already on the list                                     */
-  /* -------------------------------------------------------------- */
-
-  // Once the host has settled on a method, offer the canonical My People
-  // flow if the gathering has nobody on it yet — and stay out of the way
-  // if it already does. The wizard never builds a guest list itself.
   useEffect(() => {
     const settled =
       decision === "already_invited" || (decision === "not_yet" && mode !== null);
@@ -385,10 +299,6 @@ export default function CreateGatheringWizard() {
       cancelled = true;
     };
   }, [decision, mode, draftId]);
-
-  /* -------------------------------------------------------------- */
-  /* Finishing                                                      */
-  /* -------------------------------------------------------------- */
 
   function handleSubmit() {
     const errors = validateGatheringInput(input);
@@ -412,8 +322,6 @@ export default function CreateGatheringWizard() {
 
       await persistInvitation(saved.value);
 
-      // The one draft → active transition, guarded in the database by
-      // `WHERE status = 'draft'`.
       const finalised = await finaliseGatheringCreation(saved.value);
       if (!finalised.ok) {
         setError(finalised.message);
@@ -429,12 +337,12 @@ export default function CreateGatheringWizard() {
     input.arrivalTime &&
     isArrivalInPast(input.gatheringDate, input.arrivalTime);
 
-  /* -------------------------------------------------------------- */
-
   return (
     <div className="mt-8 grid gap-8 lg:grid-cols-[16rem,1fr]">
-      {/* ---- where you are in the conversation --------------------- */}
-      <nav aria-label="Creation steps" className="lg:sticky lg:top-8 lg:self-start">
+      <nav
+        aria-label="Creation steps"
+        className="hidden lg:sticky lg:top-8 lg:block lg:self-start"
+      >
         <ol className="space-y-1">
           {STEP_LABELS.map((label, i) => {
             const n = i + 1;
@@ -473,14 +381,26 @@ export default function CreateGatheringWizard() {
         </ol>
 
         <p className="mt-5 px-3 font-body text-xs leading-relaxed text-forest/60">
-          Nothing is shared with anyone until you finish. Until then this is
-          a draft, and it doesn&apos;t use up an active gathering.
+          Your progress saves as you go. Nothing is shared until you finish.
         </p>
       </nav>
 
-      {/* ---- the question being answered --------------------------- */}
       <div className="max-w-2xl">
-        <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.2em] text-forest/55">
+        <div className="mb-5 lg:hidden" aria-label={`Step ${step} of ${TOTAL_STEPS}`}>
+          <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.2em] text-forest/55">
+            Step {step} of {TOTAL_STEPS}
+          </p>
+          <div className="mt-2 grid grid-cols-8 gap-1.5" aria-hidden>
+            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 rounded-full ${i < step ? "bg-forest" : "bg-sage/25"}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <p className="hidden font-body text-[0.62rem] font-bold uppercase tracking-[0.2em] text-forest/55 lg:block">
           Step {step} of {TOTAL_STEPS}
         </p>
         <h2 className="mt-2 font-display text-3xl leading-tight text-forest">
@@ -500,7 +420,7 @@ export default function CreateGatheringWizard() {
                   value={input.name}
                   onChange={(e) => update("name", e.target.value)}
                   placeholder="Barbara's 80th Birthday"
-                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2.5 font-body text-forest"
+                  className="w-full rounded-card border border-sage/40 bg-white px-4 py-3 font-body text-forest outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
                 />
               </label>
 
@@ -522,41 +442,33 @@ export default function CreateGatheringWizard() {
           )}
 
           {step === 2 && (
-            <div className="mt-7 grid gap-5 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-1 block font-body text-sm font-semibold text-forest">
-                  Date
-                </span>
-                <input
-                  type="date"
-                  value={input.gatheringDate ?? ""}
-                  onChange={(e) => update("gatheringDate", e.target.value || null)}
-                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2.5 font-body text-forest"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block font-body text-sm font-semibold text-forest">
-                  When people arrive
-                </span>
-                <input
-                  type="time"
-                  value={input.arrivalTime ?? ""}
-                  onChange={(e) => update("arrivalTime", e.target.value || null)}
-                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2.5 font-body text-forest"
-                />
-              </label>
+            <div className="mt-7 grid gap-4 sm:grid-cols-2">
+              <NativeSelectorField
+                label="Date"
+                displayValue={formatDateDisplay(input.gatheringDate)}
+                inputType="date"
+                value={input.gatheringDate ?? ""}
+                onChange={(value) => update("gatheringDate", value || null)}
+              />
+              <NativeSelectorField
+                label="Start time"
+                displayValue={formatTimeDisplay(input.arrivalTime)}
+                inputType="time"
+                value={input.arrivalTime ?? ""}
+                onChange={(value) => update("arrivalTime", value || null)}
+              />
 
               {pastWarning && (
                 <p className="font-body text-sm text-forest/70 sm:col-span-2">
-                  That time has already passed — that&apos;s okay if
-                  you&apos;re catching up, just double check the date.
+                  That time has already passed — that&apos;s okay if you&apos;re
+                  catching up, just double check the date.
                 </p>
               )}
             </div>
           )}
 
           {step === 3 && (
-            <div className="mt-7 space-y-7">
+            <div className="mt-7 space-y-4">
               <CountField
                 label="Adults"
                 value={input.adultCount}
@@ -568,8 +480,7 @@ export default function CreateGatheringWizard() {
                 onChange={(n) => update("childCount", n)}
               />
               <p className="font-body text-sm text-forest/65">
-                Expected guests is worked out from these two —{" "}
-                {input.adultCount + input.childCount} so far.
+                Expected guests is worked out from these two — {input.adultCount + input.childCount} so far.
               </p>
             </div>
           )}
@@ -584,7 +495,7 @@ export default function CreateGatheringWizard() {
                   value={input.locationName}
                   onChange={(e) => update("locationName", e.target.value)}
                   placeholder="Home"
-                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2.5 font-body text-forest"
+                  className="w-full rounded-card border border-sage/40 bg-white px-4 py-3 font-body text-forest outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
                 />
               </label>
               <p className="mt-2 font-body text-sm text-forest/65">
@@ -606,10 +517,7 @@ export default function CreateGatheringWizard() {
                 >
                   Yes, already invited
                 </Chip>
-                <Chip
-                  selected={decision === "not_yet"}
-                  onClick={() => setDecision("not_yet")}
-                >
+                <Chip selected={decision === "not_yet"} onClick={() => setDecision("not_yet")}>
                   Not yet
                 </Chip>
                 <Chip
@@ -626,16 +534,13 @@ export default function CreateGatheringWizard() {
 
               {decision === "already_invited" && (
                 <p className="mt-4 font-body text-sm text-forest/70">
-                  Noted — Place &amp; Plenty won&apos;t send anything or claim
-                  invitations it didn&apos;t send. Everything else works the
-                  same.
+                  Noted — Place &amp; Plenty won&apos;t send anything or claim invitations it didn&apos;t send. Everything else works the same.
                 </p>
               )}
 
               {decision === "later" && (
                 <p className="mt-4 font-body text-sm text-forest/70">
-                  Nothing is recorded either way. You can decide this any time
-                  from the gathering.
+                  Nothing is recorded either way. You can decide this any time from the gathering.
                 </p>
               )}
 
@@ -655,22 +560,18 @@ export default function CreateGatheringWizard() {
                     {mode === INVITATION_MODES.UPLOADED && (
                       <div className="rounded-card border border-sage/35 bg-parchment px-4 py-4">
                         {artwork && (
-                          <div className="mb-3 flex items-center gap-4">
+                          <div className="mb-4 flex items-center gap-4">
                             {artworkUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={artworkUrl}
-                                alt={`Your invitation artwork for ${
-                                  input.name.trim() || "this gathering"
-                                }`}
+                                alt={`Your invitation artwork for ${input.name.trim() || "this gathering"}`}
                                 className="h-28 w-auto max-w-[10rem] rounded-md border border-sage/30 object-contain"
                               />
                             ) : (
                               <span className="flex h-28 w-24 flex-col items-center justify-center gap-1.5 rounded-md border border-sage/30 bg-offwhite text-forest/70">
                                 <Icon name="card" size={22} />
-                                <span className="font-body text-[0.6rem] font-bold uppercase tracking-[0.14em]">
-                                  PDF
-                                </span>
+                                <span className="font-body text-[0.6rem] font-bold uppercase tracking-[0.14em]">PDF</span>
                               </span>
                             )}
                             <div className="min-w-0">
@@ -678,9 +579,7 @@ export default function CreateGatheringWizard() {
                                 {artwork.filename}
                               </p>
                               <p className="mt-0.5 font-body text-xs text-forest/65">
-                                Saved to this gathering. It&apos;s the face of
-                                the gathering everywhere in Place &amp; Plenty,
-                                on the phone too.
+                                Saved to this gathering. It&apos;s the face of the gathering everywhere in Place &amp; Plenty, on the phone too.
                               </p>
                             </div>
                           </div>
@@ -691,9 +590,7 @@ export default function CreateGatheringWizard() {
                           type="file"
                           className="sr-only"
                           accept={ARTWORK_ACCEPT_ATTRIBUTE}
-                          onChange={(e) =>
-                            handleArtworkChosen(e.target.files?.[0])
-                          }
+                          onChange={(e) => handleArtworkChosen(e.target.files?.[0])}
                         />
                         <button
                           type="button"
@@ -701,30 +598,18 @@ export default function CreateGatheringWizard() {
                           disabled={uploading || !draftId}
                           className="rounded-full border border-forest px-5 py-2.5 font-body text-sm font-semibold text-forest transition-colors duration-400 hover:bg-forest/5 disabled:opacity-50"
                         >
-                          {uploading
-                            ? "Uploading…"
-                            : artwork
-                              ? "Replace artwork"
-                              : "Choose a file"}
+                          {uploading ? "Uploading…" : artwork ? "Replace artwork" : "Choose a file"}
                         </button>
 
-                        {/* Directly beneath the control, and present
-                            before anything is chosen — the rules are
-                            worth more as an instruction than as an
-                            error. Same sentence the app shows. */}
                         <p className="mt-2.5 font-body text-xs text-forest/70">
                           {ARTWORK_LIMITS_HINT}
                         </p>
                         <p className="mt-1.5 font-body text-xs leading-relaxed text-forest/60">
-                          You can also add or change this later on the
-                          gathering&apos;s Invitations screen.
+                          You can also add or change this later on the gathering&apos;s Invitations screen.
                         </p>
 
                         {artworkError && (
-                          <p
-                            role="alert"
-                            className="mt-2.5 font-body text-sm text-error"
-                          >
+                          <p role="alert" className="mt-2.5 font-body text-sm text-error">
                             {artworkError}
                           </p>
                         )}
@@ -739,46 +624,29 @@ export default function CreateGatheringWizard() {
                     />
                     {mode === INVITATION_MODES.PLACE_AND_PLENTY && (
                       <div>
-                        <p className="mb-3 mt-4 font-body text-sm font-semibold text-forest">
-                          Pick a look:
-                        </p>
+                        <p className="mb-3 mt-4 font-body text-sm font-semibold text-forest">Pick a look:</p>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                           {INVITATION_STYLES.map((s) => (
                             <button
                               key={s.id}
                               type="button"
                               onClick={() => pickStyle(s.id)}
-                              className={`rounded-card p-1 text-left transition-colors duration-400 ${
-                                styleId === s.id
-                                  ? "ring-2 ring-forest"
-                                  : "ring-1 ring-sage/35 hover:ring-sage"
-                              }`}
+                              className={`rounded-card p-1 text-left transition-colors duration-400 ${styleId === s.id ? "ring-2 ring-forest" : "ring-1 ring-sage/35 hover:ring-sage"}`}
                             >
                               <span
                                 className="flex h-24 flex-col justify-center gap-1.5 rounded-md px-3 text-center"
                                 style={{
                                   background: s.background,
                                   color: s.textColor,
-                                  border: s.bordered
-                                    ? `1px solid ${s.accentColor}`
-                                    : undefined,
+                                  border: s.bordered ? `1px solid ${s.accentColor}` : undefined,
                                 }}
                               >
-                                <span className="font-display text-sm leading-tight">
-                                  {input.name.trim() || "Your gathering"}
-                                </span>
-                                <span
-                                  aria-hidden
-                                  className="mx-auto block h-[1px] w-8"
-                                  style={{ background: s.accentColor }}
-                                />
-                                <span className="font-body text-[0.62rem] tracking-wide">
-                                  {input.gatheringDate ?? ""}
-                                </span>
+                                <span className="font-display text-sm leading-tight">{input.name.trim() || "Your gathering"}</span>
+                                <span aria-hidden className="mx-auto block h-[1px] w-8" style={{ background: s.accentColor }} />
+                                <span className="font-body text-[0.62rem] tracking-wide">{input.gatheringDate ?? ""}</span>
                               </span>
                               <span className="mt-1.5 block px-1 font-body text-xs text-forest/75">
-                                {s.label}
-                                {styleId === s.id ? " ✓" : ""}
+                                {s.label}{styleId === s.id ? " ✓" : ""}
                               </span>
                             </button>
                           ))}
@@ -796,15 +664,11 @@ export default function CreateGatheringWizard() {
                 </div>
               )}
 
-              {/* The canonical My People flow, never a second guest list. */}
               {inviteeCount === 0 && draftId && (
                 <div className="mt-7 rounded-card border border-sage/35 bg-parchment px-5 py-4">
-                  <p className="font-body text-sm font-semibold text-forest">
-                    Who are we inviting?
-                  </p>
+                  <p className="font-body text-sm font-semibold text-forest">Who are we inviting?</p>
                   <p className="mt-1 font-body text-sm text-forest/70">
-                    Nobody is on this list yet. You can add people now or
-                    after you finish.
+                    Nobody is on this list yet. You can add people now or after you finish.
                   </p>
                   <Link
                     href={`/host/g/${draftId}/people`}
@@ -821,23 +685,16 @@ export default function CreateGatheringWizard() {
           {step === 6 && (
             <div className="mt-7">
               <label className="block max-w-xs">
-                <span className="mb-1 block font-body text-sm font-semibold text-forest">
-                  Budget
-                </span>
+                <span className="mb-1 block font-body text-sm font-semibold text-forest">Budget</span>
                 <input
                   type="number"
                   min={0}
                   step="any"
                   inputMode="decimal"
                   value={input.budgetTarget ?? ""}
-                  onChange={(e) =>
-                    update(
-                      "budgetTarget",
-                      e.target.value === "" ? null : Number(e.target.value)
-                    )
-                  }
+                  onChange={(e) => update("budgetTarget", e.target.value === "" ? null : Number(e.target.value))}
                   placeholder="500"
-                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2.5 font-body text-forest"
+                  className="w-full rounded-card border border-sage/40 bg-white px-4 py-3 font-body text-forest outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
                 />
               </label>
               <button
@@ -848,8 +705,7 @@ export default function CreateGatheringWizard() {
                 Skip for now
               </button>
               <p className="mt-4 font-body text-sm text-forest/65">
-                Skipping is a real answer — it stays empty rather than being
-                guessed at, and you can set it later.
+                Skipping is a real answer — it stays empty rather than being guessed at, and you can set it later.
               </p>
             </div>
           )}
@@ -873,20 +729,17 @@ export default function CreateGatheringWizard() {
           {step === 8 && (
             <div className="mt-7">
               <label className="block">
-                <span className="mb-1 block font-body text-sm font-semibold text-forest">
-                  Anything we should know?
-                </span>
+                <span className="mb-1 block font-body text-sm font-semibold text-forest">Anything we should know?</span>
                 <textarea
                   rows={5}
                   value={input.notes}
                   onChange={(e) => update("notes", e.target.value)}
                   placeholder="Optional notes"
-                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2.5 font-body text-forest"
+                  className="w-full rounded-card border border-sage/40 bg-white px-4 py-3 font-body text-forest outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
                 />
               </label>
               <p className="mt-4 font-body text-sm text-forest/65">
-                Dietary needs, accessibility and what the space is like are
-                asked on the gathering itself, where the plan is made.
+                Dietary needs, accessibility and what the space is like are asked on the gathering itself, where the plan is made.
               </p>
             </div>
           )}
@@ -928,9 +781,7 @@ export default function CreateGatheringWizard() {
             )}
 
             {draftId && (
-              <span className="font-body text-xs text-forest/55">
-                Saved as a draft
-              </span>
+              <span className="font-body text-xs text-forest/55">Saved as a draft</span>
             )}
           </div>
         </fieldset>
@@ -938,8 +789,6 @@ export default function CreateGatheringWizard() {
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
 
 function ChipGrid({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-wrap gap-2.5">{children}</div>;
@@ -959,11 +808,7 @@ function Chip({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`rounded-full border px-4 py-2 font-body text-sm transition-colors duration-400 ${
-        selected
-          ? "border-forest bg-forest text-offwhite"
-          : "border-sage/45 text-forest hover:bg-forest/5"
-      }`}
+      className={`rounded-full border px-4 py-2 font-body text-sm transition-colors duration-400 ${selected ? "border-forest bg-forest text-offwhite" : "border-sage/45 text-forest hover:bg-forest/5"}`}
     >
       {children}
     </button>
@@ -986,25 +831,47 @@ function ModeOption({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`block w-full rounded-card border px-5 py-4 text-left transition-colors duration-400 ${
-        selected
-          ? "border-forest bg-forest text-offwhite"
-          : "border-sage/40 bg-offwhite text-forest hover:border-sage"
-      }`}
+      className={`block w-full rounded-card border px-5 py-4 text-left transition-colors duration-400 ${selected ? "border-forest bg-forest text-offwhite" : "border-sage/40 bg-offwhite text-forest hover:border-sage"}`}
     >
       <span className="block font-body text-sm font-semibold">{title}</span>
-      <span
-        className={`mt-1 block font-body text-sm ${
-          selected ? "text-offwhite/85" : "text-forest/70"
-        }`}
-      >
+      <span className={`mt-1 block font-body text-sm ${selected ? "text-offwhite/85" : "text-forest/70"}`}>
         {body}
       </span>
     </button>
   );
 }
 
-/** A number field with the counts a host most often needs, one tap away. */
+function NativeSelectorField({
+  label,
+  displayValue,
+  inputType,
+  value,
+  onChange,
+}: {
+  label: string;
+  displayValue: string;
+  inputType: "date" | "time";
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="relative block cursor-pointer rounded-card border border-sage/40 bg-white px-4 py-3 transition hover:border-sage focus-within:border-forest focus-within:ring-2 focus-within:ring-forest/10">
+      <span className="block font-body text-xs font-semibold text-forest/65">{label}</span>
+      <span className="mt-1 flex items-center justify-between gap-3 font-body text-base text-forest">
+        <span>{displayValue}</span>
+        <span aria-hidden className="text-forest/55">⌄</span>
+      </span>
+      <input
+        type={inputType}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+      />
+    </label>
+  );
+}
+
 function CountField({
   label,
   value,
@@ -1014,42 +881,59 @@ function CountField({
   value: number;
   onChange: (n: number) => void;
 }) {
+  const [exact, setExact] = useState(value > 50);
+
   return (
     <div>
-      <label className="block max-w-[10rem]">
-        <span className="mb-1 block font-body text-sm font-semibold text-forest">
-          {label}
-        </span>
-        <input
-          type="number"
-          min={0}
-          step={1}
-          inputMode="numeric"
-          value={value}
-          onChange={(e) => {
-            const n = Number(e.target.value);
-            onChange(Number.isFinite(n) && n > 0 ? Math.round(n) : 0);
-          }}
-          className="w-full rounded-md border border-sage/40 bg-white px-3 py-2.5 font-body text-forest"
-        />
-      </label>
-      <div className="mt-2.5 flex flex-wrap gap-2">
-        {QUICK_COUNTS.map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => onChange(n)}
-            aria-label={`${label}: ${n}`}
-            className={`h-8 min-w-[2rem] rounded-full border px-2 font-body text-sm transition-colors duration-400 ${
-              value === n
-                ? "border-forest bg-forest text-offwhite"
-                : "border-sage/40 text-forest/75 hover:bg-forest/5"
-            }`}
+      <label className="block">
+        <span className="sr-only">{label}</span>
+        <div className="relative rounded-card border border-sage/40 bg-white transition hover:border-sage focus-within:border-forest focus-within:ring-2 focus-within:ring-forest/10">
+          <div className="pointer-events-none px-4 py-3">
+            <span className="block font-body text-xs font-semibold text-forest/65">{label}</span>
+            <span className="mt-1 flex items-center justify-between gap-3 font-body text-base text-forest">
+              <span>{value}</span>
+              <span aria-hidden className="text-forest/55">⌄</span>
+            </span>
+          </div>
+          <select
+            value={exact ? "exact" : String(Math.min(value, 50))}
+            onChange={(e) => {
+              if (e.target.value === "exact") {
+                setExact(true);
+                return;
+              }
+              setExact(false);
+              onChange(Number(e.target.value));
+            }}
+            aria-label={label}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           >
-            {n}
-          </button>
-        ))}
-      </div>
+            {Array.from({ length: 51 }, (_, n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+            <option value="exact">Enter exact number…</option>
+          </select>
+        </div>
+      </label>
+
+      {exact && (
+        <label className="mt-2 block max-w-xs">
+          <span className="mb-1 block font-body text-xs font-semibold text-forest/65">Exact {label.toLowerCase()}</span>
+          <input
+            autoFocus
+            type="number"
+            min={0}
+            step={1}
+            inputMode="numeric"
+            value={value}
+            onChange={(e) => {
+              const n = Number(e.target.value);
+              onChange(Number.isFinite(n) && n >= 0 ? Math.round(n) : 0);
+            }}
+            className="w-full rounded-card border border-sage/40 bg-white px-4 py-3 font-body text-forest outline-none transition focus:border-forest focus:ring-2 focus:ring-forest/10"
+          />
+        </label>
+      )}
     </div>
   );
 }
