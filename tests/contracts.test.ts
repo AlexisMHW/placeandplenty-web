@@ -309,9 +309,17 @@ describe("pricing — the approved V1 model", () => {
   });
 
   test("Plus states both of its bounds", () => {
-    assert.match(PLUS_LIMITS_NOTE, /6 active gatherings/);
+    // The wording moved from "6 active gatherings / Drafts don't count"
+    // to the note below, and the new one is the accurate one: a draft
+    // DOES occupy an open working slot — assert_free_gathering_slot_
+    // available() counts draft, active and hosting alike — while
+    // enforce_lock_in_rules() ignores drafts entirely, so a draft spends
+    // nothing from the annual twelve. Both bounds are still stated.
+    assert.match(PLUS_LIMITS_NOTE, /6 open gatherings/);
     assert.match(PLUS_LIMITS_NOTE, /12 locked-in gatherings/);
-    assert.match(PLUS_LIMITS_NOTE, /Drafts don't count/);
+    assert.match(PLUS_LIMITS_NOTE, /annual term/);
+    assert.match(PLUS_LIMITS_NOTE, /Drafts occupy an open working slot/);
+    assert.match(PLUS_LIMITS_NOTE, /do not use the annual allowance/);
   });
 
   test("a Pass is bound to its gathering and is not a subscription", () => {
@@ -895,7 +903,10 @@ describe("entitlement consistency — the V1 model as sold", () => {
   });
 
   test("Plus is 6 open and 12 lock-ins a term, everywhere it is stated", () => {
-    assert.match(PLUS_LIMITS_NOTE, /6 active gatherings/);
+    // The public note and the notice a host meets at the limit have to
+    // agree, or the plan means one thing on the pricing page and another
+    // in the wizard.
+    assert.match(PLUS_LIMITS_NOTE, /6 open gatherings/);
     assert.match(PLUS_LIMITS_NOTE, /12 locked-in gatherings/);
     assert.match(
       GATHERING_LIMIT_COPY.plus_open_gathering_limit_reached.body,
