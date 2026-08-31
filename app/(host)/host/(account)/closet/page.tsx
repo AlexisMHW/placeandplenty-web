@@ -4,24 +4,15 @@ import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
 import { AddForm, Field, ActionButton } from "@/components/host/Editable";
 import { addClosetItem, archiveClosetItem } from "@/lib/host-actions";
 
-// MY HOSTING CLOSET (§9, food & the table) — "what you already have".
+// MY HOSTING CLOSET — account-level reusable inventory.
 //
-// AN EMPTY RESULT HERE IS AMBIGUOUS, AND THE PAGE MUST NOT PRETEND
-// OTHERWISE. The RLS policy is:
+// Product truth:
+// - Free: basic Closet organization and owner CRUD.
+// - Gathering Pass / Plus: smart gathering-specific Closet intelligence
+//   such as what is covered, what is missing, and Shopping quantity reduction.
 //
-//   owner_user_id = auth.uid() AND user_can_access_closet(auth.uid())
-//
-// so a user without the entitlement gets zero rows — exactly the same
-// response as a user who genuinely owns nothing. Showing "your closet is
-// empty, add something" to someone who cannot access the feature would
-// be actively misleading: they would go looking for an add button that
-// is not there for them.
-//
-// The web app cannot distinguish the two cases from the row count alone,
-// so the empty state names both possibilities plainly rather than
-// guessing. Resolving it properly needs an entitlement read the app
-// already does; that is a follow-up, and saying so is better than
-// shipping copy that is wrong for one of the two groups.
+// This page is the basic inventory surface and must never imply that the
+// Closet itself requires a paid entitlement.
 
 export const metadata = { title: "My Hosting Closet" };
 
@@ -44,8 +35,7 @@ export default async function ClosetPage() {
       {items.length === 0 ? (
         <EmptyState
           title="Nothing in the closet yet."
-          body="The Hosting Closet remembers what you own — platters, chairs, the good glasses — so a shopping list can tell you what you actually need."
-          hint="If the closet is part of a plan you don't have, it stays empty here too."
+          body="Keep the things you host with here — platters, chairs, the good glasses — so My Shopping can help you see what you already have before you buy more."
         />
       ) : (
         <>
@@ -105,7 +95,6 @@ export default async function ClosetPage() {
               </section>
             ))}
           </div>
-
         </>
       )}
 
