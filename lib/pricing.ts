@@ -78,13 +78,13 @@ export const PRICING_TIERS: PricingTier[] = [
 ];
 
 /**
- * Current channel truth. Native store purchasing is wired through Apple /
- * Google and resolves into the same canonical entitlement rows. The website's
- * card-checkout UX is prepared, but its server payment route/processor is not
- * live on this branch yet; public copy must not imply otherwise.
+ * Release-state truth. Native purchase code is wired, but store/RevenueCat
+ * setup and real-purchase verification still have to clear the release gate.
+ * Stripe/web checkout is also not enabled yet. Public copy therefore states
+ * availability without pretending either channel is already live.
  */
 export const PURCHASE_AVAILABILITY_NOTE =
-  "Purchases are available in the mobile app through Apple or Google. Web card checkout is not currently enabled.";
+  "Purchasing opens with the app release. Web card checkout is not currently enabled.";
 
 export const FREE_LIMITS_NOTE =
   "Free covers one open gathering at a time. A draft occupies that working slot until you finish or close it.";
