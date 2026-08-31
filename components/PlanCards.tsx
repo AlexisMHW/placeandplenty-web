@@ -10,38 +10,6 @@ import {
 import { isCheckoutConfigured, findWebProduct } from "@/lib/checkout";
 import { FEATURE_AVAILABILITY_NOTE } from "@/lib/entitlements";
 
-// THE THREE PLAN CARDS, composed to `Pricing_Page.png`.
-//
-// The reference's card anatomy, followed closely:
-//
-//   plan name      letterspaced small caps, centred
-//   amount         the display serif, very large, with the $ raised
-//   period         beside it in body type; the qualifier under it
-//   gold rule
-//   one-line       what the plan is for
-//   check list     circle-check icons, left aligned
-//   button         full width at the foot of the card
-//   fine print     one line under the button
-//
-// Plus sits in the centre, raised, with a forest MOST POPULAR tab
-// straddling its top edge and a forest border the other two do not have.
-// Botanical boughs run down both outer margins of the band.
-//
-// THE PRICE IS NEVER FORMATTED HERE. Every amount is a pre-assembled
-// `priceLine` from lib/pricing.ts with "+ applicable taxes and fees"
-// already inside the string. The reference's "+ applicable tax" is the
-// exact wording §17 and §32 forbid, so the reference's TYPOGRAPHY of the
-// price is copied and its WORDING is not: the amount is split off the
-// front of the string for display and the remainder is printed verbatim
-// underneath, so the qualifier cannot be lost by a formatting change.
-//
-// THE BUTTONS ARE REAL WHERE THE PATH IS REAL. "Start Hosting" goes to
-// /signup and works today. The two paid buttons go to /checkout/<slug>,
-// which is a genuine page that explains the purchase and hands off to
-// the processor — and which says plainly that card payment opens with
-// the release while no processor is configured. Nothing here is a
-// disabled control pretending to be a live one.
-
 function CheckItem({ children, filled }: { children: string; filled: boolean }) {
   return (
     <li className="flex items-start gap-2.5">
@@ -57,13 +25,10 @@ function CheckItem({ children, filled }: { children: string; filled: boolean }) 
   );
 }
 
-function PlanCard({ tier }: { tier: PricingTier }) {
+function PlanCard({ tier, checkoutLive }: { tier: PricingTier; checkoutLive: boolean }) {
   const highlight = Boolean(tier.highlight);
   const free = tier.price === "$0";
 
-  // Split the amount off the front of the compliant string so the
-  // qualifier is printed exactly as lib/pricing.ts wrote it. The
-  // remainder is never edited, only positioned.
   const qualifier = tier.priceLine
     .replace(tier.price, "")
     .replace(tier.billing, "")
@@ -73,17 +38,27 @@ function PlanCard({ tier }: { tier: PricingTier }) {
     ? null
     : findWebProduct(tier.name === "Gathering Pass" ? "gathering-pass" : "plus");
 
-  const href = free ? "/signup" : `/checkout/${product?.slug ?? "plus"}`;
+  const href = free
+    ? "/signup"
+    : checkoutLive
+      ? `/checkout/${product?.slug ?? "plus"}`
+      : "/get";
+
   const label = free
     ? "Start Hosting"
-    : tier.name === "Gathering Pass"
-      ? "Get a Pass"
-      : "Go Plus";
+    : checkoutLive
+      ? tier.name === "Gathering Pass"
+        ? "Get a Pass"
+        : "Go Plus"
+      : "Get the app";
+
   const fineprint = free
     ? "No credit card required"
-    : tier.name === "Gathering Pass"
-      ? "Use anytime · not a subscription"
-      : "Billed annually";
+    : checkoutLive
+      ? tier.name === "Gathering Pass"
+        ? "Use anytime · not a subscription"
+        : "Billed annually"
+      : "Purchase through Apple or Google when available";
 
   return (
     <div
@@ -149,12 +124,8 @@ function PlanCard({ tier }: { tier: PricingTier }) {
 }
 
 export default function PlanCards() {
-  // The reference raises Plus in the middle. lib/pricing.ts lists the
-  // tiers Free / Pass / Plus, which is the reconciliation's order, so the
-  // swap happens here rather than by reordering the source of truth.
   const [free, pass, plus] = PRICING_TIERS;
   const ordered = [free, plus, pass];
-
   const checkoutLive = isCheckoutConfigured();
 
   return (
@@ -180,11 +151,10 @@ export default function PlanCards() {
 
           <div className="mt-14 grid gap-6 lg:grid-cols-3 lg:gap-5">
             {ordered.map((tier) => (
-              <PlanCard key={tier.name} tier={tier} />
+              <PlanCard key={tier.name} tier={tier} checkoutLive={checkoutLive} />
             ))}
           </div>
 
-          {/* ---- the "How Plus works" strip from the reference ------- */}
           <div className="mt-10 flex flex-col gap-4 rounded-2xl border border-sage/25 bg-cream px-6 py-6 sm:flex-row sm:items-center sm:gap-6">
             <span className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-forest text-offwhite">
               <Icon name="info" size={20} />
@@ -199,18 +169,14 @@ export default function PlanCards() {
             </div>
           </div>
 
-          {/* Sits directly under the cards, because this is where
-              someone decides to buy Plus and it is the caveat that
-              belongs to that decision. */}
           <p className="mt-6 text-center font-body text-sm leading-relaxed text-forest/70">
             {FEATURE_AVAILABILITY_NOTE}
           </p>
 
           {!checkoutLive && (
             <p className="mt-6 text-center font-body text-sm text-forest/65">
-              Card payment opens with the app release. Free accounts work
-              today — everything on this page is settled and nothing about it
-              changes when checkout goes live.
+              Web card checkout is not active yet. Paid access will be available
+              through the mobile stores first; Free accounts already work in the browser.
             </p>
           )}
         </div>
