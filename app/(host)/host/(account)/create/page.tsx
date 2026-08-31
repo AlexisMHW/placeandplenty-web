@@ -26,7 +26,7 @@ export default function CreateGatheringPage() {
         <span aria-hidden className="rotate-180">
           <Icon name="arrow" size={15} />
         </span>
-        My Host Hub
+        My Gatherings
       </Link>
 
       <h1 className="mt-5 font-display text-4xl leading-tight text-forest">
