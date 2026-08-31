@@ -44,7 +44,14 @@ import {
   TAX_QUALIFIER,
   PLUS_LIMITS_NOTE,
   PASS_LIMITS_NOTE,
+  FREE_LIMITS_NOTE,
+  PURCHASE_AVAILABILITY_NOTE,
 } from "../lib/pricing.ts";
+import {
+  GATHERING_LIMIT_CODES,
+  GATHERING_LIMIT_COPY,
+  isGatheringLimitCode,
+} from "../lib/gathering-limits.ts";
 
 // PRE-NATIVE-REBUILD REGRESSION TESTS, for the rules that live in
 // TypeScript rather than in Postgres.
@@ -778,5 +785,159 @@ describe("invitation artwork — the browser and the phone judge the same file a
       "file_too_large",
       "unsupported_file_type",
     ]);
+  });
+});
+
+describe("gathering limits — the database's answer, carried not recomputed", () => {
+  test("the three codes are the migrations' literals, character for character", () => {
+    // assert_free_gathering_slot_available() raises the first two;
+    // enforce_lock_in_rules() raises the third. A typo here costs the
+    // whole feature silently: the code never matches and the host gets
+    // the generic red message instead of the notice.
+    assert.deepEqual([...GATHERING_LIMIT_CODES].sort(), [
+      "free_open_gathering_limit_reached",
+      "plus_annual_allowance_reached",
+      "plus_open_gathering_limit_reached",
+    ]);
+    assert.equal(isGatheringLimitCode("free_open_gathering_limit_reached"), true);
+    assert.equal(isGatheringLimitCode("free_gathering_slot"), false);
+  });
+
+  test("every code has copy, and no code is left to the generic path", () => {
+    for (const code of GATHERING_LIMIT_CODES) {
+      const copy = GATHERING_LIMIT_COPY[code];
+      assert.equal(typeof copy.title, "string");
+      assert.equal(copy.title.length > 0, true);
+      assert.equal(copy.body.length > 0, true);
+      assert.equal(copy.primary.label.length > 0, true);
+      assert.match(copy.primary.href, /^\//);
+    }
+  });
+
+  test("FREE says one at a time, and leads to the plans", () => {
+    const c = GATHERING_LIMIT_COPY.free_open_gathering_limit_reached;
+    assert.equal(c.title, "One free gathering at a time");
+    assert.equal(
+      c.body,
+      "Free includes one open gathering at a time. Finish or close your current gathering, or add paid access when purchasing opens."
+    );
+    assert.deepEqual(c.primary, { label: "Compare plans", href: "/pricing" });
+    assert.deepEqual(c.secondary, { label: "My Gatherings", href: "/host" });
+  });
+
+  test("PLUS 6 says six, and offers NO Gathering Pass", () => {
+    // Six open gatherings is the plan working as sold. A Pass does not
+    // lift this cap, so offering one would be selling against a limit
+    // the purchase does not answer.
+    const c = GATHERING_LIMIT_COPY.plus_open_gathering_limit_reached;
+    assert.equal(c.title, "You have six gatherings open");
+    assert.equal(
+      c.body,
+      "Plus includes up to 6 open gatherings at one time. Finish, archive, or cancel one before opening another."
+    );
+    assert.deepEqual(c.primary, { label: "My Gatherings", href: "/host" });
+    assert.equal(c.secondary, undefined);
+    assert.equal(/pass/i.test(JSON.stringify(c)), false);
+  });
+
+  test("PLUS 12 keeps the draft, and offers the Pass in the future tense", () => {
+    const c = GATHERING_LIMIT_COPY.plus_annual_allowance_reached;
+    assert.equal(c.title, "You’ve used this term’s 12 Plus lock-ins");
+    assert.equal(
+      c.body,
+      "Your Plus account features stay active. This draft is saved. A Gathering Pass can unlock this gathering when paid purchasing is available."
+    );
+    assert.deepEqual(c.primary, {
+      label: "See Gathering Pass",
+      href: "/pricing",
+    });
+    assert.equal(c.dismiss, "Keep as draft");
+    // The lock-in trigger refuses the transition and leaves the row in
+    // 'draft', so this is a statement of fact, not reassurance.
+    assert.match(c.body, /This draft is saved/);
+    // Purchasing is not live on the web, so the Pass is future tense.
+    assert.match(c.body, /when paid purchasing is available/);
+  });
+
+  test("no notice claims a purchase can be made right now", () => {
+    const all = JSON.stringify(GATHERING_LIMIT_COPY);
+    assert.equal(/buy now|purchase now|upgrade now/i.test(all), false);
+    assert.equal(/unlimited/i.test(all), false);
+  });
+
+  test("the caps appear only as words the host reads, never as arithmetic", () => {
+    // This module maps a code to copy. If it ever starts counting
+    // gatherings or reading entitlements there are two answers to
+    // "is this host at their limit" and they will disagree.
+    const source = GATHERING_LIMIT_COPY;
+    assert.equal(Object.keys(source).length, GATHERING_LIMIT_CODES.length);
+    for (const code of GATHERING_LIMIT_CODES) {
+      assert.equal(typeof source[code].body, "string");
+    }
+  });
+});
+
+describe("entitlement consistency — the V1 model as sold", () => {
+  const everything =
+    JSON.stringify(PRICING_TIERS) +
+    PLUS_LIMITS_NOTE +
+    PASS_LIMITS_NOTE +
+    FREE_LIMITS_NOTE +
+    PURCHASE_AVAILABILITY_NOTE +
+    JSON.stringify(GATHERING_LIMIT_COPY);
+
+  test("Free is one open gathering, everywhere it is stated", () => {
+    assert.match(FREE_LIMITS_NOTE, /one/i);
+    assert.match(
+      GATHERING_LIMIT_COPY.free_open_gathering_limit_reached.body,
+      /one open gathering at a time/
+    );
+  });
+
+  test("Plus is 6 open and 12 lock-ins a term, everywhere it is stated", () => {
+    assert.match(PLUS_LIMITS_NOTE, /6 active gatherings/);
+    assert.match(PLUS_LIMITS_NOTE, /12 locked-in gatherings/);
+    assert.match(
+      GATHERING_LIMIT_COPY.plus_open_gathering_limit_reached.body,
+      /up to 6 open gatherings/
+    );
+    assert.match(
+      GATHERING_LIMIT_COPY.plus_annual_allowance_reached.title,
+      /12 Plus lock-ins/
+    );
+  });
+
+  test("a Pass is one gathering, and is not a subscription", () => {
+    assert.match(PASS_LIMITS_NOTE, /bound to it/);
+    assert.match(PASS_LIMITS_NOTE, /isn't a subscription/);
+  });
+
+  test("nothing anywhere is described as unlimited", () => {
+    assert.equal(/unlimited/i.test(everything), false);
+  });
+
+  test("web checkout is not live, and nothing says otherwise", () => {
+    assert.equal(WEB_CHECKOUT_LIVE, false);
+  });
+
+  test("store purchasing is not presented as live either", () => {
+    // RevenueCat / App Store / Play purchasing is not something this
+    // site may claim is available today.
+    assert.equal(/buy now|purchase now|available now/i.test(everything), false);
+    assert.equal(/revenuecat/i.test(everything), false);
+  });
+
+  test("every paid price line still carries the tax qualifier", () => {
+    // priceLine is the string surfaces render; a paid tier must never
+    // show a bare amount.
+    for (const tier of PRICING_TIERS) {
+      if (tier.price === "$0") continue;
+      assert.equal(
+        tier.priceLine.includes(TAX_QUALIFIER),
+        true,
+        `${tier.name} is missing "${TAX_QUALIFIER}"`
+      );
+    }
+    assert.equal(TAX_QUALIFIER, "+ applicable taxes and fees");
   });
 });

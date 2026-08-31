@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
 import { getBrowserClient } from "@/lib/supabase-browser";
+import GatheringLimitNotice from "@/components/host/GatheringLimitNotice";
 import {
   countGatheringInvitees,
   finaliseGatheringCreation,
@@ -12,6 +13,7 @@ import {
   saveGatheringDraft,
   saveInvitationArtwork,
 } from "@/lib/host-actions";
+import type { GatheringLimitCode } from "@/lib/gathering-limits";
 import {
   DEFAULT_ARRIVAL_TIME,
   EMPTY_GATHERING_INPUT,
@@ -129,6 +131,24 @@ export default function CreateGatheringWizard() {
   const [inviteeCount, setInviteeCount] = useState<number | null>(null);
 
   const [error, setError] = useState<string | null>(null);
+  // A plan limit the database named, when it named one. Held apart from
+  // `error` because it is answered with a notice rather than printed as
+  // a failure — see components/host/GatheringLimitNotice.tsx. Never
+  // derived here: it only ever arrives on an action's result.
+  const [limit, setLimit] = useState<GatheringLimitCode | null>(null);
+
+  /** Every refusal lands here, so the two can never disagree. */
+  function showRefusal(result: { message: string; limit?: GatheringLimitCode }) {
+    setLimit(result.limit ?? null);
+    // A named limit is not an error, so the red line stays empty for it
+    // and the notice carries the whole message.
+    setError(result.limit ? null : result.message);
+  }
+
+  function clearRefusal() {
+    setError(null);
+    setLimit(null);
+  }
   const [submitting, start] = useTransition();
 
   const fileInput = useRef<HTMLInputElement>(null);
@@ -176,7 +196,9 @@ export default function CreateGatheringWizard() {
       if (firstSave) setDraftId(result.value);
       return result.value;
     }
-    if (firstSave) setError(result.message);
+    // The insert is the one the database can refuse — on a plan limit it
+    // names, which showRefusal turns into a notice rather than red text.
+    if (firstSave) showRefusal(result);
     return draftId;
   }
 
@@ -187,7 +209,7 @@ export default function CreateGatheringWizard() {
   }
 
   function go(next: number) {
-    setError(null);
+    clearRefusal();
     start(async () => {
       const id = await persistDraft(input);
       await persistInvitation(id);
@@ -303,11 +325,13 @@ export default function CreateGatheringWizard() {
   function handleSubmit() {
     const errors = validateGatheringInput(input);
     if (errors.length > 0) {
+      // A rule this side owns, so it stays a plain red line.
+      setLimit(null);
       setError(VALIDATION_MESSAGES[errors[0].code]);
       return;
     }
 
-    setError(null);
+    clearRefusal();
     start(async () => {
       const saved = await saveGatheringDraft(
         input,
@@ -315,16 +339,21 @@ export default function CreateGatheringWizard() {
         draftId ? null : Intl.DateTimeFormat().resolvedOptions().timeZone
       );
       if (!saved.ok) {
-        setError(saved.message);
+        showRefusal(saved);
         return;
       }
       if (!draftId) setDraftId(saved.value);
 
       await persistInvitation(saved.value);
 
+      // The one draft → active transition, guarded in the database by
+      // `WHERE status = 'draft'`. The lock-in trigger can refuse it, and
+      // when it does the row is left exactly as it was — a draft — which
+      // is why the Plus 12 notice can promise the draft is saved without
+      // doing anything to save it.
       const finalised = await finaliseGatheringCreation(saved.value);
       if (!finalised.ok) {
-        setError(finalised.message);
+        showRefusal(finalised);
         return;
       }
 
@@ -744,7 +773,19 @@ export default function CreateGatheringWizard() {
             </div>
           )}
 
-          {error && (
+          {/* A plan limit is answered with a notice; anything else is
+              still a plain red line. The two are mutually exclusive by
+              construction — see showRefusal(). The draft and every
+              answer already given survive either way. */}
+          {limit && (
+            <GatheringLimitNotice
+              code={limit}
+              onDismiss={clearRefusal}
+              className="mt-6"
+            />
+          )}
+
+          {error && !limit && (
             <p role="alert" className="mt-6 font-body text-sm text-error">
               {error}
             </p>

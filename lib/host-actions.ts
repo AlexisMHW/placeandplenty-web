@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase-server";
 import { mergeGuestCounts } from "@/lib/guest-counts";
 import {
+  GATHERING_LIMIT_CODES,
+  type GatheringLimitCode,
+} from "@/lib/gathering-limits";
+import {
   isFoodStyle,
   isGatheringType,
   validateGatheringInput,
@@ -69,12 +73,43 @@ import {
 // in hostready_compute(), both surfaces become right at once and nothing
 // in this file changes.
 
-export type ActionResult = { ok: true } | { ok: false; message: string };
+/* ------------------------------------------------------------------ */
+/* Limits the database refused, named the way the database named them  */
+/* ------------------------------------------------------------------ */
+
+// Three of the refusals below are not failures — a Free host with a
+// gathering already open, a Plus host with six, a Plus term's twelve
+// lock-ins spent. Each is a literal raised by a Postgres trigger with
+// errcode P0001, and the UI has to tell them apart from the general
+// case without reading English.
+//
+// MATCHED, NEVER RECOMPUTED. Nothing on this side counts a host's
+// gatherings or reads an entitlement to decide which one applies. The
+// database decided; the only job here is to carry which decision it was
+// so a surface can answer it properly instead of printing a red
+// sentence. The codes and their copy live in lib/gathering-limits.ts.
+
+/** Which limit the database named, if it named one. */
+function limitCodeOf(
+  error: { message?: string } | null
+): GatheringLimitCode | undefined {
+  const raw = error?.message ?? "";
+  return GATHERING_LIMIT_CODES.find((code) => raw.includes(code));
+}
+
+/**
+ * A failure carries `limit` when the database refused on a plan rule
+ * rather than going wrong. Optional, so every existing caller that only
+ * reads `message` keeps working unchanged and simply shows the sentence.
+ */
+export type ActionResult =
+  | { ok: true }
+  | { ok: false; message: string; limit?: GatheringLimitCode };
 
 /** A result that hands something back — an invite link, an id. */
 export type ActionValue<T> =
   | { ok: true; value: T }
-  | { ok: false; message: string };
+  | { ok: false; message: string; limit?: GatheringLimitCode };
 
 /** Postgres error codes and messages a host might actually provoke. */
 function translate(error: { message?: string; code?: string } | null): string {
@@ -83,15 +118,29 @@ function translate(error: { message?: string; code?: string } | null): string {
   if (raw.includes("gathering_archived_read_only")) {
     return "This gathering is archived, so it can't be changed. Unarchive it in the app first.";
   }
+
+  // THE THREE PLAN LIMITS COME FIRST, before the older `free_gathering_slot`
+  // branch below. That branch matches on a fragment, and the function
+  // that raises two of these is called assert_free_gathering_slot_
+  // available() — so a Postgres message carrying the function name could
+  // be answered with the wrong sentence if the general case were tested
+  // first. Specific before general.
+  //
+  // These sentences are the fallback for surfaces that only render
+  // `message`. Where a surface can do better — the create wizard — it
+  // reads `limit` instead and shows the notice that belongs to it.
+  if (raw.includes("free_open_gathering_limit_reached")) {
+    return "Free includes one open gathering at a time. Finish or close your current gathering, or add paid access when purchasing opens.";
+  }
+  if (raw.includes("plus_open_gathering_limit_reached")) {
+    return "Plus includes up to 6 open gatherings at one time. Finish, archive, or cancel one before opening another.";
+  }
+  if (raw.includes("plus_annual_allowance_reached")) {
+    return "You've used this term's 12 Plus lock-ins. Your Plus account features stay active and this draft is saved.";
+  }
+
   if (raw.includes("free_gathering_slot") || raw.includes("slot_available")) {
     return "Free covers one active gathering at a time. Finish or close the current one first.";
-  }
-  // enforce_one_open_gathering raises this literal string. Matched
-  // rather than parsed out of arbitrary Postgres text, exactly as the
-  // native app matches it — the limit lives in the database, and both
-  // surfaces are only translating what it said.
-  if (raw.includes("free_open_gathering_limit_reached")) {
-    return "Your Free plan includes one active gathering at a time. Finish or archive your current gathering, or unlock another gathering to start a new one.";
   }
   if (raw.includes("locked_in") || raw.includes("lock_in")) {
     return "This gathering is locked in, so that can't be changed here.";
@@ -115,10 +164,9 @@ function translate(error: { message?: string; code?: string } | null): string {
 }
 
 function fail(error: unknown): ActionResult {
-  return {
-    ok: false,
-    message: translate(error as { message?: string; code?: string } | null),
-  };
+  const e = error as { message?: string; code?: string } | null;
+  const limit = limitCodeOf(e);
+  return { ok: false, message: translate(e), ...(limit ? { limit } : {}) };
 }
 
 /**
@@ -127,10 +175,9 @@ function fail(error: unknown): ActionResult {
  * except the type they have to satisfy.
  */
 function failValue<T>(error: unknown): ActionValue<T> {
-  return {
-    ok: false,
-    message: translate(error as { message?: string; code?: string } | null),
-  };
+  const e = error as { message?: string; code?: string } | null;
+  const limit = limitCodeOf(e);
+  return { ok: false, message: translate(e), ...(limit ? { limit } : {}) };
 }
 
 /**
