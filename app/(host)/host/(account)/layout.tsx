@@ -9,25 +9,9 @@ import {
   getClosetItems,
 } from "@/lib/host-data";
 
-// THE ACCOUNT-LEVEL SHELL, composed to `host_web_home.png`.
-//
-// §11 asks for "top account bar, gathering switcher, left-side
-// navigation, large central workspace, responsive collapse". The
-// reference draws exactly that: a forest sidebar carrying the wordmark
-// and the account navigation, a slim top bar, and a wide cream
-// workspace. §15 confirms the balance — "majority warm ivory/cream
-// workspace, stronger forest/sage sidebar or navigation anchor".
-//
-// THE COUNTS ARE REAL. My Gatherings, My Guest Book and My Hosting
-// Closet each show how many, read from the canonical tables. The
-// reference shows 4 / 240 / 126 and the temptation is to render
-// something that looks similar; a number nobody counted is worse than no
-// number, so a count that cannot be read is simply omitted and the badge
-// does not appear.
-//
-// GATHERING NAVIGATION IS NOT HERE. It belongs to the gathering
-// workspace, because a rail of gathering tools on the gatherings LIST is
-// navigation to nowhere.
+// Account-level Host Web shell. Gathering tools live inside the gathering
+// workspace; this surface is for the host's gatherings and reusable account
+// tools. Keep "My Hosting Hub" reserved for the gathering-level feature hub.
 
 export default async function AccountShellLayout({
   children,
@@ -36,7 +20,6 @@ export default async function AccountShellLayout({
 }) {
   const user = await getUser();
 
-  // Failing to read a count costs a badge, not the page.
   const [profile, gatherings, guestBook, closet] = await Promise.all([
     getProfile(),
     getMyGatherings().catch(() => null),
@@ -56,6 +39,7 @@ export default async function AccountShellLayout({
     {
       items: [
         { label: "Home", href: "/host", icon: "house", exact: true },
+        { label: "Create Gathering", href: "/host/create", icon: "calendar" },
         {
           label: "My Hosting Closet",
           href: "/host/closet",
@@ -94,7 +78,7 @@ export default async function AccountShellLayout({
     <HostShell
       tone="forest"
       groups={groups}
-      title="My Host Hub"
+      title="My Gatherings"
       topBar={
         <>
           {typeof activeCount === "number" && activeCount > 0 && (
@@ -105,6 +89,13 @@ export default async function AccountShellLayout({
           )}
 
           <Link
+            href="/host/create"
+            className="hidden rounded-lg bg-forest px-3.5 py-2 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90 sm:inline-flex"
+          >
+            Create Gathering
+          </Link>
+
+          <Link
             href="/host/account"
             className="hidden max-w-[12rem] items-center gap-2 truncate rounded-lg border border-sage/40 px-3 py-2 font-body text-sm text-forest transition-colors duration-400 hover:bg-forest/5 sm:flex"
           >
@@ -112,7 +103,6 @@ export default async function AccountShellLayout({
             <span className="truncate">{name}</span>
           </Link>
 
-          {/* POST, not a link — see app/auth/signout/route.ts. */}
           <form action="/auth/signout" method="post">
             <button
               type="submit"
