@@ -29,7 +29,7 @@ import {
 } from "@/lib/gathering-creation";
 import { gatheringTypeLabel } from "@/lib/host-format";
 import {
-  ALLOWED_ARTWORK_MIME_TYPES,
+  ARTWORK_ACCEPT_ATTRIBUTE,
   ARTWORK_LIMITS_HINT,
   artworkObjectPath,
   artworkRejectionReason,
@@ -37,6 +37,7 @@ import {
   INVITATION_MODES,
   INVITATION_STYLES,
   isRenderableArtwork,
+  resolveArtworkMimeType,
   type InvitationDecision,
   type InvitationMode,
 } from "@/lib/invitations";
@@ -298,11 +299,22 @@ export default function CreateGatheringWizard() {
     }
     // Checked here so a host is told before a ten-megabyte upload rather
     // than after it. The bucket enforces the same limits regardless.
+    // The name is passed because a browser reports no type at all for
+    // some files, and the phone resolves those by extension — the two
+    // have to reach the same verdict about the same file.
     const rejection = artworkRejectionReason(file);
     if (rejection) {
       setArtworkError(rejection);
       return;
     }
+
+    // Stored as the RESOLVED type, never the reported one: an
+    // octet-stream-labelled PNG saved under that label downloads as a
+    // blob instead of rendering, and the gathering loses its face.
+    // Non-null by construction — the rejection check above already
+    // refused anything that does not resolve.
+    const mimeType =
+      resolveArtworkMimeType(file.type, file.name) ?? file.type;
 
     setUploading(true);
     try {
@@ -311,7 +323,7 @@ export default function CreateGatheringWizard() {
 
       const { error: uploadError } = await supabase.storage
         .from(INVITATION_ARTWORK_BUCKET)
-        .upload(path, file, { contentType: file.type, upsert: false });
+        .upload(path, file, { contentType: mimeType, upsert: false });
 
       if (uploadError) {
         setArtworkError(
@@ -323,7 +335,7 @@ export default function CreateGatheringWizard() {
       const recorded = await saveInvitationArtwork(
         gatheringId,
         path,
-        file.type,
+        mimeType,
         file.name
       );
       if (!recorded.ok) {
@@ -331,12 +343,12 @@ export default function CreateGatheringWizard() {
         return;
       }
 
-      setArtwork({ filename: file.name, mimeType: file.type });
+      setArtwork({ filename: file.name, mimeType });
 
       // A private bucket, so a path is not a URL. An hour is longer than
       // anyone spends on this step and short enough that a URL copied
       // out of devtools stops working the same afternoon.
-      if (isRenderableArtwork(file.type)) {
+      if (isRenderableArtwork(mimeType)) {
         const { data } = await supabase.storage
           .from(INVITATION_ARTWORK_BUCKET)
           .createSignedUrl(path, 3600);
@@ -678,7 +690,7 @@ export default function CreateGatheringWizard() {
                           ref={fileInput}
                           type="file"
                           className="sr-only"
-                          accept={ALLOWED_ARTWORK_MIME_TYPES.join(",")}
+                          accept={ARTWORK_ACCEPT_ATTRIBUTE}
                           onChange={(e) =>
                             handleArtworkChosen(e.target.files?.[0])
                           }

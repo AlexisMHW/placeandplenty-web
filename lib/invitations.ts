@@ -172,17 +172,101 @@ export function isInvitationDecision(
 
 export const INVITATION_ARTWORK_BUCKET = "invitation-artwork";
 
-/**
- * What the bucket itself accepts. Kept in step with the native picker's
- * allow-list — PDF is supported end to end and must not be quietly
- * dropped here, since a host who bought a PDF invitation from a designer
- * is exactly the person this feature is for.
- */
+// THIS IS THE WEB'S COPY OF features/invitations/services/
+// invitationArtworkRules.ts IN THE NATIVE REPO, AND IT IS A COPY.
+//
+// That module was written to be import-free precisely so a single
+// definition could serve both clients, and its header says the web
+// "can import exactly this file rather than keeping a second copy."
+// It cannot: the two clients are separate repositories with separate
+// dependency graphs, and nothing here resolves a path into the app.
+// Until the rules are published as a package both surfaces depend on,
+// the honest description is two copies that must be kept identical by
+// hand — so the values below are mirrored exactly, and the tests
+// assert the behaviour rather than trusting the intention.
+//
+// KEEPING THEM THE SAME IS THE WHOLE REQUIREMENT. A file that uploads
+// from the phone and is refused by the browser is the failure both
+// files exist to prevent.
+
+/** `ALLOWED_MIME_TYPES` in the native rules module. */
 export const ALLOWED_ARTWORK_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "application/pdf",
 ] as const;
+
+/** `ALLOWED_EXTENSIONS` in the native rules module. */
+export const ALLOWED_ARTWORK_EXTENSIONS = [
+  "pdf",
+  "jpg",
+  "jpeg",
+  "png",
+] as const;
+
+/**
+ * The `accept` value for the file input.
+ *
+ * BOTH MIME TYPES AND EXTENSIONS, because some desktop browsers filter
+ * on one and some on the other — a picker that greys out a valid PDF is
+ * the same refusal as a validator that rejects it, just earlier and with
+ * no explanation. Mirrors `ACCEPT_ATTRIBUTE`.
+ */
+export const ARTWORK_ACCEPT_ATTRIBUTE = [
+  ...ALLOWED_ARTWORK_MIME_TYPES,
+  ...ALLOWED_ARTWORK_EXTENSIONS.map((ext) => `.${ext}`),
+].join(",");
+
+/**
+ * Types that mean "I don't know", not "this is binary rubbish".
+ *
+ * Several Android document providers hand back a perfectly good PDF or
+ * PNG labelled octet-stream, and browsers report an empty type for a
+ * drag-and-dropped file or one with an unregistered extension. Native
+ * resolves those by extension; before this, web did not — so the same
+ * PDF was accepted on the phone and refused in the browser, which is
+ * exactly the divergence the rules are supposed to rule out.
+ */
+const GENERIC_MIME_TYPES = ["", "application/octet-stream", "binary/octet-stream"];
+
+const EXTENSION_MIME_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+};
+
+export function extensionOf(filename: string): string {
+  const dot = filename.lastIndexOf(".");
+  return dot === -1 ? "" : filename.slice(dot + 1).toLowerCase();
+}
+
+/**
+ * The type the file should actually be STORED as, or null when it is not
+ * an accepted kind at all.
+ *
+ * Resolving rather than trusting matters after the upload as well as
+ * before it: an octet-stream-labelled PNG stored under its reported type
+ * downloads as a blob instead of rendering, so the gathering loses its
+ * face on both surfaces. A genuinely disallowed type is never rescued by
+ * a matching extension — only a *generic* label is resolved, so
+ * `evil.exe` renamed `evil.png` still arrives as its real reported type
+ * and is refused.
+ */
+export function resolveArtworkMimeType(
+  mimeType: string | null | undefined,
+  filename: string
+): string | null {
+  const reported = (mimeType ?? "").trim().toLowerCase();
+
+  if ((ALLOWED_ARTWORK_MIME_TYPES as readonly string[]).includes(reported)) {
+    return reported;
+  }
+  if (GENERIC_MIME_TYPES.includes(reported)) {
+    return EXTENSION_MIME_TYPES[extensionOf(filename)] ?? null;
+  }
+  return null;
+}
 
 /**
  * The bucket's own `file_size_limit`, mirrored so the host is told
@@ -239,13 +323,19 @@ export const ARTWORK_REJECTION_MESSAGES: Record<ArtworkRejectionCode, string> =
  * watching ten megabytes upload into a rejection.
  */
 export function artworkRejectionCode(file: {
+  /** The browser's reported type, which is not always the real one. */
   type: string;
   size: number;
+  /** Needed to resolve a generic type. Mirrors the native signature. */
+  name?: string;
 }): ArtworkRejectionCode | null {
-  if (!(ALLOWED_ARTWORK_MIME_TYPES as readonly string[]).includes(file.type)) {
+  // Judged on the RESOLVED type, so the browser and the phone reach the
+  // same verdict about the same file. Type before size, so a host with a
+  // 30MB GIF is not sent off to shrink something they cannot use anyway.
+  if (resolveArtworkMimeType(file.type, file.name ?? "") === null) {
     return "unsupported_file_type";
   }
-  if (file.size === 0) {
+  if (file.size <= 0) {
     return "empty_file";
   }
   if (file.size > MAX_ARTWORK_BYTES) {

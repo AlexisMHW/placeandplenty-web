@@ -3,12 +3,17 @@ import assert from "node:assert/strict";
 
 import { mergeGuestCounts } from "../lib/guest-counts.ts";
 import {
+  ALLOWED_ARTWORK_EXTENSIONS,
   ALLOWED_ARTWORK_MIME_TYPES,
+  ARTWORK_ACCEPT_ATTRIBUTE,
   ARTWORK_LIMITS_HINT,
   ARTWORK_REJECTION_MESSAGES,
   artworkObjectPath,
   artworkRejectionCode,
   artworkRejectionReason,
+  extensionOf,
+  resolveArtworkMimeType,
+  type ArtworkRejectionCode,
   INVITATION_ARTWORK_BUCKET,
   INVITATION_MODES,
   INVITATION_STATUSES,
@@ -652,5 +657,126 @@ describe("invitation artwork — one rule, told the same way on both surfaces", 
       artworkRejectionCode({ type: "image/gif", size: MAX_ARTWORK_BYTES * 3 }),
       "unsupported_file_type"
     );
+  });
+});
+
+describe("invitation artwork — the browser and the phone judge the same file alike", () => {
+  // These mirror tests/invitations/invitationArtworkRules.test.ts in the
+  // native repo. The two clients are separate repositories, so the rules
+  // are two copies kept identical by hand rather than one import -- and
+  // a copy nobody checks is how the drift starts.
+
+  test("a generic type is resolved by extension, not refused", () => {
+    // Several Android providers hand back a real PDF labelled
+    // octet-stream, and browsers report an empty type for some files.
+    // Native resolves these; web used to reject them, so the same file
+    // uploaded from the phone and failed in the browser.
+    assert.equal(
+      resolveArtworkMimeType("application/octet-stream", "invite.pdf"),
+      "application/pdf"
+    );
+    assert.equal(resolveArtworkMimeType("", "invite.PNG"), "image/png");
+    assert.equal(
+      resolveArtworkMimeType("binary/octet-stream", "invite.jpeg"),
+      "image/jpeg"
+    );
+    assert.equal(
+      artworkRejectionCode({
+        type: "application/octet-stream",
+        size: 1000,
+        name: "invite.pdf",
+      }),
+      null
+    );
+  });
+
+  test("a file is stored as its resolved type, so it renders", () => {
+    // An octet-stream-labelled PNG saved under that label downloads as a
+    // blob instead of showing, and the gathering loses its face.
+    assert.equal(
+      resolveArtworkMimeType("application/octet-stream", "art.png"),
+      "image/png"
+    );
+    assert.equal(isRenderableArtwork(resolveArtworkMimeType("", "art.png")), true);
+    assert.equal(
+      isRenderableArtwork(resolveArtworkMimeType("", "art.pdf")),
+      false
+    );
+  });
+
+  test("a disallowed type is never rescued by a matching extension", () => {
+    // Only a GENERIC label is resolved. A file that reports a real,
+    // disallowed type keeps it and is refused however it is named.
+    assert.equal(resolveArtworkMimeType("image/gif", "actually.png"), null);
+    assert.equal(
+      resolveArtworkMimeType("application/x-msdownload", "invite.pdf"),
+      null
+    );
+    assert.equal(
+      artworkRejectionCode({ type: "image/gif", size: 10, name: "x.png" }),
+      "unsupported_file_type"
+    );
+  });
+
+  test("a generic type with no usable extension is still refused", () => {
+    assert.equal(resolveArtworkMimeType("", "invitation"), null);
+    assert.equal(resolveArtworkMimeType("application/octet-stream", "a.gif"), null);
+    assert.equal(
+      artworkRejectionCode({ type: "", size: 10, name: "invitation" }),
+      "unsupported_file_type"
+    );
+  });
+
+  test("extensions are read case-insensitively, from the last dot", () => {
+    assert.equal(extensionOf("my.invite.FINAL.Pdf"), "pdf");
+    assert.equal(extensionOf("noextension"), "");
+    assert.equal(resolveArtworkMimeType("", "my.invite.FINAL.Pdf"), "application/pdf");
+  });
+
+  test("the accept attribute offers both MIME types and extensions", () => {
+    // Some desktop browsers filter on one and some on the other; a
+    // picker grey-ing out a valid PDF is a refusal too, just earlier.
+    for (const mime of ALLOWED_ARTWORK_MIME_TYPES) {
+      assert.equal(ARTWORK_ACCEPT_ATTRIBUTE.includes(mime), true);
+    }
+    for (const ext of ALLOWED_ARTWORK_EXTENSIONS) {
+      assert.equal(ARTWORK_ACCEPT_ATTRIBUTE.includes(`.${ext}`), true);
+    }
+    // JPG and JPEG are one MIME type but two extensions a host may have.
+    assert.equal(ARTWORK_ACCEPT_ATTRIBUTE.includes(".jpg"), true);
+    assert.equal(ARTWORK_ACCEPT_ATTRIBUTE.includes(".jpeg"), true);
+  });
+
+  test("the rules mirror the native module's values exactly", () => {
+    // ALLOWED_MIME_TYPES, ALLOWED_EXTENSIONS and MAX_FILE_SIZE_BYTES as
+    // committed in features/invitations/services/invitationArtworkRules.ts.
+    assert.deepEqual([...ALLOWED_ARTWORK_MIME_TYPES].sort(), [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+    ]);
+    assert.deepEqual([...ALLOWED_ARTWORK_EXTENSIONS].sort(), [
+      "jpeg",
+      "jpg",
+      "pdf",
+      "png",
+    ]);
+    assert.equal(MAX_ARTWORK_BYTES, 10 * 1024 * 1024);
+  });
+
+  test("every rejection reason the native picker can throw has a sentence here", () => {
+    // InvitationArtworkRejection in the native module is exactly these.
+    const nativeCodes = ["unsupported_file_type", "file_too_large", "empty_file"];
+    for (const code of nativeCodes) {
+      assert.equal(
+        typeof ARTWORK_REJECTION_MESSAGES[code as ArtworkRejectionCode],
+        "string"
+      );
+    }
+    assert.deepEqual(Object.keys(ARTWORK_REJECTION_MESSAGES).sort(), [
+      "empty_file",
+      "file_too_large",
+      "unsupported_file_type",
+    ]);
   });
 });
