@@ -1,5 +1,6 @@
 name: Phase 6 web Next Up convergence
 
+# One-shot reconciliation. Vercel performs the credentialed production-style build after commit.
 on:
   push:
     branches: [homepage-visual-conversion-rebuild]
@@ -30,8 +31,8 @@ jobs:
           s=s[:start]+'        <NextUpPanel actions={nextUp} base={base} />'+s[end:]
           p.write_text(s)
           Path('.github/workflows/phase6-nextup-convergence.yml').unlink()
-      - name: Verify
-        run: npm ci && npm run build
+      - name: Verify TypeScript
+        run: npm ci && npx tsc --noEmit
       - name: Commit
         run: |
           git config user.name "Place & Plenty Reconciliation"
