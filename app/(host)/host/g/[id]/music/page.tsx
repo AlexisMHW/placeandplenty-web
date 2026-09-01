@@ -6,6 +6,30 @@ import MusicMediaWorkspace from "@/components/host/MusicMediaWorkspace";
 
 export const metadata = { title: "My Music & Media" };
 
+function GuestSongRequests({ requests }: { requests: Array<{ id: string; songTitle: string; artist: string | null }> }) {
+  return (
+    <section className="mt-8 rounded-card border border-sage/25 bg-cream p-6 shadow-softer">
+      <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-forest/60">From your people</p>
+      <h2 className="mt-2 font-display text-2xl text-forest">Guest song requests</h2>
+      <p className="mt-2 font-body text-sm leading-relaxed text-forest/65">
+        These belong to your gathering, so you can always see what your guests asked for — no matter which Place & Plenty tier you use.
+      </p>
+      {requests.length === 0 ? (
+        <p className="mt-4 font-body text-sm text-forest/55">No requests yet.</p>
+      ) : (
+        <div className="mt-4 divide-y divide-sage/25">
+          {requests.map((request) => (
+            <div key={request.id} className="py-3">
+              <p className="font-body font-semibold text-forest">{request.songTitle}</p>
+              {request.artist ? <p className="mt-0.5 font-body text-sm text-forest/60">{request.artist}</p> : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default async function MusicPage({ params }: { params: { id: string } }) {
   const [gathering, workspace, style] = await Promise.all([
     getGathering(params.id),
@@ -24,18 +48,21 @@ export default async function MusicPage({ params }: { params: { id: string } }) 
       />
 
       {!workspace.entitled ? (
-        <div className="mt-8 overflow-hidden rounded-card border border-gold/45 bg-parchment shadow-softer">
-          <div className="p-6 md:p-7">
-            <p className="font-body text-xs font-bold uppercase tracking-[0.18em] text-goldInk">Premium planning</p>
-            <h2 className="mt-2 font-display text-2xl text-forest">Set the mood before people arrive.</h2>
-            <p className="mt-3 max-w-2xl font-body leading-relaxed text-forest/70">
-              My Music & Media keeps your soundtrack direction, playlist, must-plays, setup needs and guest song requests with this gathering. It’s included when this gathering is unlocked with a Gathering Pass or through Place & Plenty Plus.
-            </p>
-            <p className="mt-4 font-body text-sm text-forest/55">
-              Gathering Pass — $9.99 + applicable taxes and fees · Plus — $59.99/year + applicable taxes and fees
-            </p>
+        <>
+          <div className="mt-8 overflow-hidden rounded-card border border-gold/45 bg-parchment shadow-softer">
+            <div className="p-6 md:p-7">
+              <p className="font-body text-xs font-bold uppercase tracking-[0.18em] text-goldInk">Premium planning</p>
+              <h2 className="mt-2 font-display text-2xl text-forest">Set the mood before people arrive.</h2>
+              <p className="mt-3 max-w-2xl font-body leading-relaxed text-forest/70">
+                My Music & Media keeps your soundtrack direction, playlist, must-plays and setup needs with this gathering. It’s included when this gathering is unlocked with a Gathering Pass or through Place & Plenty Plus.
+              </p>
+              <p className="mt-4 font-body text-sm text-forest/55">
+                Gathering Pass — $9.99 + applicable taxes and fees · Plus — $59.99/year + applicable taxes and fees
+              </p>
+            </div>
           </div>
-        </div>
+          <GuestSongRequests requests={workspace.songRequests} />
+        </>
       ) : (
         <>
           {readOnly && (
