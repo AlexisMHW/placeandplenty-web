@@ -89,7 +89,7 @@ export default function NextUpPanel({
           const row = (
             <div className="flex items-start gap-3 rounded-xl border border-sage/20 bg-offwhite/70 px-4 py-3">
               <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-parchment text-forest">
-                <Icon name={action.key === "ready" ? "check" : "arrow-right"} size={14} />
+                <Icon name={action.key === "ready" ? "check" : "arrow"} size={14} />
               </span>
               <span className="font-body text-sm leading-relaxed text-forest/85">
                 {labelFor(action)}
