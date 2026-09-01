@@ -9,6 +9,9 @@ import { createClient } from "@/lib/supabase-server";
 // date arithmetic, or status derivation. Host Web calls the same canonical
 // RPCs as native and lets Postgres decide whether the transition is allowed.
 // The browser is only an interface to the existing authority.
+//
+// Product policy: hosts do not manually archive or restore gatherings.
+// Terminal archival is automatic, and Gather Again creates a new gathering.
 
 export type LifecycleActionResult =
   | { ok: true }
@@ -26,15 +29,6 @@ function lifecycleMessage(error: { message?: string } | null): string {
   }
   if (raw.includes("gathering_not_started")) {
     return "This gathering has not started yet.";
-  }
-  if (raw.includes("gathering_lifecycle_completed")) {
-    return "This gathering is part of your finished history and can’t be restored. Use Gather Again instead.";
-  }
-  if (raw.includes("free_open_gathering_limit_reached")) {
-    return "Free includes one open gathering at a time. Close the current one before restoring this gathering.";
-  }
-  if (raw.includes("plus_open_gathering_limit_reached")) {
-    return "Plus includes up to 6 open gatherings at one time. Finish, archive, or cancel one before restoring this gathering.";
   }
   if (raw.includes("gather_again_source_not_locked_in")) {
     return "An unfinished draft should be resumed instead of gathered again.";
@@ -55,30 +49,6 @@ function refreshGathering(gatheringId: string): void {
   revalidatePath("/host");
   revalidatePath(`/host/g/${gatheringId}`);
   revalidatePath(`/host/g/${gatheringId}/settings`);
-}
-
-export async function archiveGathering(
-  gatheringId: string
-): Promise<LifecycleActionResult> {
-  const supabase = createClient();
-  const { error } = await supabase.rpc("archive_gathering", {
-    p_gathering_id: gatheringId,
-  });
-  if (error) return { ok: false, message: lifecycleMessage(error) };
-  refreshGathering(gatheringId);
-  return { ok: true };
-}
-
-export async function restoreGathering(
-  gatheringId: string
-): Promise<LifecycleActionResult> {
-  const supabase = createClient();
-  const { error } = await supabase.rpc("unarchive_gathering", {
-    p_gathering_id: gatheringId,
-  });
-  if (error) return { ok: false, message: lifecycleMessage(error) };
-  refreshGathering(gatheringId);
-  return { ok: true };
 }
 
 export async function finishGathering(
