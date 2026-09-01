@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import { Band, Display } from "@/components/Display";
+import FeatureMiniVisual from "@/components/FeatureMiniVisual";
 import Icon, { type IconName } from "@/components/Icon";
 import { CROSS_PLATFORM_PROMISE } from "@/lib/entitlements";
 import myTable from "../../../what-it-does/what-it-does-01-my-table.png";
@@ -27,6 +28,7 @@ type Feature = {
   number: string;
   name: string;
   image?: StaticImageData;
+  visualKind?: "contributions" | "space" | "photos";
 };
 
 const FEATURES: Feature[] = [
@@ -39,10 +41,10 @@ const FEATURES: Feature[] = [
   { number: "07", name: "My Shopping", image: myShopping },
   { number: "08", name: "My Style Board", image: styleBoard },
   { number: "09", name: "My Guest Book", image: guestBook },
-  { number: "10", name: "Who’s Bringing What" },
+  { number: "10", name: "Who’s Bringing What", visualKind: "contributions" },
   { number: "11", name: "My Invitations", image: invitations },
-  { number: "12", name: "Space Mode" },
-  { number: "13", name: "My Gathering Photos" },
+  { number: "12", name: "Space Mode", visualKind: "space" },
+  { number: "13", name: "My Gathering Photos", visualKind: "photos" },
 ];
 
 const CONNECTED: { name: string; icon: IconName; body: string }[] = [
@@ -148,21 +150,9 @@ export default function WhatItDoesPage() {
                     sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                     priority={feature.number === "01"}
                   />
-                ) : (
-                  <div className="flex aspect-[16/10] w-full items-center justify-center bg-gradient-to-br from-cream via-parchment to-sage/20 px-4 text-center">
-                    <div>
-                      <p className="font-body text-[0.65rem] font-bold uppercase tracking-[0.2em] text-gold">
-                        {feature.number} / 13
-                      </p>
-                      <h2 className="mt-3 font-display text-xl leading-tight text-forest sm:text-2xl">
-                        {feature.name}
-                      </h2>
-                      <p className="mt-3 font-body text-[0.65rem] uppercase tracking-[0.12em] text-forest/45">
-                        Final visual pending
-                      </p>
-                    </div>
-                  </div>
-                )}
+                ) : feature.visualKind ? (
+                  <FeatureMiniVisual kind={feature.visualKind} number={feature.number} />
+                ) : null}
               </article>
             ))}
           </div>
