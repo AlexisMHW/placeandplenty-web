@@ -59,18 +59,18 @@ export default function GatheringLifecyclePanel({
 
   const explainer = useMemo(() => {
     if (archived || terminal) {
-      return "This gathering is preserved as read-only history. If you want to host it again, Gather Again starts a fresh draft with a new gathering ID and leaves this record intact.";
+      return "This gathering is preserved as read-only history. Gather Again starts a fresh gathering and keeps this one intact.";
     }
     if (state === "hosting") {
-      return "Your gathering is happening now. Finish Gathering records that the hosting day is complete without erasing the gathering or its history.";
+      return "Your gathering is happening now. Finish Gathering records that the hosting day is complete while keeping everything from the gathering together.";
     }
     if (state === "completed") {
-      return "The hosting window has ended. This gathering remains available through its post-gathering window and will be archived automatically as read-only history.";
+      return "The hosting window has ended. This gathering stays available during its post-gathering window, then becomes read-only history automatically.";
     }
     if (state === "cancelled") {
-      return "This gathering is cancelled. Its history remains intact and, if it had been locked in, you can use it as the starting point for Gather Again.";
+      return "This gathering is cancelled and its history stays intact. If you want to plan something similar later, Gather Again starts a fresh gathering.";
     }
-    return "Place & Plenty keeps this gathering in its current lifecycle automatically. You can finish or cancel when appropriate; old gatherings archive themselves and are never restored into a new event.";
+    return "Place & Plenty keeps this gathering moving through its lifecycle automatically. Finish or cancel it when appropriate; old gatherings become read-only history on their own.";
   }, [archived, state, terminal]);
 
   function run(
@@ -101,27 +101,22 @@ export default function GatheringLifecyclePanel({
           {statusLabel(state)}
         </h3>
         <p className="mt-2 max-w-2xl font-body text-sm leading-relaxed text-forest/70">
-          You can work inside this gathering as a co-host, but lifecycle changes belong to the gathering owner.
+          You can work inside this gathering as a co-host, but finishing or cancelling it belongs to the gathering owner.
         </p>
       </section>
     );
   }
 
   return (
-    <section className="mt-10 max-w-3xl rounded-card border border-sage/30 bg-parchment p-6 md:p-7">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="font-body text-xs font-semibold uppercase tracking-[0.18em] text-forest/60">
-            Gathering lifecycle
-          </p>
-          <div className="mt-3 h-px w-12 bg-gold" />
-          <h3 className="mt-4 font-display text-xl text-forest">
-            {statusLabel(state)}
-          </h3>
-        </div>
-        <span className="rounded-full border border-sage/35 bg-cream px-3 py-1.5 font-body text-xs font-semibold text-forest/75">
-          Backend verified
-        </span>
+    <section className="mt-10 max-w-3xl rounded-card border border-sage/30 bg-parchment p-6 shadow-sm md:p-7">
+      <div>
+        <p className="font-body text-xs font-semibold uppercase tracking-[0.18em] text-forest/60">
+          Gathering lifecycle
+        </p>
+        <div className="mt-3 h-px w-12 bg-gold" />
+        <h3 className="mt-4 font-display text-xl text-forest">
+          {statusLabel(state)}
+        </h3>
       </div>
 
       <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-forest/70">
@@ -187,11 +182,12 @@ export default function GatheringLifecyclePanel({
           <p className="font-body text-xs font-semibold uppercase tracking-[0.16em] text-forest/60">
             A fresh gathering, not a restore
           </p>
-          <h4 className="mt-2 font-display text-lg text-forest">
+          <div className="mt-2 h-[2px] w-9 rounded-full bg-gold" />
+          <h4 className="mt-3 font-display text-lg text-forest">
             When are you gathering again?
           </h4>
           <p className="mt-1 font-body text-sm leading-relaxed text-forest/65">
-            Place &amp; Plenty carries forward reusable planning basics only. Guests, RSVPs, communications, photos, entitlements, and lifecycle history stay with this gathering.
+            We’ll carry over the reusable planning basics. Your people, replies, messages, photos and history stay with this gathering.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="font-body text-sm font-semibold text-forest">
@@ -250,7 +246,7 @@ export default function GatheringLifecyclePanel({
             className="mt-4 w-full rounded-lg border border-sage/40 bg-white px-3 py-3 font-body text-sm text-forest outline-none focus:border-forest"
           />
           <p className="mt-2 font-body text-xs leading-relaxed text-forest/55">
-            Cancelling updates the gathering and uses the canonical guest communication path. This is not a local web-only status change.
+            We’ll update the gathering and send your note to your guests.
           </p>
           <button
             type="button"
