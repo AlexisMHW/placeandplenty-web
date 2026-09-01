@@ -4,7 +4,9 @@ import {
   LeftoverPreferenceControl,
   ServingsControl,
 } from "@/components/host/MyTableControls";
+import { RecipeSourceEditor } from "@/components/host/RecipeSourceEditor";
 import { getMyTableData } from "@/lib/menu-data";
+import { getRecipeSourceOptions } from "@/lib/recipe-source-data";
 import {
   addCanonicalMenuItemWeb,
   deleteCanonicalMenuItemWeb,
@@ -12,13 +14,6 @@ import {
   setCanonicalLeftoversWeb,
   setCanonicalMenuServingsWeb,
 } from "@/lib/menu-actions";
-
-// MY TABLE — one menu truth on every surface.
-//
-// The database owns quantity recommendations, category splitting, leftovers
-// multipliers, duplicate-safe Figure It Out seeding and HostReady refresh.
-// Host Web sends intent and renders the resulting rows; it does not carry a
-// second servings calculator.
 
 export const metadata = { title: "My Table" };
 
@@ -31,29 +26,15 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: "Everything else",
 };
 
-function recipeSourceLabel(source: string, prepared: string | null): string {
-  switch (source) {
-    case "saved_recipe":
-      return "Using a saved recipe";
-    case "suggested_recipe":
-      return "Using a suggested recipe";
-    case "prepared_item":
-      return prepared ? `Prepared item · ${prepared}` : "Prepared item";
-    case "bringing_guest":
-      return "A guest is bringing this";
-    case "self_managed":
-      return "You’re handling this your own way";
-    default:
-      return "Recipe or source not chosen yet";
-  }
-}
-
 export default async function TablePage({
   params,
 }: {
   params: { id: string };
 }) {
-  const { items, context } = await getMyTableData(params.id);
+  const [{ items, context }, sourceOptions] = await Promise.all([
+    getMyTableData(params.id),
+    getRecipeSourceOptions(params.id),
+  ]);
 
   const grouped = items.reduce<Record<string, typeof items>>((acc, item) => {
     (acc[item.category] ||= []).push(item);
@@ -71,6 +52,9 @@ export default async function TablePage({
   const planningNeeds = [context.dietary_notes, context.accessibility_notes].filter(
     (value): value is string => Boolean(value?.trim())
   );
+
+  const dietaryNeeds = context.dietary_notes ? [context.dietary_notes] : [];
+  const accessibilityNeeds = context.accessibility_notes ? [context.accessibility_notes] : [];
 
   return (
     <div>
@@ -141,9 +125,6 @@ export default async function TablePage({
                         {item.notes && (
                           <p className="mt-1 font-body text-sm text-forest/65">{item.notes}</p>
                         )}
-                        <p className="mt-2 font-body text-xs text-forest/55">
-                          {recipeSourceLabel(item.recipe_source, item.prepared_item_description)}
-                        </p>
                         {item.servings_recommended != null && (
                           <p className="mt-2 font-body text-sm text-forest/70">
                             Place &amp; Plenty recommends {item.servings_recommended} servings
@@ -177,6 +158,16 @@ export default async function TablePage({
                         </ActionButton>
                       </div>
                     </div>
+
+                    <RecipeSourceEditor
+                      gatheringId={params.id}
+                      item={item}
+                      recipes={sourceOptions.recipes}
+                      guests={sourceOptions.guests}
+                      coHosts={sourceOptions.coHosts}
+                      dietaryNeeds={dietaryNeeds}
+                      accessibilityNeeds={accessibilityNeeds}
+                    />
                   </li>
                 ))}
               </ul>
