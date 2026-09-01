@@ -10,9 +10,9 @@ import type { GatheringSummary } from "@/lib/host-data";
 // front of the only thing here.
 //
 // Lifecycle actions are intentionally separate below this form. These fields
-// are ordinary gathering details; archive/cancel/finish/restore/Gather Again
-// have their own canonical RPC authority and should never look like another
-// settings dropdown.
+// are ordinary gathering details; finish/cancel/Gather Again have their own
+// canonical RPC authority and should never look like another settings dropdown.
+// Archival is automatic and archived gatherings are read-only history.
 
 export default function GatheringSettingsForm({
   gathering,
@@ -108,8 +108,8 @@ export default function GatheringSettingsForm({
 
       <p className="mt-8 font-body text-sm leading-relaxed text-forest/65">
         Moving the date or time may notify guests who have already replied.
-        Lifecycle changes live in their own section below so they keep the
-        same safeguards and consequences as the app.
+        Finishing, cancelling, and Gather Again live in their own section below;
+        old gatherings archive automatically and remain read-only history.
       </p>
     </form>
   );
