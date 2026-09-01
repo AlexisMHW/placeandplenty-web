@@ -4,11 +4,9 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import type { GatheringSummary } from "@/lib/host-data";
 import {
-  archiveGathering,
   cancelGathering,
   finishGathering,
   gatherAgain,
-  restoreGathering,
 } from "@/lib/host-lifecycle-actions";
 
 function statusLabel(value: string): string {
@@ -48,36 +46,32 @@ export default function GatheringLifecyclePanel({
 
   const state = gathering.effective_status;
   const terminal = gathering.lifecycle_completed_at !== null;
-  const manuallyArchived = gathering.status === "archived" && !terminal;
+  const archived = gathering.status === "archived" || state === "archived";
   const canFinish = state === "hosting" && gathering.status !== "cancelled";
   const canCancel =
     !terminal &&
-    gathering.status !== "archived" &&
+    !archived &&
     gathering.status !== "cancelled" &&
     (state === "draft" || state === "active");
-  const canArchive = !terminal && gathering.status !== "archived";
   const canGatherAgain =
     gathering.locked_in_at !== null &&
-    (state === "completed" || state === "cancelled" || terminal);
+    (state === "completed" || state === "cancelled" || archived || terminal);
 
   const explainer = useMemo(() => {
-    if (terminal) {
-      return "This gathering is finished history. Its original plan stays intact; Gather Again starts a new draft with a new gathering ID.";
-    }
-    if (manuallyArchived) {
-      return "You archived this gathering before its terminal lifecycle. Restore returns the same gathering to planning if your account has an open slot.";
+    if (archived || terminal) {
+      return "This gathering is preserved as read-only history. If you want to host it again, Gather Again starts a fresh draft with a new gathering ID and leaves this record intact.";
     }
     if (state === "hosting") {
       return "Your gathering is happening now. Finish Gathering records that the hosting day is complete without erasing the gathering or its history.";
     }
     if (state === "completed") {
-      return "The hosting window has ended. The gathering remains available as history until its terminal lifecycle closes.";
+      return "The hosting window has ended. This gathering remains available through its post-gathering window and will be archived automatically as read-only history.";
     }
     if (state === "cancelled") {
       return "This gathering is cancelled. Its history remains intact and, if it had been locked in, you can use it as the starting point for Gather Again.";
     }
-    return "These actions change the gathering itself, so Place & Plenty sends them through the same canonical lifecycle rules used by the app.";
-  }, [manuallyArchived, state, terminal]);
+    return "Place & Plenty keeps this gathering in its current lifecycle automatically. You can finish or cancel when appropriate; old gatherings archive themselves and are never restored into a new event.";
+  }, [archived, state, terminal]);
 
   function run(
     work: () => Promise<{ ok: true } | { ok: false; message: string }>,
@@ -148,17 +142,6 @@ export default function GatheringLifecyclePanel({
       )}
 
       <div className="mt-6 flex flex-wrap gap-3">
-        {manuallyArchived && (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => run(() => restoreGathering(gathering.id), "Gathering restored.")}
-            className="rounded-full bg-forest px-5 py-2.5 font-body text-sm font-semibold text-offwhite transition-colors hover:bg-forest/90 disabled:opacity-60"
-          >
-            {pending ? "Restoring…" : "Restore gathering"}
-          </button>
-        )}
-
         {canFinish && (
           <button
             type="button"
@@ -181,17 +164,6 @@ export default function GatheringLifecyclePanel({
             className="rounded-full border border-gold/60 bg-cream px-5 py-2.5 font-body text-sm font-semibold text-forest transition-colors hover:bg-gold/10 disabled:opacity-60"
           >
             Gather Again
-          </button>
-        )}
-
-        {canArchive && (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => run(() => archiveGathering(gathering.id), "Gathering archived.")}
-            className="rounded-full border border-sage/45 bg-transparent px-5 py-2.5 font-body text-sm font-semibold text-forest transition-colors hover:bg-forest/5 disabled:opacity-60"
-          >
-            Archive
           </button>
         )}
 
