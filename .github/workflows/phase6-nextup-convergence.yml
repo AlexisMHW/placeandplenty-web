@@ -1,0 +1,41 @@
+name: Phase 6 web Next Up convergence
+
+on:
+  push:
+    branches: [homepage-visual-conversion-rebuild]
+    paths: [.github/workflows/phase6-nextup-convergence.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: homepage-visual-conversion-rebuild
+          fetch-depth: 0
+      - name: Replace local overview advice with canonical Next Up
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('app/(host)/host/g/[id]/page.tsx')
+          s=p.read_text()
+          s=s.replace('import HostReadyDial from "@/components/host/HostReadyDial";','import HostReadyDial from "@/components/host/HostReadyDial";\nimport NextUpPanel from "@/components/host/NextUpPanel";\nimport { getCanonicalNextUp } from "@/lib/next-up";')
+          s=s.replace('  const [guests, contributions, shopping, menu, expenses, closet] =\n    await Promise.all([','  const [guests, contributions, shopping, menu, expenses, closet, nextUp] =\n    await Promise.all([')
+          s=s.replace('      getClosetItems().catch(() => []),\n    ]);','      getClosetItems().catch(() => []),\n      getCanonicalNextUp(params.id).catch(() => []),\n    ]);')
+          start=s.index('        <section className="relative overflow-hidden rounded-2xl border border-sage/25 bg-cream p-6">')
+          end=s.index('        </section>', start)+len('        </section>')
+          s=s[:start]+'        <NextUpPanel actions={nextUp} base={base} />'+s[end:]
+          p.write_text(s)
+          Path('.github/workflows/phase6-nextup-convergence.yml').unlink()
+      - name: Verify
+        run: npm ci && npm run build
+      - name: Commit
+        run: |
+          git config user.name "Place & Plenty Reconciliation"
+          git config user.email "actions@users.noreply.github.com"
+          git add 'app/(host)/host/g/[id]/page.tsx' .github/workflows/phase6-nextup-convergence.yml
+          git commit -m "feat(phase6): consume canonical Next Up on Host Web"
+          git push origin HEAD:homepage-visual-conversion-rebuild
