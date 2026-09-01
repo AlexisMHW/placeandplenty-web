@@ -4,9 +4,11 @@ import { useMemo, useState, useTransition } from "react";
 import {
   analyzeStyleImagesWeb,
   deleteStyleImageWeb,
+  matchStyleComponentsToClosetWeb,
   requestStyleSuggestionWeb,
   saveStyleBoardWeb,
   uploadStyleImageWeb,
+  type StyleClosetMatch,
 } from "@/lib/style-board-actions";
 import type {
   StyleBoardRow,
@@ -52,6 +54,8 @@ export default function StyleBoardWorkspace({
     moodDescriptors: string[];
     ideas?: string;
   } | null>(null);
+  const [closetMatches, setClosetMatches] = useState<Record<string, StyleClosetMatch>>({});
+  const [closetChecked, setClosetChecked] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -107,6 +111,29 @@ export default function StyleBoardWorkspace({
         return;
       }
       setSuggestion(result.value);
+    });
+  }
+
+  function checkCloset() {
+    setMessage(null);
+    startTransition(async () => {
+      const result = await matchStyleComponentsToClosetWeb(
+        gatheringId,
+        components.map((component) => ({
+          id: component.id,
+          name: component.component_name,
+          category: component.component_type,
+          searchTerms: component.search_terms ?? [],
+        }))
+      );
+      if (!result.ok) {
+        setMessage(result.message);
+        return;
+      }
+      setClosetMatches(Object.fromEntries(result.matches.map((match) => [match.componentId, match])));
+      setClosetChecked(true);
+      const found = result.matches.filter((match) => match.found).length;
+      setMessage(found > 0 ? `You already have ${found} ${found === 1 ? "piece" : "pieces"} that may work.` : "No close Hosting Closet matches found yet.");
     });
   }
 
@@ -371,17 +398,41 @@ export default function StyleBoardWorkspace({
 
       {components.length > 0 && (
         <section className="rounded-card border border-sage/25 bg-offwhite p-6">
-          <p className="font-body text-xs font-bold uppercase tracking-[0.18em] text-goldInk">The pieces underneath the look</p>
-          <h3 className="mt-1 font-display text-xl text-forest">What it’s made of</h3>
-          <p className="mt-1 font-body text-sm text-forest/60">Descriptive search language only—never a guessed brand or product.</p>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="font-body text-xs font-bold uppercase tracking-[0.18em] text-goldInk">The pieces underneath the look</p>
+              <h3 className="mt-1 font-display text-xl text-forest">What it’s made of</h3>
+              <p className="mt-1 font-body text-sm text-forest/60">Descriptive search language only—never a guessed brand or product.</p>
+            </div>
+            {!closetChecked && (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={checkCloset}
+                className="rounded-full border border-forest px-5 py-2.5 font-body text-sm font-semibold text-forest disabled:opacity-50"
+              >
+                {pending ? "Checking…" : "Check my Hosting Closet"}
+              </button>
+            )}
+          </div>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-            {components.map((component) => (
-              <li key={component.id} className="rounded-card border border-sage/25 bg-cream p-4">
-                <p className="font-body font-semibold text-forest">{component.component_name}</p>
-                {(component.descriptor || component.component_type) && <p className="mt-1 font-body text-sm text-forest/60">{[component.descriptor, component.component_type].filter(Boolean).join(" · ")}</p>}
-                {component.search_terms?.length ? <p className="mt-2 font-body text-xs text-forest/50">Try: {component.search_terms.join(" · ")}</p> : null}
-              </li>
-            ))}
+            {components.map((component) => {
+              const match = closetMatches[component.id];
+              return (
+                <li key={component.id} className="rounded-card border border-sage/25 bg-cream p-4">
+                  <p className="font-body font-semibold text-forest">{component.component_name}</p>
+                  {(component.descriptor || component.component_type) && <p className="mt-1 font-body text-sm text-forest/60">{[component.descriptor, component.component_type].filter(Boolean).join(" · ")}</p>}
+                  {component.search_terms?.length ? <p className="mt-2 font-body text-xs text-forest/50">Try: {component.search_terms.join(" · ")}</p> : null}
+                  {closetChecked && match?.found && (
+                    <div className="mt-3 rounded-md border border-gold/35 bg-offwhite px-3 py-2">
+                      <p className="font-body text-xs font-bold uppercase tracking-[0.12em] text-goldInk">Already in your Hosting Closet</p>
+                      <p className="mt-1 font-body text-sm text-forest/75">{match.name || component.component_name}{match.quantityOwned != null ? ` · ${match.quantityOwned} on hand` : ""}</p>
+                    </div>
+                  )}
+                  {closetChecked && !match?.found && <p className="mt-3 font-body text-xs text-forest/45">No close Closet match found.</p>}
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
