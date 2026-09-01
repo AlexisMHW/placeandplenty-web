@@ -1,27 +1,31 @@
 import Link from "next/link";
 import {
-  getShoppingItems,
   getGatheringClosetUse,
   gatheringHasSmartCloset,
 } from "@/lib/host-data";
+import { getShoppingWorkspace } from "@/lib/shopping-data";
 import { getBudgetData } from "@/lib/budget-data";
 import { WorkspaceHeader, EmptyState, Panel } from "@/components/host/Workspace";
 import {
   AddForm,
   Field,
   ActionButton,
-  StatusSelect,
 } from "@/components/host/Editable";
+import { ShoppingFulfillmentControl } from "@/components/host/ShoppingFulfillmentControl";
 import {
   ExpenseForm,
   MoneyEditor,
   ReceiptUpload,
 } from "@/components/host/BudgetControls";
 import {
-  addShoppingItem,
-  setShoppingStatus,
-  deleteShoppingItem,
-} from "@/lib/host-actions";
+  addCanonicalShoppingItemWeb,
+  assignCanonicalBorrowWeb,
+  deleteCanonicalShoppingItemWeb,
+  seedCanonicalShoppingWeb,
+  setCanonicalBorrowReturnedWeb,
+  setCanonicalProviderWeb,
+  setCanonicalShoppingStatusWeb,
+} from "@/lib/shopping-actions";
 import {
   attachReceiptWeb,
   createExpenseWeb,
@@ -29,17 +33,7 @@ import {
   updateBudgetTargetWeb,
   updateSpentOverrideWeb,
 } from "@/lib/budget-actions";
-import { formatCurrency, shoppingLabel } from "@/lib/host-format";
-
-const STATUS_OPTIONS = [
-  "need",
-  "have",
-  "bought",
-  "borrow",
-  "rent",
-  "hire",
-  "not_needed",
-].map((value) => ({ value, label: shoppingLabel(value) }));
+import { formatCurrency } from "@/lib/host-format";
 
 export const metadata = { title: "My Shopping" };
 
@@ -51,18 +45,25 @@ export default async function ShoppingPage({
   searchParams?: { view?: string };
 }) {
   const view = searchParams?.view === "budget" ? "budget" : "list";
-  const [items, closetUse, smartCloset, budget] = await Promise.all([
-    getShoppingItems(params.id),
+  const [workspace, closetUse, smartCloset, budget] = await Promise.all([
+    getShoppingWorkspace(params.id),
     getGatheringClosetUse(params.id),
     gatheringHasSmartCloset(params.id),
     getBudgetData(params.id),
   ]);
+  const items = workspace.items;
 
   const grouped = items.reduce<Record<string, typeof items>>((acc, item) => {
     const key = item.category || "Everything else";
     (acc[key] ||= []).push(item);
     return acc;
   }, {});
+
+  const existingNames = new Set(items.map((item) => item.name.trim().toLowerCase()));
+  const planItems = workspace.lastPlanOutput?.shoppingItems ?? [];
+  const hasUnseededPlanItems = planItems.some(
+    (item) => item.name && !existingNames.has(item.name.trim().toLowerCase())
+  );
 
   return (
     <div>
@@ -98,9 +99,26 @@ export default async function ShoppingPage({
             </p>
             <div className="mt-2 h-[2px] w-10 bg-gold" aria-hidden />
             <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-forest/70">
-              Menu ingredients, supplies, borrowed things and anything else you need for the day all live here. Changing a status never moves the item into a second list.
+              Menu ingredients, supplies, borrowed things and anything else you need for the day all live here. Borrowing stays connected to Who’s Bringing What; rentals and hired help keep their provider here.
             </p>
           </section>
+
+          {hasUnseededPlanItems && (
+            <section className="mt-5 flex max-w-4xl flex-wrap items-center justify-between gap-4 rounded-card border border-gold/35 bg-cream px-5 py-4">
+              <div>
+                <p className="font-display text-lg text-forest">Your Figure It Out plan has shopping ideas ready.</p>
+                <p className="mt-1 font-body text-sm text-forest/65">
+                  Add the items that are not already on your list. Existing names are skipped instead of duplicated.
+                </p>
+              </div>
+              <ActionButton
+                action={seedCanonicalShoppingWeb.bind(null, params.id)}
+                className="rounded-full bg-forest px-5 py-2.5 font-body text-sm font-semibold text-offwhite"
+              >
+                Add plan suggestions
+              </ActionButton>
+            </section>
+          )}
 
           {items.length === 0 ? (
             <EmptyState
@@ -115,43 +133,70 @@ export default async function ShoppingPage({
                     {category}
                   </h3>
                   <ul className="mt-3 space-y-2">
-                    {rows.map((item) => (
-                      <li
-                        key={item.id}
-                        className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 rounded-card border border-sage/20 bg-offwhite px-5 py-4 shadow-soft"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-body text-base font-semibold text-forest">
-                            {item.name}
-                          </p>
-                          <p className="mt-1 font-body text-sm text-forest/60">
-                            {item.quantity != null
-                              ? `${item.quantity}${item.unit ? ` ${item.unit}` : ""}`
-                              : "Quantity not set"}
-                            {item.estimated_cost != null
-                              ? ` · ${formatCurrency(item.estimated_cost)} estimated`
-                              : ""}
-                          </p>
-                        </div>
+                    {rows.map((item) => {
+                      const responsibility = workspace.contributions.find(
+                        (row) => row.linked_shopping_item_id === item.id && row.status !== "cancelled"
+                      );
+                      const responsibilityLabel = responsibility?.guest_id
+                        ? workspace.guests.find((guest) => guest.id === responsibility.guest_id)?.label
+                        : responsibility?.gathering_member_id
+                          ? workspace.coHosts.find((member) => member.id === responsibility.gathering_member_id)?.label
+                          : null;
 
-                        <div className="flex items-center gap-4">
-                          <StatusSelect
-                            label={`Status for ${item.name}`}
-                            value={item.status}
-                            options={STATUS_OPTIONS}
-                            action={setShoppingStatus.bind(null, params.id, item.id)}
-                          />
-                          <ActionButton
-                            action={deleteShoppingItem.bind(null, params.id, item.id)}
-                            confirm={`Remove ${item.name} from the list?`}
-                            title={`Remove ${item.name}`}
-                            className="font-body text-sm text-forest/55 underline decoration-sage/50 underline-offset-4 transition hover:text-error"
-                          >
-                            Remove
-                          </ActionButton>
-                        </div>
-                      </li>
-                    ))}
+                      return (
+                        <li
+                          key={item.id}
+                          className="flex flex-wrap items-start justify-between gap-x-5 gap-y-3 rounded-card border border-sage/20 bg-offwhite px-5 py-4 shadow-soft"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="font-body text-base font-semibold text-forest">
+                              {item.name}
+                            </p>
+                            <p className="mt-1 font-body text-sm text-forest/60">
+                              {item.quantity != null
+                                ? `${item.quantity}${item.unit ? ` ${item.unit}` : ""}`
+                                : "Quantity not set"}
+                              {item.estimated_cost != null
+                                ? ` · ${formatCurrency(item.estimated_cost)} estimated`
+                                : ""}
+                            </p>
+                            {item.covered_from_closet_quantity != null && item.covered_from_closet_quantity > 0 && (
+                              <p className="mt-2 font-body text-xs font-semibold text-forest/65">
+                                {item.covered_from_closet_quantity} covered from your Hosting Closet
+                              </p>
+                            )}
+                            {responsibilityLabel && (
+                              <p className="mt-2 font-body text-xs text-forest/60">
+                                {item.status === "borrow" ? "Borrowing from" : "Responsible"}: {responsibilityLabel}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex min-w-[13rem] flex-col items-stretch gap-3">
+                            <ShoppingFulfillmentControl
+                              status={item.status}
+                              itemName={item.name}
+                              provider={item.fulfillment_provider}
+                              returnedAt={item.returned_at}
+                              guests={workspace.guests}
+                              coHosts={workspace.coHosts}
+                              setStatus={setCanonicalShoppingStatusWeb.bind(null, params.id, item.id)}
+                              assignBorrow={assignCanonicalBorrowWeb.bind(null, params.id, item.id)}
+                              setProvider={setCanonicalProviderWeb.bind(null, params.id, item.id)}
+                              setReturned={setCanonicalBorrowReturnedWeb.bind(null, params.id, item.id)}
+                            />
+                            <ActionButton
+                              action={deleteCanonicalShoppingItemWeb.bind(null, params.id, item.id)}
+                              confirm={`Remove ${item.name} from the list?`}
+                              title={`Remove ${item.name}`}
+                              className="self-end font-body text-sm text-forest/55 underline decoration-sage/50 underline-offset-4 transition hover:text-error"
+                            >
+                              Remove
+                            </ActionButton>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </section>
               ))}
@@ -161,7 +206,7 @@ export default async function ShoppingPage({
           <AddForm
             label="Add to the list"
             submitLabel="Add item"
-            action={addShoppingItem.bind(null, params.id)}
+            action={addCanonicalShoppingItemWeb.bind(null, params.id)}
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <Field name="name" label="Item" required placeholder="Ice" />
