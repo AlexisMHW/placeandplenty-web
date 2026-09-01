@@ -1,4 +1,5 @@
 import { getGuestBook } from "@/lib/host-data";
+import { getGuestBookAvatarUrls } from "@/lib/profile-data";
 import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
 import { AddForm, Field } from "@/components/host/Editable";
 import GuestBookEntry from "@/components/host/GuestBookEntry";
@@ -6,34 +7,19 @@ import { addGuestBookPerson } from "@/lib/host-actions";
 
 // MY GUEST BOOK — account-level reusable people (§10, §11).
 //
-// THE DISTINCTION THIS PAGE EXISTS TO MAKE:
-//
-//   My Guest Book = reusable people, across every gathering
-//   My People     = the people for ONE gathering
-//
-// They are different tables, not different views: `guests` is owned by
-// the user (owner_user_id = auth.uid()), while `gathering_guests` joins
-// a guest to a gathering with an RSVP. That is what makes "you don't
-// rebuild the same list every time" true rather than a claim.
-//
-// WHAT CHANGED, AND WHY. This page used to render every `guests` row as
-// a Guest Book entry, with the unsaved ones under a heading reading
-// "Added for a gathering". That made the book look larger than it is and
-// blurred the one thing it means. My Guest Book is the people the host
-// DELIBERATELY KEPT — `is_saved = true` — and that is now the page.
-//
-// THE UNSAVED ROWS ARE STILL HERE, and deleting them was never an
-// option: `gathering_guests` references them, and they carry the RSVP,
-// the dietary note and the contribution for a real gathering that
-// happened. They live under "Previously invited", clearly separate,
-// described as history rather than as saved entries, and each one can be
-// promoted into the book with a single press. Nothing is hidden and
-// nothing is misrepresented.
+// My Guest Book = reusable people across gatherings. My People = people
+// for one gathering. A P&P account photo may decorate either saved or
+// historical guest rows when the host already owns the matching email,
+// the account email is verified, and that account allows Guest Book
+// photo sharing. The photo is never copied into `guests`.
 
 export const metadata = { title: "My Guest Book" };
 
 export default async function GuestBookPage() {
-  const { saved, history } = await getGuestBook();
+  const [{ saved, history }, avatars] = await Promise.all([
+    getGuestBook(),
+    getGuestBookAvatarUrls(),
+  ]);
 
   return (
     <div className="mx-auto max-w-[70rem] px-6 py-10 md:py-14">
@@ -61,7 +47,12 @@ export default async function GuestBookPage() {
 
           <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {saved.map((g) => (
-              <GuestBookEntry key={g.id} guest={g} saved />
+              <GuestBookEntry
+                key={g.id}
+                guest={g}
+                saved
+                avatarUrl={avatars.get(g.id)}
+              />
             ))}
           </ul>
         </>
@@ -105,7 +96,12 @@ export default async function GuestBookPage() {
 
           <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {history.map((g) => (
-              <GuestBookEntry key={g.id} guest={g} saved={false} />
+              <GuestBookEntry
+                key={g.id}
+                guest={g}
+                saved={false}
+                avatarUrl={avatars.get(g.id)}
+              />
             ))}
           </ul>
         </section>
