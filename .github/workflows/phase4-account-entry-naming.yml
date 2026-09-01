@@ -1,0 +1,47 @@
+name: Phase 4 account entry naming reconciliation
+
+on:
+  push:
+    branches:
+      - homepage-visual-conversion-rebuild
+    paths:
+      - .github/workflows/phase4-account-entry-naming.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: homepage-visual-conversion-rebuild
+          fetch-depth: 0
+
+      - name: Keep account entry naming canonical
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('app/(host)/host/(account)/page.tsx')
+          text = path.read_text()
+          old = 'export const metadata = { title: "My Host Hub" };'
+          new = 'export const metadata = { title: "My Gatherings" };'
+          if text.count(old) != 1:
+              raise SystemExit('Expected one stale My Host Hub metadata title; refusing broad edit.')
+          path.write_text(text.replace(old, new, 1))
+          Path('.github/workflows/phase4-account-entry-naming.yml').unlink()
+
+      - name: Verify
+        run: |
+          npm ci
+          npm run typecheck
+          npm test -- --runInBand
+
+      - name: Commit reconciliation
+        run: |
+          git config user.name "Place & Plenty Reconciliation"
+          git config user.email "actions@users.noreply.github.com"
+          git add 'app/(host)/host/(account)/page.tsx' .github/workflows/phase4-account-entry-naming.yml
+          git commit -m "fix(account): keep Host Web entry naming canonical"
+          git push origin HEAD:homepage-visual-conversion-rebuild
