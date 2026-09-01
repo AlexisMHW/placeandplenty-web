@@ -10,26 +10,20 @@ import {
 
 // One person in My Guest Book.
 //
-// THE CONTROL THAT MATTERS IS "KEEP" / "REMOVE FROM MY GUEST BOOK", and
-// it writes `guests.is_saved`. It is not a delete and must never become
-// one. Every RSVP, contribution, dietary note and household this person
-// has ever been part of hangs off `gathering_guests` rows that reference
-// this guest id. Unsaving takes them out of the reusable book and leaves
-// all of it exactly where it is.
-//
-// DELETE IS OFFERED ONLY TO SOMEONE WITH NO HISTORY AT ALL — a person
-// typed in by mistake five seconds ago. The check is in the server
-// action, not here, because the honest answer for a person WITH history
-// is "unsave them instead", and that needs a real count rather than a
-// guess made in the browser.
+// Profile photos are decoration resolved from a matching VERIFIED P&P
+// account email. They are never copied into this guest row, so changing
+// or removing a profile photo updates everywhere automatically and the
+// host never owns someone else's image data.
 
 export default function GuestBookEntry({
   guest,
   saved,
+  avatarUrl,
 }: {
   guest: SavedGuest;
   /** Which section this card is rendered in. Changes the offer, not the data. */
   saved: boolean;
+  avatarUrl?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [pending, start] = useTransition();
@@ -40,6 +34,11 @@ export default function GuestBookEntry({
     guest.allergy_notes,
     guest.accessibility_notes,
   ].filter(Boolean);
+  const initials = [guest.first_name, guest.last_name]
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => String(part)[0]?.toUpperCase())
+    .join("");
 
   function run(
     action: () => Promise<{ ok: true } | { ok: false; message: string }>
@@ -108,19 +107,34 @@ export default function GuestBookEntry({
 
   return (
     <li className="rounded-card border border-sage/30 bg-parchment p-4">
-      <p className="font-display text-lg text-forest">
-        {[guest.first_name, guest.last_name].filter(Boolean).join(" ")}
-      </p>
-      {guest.household_name && (
-        <p className="font-body text-sm text-forest/65">{guest.household_name}</p>
-      )}
-      {(guest.email || guest.phone) && (
-        <p className="mt-1 font-body text-sm text-forest/55">
-          {[guest.email, guest.phone].filter(Boolean).join(" · ")}
-        </p>
-      )}
+      <div className="flex items-start gap-3.5">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-sage/30 bg-cream">
+          {avatarUrl ? (
+            // Private signed URL returned only after an authorized email match.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="font-display text-sm text-forest/60">{initials || "—"}</span>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-lg text-forest">
+            {[guest.first_name, guest.last_name].filter(Boolean).join(" ")}
+          </p>
+          {guest.household_name && (
+            <p className="font-body text-sm text-forest/65">{guest.household_name}</p>
+          )}
+          {(guest.email || guest.phone) && (
+            <p className="mt-1 font-body text-sm text-forest/55">
+              {[guest.email, guest.phone].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+      </div>
+
       {notes.length > 0 && (
-        <ul className="mt-2 flex flex-wrap gap-1.5">
+        <ul className="mt-3 flex flex-wrap gap-1.5">
           {notes.map((n, i) => (
             <li
               key={i}
@@ -180,8 +194,6 @@ export default function GuestBookEntry({
     </li>
   );
 }
-
-/* ------------------------------------------------------------------ */
 
 function Action({
   pending,
