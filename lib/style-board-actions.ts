@@ -18,6 +18,14 @@ export type StyleSuggestionResult =
     }
   | { ok: false; message: string };
 
+export interface StyleClosetMatch {
+  componentId: string;
+  found: boolean;
+  closetItemId?: string;
+  name?: string;
+  quantityOwned?: number;
+}
+
 async function ensureEditable(gatheringId: string): Promise<StyleActionResult> {
   const supabase = createClient();
   const [{ data: entitled, error: entitlementError }, { data: status, error: statusError }] =
@@ -140,6 +148,74 @@ export async function deleteStyleImageWeb(
   await supabase.storage.from("style-images").remove([storagePath]);
   revalidatePath(`/host/g/${gatheringId}/style`);
   return { ok: true };
+}
+
+/**
+ * Style analysis names pieces; Smart Hosting Closet answers whether the
+ * gathering owner already owns something like them. This deliberately
+ * does not expose the owner's reusable inventory to a co-host. A co-host
+ * can see the Style Board, but only the owner can probe their private
+ * account-level Closet.
+ */
+export async function matchStyleComponentsToClosetWeb(
+  gatheringId: string,
+  components: Array<{
+    id: string;
+    name: string;
+    category: string | null;
+    searchTerms: string[];
+  }>
+): Promise<
+  | { ok: true; matches: StyleClosetMatch[] }
+  | { ok: false; message: string }
+> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Please log in again." };
+
+  const { data: gathering, error: gatheringError } = await supabase
+    .from("gatherings")
+    .select("owner_user_id")
+    .eq("id", gatheringId)
+    .maybeSingle();
+  if (gatheringError || !gathering) return { ok: false, message: "That gathering is no longer available." };
+  if (gathering.owner_user_id !== user.id) {
+    return { ok: false, message: "Only the gathering owner can check their private Hosting Closet." };
+  }
+
+  const matches: StyleClosetMatch[] = [];
+  for (const component of components.slice(0, 30)) {
+    const searchName = [component.name, ...(component.searchTerms ?? [])]
+      .filter(Boolean)
+      .join(" ")
+      .slice(0, 500);
+    const { data, error } = await supabase.rpc("match_hosting_closet", {
+      p_user_id: user.id,
+      p_need_name: searchName || component.name,
+      p_need_quantity: 1,
+      p_need_category: component.category,
+      p_gathering_id: gatheringId,
+    });
+    if (error) {
+      const raw = error.message ?? "";
+      if (raw.includes("smart_closet_requires_pass_or_plus")) {
+        return { ok: false, message: "Smart Hosting Closet matching needs a Gathering Pass or Plus." };
+      }
+      continue;
+    }
+    const row = (data ?? {}) as Record<string, unknown>;
+    matches.push({
+      componentId: component.id,
+      found: row.entitled === true && row.found === true,
+      closetItemId: row.found === true ? String(row.closetItemId ?? "") : undefined,
+      name: row.found === true && typeof row.name === "string" ? row.name : undefined,
+      quantityOwned: row.found === true ? Number(row.quantityOwned ?? 0) : undefined,
+    });
+  }
+
+  return { ok: true, matches };
 }
 
 async function callStyleFunction<T>(
