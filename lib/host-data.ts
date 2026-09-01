@@ -131,7 +131,33 @@ export async function getGathering(
   // cannot see is indistinguishable from one that does not exist, and
   // the page turns both into a 404.
   if (error) throw error;
-  return (data as GatheringSummary) ?? null;
+  const gathering = (data as GatheringSummary) ?? null;
+  if (!gathering) return null;
+
+  // HostReady's stored columns are a cache/snapshot, not a second source of
+  // truth. Read the canonical backend computation for every gathering
+  // workspace render so web cannot show a stale score after an edit made on
+  // either platform. The wrapper enforces accepted gathering membership.
+  const { data: hostReady, error: hostReadyError } = await supabase.rpc(
+    "hostready_read",
+    { p_gathering_id: id }
+  );
+  if (hostReadyError) throw hostReadyError;
+
+  if (hostReady && typeof hostReady === "object") {
+    const result = hostReady as {
+      score?: number;
+      readinessState?: GatheringSummary["readiness_state"];
+    };
+    if (typeof result.score === "number") {
+      gathering.current_hostready_score = result.score;
+    }
+    if (result.readinessState) {
+      gathering.readiness_state = result.readinessState;
+    }
+  }
+
+  return gathering;
 }
 
 /* ------------------------------------------------------------------ */
