@@ -29,7 +29,6 @@ export interface GatheringSummary {
   gathering_type: string;
   gathering_date: string;
   arrival_time: string;
-  status: string;
   readiness_state: string | null;
   current_hostready_score: number | null;
   expected_guest_count: number;
@@ -53,17 +52,61 @@ export interface GatheringSummary {
   invitation_artwork_path: string | null;
   /** PDFs are allowed in the bucket and cannot render in an <img>. */
   invitation_artwork_mime_type: string | null;
+
+  /* ---- lifecycle, and it is not this app's to work out -------------- */
+
+  /**
+   * WHAT THE ROW SAYS. Kept, because some things genuinely key off the
+   * stored value rather than the phase — the draft → active transition
+   * is guarded by `WHERE status = 'draft'`, and resuming the wizard has
+   * to ask the same question that guard asks.
+   */
+  status: string;
+
+  /**
+   * WHAT IS ACTUALLY TRUE RIGHT NOW, from `effective_gathering_status()`.
+   *
+   * A gathering stored as `active` whose evening has passed is not
+   * active any more, and the row does not change at the moment it stops
+   * being — nothing writes to it as the clock ticks. Every list,
+   * grouping, badge and "up next" therefore reads THIS, and the web
+   * works out none of it: there is no date comparison in this app that
+   * decides a lifecycle phase, because two implementations of "is it
+   * over yet" is two answers.
+   */
+  effective_status: string;
+
+  /** Set by the batch worker when it closed the gathering out. */
+  lifecycle_completed_at: string | null;
+  /** Set on the draft → non-draft transition, immutable afterwards. */
+  locked_in_at: string | null;
+  /** The gathering's own wall-clock zone. */
+  timezone: string;
 }
+
+// ONE READ FOR GATHERINGS, AND IT IS AN RPC.
+//
+// `list_my_gatherings_with_lifecycle()` is security invoker and takes no
+// arguments: RLS decides which rows come back, exactly as the table
+// select it replaces did, and the ordering (date then arrival time) is
+// the function's own. What it adds is the part a client must not compute
+// — `effective_status` per row, from the single canonical
+// `effective_gathering_status()`, plus the two terminal timestamps.
+//
+// The old select could not have done this. `effective_status` is a
+// function of the row and the clock, not a column, so the choice was
+// always between calling the canonical one and re-deriving it here in
+// JavaScript. This app used to do the latter, in one line on the home
+// page, and it was wrong twice over: it compared against a UTC date
+// while gatherings are wall-clock in their own timezone, and it knew
+// nothing about lock-in or the batch worker.
 
 /** Gatherings the signed-in user owns or co-hosts. Soonest first. */
 export async function getMyGatherings(): Promise<GatheringSummary[]> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("gatherings")
-    .select(
-      "id, name, gathering_type, gathering_date, arrival_time, status, readiness_state, current_hostready_score, expected_guest_count, adult_count, child_count, location_name, owner_user_id, invitation_mode, invitation_status, invitation_artwork_path, invitation_artwork_mime_type"
-    )
-    .order("gathering_date", { ascending: true });
+  const { data, error } = await supabase.rpc(
+    "list_my_gatherings_with_lifecycle"
+  );
 
   if (error) throw error;
   return (data ?? []) as GatheringSummary[];
@@ -73,11 +116,13 @@ export async function getGathering(
   id: string
 ): Promise<GatheringSummary | null> {
   const supabase = createClient();
+
+  // PostgREST filters a set-returning function's result, so one
+  // projection serves both the list and a single gathering. A second
+  // read shaped differently is how the two drift apart, and this one
+  // would be the one missing `effective_status`.
   const { data, error } = await supabase
-    .from("gatherings")
-    .select(
-      "id, name, gathering_type, gathering_date, arrival_time, status, readiness_state, current_hostready_score, expected_guest_count, adult_count, child_count, location_name, owner_user_id, invitation_mode, invitation_status, invitation_artwork_path, invitation_artwork_mime_type"
-    )
+    .rpc("list_my_gatherings_with_lifecycle")
     .eq("id", id)
     .maybeSingle();
 
@@ -87,6 +132,52 @@ export async function getGathering(
   // the page turns both into a 404.
   if (error) throw error;
   return (data as GatheringSummary) ?? null;
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * The wizard's own answers for one gathering, so a draft can be resumed
+ * where it was left.
+ *
+ * A PLAIN COLUMN READ, AND DELIBERATELY NOT A SECOND LIFECYCLE READ.
+ * `list_my_gatherings_with_lifecycle()` does not project `budget_target`,
+ * `food_style`, `notes` or `invitation_style` — they are wizard answers
+ * rather than lifecycle facts — so those come from the table under the
+ * same RLS. Nothing here derives a phase: the caller pairs this with
+ * getGathering() above when it needs to know where the gathering stands.
+ */
+export interface GatheringDraftFields {
+  id: string;
+  name: string;
+  gathering_type: string;
+  gathering_date: string;
+  arrival_time: string;
+  location_name: string | null;
+  adult_count: number;
+  child_count: number;
+  budget_target: number | null;
+  food_style: string | null;
+  notes: string | null;
+  invitation_mode: string;
+  invitation_status: string;
+  invitation_style: string | null;
+}
+
+export async function getGatheringDraftFields(
+  id: string
+): Promise<GatheringDraftFields | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("gatherings")
+    .select(
+      "id, name, gathering_type, gathering_date, arrival_time, location_name, adult_count, child_count, budget_target, food_style, notes, invitation_mode, invitation_status, invitation_style"
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as GatheringDraftFields) ?? null;
 }
 
 /* ------------------------------------------------------------------ */

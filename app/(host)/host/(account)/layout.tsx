@@ -31,7 +31,11 @@ export default async function AccountShellLayout({
     profile?.display_name || profile?.first_name || user?.email || "Your account";
 
   const activeCount = gatherings
-    ? gatherings.filter((g) => ["draft", "active", "hosting"].includes(g.status))
+    ? // effective_status, so the badge stops counting a gathering the
+      // moment it is actually over rather than when the row catches up.
+      gatherings.filter((g) =>
+        ["draft", "active", "hosting"].includes(g.effective_status)
+      )
         .length
     : null;
 

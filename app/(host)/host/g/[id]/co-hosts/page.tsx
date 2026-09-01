@@ -44,7 +44,9 @@ export default async function CoHostsPage({
   if (!gathering) notFound();
 
   const isOwner = Boolean(user && user.id === gathering.owner_user_id);
-  const isArchived = gathering.status === "archived";
+  // effective_status: the archived read-only rule is a lifecycle
+  // question, and the backend is the one that answers it.
+  const isArchived = gathering.effective_status === "archived";
 
   return (
     <div>

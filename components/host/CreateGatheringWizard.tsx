@@ -113,21 +113,54 @@ function formatTimeDisplay(value: string | null): string {
   return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
 }
 
-export default function CreateGatheringWizard() {
+/**
+ * A draft the host already started, loaded by the page from the row.
+ *
+ * THE ID IS THE WHOLE POINT. Holding it from the first render means the
+ * first save is an UPDATE, so resuming can never leave a second row
+ * behind — see `draftId` below and saveGatheringDraft().
+ */
+export interface ResumedDraft {
+  id: string;
+  input: CreateGatheringInput;
+  decision: InvitationDecision | null;
+  mode: InvitationMode | null;
+  styleId: string | null;
+  artwork: { filename: string; mimeType: string } | null;
+  artworkUrl: string | null;
+}
+
+export default function CreateGatheringWizard({
+  resume = null,
+}: {
+  resume?: ResumedDraft | null;
+}) {
   const router = useRouter();
 
   const [step, setStep] = useState(1);
-  const [furthest, setFurthest] = useState(1);
-  const [input, setInput] = useState<CreateGatheringInput>(() => ({
-    ...EMPTY_GATHERING_INPUT,
-    gatheringDate: todayISODate(),
-    arrivalTime: DEFAULT_ARRIVAL_TIME,
-  }));
+  // A resumed draft has already been somewhere. The rail is free to go
+  // back to any question, while the gates on 1, 3 and 5 still decide
+  // whether Next may be pressed — so nothing is skipped, only revisited.
+  const [furthest, setFurthest] = useState(resume ? TOTAL_STEPS : 1);
+  const [input, setInput] = useState<CreateGatheringInput>(
+    () =>
+      resume?.input ?? {
+        ...EMPTY_GATHERING_INPUT,
+        gatheringDate: todayISODate(),
+        arrivalTime: DEFAULT_ARRIVAL_TIME,
+      }
+  );
 
-  const [draftId, setDraftId] = useState<string | null>(null);
-  const [decision, setDecision] = useState<InvitationDecision | null>(null);
-  const [mode, setMode] = useState<InvitationMode | null>(null);
-  const [styleId, setStyleId] = useState<string | null>(null);
+  // Not null when resuming, so persistDraft() updates from the outset
+  // and never inserts.
+  const [draftId, setDraftId] = useState<string | null>(resume?.id ?? null);
+  const [decision, setDecision] = useState<InvitationDecision | null>(
+    resume?.decision ?? null
+  );
+  const [mode, setMode] = useState<InvitationMode | null>(resume?.mode ?? null);
+  const [styleId, setStyleId] = useState<string | null>(
+    resume?.styleId ?? null
+  );
   const [inviteeCount, setInviteeCount] = useState<number | null>(null);
 
   const [error, setError] = useState<string | null>(null);
@@ -155,8 +188,10 @@ export default function CreateGatheringWizard() {
   const [artwork, setArtwork] = useState<{
     filename: string;
     mimeType: string;
-  } | null>(null);
-  const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
+  } | null>(resume?.artwork ?? null);
+  const [artworkUrl, setArtworkUrl] = useState<string | null>(
+    resume?.artworkUrl ?? null
+  );
   const [uploading, setUploading] = useState(false);
   const [artworkError, setArtworkError] = useState<string | null>(null);
 

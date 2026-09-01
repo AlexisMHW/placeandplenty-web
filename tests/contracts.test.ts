@@ -1,5 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import { mergeGuestCounts } from "../lib/guest-counts.ts";
 import {
@@ -950,5 +951,99 @@ describe("entitlement consistency — the V1 model as sold", () => {
       );
     }
     assert.equal(TAX_QUALIFIER, "+ applicable taxes and fees");
+  });
+});
+
+describe("lifecycle — the backend decides the phase, not this app", () => {
+  // These read the source rather than call a function, because the code
+  // they guard lives inside server components that node:test cannot
+  // render. The rule is worth a guard anyway: the JS date comparison
+  // removed here was wrong for hours a day west of Greenwich, and it is
+  // one line to reintroduce by accident.
+  const read = (p: string) =>
+    readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+
+  const HOST_HOME = "app/(host)/host/(account)/page.tsx";
+  const HOST_SHELL = "app/(host)/host/(account)/layout.tsx";
+  const HOST_DATA = "lib/host-data.ts";
+
+  test("gatherings are read through the lifecycle RPC, not a table select", () => {
+    const source = read(HOST_DATA);
+    assert.match(source, /rpc\(\s*\n?\s*"list_my_gatherings_with_lifecycle"/);
+    // The single-gathering read goes through the same projection, so it
+    // cannot be the one that quietly lacks effective_status.
+    assert.equal(
+      source.split("list_my_gatherings_with_lifecycle").length - 1 >= 2,
+      true,
+      "both the list and the single read should use the RPC"
+    );
+  });
+
+  test("the summary carries the stored status AND the effective one", () => {
+    const source = read(HOST_DATA);
+    // Stored status is kept: the draft -> active guard is WHERE
+    // status = 'draft', and resuming asks the same question.
+    assert.match(source, /\n  status: string;/);
+    assert.match(source, /\n  effective_status: string;/);
+    assert.match(source, /lifecycle_completed_at: string \| null;/);
+    assert.match(source, /locked_in_at: string \| null;/);
+  });
+
+  test("grouping and Up Next read effective_status", () => {
+    const source = read(HOST_HOME);
+    assert.match(source, /OPEN\.includes\(g\.effective_status\)/);
+    assert.match(source, /FINISHED\.includes\(g\.effective_status\)/);
+    assert.match(source, /includes\(g\.effective_status\)/);
+    // The badge shows the phase, not the row.
+    assert.match(source, /\{g\.effective_status\}/);
+  });
+
+  /**
+   * Code only. The comments in these files describe the date comparison
+   * that was REMOVED, so a guard that read prose would fail on the
+   * explanation of its own rule.
+   */
+  const code = (p: string) =>
+    read(p)
+      .replace(/\/\*[\s\S]*?\*\//g, " ")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1");
+
+  test("no JS date arithmetic decides a lifecycle phase", () => {
+    for (const file of [HOST_HOME, HOST_SHELL]) {
+      const source = code(file);
+      assert.equal(
+        /gathering_date\s*>=|gathering_date\s*</.test(source),
+        false,
+        `${file} compares gathering_date to decide a phase`
+      );
+      assert.equal(
+        /new Date\(\)\.toISOString\(\)/.test(source),
+        false,
+        `${file} derives "today" in UTC to decide a phase`
+      );
+    }
+  });
+
+  test("lifecycle grouping never keys off the stored status", () => {
+    const source = code(HOST_HOME);
+    // g.status would be the row talking: a gathering stored 'active'
+    // whose evening has passed is not active, and nothing rewrites the
+    // row as the clock ticks.
+    assert.equal(
+      /\bg\.status\b/.test(source),
+      false,
+      "the home page groups on g.status somewhere"
+    );
+  });
+
+  test("resuming a draft reuses its id, so no second row is created", () => {
+    const wizard = read("components/host/CreateGatheringWizard.tsx");
+    // draftId starts non-null when resuming, which sends the very first
+    // save down saveGatheringDraft()'s UPDATE path.
+    assert.match(wizard, /useState<string \| null>\(resume\?\.id \?\? null\)/);
+    const page = read("app/(host)/host/(account)/create/page.tsx");
+    // Only a stored draft may be resumed — the same question the
+    // transition guard asks.
+    assert.match(page, /gathering\.status !== "draft"/);
   });
 });
