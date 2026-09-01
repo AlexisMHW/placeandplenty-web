@@ -12,42 +12,23 @@ import {
 import Icon, { type IconName } from "@/components/Icon";
 import HostReadyDial from "@/components/host/HostReadyDial";
 import NextUpPanel from "@/components/host/NextUpPanel";
+import FigureItOutPanel from "@/components/host/FigureItOutPanel";
 import { getCanonicalNextUp } from "@/lib/next-up";
-import { BotanicalSprig } from "@/components/Botanical";
+import { getFigureItOutOverviewState } from "@/lib/figure-it-out-data";
 import { formatCurrency } from "@/lib/host-format";
 import { usesOwnArtwork } from "@/lib/invitations";
 
 // GATHERING COMMAND CENTRAL, composed to `host_web_gathering.png`.
 //
-// The reference's layout, and this page follows it:
+// Figure It Out belongs to the gathering overview as planning intelligence,
+// not as a standalone Hosting Hub card. HostReady and Next Up remain the
+// canonical verdict/prioritization surfaces around that plan.
 //
-//   top-left    the HostReady dial, with what to focus on next beside it
-//   top-right   the gathering identity — handled by the layout's header
-//   mid         a row of stat tiles, each with a circular icon plate, a
-//               large number and a link into the surface it summarises
-//   bottom      At a Glance / Worth a look / Invitations
-//
-// HOSTREADY IS READ, NEVER RECOMPUTED. `current_hostready_score` and
-// `readiness_state` are already on the gathering, calculated by the app
-// against rules this repo does not own. A second implementation would
-// drift, and the first time web said 71% while the phone said 68%,
-// neither number would be trusted again.
-//
-// The counts below ARE derived here, but they are arithmetic over rows
-// this page already holds — how many said yes, how many contributions
-// are unclaimed — not judgements. That distinction is the line: derive
-// facts, never re-derive verdicts.
-//
-// THE REFERENCE'S TILES SAY "My Shopping List" AND "My Budget". §9
-// renamed the first to My Shopping and absorbed the second into it as
-// List | Budget; a standalone Budget tile is one of the three names §32
-// forbids bringing back. So spend appears as a line INSIDE the My
-// Shopping tile, which is also where it lives in the product.
+// HOSTREADY IS READ, NEVER RECOMPUTED HERE. Counts below are arithmetic
+// facts over canonical rows, not a second readiness formula.
 //
 // SPENT COMES FROM `gathering_expenses`, NEVER FROM SUMMING THE SHOPPING
-// LIST. That table's own comment is explicit that shopping rows are
-// planning only. Summing them would report money as spent that nobody
-// has spent.
+// LIST. Shopping rows are planning state; the ledger is actual spending.
 
 function StatTile({
   icon,
@@ -133,7 +114,7 @@ export default async function GatheringOverviewPage({
 
   const base = `/host/g/${params.id}`;
 
-  const [guests, contributions, shopping, menu, expenses, closet, nextUp] =
+  const [guests, contributions, shopping, menu, expenses, closet, nextUp, figureState] =
     await Promise.all([
       getGatheringGuests(params.id),
       getContributions(params.id),
@@ -142,6 +123,7 @@ export default async function GatheringOverviewPage({
       getExpenses(params.id).catch(() => []),
       getClosetItems().catch(() => []),
       getCanonicalNextUp(params.id).catch(() => []),
+      getFigureItOutOverviewState(params.id),
     ]);
 
   const coming = guests.filter((g) => g.rsvp_status === "yes");
@@ -157,7 +139,6 @@ export default async function GatheringOverviewPage({
   const openContributions = contributions.filter(
     (c) => c.status === "needed" || c.status === "asked"
   );
-  const needsAttention = contributions.filter((c) => c.needs_host_attention);
 
   const stillToBuy = shopping.filter((s) => s.status === "need");
   const estimatedRemaining = stillToBuy.reduce(
@@ -168,18 +149,23 @@ export default async function GatheringOverviewPage({
 
   return (
     <div>
-      {/* ---- HostReady + what's next ------------------------------- */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <HostReadyDial
           score={gathering.current_hostready_score}
           state={gathering.readiness_state}
           gatheringId={params.id}
         />
-
         <NextUpPanel actions={nextUp} base={base} />
       </div>
 
-      {/* ---- the stat row ------------------------------------------ */}
+      <FigureItOutPanel
+        gatheringId={params.id}
+        initialDietaryNotes={figureState.dietaryNotes}
+        initialAccessibilityNotes={figureState.accessibilityNotes}
+        hasPlan={figureState.hasPlan}
+        readOnly={figureState.readOnly}
+      />
+
       <ul className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
           icon="people"
@@ -229,7 +215,6 @@ export default async function GatheringOverviewPage({
         />
       </ul>
 
-      {/* ---- at a glance -------------------------------------------- */}
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Card title="My Table at a glance" href={`${base}/table`} action="View Full Menu">
           {menu.length === 0 ? (
@@ -267,10 +252,7 @@ export default async function GatheringOverviewPage({
               </dl>
               <ul className="mt-4 space-y-1.5">
                 {menu.slice(0, 4).map((m) => (
-                  <li
-                    key={m.id}
-                    className="font-body text-sm text-forest/75"
-                  >
+                  <li key={m.id} className="font-body text-sm text-forest/75">
                     {m.name}
                   </li>
                 ))}
@@ -284,8 +266,6 @@ export default async function GatheringOverviewPage({
           )}
         </Card>
 
-        {/* §3/§10: invitation flexibility is real product behaviour, not
-            marketing copy — gatherings.invitation_mode records it. */}
         <Card title="Invitations" href={`${base}/people`} action="Go to My People">
           <p className="font-body text-sm leading-relaxed text-forest/75">
             {usesOwnArtwork(gathering.invitation_mode)
