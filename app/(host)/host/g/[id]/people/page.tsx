@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getGathering, getGuestBook } from "@/lib/host-data";
 import { getPeopleWorkspace } from "@/lib/people-data";
+import { getUser } from "@/lib/supabase-server";
 import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
 import { AddForm, Field, StatusSelect, ActionButton } from "@/components/host/Editable";
 import { setRsvpStatus } from "@/lib/host-actions";
@@ -12,6 +13,7 @@ import {
   saveGatheringPersonToGuestBookWeb,
   sendGuestMessageWeb,
   sendInvitationToPartyWeb,
+  updateGatheringPersonDetailsWeb,
   updateGatheringPersonWeb,
 } from "@/lib/people-actions";
 import { rsvpLabel } from "@/lib/host-format";
@@ -45,17 +47,19 @@ function deliveryLabel(firstShare: string | null | undefined, latest: string | n
 }
 
 export default async function PeoplePage({ params }: { params: { id: string } }) {
-  const [gathering, guests, guestBook] = await Promise.all([
+  const [gathering, guests, guestBook, user] = await Promise.all([
     getGathering(params.id),
     getPeopleWorkspace(params.id),
     getGuestBook(),
+    getUser(),
   ]);
   if (!gathering) notFound();
 
   const isArchived = gathering.status === "archived";
+  const isOwner = !!user && user.id === gathering.owner_user_id;
   const guestIds = new Set(guests.map((row) => row.guest?.id).filter(Boolean));
   const savedIds = new Set(guestBook.saved.map((row) => row.id));
-  const reusablePeople = guestBook.saved.filter((person) => !guestIds.has(person.id));
+  const reusablePeople = isOwner ? guestBook.saved.filter((person) => !guestIds.has(person.id)) : [];
   const groups = ORDER.map((status) => ({
     status,
     rows: guests.filter((g) => g.rsvp_status === status),
@@ -97,6 +101,11 @@ export default async function PeoplePage({ params }: { params: { id: string } })
         <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-forest/70">
           My People is this gathering’s guest list. My Guest Book is your reusable list for next time. Invitations, RSVPs, household replies and guest updates all stay attached to this same gathering record.
         </p>
+        {!isOwner && !isArchived && (
+          <p className="mt-3 font-body text-sm text-forest/65">
+            As a co-host, you can manage this gathering’s replies, invitation contacts, plus-ones and host notes. The host’s reusable Guest Book stays private to their account.
+          </p>
+        )}
         {isArchived && (
           <p className="mt-3 font-body text-sm font-semibold text-forest/75">
             This gathering is archived. Its people and replies are preserved here as read-only history.
@@ -104,7 +113,7 @@ export default async function PeoplePage({ params }: { params: { id: string } })
         )}
       </section>
 
-      {!isArchived && reusablePeople.length > 0 && (
+      {!isArchived && isOwner && reusablePeople.length > 0 && (
         <section className="mt-7 max-w-4xl">
           <p className="font-body text-xs font-bold uppercase tracking-[0.18em] text-forest/65">
             Invite again from My Guest Book
@@ -123,13 +132,13 @@ export default async function PeoplePage({ params }: { params: { id: string } })
         </section>
       )}
 
-      {!isArchived && reusablePeople.length > 0 && (
+      {!isArchived && isOwner && reusablePeople.length > 0 && (
         <AddForm
           label="Add a household"
           submitLabel="Add as one household"
           action={createHouseholdWeb.bind(null, params.id)}
         >
-          <Field name="party_name" label="Household or group name" placeholder="The Whitfields" />
+          <Field name="party_name" label="Household or group name" required placeholder="The Whitfields" />
           <p className="mt-3 font-body text-sm leading-relaxed text-forest/65">
             Choose the people who should receive one invitation and reply together as one household.
           </p>
@@ -146,7 +155,7 @@ export default async function PeoplePage({ params }: { params: { id: string } })
         </AddForm>
       )}
 
-      {!isArchived && (
+      {!isArchived && isOwner && (
         <AddForm
           label="Add someone new"
           submitLabel="Add to this gathering"
@@ -217,7 +226,7 @@ export default async function PeoplePage({ params }: { params: { id: string } })
       {guests.length === 0 ? (
         <EmptyState
           title="No one on the list yet."
-          body="Add someone new or bring a saved person over from My Guest Book."
+          body={isOwner ? "Add someone new or bring a saved person over from My Guest Book." : "The host hasn’t added anyone to this gathering yet."}
         />
       ) : (
         <>
@@ -263,8 +272,8 @@ export default async function PeoplePage({ params }: { params: { id: string } })
                             {g.guest?.household_name && (
                               <p className="font-body text-sm text-forest/60">{g.guest.household_name}</p>
                             )}
-                            {g.guest?.email && <p className="mt-1 font-body text-sm text-forest/55">{g.guest.email}</p>}
-                            {g.guest?.phone && <p className="font-body text-sm text-forest/55">{g.guest.phone}</p>}
+                            {isOwner && g.guest?.email && <p className="mt-1 font-body text-sm text-forest/55">{g.guest.email}</p>}
+                            {isOwner && g.guest?.phone && <p className="font-body text-sm text-forest/55">{g.guest.phone}</p>}
                             {notes.length > 0 && (
                               <ul className="mt-2 flex flex-wrap gap-2">
                                 {notes.map((note, index) => (
@@ -290,7 +299,7 @@ export default async function PeoplePage({ params }: { params: { id: string } })
 
                             {!isArchived && (
                               <div className="flex flex-wrap justify-end gap-3">
-                                {!isSaved && g.guest?.id && (
+                                {isOwner && !isSaved && g.guest?.id && (
                                   <ActionButton
                                     action={saveGatheringPersonToGuestBookWeb.bind(null, params.id, g.guest.id)}
                                     className="font-body text-xs font-semibold text-forest/70 underline decoration-sage/50 underline-offset-4"
@@ -334,7 +343,7 @@ export default async function PeoplePage({ params }: { params: { id: string } })
                           </div>
                         )}
 
-                        {!isArchived && g.guest && (
+                        {!isArchived && g.guest && isOwner && (
                           <AddForm
                             label={`Edit ${name}`}
                             submitLabel="Save person"
@@ -353,7 +362,7 @@ export default async function PeoplePage({ params }: { params: { id: string } })
                               </label>
                               {isPartyLead && g.party ? (
                                 <>
-                                  <Field name="party_name" label="Invitation household / recipient name" defaultValue={g.party.party_name} />
+                                  <Field name="party_name" label="Invitation household / recipient name" required defaultValue={g.party.party_name} />
                                   <Field name="contact_email" label="Invitation email" type="email" defaultValue={g.party.contact_email} />
                                 </>
                               ) : (
@@ -365,6 +374,36 @@ export default async function PeoplePage({ params }: { params: { id: string } })
                             </div>
                             <p className="mt-3 font-body text-xs leading-relaxed text-forest/55">
                               Name, dietary, allergy and accessibility details belong to this person in your Guest Book record. Host note, RSVP and plus-one count belong only to this gathering.
+                            </p>
+                          </AddForm>
+                        )}
+
+                        {!isArchived && g.guest && !isOwner && (
+                          <AddForm
+                            label={`Edit gathering details for ${name}`}
+                            submitLabel="Save gathering details"
+                            action={updateGatheringPersonDetailsWeb.bind(null, params.id, g.id)}
+                          >
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <Field name="plus_one_count" label="Plus ones" type="number" defaultValue={g.plus_one_count} />
+                              <label className="block sm:col-span-2">
+                                <span className="mb-1 block font-body text-sm font-semibold text-forest">Host note for this gathering</span>
+                                <textarea name="host_notes" rows={3} defaultValue={g.notes ?? ""} className={INPUT} />
+                              </label>
+                              {isPartyLead && g.party ? (
+                                <>
+                                  <Field name="party_name" label="Invitation household / recipient name" required defaultValue={g.party.party_name} />
+                                  <Field name="contact_email" label="Invitation email" type="email" defaultValue={g.party.contact_email} />
+                                </>
+                              ) : (
+                                <>
+                                  <input type="hidden" name="party_name" value={g.party?.party_name ?? ""} />
+                                  <input type="hidden" name="contact_email" value={g.party?.contact_email ?? ""} />
+                                </>
+                              )}
+                            </div>
+                            <p className="mt-3 font-body text-xs leading-relaxed text-forest/55">
+                              These are gathering-only details. The host’s reusable Guest Book identity and private contact record are not changed.
                             </p>
                           </AddForm>
                         )}
