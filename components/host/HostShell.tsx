@@ -90,6 +90,32 @@ export default function HostShell({
   const isCurrent = (item: HostNavItem) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
+  // Phase 26: the top-bar back affordance follows the product hierarchy,
+  // not a single static destination for every gathering screen.
+  //
+  // My Gatherings -> Gathering Overview -> My Hosting Hub -> Feature
+  //
+  // Settings is gathering-level rather than a Hub tool, so it returns to
+  // the Overview. This is derived in the shared shell so desktop/mobile
+  // and every current/future Hub feature cannot drift independently.
+  let resolvedBackHref = backHref;
+  let resolvedBackLabel = backLabel;
+  const gatheringPath = pathname.match(/^\/host\/g\/([^/]+)(?:\/([^/]+))?\/?$/);
+  if (gatheringPath) {
+    const gatheringBase = `/host/g/${gatheringPath[1]}`;
+    const child = gatheringPath[2];
+    if (!child) {
+      resolvedBackHref = "/host";
+      resolvedBackLabel = "My Gatherings";
+    } else if (child === "hub" || child === "settings") {
+      resolvedBackHref = gatheringBase;
+      resolvedBackLabel = "Gathering Overview";
+    } else {
+      resolvedBackHref = `${gatheringBase}/hub`;
+      resolvedBackLabel = "My Hosting Hub";
+    }
+  }
+
   const nav = (
     <nav aria-label="Host" className="flex flex-col gap-6">
       {groups.map((group, gi) => (
@@ -167,9 +193,6 @@ export default function HostShell({
 
   return (
     <div className="flex min-h-screen bg-offwhite">
-      {/* The skip link belongs to the shell, not to a page: the sidebar
-          is a long list of links a keyboard user would otherwise have to
-          walk through on every navigation. */}
       <a
         href="#host-main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-forest focus:px-5 focus:py-2.5 focus:font-body focus:text-sm focus:font-semibold focus:text-offwhite"
@@ -177,7 +200,6 @@ export default function HostShell({
         Skip to content
       </a>
 
-      {/* ---- sidebar, desktop --------------------------------------- */}
       <aside
         className={`hidden w-64 flex-shrink-0 flex-col justify-between p-5 lg:flex ${sidebar}`}
       >
@@ -199,7 +221,6 @@ export default function HostShell({
         <div className="mt-8">{promo}</div>
       </aside>
 
-      {/* ---- workspace ----------------------------------------------- */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-40 border-b border-sage/25 bg-offwhite/95 backdrop-blur">
           <div className="flex items-center justify-between gap-4 px-5 py-3">
@@ -239,12 +260,12 @@ export default function HostShell({
               </button>
 
               <div className="min-w-0">
-                {backHref && (
+                {resolvedBackHref && (
                   <Link
-                    href={backHref}
+                    href={resolvedBackHref}
                     className="block truncate font-body text-[0.68rem] text-forest/55 transition-colors duration-400 hover:text-forest"
                   >
-                    <span aria-hidden>&larr;</span> {backLabel}
+                    <span aria-hidden>&larr;</span> {resolvedBackLabel}
                   </Link>
                 )}
                 <p className="truncate font-display text-lg leading-tight text-forest">
@@ -258,7 +279,6 @@ export default function HostShell({
             </div>
           </div>
 
-          {/* the sidebar's contents, on a phone */}
           <div
             id="host-menu"
             hidden={!open}
