@@ -1,6 +1,7 @@
 name: Phase 6 web Next Up convergence
 
 # One-shot reconciliation. Vercel performs the credentialed production-style build after commit.
+# Rerun after aligning the panel to the approved icon vocabulary.
 on:
   push:
     branches: [homepage-visual-conversion-rebuild]
