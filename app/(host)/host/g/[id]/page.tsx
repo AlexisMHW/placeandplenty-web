@@ -11,6 +11,8 @@ import {
 } from "@/lib/host-data";
 import Icon, { type IconName } from "@/components/Icon";
 import HostReadyDial from "@/components/host/HostReadyDial";
+import NextUpPanel from "@/components/host/NextUpPanel";
+import { getCanonicalNextUp } from "@/lib/next-up";
 import { BotanicalSprig } from "@/components/Botanical";
 import { formatCurrency } from "@/lib/host-format";
 import { usesOwnArtwork } from "@/lib/invitations";
@@ -131,7 +133,7 @@ export default async function GatheringOverviewPage({
 
   const base = `/host/g/${params.id}`;
 
-  const [guests, contributions, shopping, menu, expenses, closet] =
+  const [guests, contributions, shopping, menu, expenses, closet, nextUp] =
     await Promise.all([
       getGatheringGuests(params.id),
       getContributions(params.id),
@@ -139,6 +141,7 @@ export default async function GatheringOverviewPage({
       getMenuItems(params.id),
       getExpenses(params.id).catch(() => []),
       getClosetItems().catch(() => []),
+      getCanonicalNextUp(params.id).catch(() => []),
     ]);
 
   const coming = guests.filter((g) => g.rsvp_status === "yes");
@@ -173,97 +176,7 @@ export default async function GatheringOverviewPage({
           gatheringId={params.id}
         />
 
-        <section className="relative overflow-hidden rounded-2xl border border-sage/25 bg-cream p-6">
-          <BotanicalSprig
-            className="pointer-events-none absolute -right-3 -top-2 text-olive/35"
-            size={92}
-          />
-          <h2 className="relative font-display text-lg text-forest">
-            Worth a look
-          </h2>
-
-          <ul className="relative mt-4 space-y-3">
-            {needsAttention.length > 0 && (
-              <li className="flex items-start gap-3">
-                <Icon
-                  name="info"
-                  size={17}
-                  className="mt-0.5 flex-shrink-0 text-goldInk"
-                />
-                <Link
-                  href={`${base}/contributions`}
-                  className="font-body text-sm leading-relaxed text-forest/85 underline decoration-gold decoration-2 underline-offset-4 hover:text-forest"
-                >
-                  {needsAttention.length}{" "}
-                  {needsAttention.length === 1
-                    ? "contribution needs"
-                    : "contributions need"}{" "}
-                  your attention
-                </Link>
-              </li>
-            )}
-
-            {waiting.length > 0 && (
-              <li className="flex items-start gap-3">
-                <Icon
-                  name="rsvp"
-                  size={17}
-                  className="mt-0.5 flex-shrink-0 text-forest/60"
-                />
-                <Link
-                  href={`${base}/people`}
-                  className="font-body text-sm leading-relaxed text-forest/85 underline decoration-gold decoration-2 underline-offset-4 hover:text-forest"
-                >
-                  {waiting.length}{" "}
-                  {waiting.length === 1 ? "person hasn’t" : "people haven’t"}{" "}
-                  replied yet
-                </Link>
-              </li>
-            )}
-
-            {openContributions.length > 0 && (
-              <li className="flex items-start gap-3">
-                <Icon
-                  name="gift"
-                  size={17}
-                  className="mt-0.5 flex-shrink-0 text-forest/60"
-                />
-                <Link
-                  href={`${base}/contributions`}
-                  className="font-body text-sm leading-relaxed text-forest/85 underline decoration-gold decoration-2 underline-offset-4 hover:text-forest"
-                >
-                  {openContributions.length} still unclaimed
-                </Link>
-              </li>
-            )}
-
-            {stillToBuy.length > 0 && (
-              <li className="flex items-start gap-3">
-                <Icon
-                  name="cart"
-                  size={17}
-                  className="mt-0.5 flex-shrink-0 text-forest/60"
-                />
-                <Link
-                  href={`${base}/shopping`}
-                  className="font-body text-sm leading-relaxed text-forest/85 underline decoration-gold decoration-2 underline-offset-4 hover:text-forest"
-                >
-                  {stillToBuy.length} still to buy
-                </Link>
-              </li>
-            )}
-
-            {needsAttention.length === 0 &&
-              waiting.length === 0 &&
-              openContributions.length === 0 &&
-              stillToBuy.length === 0 && (
-                <li className="font-body text-sm leading-relaxed text-forest/75">
-                  Nothing is waiting on you right now. Everyone has replied,
-                  every contribution is spoken for, and the list is clear.
-                </li>
-              )}
-          </ul>
-        </section>
+        <NextUpPanel actions={nextUp} base={base} />
       </div>
 
       {/* ---- the stat row ------------------------------------------ */}
