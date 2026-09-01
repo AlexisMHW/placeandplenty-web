@@ -12,14 +12,15 @@ function refresh(gatheringId: string) {
 
 function errorMessage(error: { message?: string } | null): string {
   const raw = error?.message ?? "";
-  if (raw.includes("not_authorized") || raw.includes("guest_not_authorized")) return "Only the gathering owner can change that person or household.";
+  if (raw.includes("not_authorized") || raw.includes("guest_not_authorized")) return "You don’t have access to make that change.";
   if (raw.includes("first_name_required")) return "A first name is enough to start.";
+  if (raw.includes("party_name_required")) return "Give this household or invitation a name.";
   if (raw.includes("household_requires_people")) return "Choose at least one person for this household.";
   if (raw.includes("guest_already_in_gathering")) return "Someone you chose is already in this gathering.";
   if (raw.includes("guests_owner_email_unique")) return "That email is already saved to someone in your Guest Book.";
   if (raw.includes("gathering_archived_read_only")) return "This gathering is archived, so its guest list can’t be changed.";
-  if (raw.includes("party_contact_email_required") || raw.includes("contact_email")) return "Add an email address before sending this invitation.";
-  if (raw.includes("selected_audience_requires_parties")) return "Choose at least one household or guest for this message.";
+  if (raw.includes("no_contact_email")) return "Add an email address before sending this invitation.";
+  if (raw.includes("no_recipients_selected")) return "Choose at least one household or guest for this message.";
   return "That didn’t save. Please try again.";
 }
 
@@ -71,12 +72,14 @@ export async function createHouseholdWeb(
     .getAll("guest_ids")
     .map((value) => String(value))
     .filter(Boolean);
+  const partyName = String(formData.get("party_name") ?? "").trim();
+  if (!partyName) return { ok: false, message: "Give this household a name." };
   if (guestIds.length === 0) return { ok: false, message: "Choose at least one person for this household." };
 
   const supabase = createClient();
   const { error } = await supabase.rpc("people_create_household", {
     p_gathering_id: gatheringId,
-    p_party_name: String(formData.get("party_name") ?? "").trim() || null,
+    p_party_name: partyName,
     p_guest_ids: guestIds,
   });
   if (error) return { ok: false, message: errorMessage(error) };
@@ -85,9 +88,8 @@ export async function createHouseholdWeb(
 }
 
 /**
- * One canonical edit across the three records My People actually represents:
- * reusable guest identity, this gathering's note/plus-one, and its invitation
- * party contact. The RPC owns the boundaries so web cannot drift from native.
+ * Owner edit across the three records My People represents: reusable guest
+ * identity, this gathering's note/plus-one, and its invitation party contact.
  */
 export async function updateGatheringPersonWeb(
   gatheringId: string,
@@ -107,6 +109,30 @@ export async function updateGatheringPersonWeb(
     p_dietary_notes: String(formData.get("dietary_notes") ?? "").trim() || null,
     p_allergy_notes: String(formData.get("allergy_notes") ?? "").trim() || null,
     p_accessibility_notes: String(formData.get("accessibility_notes") ?? "").trim() || null,
+    p_host_notes: String(formData.get("host_notes") ?? "").trim() || null,
+    p_party_name: String(formData.get("party_name") ?? "").trim() || null,
+    p_contact_email: String(formData.get("contact_email") ?? "").trim() || null,
+    p_plus_one_count: plusOne,
+  });
+  if (error) return { ok: false, message: errorMessage(error) };
+  refresh(gatheringId);
+  return { ok: true };
+}
+
+/**
+ * Gathering-scoped edit for an accepted co-host. It deliberately cannot touch
+ * the owner's reusable Guest Book identity/contact record.
+ */
+export async function updateGatheringPersonDetailsWeb(
+  gatheringId: string,
+  gatheringGuestId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  const plusOne = Math.max(0, Number.parseInt(String(formData.get("plus_one_count") ?? "0"), 10) || 0);
+  const supabase = createClient();
+  const { error } = await supabase.rpc("people_update_gathering_details", {
+    p_gathering_id: gatheringId,
+    p_gathering_guest_id: gatheringGuestId,
     p_host_notes: String(formData.get("host_notes") ?? "").trim() || null,
     p_party_name: String(formData.get("party_name") ?? "").trim() || null,
     p_contact_email: String(formData.get("contact_email") ?? "").trim() || null,
