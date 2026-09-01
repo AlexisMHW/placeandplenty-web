@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import Icon from "@/components/Icon";
+import { BotanicalSprig } from "@/components/Botanical";
 import CreateGatheringWizard, {
   type ResumedDraft,
 } from "@/components/host/CreateGatheringWizard";
@@ -24,30 +25,8 @@ import {
 } from "@/lib/invitations";
 import type { InvitationDecision, InvitationMode } from "@/lib/invitations";
 
-// /host/create — the same eight questions the app asks, on a desktop.
-//
-// It sits inside the (account) group so it wears the account shell: this
-// is something a host does BEFORE they have a gathering, so a gathering
-// workspace has nothing to wrap it in.
-//
-// ?editId=<uuid> RESUMES A DRAFT INTO THE SAME WIZARD. Not a second
-// screen and not a second row: the id is handed to the wizard, which
-// starts holding it, so every save takes saveGatheringDraft()'s UPDATE
-// path from the first keystroke. A host who left after question four
-// comes back to their four answers, and the gathering they were making
-// is still the gathering they are making.
-//
-// ONLY A DRAFT MAY BE RESUMED, and the check is the stored `status`
-// rather than the effective one — deliberately, because it is the same
-// question the transition guard asks (`WHERE status = 'draft'`). A
-// gathering that has already been created is edited on its own settings
-// surface, where the rules around a live gathering apply; sending it
-// through the creation wizard would end at a finalise call that is a
-// no-op at best. So it redirects there instead of pretending.
-
 export const metadata = { title: "Start a gathering" };
 
-/** Where the invitation question stands, restored from the row. */
 function resumeInvitation(fields: {
   invitation_status: string;
   invitation_mode: string;
@@ -76,8 +55,6 @@ function resumeInvitation(fields: {
           : null,
     };
   }
-  // 'not_started' is a host who has not decided, and resuming must not
-  // decide for them.
   return { decision: null, mode: null, styleId: null };
 }
 
@@ -87,8 +64,6 @@ async function loadDraft(editId: string): Promise<ResumedDraft> {
     getGatheringDraftFields(editId),
   ]);
 
-  // Missing, or filtered out by RLS — indistinguishable, and both are a
-  // 404 to the person asking.
   if (!gathering || !fields) notFound();
   if (gathering.status !== "draft") redirect(`/host/g/${editId}`);
 
@@ -99,8 +74,6 @@ async function loadDraft(editId: string): Promise<ResumedDraft> {
       }
     : null;
 
-  // A private bucket, so a path is not a URL; PDFs get no preview by
-  // design and signArtwork already declines to sign them.
   const signed = artwork ? await signArtwork([gathering]) : null;
 
   return {
@@ -112,7 +85,6 @@ async function loadDraft(editId: string): Promise<ResumedDraft> {
         ? fields.gathering_type
         : null,
       gatheringDate: fields.gathering_date ?? todayISODate(),
-      // Postgres hands back "18:00:00"; <input type="time"> wants "18:00".
       arrivalTime: fields.arrival_time
         ? fields.arrival_time.slice(0, 5)
         : DEFAULT_ARRIVAL_TIME,
@@ -120,8 +92,6 @@ async function loadDraft(editId: string): Promise<ResumedDraft> {
       adultCount: fields.adult_count ?? 0,
       childCount: fields.child_count ?? 0,
       budgetTarget: fields.budget_target,
-      // A stored value outside the canonical five leaves the question
-      // unanswered rather than showing a chip that is not offered.
       foodStyle:
         fields.food_style && isFoodStyle(fields.food_style)
           ? fields.food_style
@@ -157,16 +127,30 @@ export default async function CreateGatheringPage({
         My Gatherings
       </Link>
 
-      <h1 className="mt-5 font-display text-4xl leading-tight text-forest">
-        {resume ? "Pick up where you left off" : "Start a gathering"}
-      </h1>
-      <p className="mt-3 max-w-prose font-body leading-relaxed text-forest/75">
-        {resume
-          ? "Your answers are here, and this is the same gathering you started — nothing new is created by carrying on."
-          : "Eight questions, the same ones the app asks. Answer what you know — the rest can wait, and nothing is shared with anyone until you finish."}
-      </p>
+      <section className="relative mt-5 overflow-hidden rounded-[1.75rem] border border-sage/30 bg-parchment px-6 py-7 shadow-sm md:px-8 md:py-9">
+        <BotanicalSprig
+          className="pointer-events-none absolute -right-6 -top-8 text-olive/25"
+          size={150}
+        />
+        <div className="relative max-w-2xl">
+          <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.2em] text-forest/55">
+            {resume ? "YOUR GATHERING" : "PEOPLE ARE COMING"}
+          </p>
+          <div className="mt-3 h-[3px] w-10 rounded-full bg-gold" />
+          <h1 className="mt-4 font-display text-4xl leading-tight text-forest md:text-5xl">
+            {resume ? "Pick up where you left off" : "Start a gathering"}
+          </h1>
+          <p className="mt-3 max-w-prose font-body leading-relaxed text-forest/75">
+            {resume
+              ? "Your answers are here, and this is the same gathering you started — nothing new is created by carrying on."
+              : "A few thoughtful questions turn ‘people are coming’ into a real plan. Answer what you know; the rest can wait."}
+          </p>
+        </div>
+      </section>
 
-      <CreateGatheringWizard resume={resume} />
+      <div className="mt-6 rounded-[1.75rem] border border-sage/25 bg-offwhite p-4 shadow-sm md:p-6">
+        <CreateGatheringWizard resume={resume} />
+      </div>
     </div>
   );
 }
