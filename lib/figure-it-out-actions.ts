@@ -38,9 +38,6 @@ function buildInput(
   const foodStyle = typeof gathering.food_style === "string" ? gathering.food_style : null;
   const budgetTarget = Number(gathering.budget_target ?? 0);
 
-  // Keep the key order and contract aligned with native
-  // buildFigureItOutInput.ts so the same canonical gathering state produces
-  // the same cache identity on web and app.
   return {
     gathering: {
       name: gathering.name,
@@ -57,9 +54,7 @@ function buildInput(
       dietaryNeeds: splitNotes((gathering.dietary_notes as string | null) ?? null),
       accessibilityNeeds: splitNotes((gathering.accessibility_notes as string | null) ?? null),
     },
-    budget: budgetTarget
-      ? { total: budgetTarget, currency: "USD" }
-      : undefined,
+    budget: budgetTarget ? { total: budgetTarget, currency: "USD" } : undefined,
     food: {
       style: foodStyle ?? undefined,
       hostCooking: foodStyle === "cooking" || foodStyle === "mixed",
@@ -91,24 +86,15 @@ function friendlyError(code: string): string {
   return "Figure It Out couldn’t finish that just now. Your existing plan is still safe.";
 }
 
-async function callWeather(
-  token: string,
-  city: string,
-  gatheringDate: string
-): Promise<WeatherForecast | undefined> {
+async function callWeather(token: string, gatheringId: string): Promise<WeatherForecast | undefined> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon) return undefined;
-
   try {
     const response = await fetch(`${url}/functions/v1/weather-forecast`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        apikey: anon,
-      },
-      body: JSON.stringify({ city, gatheringDate }),
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: anon },
+      body: JSON.stringify({ gatheringId }),
       cache: "no-store",
     });
     if (!response.ok) return undefined;
@@ -128,49 +114,32 @@ export async function runFigureItOutWeb(
   const token = sessionData.session?.access_token;
   if (!token) return { ok: false, message: "Please sign in again to update this plan." };
 
-  const { data: status, error: statusError } = await supabase.rpc("effective_gathering_status", {
-    p_gathering_id: gatheringId,
-  });
+  const { data: status, error: statusError } = await supabase.rpc("effective_gathering_status", { p_gathering_id: gatheringId });
   if (statusError) return { ok: false, message: "We couldn’t verify this gathering just now." };
   if (["completed", "cancelled", "archived"].includes(String(status))) {
     return { ok: false, message: "This gathering is finished, so its plan is preserved as read-only." };
   }
 
-  // Prep notes are canonical gathering state, matching the native flow that
-  // saves them immediately before generation.
-  const { error: notesError } = await supabase
-    .from("gatherings")
-    .update({
-      dietary_notes: dietaryNotes.trim() || null,
-      accessibility_notes: accessibilityNotes.trim() || null,
-    })
-    .eq("id", gatheringId);
+  const { error: notesError } = await supabase.from("gatherings").update({
+    dietary_notes: dietaryNotes.trim() || null,
+    accessibility_notes: accessibilityNotes.trim() || null,
+  }).eq("id", gatheringId);
   if (notesError) return { ok: false, message: "Those planning notes couldn’t be saved." };
 
   const { data: gathering, error: gatheringError } = await supabase
     .from("gatherings")
-    .select(
-      "id,name,gathering_type,gathering_date,arrival_time,timezone,location_type,gathering_environment,adult_count,child_count,dietary_notes,accessibility_notes,budget_target,food_style,notes,weather_city,last_plan_input_hash,last_plan_output"
-    )
+    .select("id,name,gathering_type,gathering_date,arrival_time,timezone,location_type,gathering_environment,adult_count,child_count,dietary_notes,accessibility_notes,budget_target,food_style,notes,weather_city,last_plan_input_hash,last_plan_output")
     .eq("id", gatheringId)
     .maybeSingle();
   if (gatheringError || !gathering) return { ok: false, message: "That gathering is no longer available." };
 
-  const { data: premium } = await supabase.rpc("resolve_gathering_is_premium", {
-    p_gathering_id: gatheringId,
-  });
-
+  const { data: premium } = await supabase.rpc("resolve_gathering_is_premium", { p_gathering_id: gatheringId });
   let weather: WeatherForecast | undefined;
-  if (premium === true && gathering.weather_city) {
-    weather = await callWeather(token, String(gathering.weather_city), String(gathering.gathering_date));
-  }
+  if (premium === true && gathering.weather_city) weather = await callWeather(token, gatheringId);
 
   const input = buildInput(gathering as Record<string, unknown>, weather);
   const inputHash = hashInput(input);
-
-  if (gathering.last_plan_input_hash === inputHash && gathering.last_plan_output) {
-    return { ok: true, cached: true };
-  }
+  if (gathering.last_plan_input_hash === inputHash && gathering.last_plan_output) return { ok: true, cached: true };
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -180,11 +149,7 @@ export async function runFigureItOutWeb(
   try {
     response = await fetch(`${url}/functions/v1/figure-it-out`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        apikey: anon,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: anon },
       body: JSON.stringify({ gatheringId, input }),
       cache: "no-store",
     });
@@ -193,9 +158,7 @@ export async function runFigureItOutWeb(
   }
 
   const payload = (await response.json().catch(() => null)) as (FigureItOutOutput & { error?: string }) | null;
-  if (!response.ok || !payload || payload.error) {
-    return { ok: false, message: friendlyError(String(payload?.error ?? `http_${response.status}`)) };
-  }
+  if (!response.ok || !payload || payload.error) return { ok: false, message: friendlyError(String(payload?.error ?? `http_${response.status}`)) };
 
   const { error: applyError } = await supabase.rpc("apply_figure_it_out_plan", {
     p_gathering_id: gatheringId,
