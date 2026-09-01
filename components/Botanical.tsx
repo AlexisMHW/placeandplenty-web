@@ -1,79 +1,70 @@
-// BOTANICAL LINEWORK — the evergreen brand texture.
+// PLACE & PLENTY BOTANICALS
 //
-// WHY THIS EXISTS. The approved visual system calls for botanical
-// language "restrained and used as punctuation". The site shipped with
-// none at all, which stripped out part of what makes it recognisably
-// Place & Plenty and left eleven sections of cream/forest colour-blocking
-// with nothing distinctive between them. That reads as competent generic
-// SaaS, which is the exact failure the visual bar rules out.
+// Foliage is soft editorial punctuation, not a branch graphic and not a
+// repeating pattern. These drawings intentionally use overlapping leaves,
+// curved stems, imperfect spacing and mixed scale so they read more like
+// clipped greenery from a real table than diagrammatic SVG branches.
 //
-// THE GOVERNING RELATIONSHIP, and the reason this is a component rather
-// than decoration sprinkled inline:
-//
-//   Evergreen P&P identity  = the foundation. Palette, serif display
-//                             type, tactile cards, warm photography,
-//                             and THIS linework. Present all year.
-//   Current season          = an overlay. Photography and content that
-//                             rotate fall -> holiday -> spring.
-//
-// Swapping the season must never require touching the foundation. So
-// nothing here is fall-specific: olive sprigs are the brand's own
-// botanical, not a seasonal motif. No leaves-turning-orange, no pumpkins,
-// no wheat. When the fall photography is replaced in Tina, every mark on
-// this page still reads as Place & Plenty.
-//
-// USED SPARINGLY, AND THAT IS ENFORCED BY TASTE NOT BY CODE. The rule
-// followed across the site: at most one botanical moment per screenful,
-// only at transitions, card corners, empty states and closing CTAs.
-// Never a repeating pattern, never a background wash, never on every
-// section. If it starts reading as a garden, a spa, a wedding or a
-// Thanksgiving template, there is too much of it.
-//
-// Inline SVG rather than the PNG mark, because these need to inherit
-// `currentColor` to sit on forest and on cream alike, stay crisp at any
-// size, and cost no request. public/images/olive-mark.png is still the
-// right choice where a filled, full-colour mark is wanted (host empty
-// states).
-//
-// All variants are aria-hidden. They carry no information.
+// Keep usage restrained. Photography carries the emotional weight; foliage
+// gives the cream/forest system a natural signature between those moments.
 
-/** A pointed almond leaf, centred on the origin, pointing +x. */
-const LEAF = "M-10 0Q-2-4.2 10 0Q-2 4.2-10 0Z";
+const LEAF = "M0 0C8-7 22-7 31 0C22 8 8 9 0 0Z";
 
-function Sprig() {
+function Leaf({
+  x,
+  y,
+  rotate,
+  scale = 1,
+  opacity = 0.72,
+}: {
+  x: number;
+  y: number;
+  rotate: number;
+  scale?: number;
+  opacity?: number;
+}) {
+  return (
+    <path
+      d={LEAF}
+      transform={`translate(${x} ${y}) rotate(${rotate}) scale(${scale})`}
+      fill="currentColor"
+      opacity={opacity}
+    />
+  );
+}
+
+function NaturalSprig() {
   return (
     <g>
-      {/* stem */}
-      <path
-        d="M6 58C16 46 24 32 31 14"
+      <g
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.4"
         strokeLinecap="round"
-        opacity="0.85"
-      />
-      {/* leaves, alternating down the stem and shrinking toward the tip */}
-      <g fill="currentColor" opacity="0.75">
-        <path d={LEAF} transform="translate(14,46) rotate(-28) scale(0.95)" />
-        <path d={LEAF} transform="translate(17,44) rotate(150) scale(0.8)" />
-        <path d={LEAF} transform="translate(21,35) rotate(-34) scale(0.85)" />
-        <path d={LEAF} transform="translate(24,33) rotate(146) scale(0.7)" />
-        <path d={LEAF} transform="translate(27,23) rotate(-40) scale(0.7)" />
-        <path d={LEAF} transform="translate(30,21) rotate(140) scale(0.58)" />
-        <path d={LEAF} transform="translate(32,11) rotate(-52) scale(0.5)" />
+        opacity="0.5"
+      >
+        <path d="M11 58C19 49 24 39 29 28C34 17 40 10 49 6" strokeWidth="1.25" />
+        <path d="M27 33C21 29 16 25 11 19" strokeWidth="0.9" />
+        <path d="M34 22C41 21 48 18 54 13" strokeWidth="0.9" />
       </g>
-      {/* fruit */}
-      <g fill="currentColor" opacity="0.55">
-        <circle cx="20" cy="41" r="1.9" />
-        <circle cx="26" cy="29" r="1.6" />
+      <g>
+        <Leaf x={12} y={47} rotate={-34} scale={0.48} />
+        <Leaf x={22} y={45} rotate={152} scale={0.42} opacity={0.6} />
+        <Leaf x={22} y={35} rotate={-38} scale={0.46} />
+        <Leaf x={30} y={32} rotate={145} scale={0.38} opacity={0.62} />
+        <Leaf x={31} y={23} rotate={-42} scale={0.4} />
+        <Leaf x={39} y={20} rotate={140} scale={0.34} opacity={0.58} />
+        <Leaf x={41} y={12} rotate={-30} scale={0.34} />
+        <Leaf x={8} y={18} rotate={-118} scale={0.29} opacity={0.58} />
+        <Leaf x={49} y={12} rotate={-12} scale={0.27} opacity={0.55} />
+      </g>
+      <g fill="currentColor" opacity="0.34">
+        <circle cx="27" cy="39" r="1.7" />
+        <circle cx="34" cy="27" r="1.45" />
       </g>
     </g>
   );
 }
 
-/**
- * A single sprig. For quiet corners and card accents.
- */
 export function BotanicalSprig({
   className = "",
   size = 56,
@@ -81,7 +72,6 @@ export function BotanicalSprig({
 }: {
   className?: string;
   size?: number;
-  /** Mirror it, so a pair can frame something without repeating. */
   flip?: boolean;
 }) {
   return (
@@ -94,16 +84,11 @@ export function BotanicalSprig({
       className={className}
       style={flip ? { transform: "scaleX(-1)" } : undefined}
     >
-      <Sprig />
+      <NaturalSprig />
     </svg>
   );
 }
 
-/**
- * A hairline rule with a small sprig at its centre. The section-
- * transition mark — this is the one that does most of the work, because
- * a transition is exactly where a page either has a voice or does not.
- */
 export function BotanicalDivider({
   className = "",
   tone = "light",
@@ -111,38 +96,18 @@ export function BotanicalDivider({
   className?: string;
   tone?: "light" | "dark";
 }) {
-  const line = tone === "dark" ? "text-offwhite/25" : "text-sage/40";
+  const line = tone === "dark" ? "text-offwhite/20" : "text-sage/35";
   const mark = tone === "dark" ? "text-gold" : "text-olive";
 
   return (
-    <div
-      aria-hidden
-      className={`flex items-center justify-center gap-4 ${className}`}
-    >
+    <div aria-hidden className={`flex items-center justify-center gap-4 ${className}`}>
       <span className={`h-px w-full max-w-[7rem] bg-current ${line}`} />
-      <svg
-        focusable="false"
-        viewBox="0 0 48 20"
-        width={48}
-        height={20}
-        className={`flex-shrink-0 ${mark}`}
-      >
-        {/* A small horizontal branch: stem with three paired leaves. */}
-        <path
-          d="M4 10h40"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-          opacity="0.5"
-        />
-        <g fill="currentColor" opacity="0.8">
-          <path d={LEAF} transform="translate(17,10) rotate(-30) scale(0.5)" />
-          <path d={LEAF} transform="translate(17,10) rotate(30) scale(0.5)" />
-          <path d={LEAF} transform="translate(31,10) rotate(150) scale(0.5)" />
-          <path d={LEAF} transform="translate(31,10) rotate(210) scale(0.5)" />
-        </g>
-        <circle cx="24" cy="10" r="2" fill="currentColor" opacity="0.6" />
+      <svg focusable="false" viewBox="0 0 54 22" width={54} height={22} className={`flex-shrink-0 ${mark}`}>
+        <path d="M6 17C18 14 28 9 47 5" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.45" />
+        <Leaf x={12} y={14} rotate={-25} scale={0.25} opacity={0.72} />
+        <Leaf x={23} y={11} rotate={150} scale={0.23} opacity={0.58} />
+        <Leaf x={31} y={8} rotate={-28} scale={0.22} opacity={0.68} />
+        <Leaf x={41} y={5} rotate={145} scale={0.19} opacity={0.55} />
       </svg>
       <span className={`h-px w-full max-w-[7rem] bg-current ${line}`} />
     </div>
@@ -150,20 +115,10 @@ export function BotanicalDivider({
 }
 
 /**
- * THE BOUGH — the long, elegant branch that bleeds off the left edge of
- * every hero in the approved references.
- *
- * It is a different drawing from the sprig, not a scaled-up one, and it
- * has to be: a sprig enlarged to 400px reads as a clip-art leaf, because
- * its proportions were chosen to work at 44. The bough is drawn for that
- * size — a long arcing stem, three branchings, leaves that thin toward
- * every tip, and a few olives near the base. That is what the references
- * actually show and it is the single largest botanical moment on the
- * public site.
- *
- * Low contrast by construction. It sits behind headline type on the
- * hero's cream ground and must never compete with it; the opacity here
- * is part of the drawing rather than something a caller tunes.
+ * A loose foliage spray for large editorial corners. Kept under the legacy
+ * BotanicalBough export so existing callers do not need churn, but it is no
+ * longer a long exposed branch. Most of the silhouette is leaf mass with
+ * only short curved stem glimpses between clusters.
  */
 export function BotanicalBough({
   className = "",
@@ -174,87 +129,53 @@ export function BotanicalBough({
   width?: number;
   flip?: boolean;
 }) {
-  // Leaves are drawn against a 200-unit-wide viewBox, so the scale
-  // numbers here are the difference between a branch and a few hairs.
-  // The first version used the sprig's own scales (around 1.0-1.6) and
-  // rendered as thin vertical wisps at 230px wide — visible in a
-  // screenshot as stray marks rather than as foliage. These are roughly
-  // three times that.
-  const leaf = (x: number, y: number, rot: number, s: number, o = 0.6) => (
-    <path
-      key={`${x}-${y}-${rot}`}
-      d={LEAF}
-      transform={`translate(${x},${y}) rotate(${rot}) scale(${s})`}
-      opacity={o}
-    />
-  );
-
   return (
     <svg
       aria-hidden
       focusable="false"
-      viewBox="0 0 200 420"
+      viewBox="0 0 220 360"
       width={width}
-      height={(width * 420) / 200}
+      height={(width * 360) / 220}
       className={className}
       style={flip ? { transform: "scaleX(-1)" } : undefined}
     >
-      <g
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        opacity="0.7"
-      >
-        {/* main stem, rising and arcing right */}
-        <path d="M14 410C34 330 54 256 86 194 112 142 142 96 178 50" />
-        {/* three branchings, each shorter than the last */}
-        <path d="M62 272C86 246 116 230 152 222" />
-        <path d="M96 176C116 152 144 136 176 128" />
-        <path d="M40 340C60 322 84 312 112 308" />
+      <g fill="none" stroke="currentColor" strokeLinecap="round" opacity="0.32">
+        <path d="M24 348C55 286 72 228 104 178C131 136 161 99 199 63" strokeWidth="2" />
+        <path d="M74 246C52 229 38 209 28 184" strokeWidth="1.25" />
+        <path d="M108 174C139 164 164 148 186 127" strokeWidth="1.25" />
+        <path d="M50 296C76 292 98 281 118 265" strokeWidth="1.15" />
       </g>
 
-      <g fill="currentColor">
-        {/* along the main stem — paired, alternating, thinning upward */}
-        {leaf(26, 374, -32, 4.2)}
-        {leaf(34, 366, 150, 3.6)}
-        {leaf(44, 322, -36, 4.4)}
-        {leaf(53, 314, 146, 3.7)}
-        {leaf(66, 262, -40, 4.2)}
-        {leaf(75, 254, 142, 3.5)}
-        {leaf(92, 196, -44, 3.8)}
-        {leaf(101, 188, 138, 3.1)}
-        {leaf(120, 142, -48, 3.3)}
-        {leaf(129, 134, 134, 2.7)}
-        {leaf(150, 92, -52, 2.7)}
-        {leaf(158, 84, 130, 2.2)}
-        {leaf(174, 54, -56, 2.1)}
+      <g>
+        <Leaf x={24} y={319} rotate={-48} scale={1.45} opacity={0.48} />
+        <Leaf x={49} y={304} rotate={137} scale={1.2} opacity={0.4} />
+        <Leaf x={52} y={267} rotate={-43} scale={1.55} opacity={0.52} />
+        <Leaf x={76} y={250} rotate={140} scale={1.24} opacity={0.42} />
+        <Leaf x={78} y={215} rotate={-39} scale={1.48} opacity={0.53} />
+        <Leaf x={104} y={194} rotate={143} scale={1.18} opacity={0.4} />
+        <Leaf x={111} y={160} rotate={-42} scale={1.35} opacity={0.5} />
+        <Leaf x={137} y={141} rotate={145} scale={1.08} opacity={0.38} />
+        <Leaf x={146} y={111} rotate={-36} scale={1.18} opacity={0.46} />
+        <Leaf x={171} y={93} rotate={148} scale={0.95} opacity={0.36} />
+        <Leaf x={181} y={62} rotate={-34} scale={0.9} opacity={0.45} />
 
-        {/* on the branchings — smaller, so the eye reads a hierarchy */}
-        {leaf(84, 254, -12, 3.2, 0.5)}
-        {leaf(110, 238, -8, 2.9, 0.5)}
-        {leaf(138, 226, -4, 2.4, 0.5)}
-        {leaf(114, 160, -16, 2.9, 0.5)}
-        {leaf(140, 145, -10, 2.5, 0.5)}
-        {leaf(166, 131, -6, 2.1, 0.5)}
-        {leaf(62, 330, -14, 2.9, 0.48)}
-        {leaf(88, 316, -8, 2.4, 0.48)}
+        <Leaf x={28} y={187} rotate={-115} scale={1.04} opacity={0.36} />
+        <Leaf x={45} y={208} rotate={63} scale={1.2} opacity={0.44} />
+        <Leaf x={115} y={260} rotate={-8} scale={1.08} opacity={0.38} />
+        <Leaf x={86} y={277} rotate={166} scale={0.98} opacity={0.34} />
+        <Leaf x={174} y={128} rotate={-6} scale={1.02} opacity={0.4} />
+        <Leaf x={150} y={149} rotate={172} scale={0.88} opacity={0.34} />
       </g>
 
-      {/* olives, only near the base where the drawing has weight to spare */}
-      <g fill="currentColor" opacity="0.45">
-        <circle cx="38" cy="350" r="7" />
-        <circle cx="56" cy="300" r="6" />
-        <circle cx="80" cy="242" r="5" />
+      <g fill="currentColor" opacity="0.22">
+        <circle cx="61" cy="280" r="5" />
+        <circle cx="91" cy="216" r="4.5" />
+        <circle cx="130" cy="151" r="4" />
       </g>
     </svg>
   );
 }
 
-/**
- * A large, very low-contrast sprig for a card or panel corner. Texture
- * rather than ornament — it should be noticed second, not first.
- */
 export function BotanicalCorner({
   className = "",
   size = 128,
@@ -271,8 +192,8 @@ export function BotanicalCorner({
       height={size}
       className={`pointer-events-none absolute ${className}`}
     >
-      <g opacity="0.16">
-        <Sprig />
+      <g opacity="0.14">
+        <NaturalSprig />
       </g>
     </svg>
   );
