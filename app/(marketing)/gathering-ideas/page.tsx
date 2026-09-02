@@ -9,36 +9,6 @@ import { BotanicalDivider } from "@/components/Botanical";
 import { getAllGatheringIdeas, ideaCard } from "@/lib/tina-content";
 import type { GatheringIdea } from "@/lib/tina-content";
 
-// GATHERING IDEAS, composed to `Gathering_Ideas_Page.png`.
-//
-//   PageHero      split opening with the HOME HOSTING / MADE SIMPLE seal
-//   CategoryRail  the circular category chips, with a live count each
-//   THE GRID      photo-led cards with a category pill and a meta row
-//   CtaBand
-//
-// §11 IS THE BRIEF: "This page must be a visual destination, not a
-// four-link list." So the card is the work — photograph on top, a
-// category pill laid over it, then the title, the deck, and a row of
-// small facts that turn an inspiration card into a planning one.
-//
-// WHAT THE REFERENCE SHOWS THAT IS NOT BUILT, AND WHY. It draws a
-// six-control filter bar — Sort by, Season, Group Size, Indoor/Outdoor,
-// Prep Time, Dietary Needs — over ten cards. There are four published
-// ideas. Six filters over four items is not a destination, it is
-// furniture: every control would either do nothing or empty the page.
-// §11 says "filters where useful", and the useful version at this size
-// is the category rail, which is real, navigable, and grows into the
-// full bar the moment the library does. The card's meta row carries the
-// same facts the filters would sort on, so nothing is lost from the
-// visitor's side.
-//
-// THE PHOTOGRAPH IS THE PAGE. §19: "For Gathering Ideas, every featured
-// card needs relevant photography." None of the four has one yet, so
-// each renders the designed plate at the identical ratio with the
-// intended subject named on it — architecture built, slot reserved,
-// nothing shifting when the real image lands. Every one is listed in
-// PHOTOGRAPHY-MANIFEST.md.
-
 export const metadata: Metadata = {
   title: "Gathering Ideas",
   description:
@@ -47,20 +17,11 @@ export const metadata: Metadata = {
   openGraph: { url: "/gathering-ideas" },
 };
 
-/**
- * The meta row on a card. Only facts the document actually carries —
- * inventing "45 min prep" to fill a row the reference shows would be
- * decorating a card with a number nobody checked.
- */
 function metaFor(idea: GatheringIdea): CardMeta[] {
   const meta: CardMeta[] = [];
   if (idea.season) meta.push({ icon: "sun", label: titleCase(idea.season) });
   if (idea.occasion)
     meta.push({ icon: "cake", label: titleCase(idea.occasion) });
-  // `contentType` is deliberately NOT shown. It is an editorial taxonomy
-  // word — "seasonal", "evergreen" — and printing it next to the season
-  // gave every card a meta row reading "Fall · Game day · seasonal",
-  // where the third item tells a reader nothing they can plan around.
   return meta;
 }
 
@@ -73,9 +34,6 @@ function titleCase(value: string): string {
 export default async function GatheringIdeasPage() {
   const ideas = await getAllGatheringIdeas();
 
-  // Categories come from the content, not from a hardcoded list, so a
-  // new season or occasion appears in the rail by being published rather
-  // than by someone remembering to add it here.
   const counts = new Map<string, number>();
   for (const idea of ideas) {
     const key = idea.season || idea.occasion || "Evergreen";
@@ -91,8 +49,6 @@ export default async function GatheringIdeasPage() {
     })),
   ];
 
-  // Grouped by season, because a visitor in October wants what is
-  // happening now rather than what was posted most recently.
   const groups = new Map<string, GatheringIdea[]>();
   for (const idea of ideas) {
     const key = idea.season ? titleCase(idea.season) : "All year round";
@@ -105,8 +61,9 @@ export default async function GatheringIdeasPage() {
         eyebrow="Gathering Ideas"
         headline="Inspiration for every kind of"
         emphasisLine="gathering."
-        image={null}
-        imageCaption="A laid table with greenery, candles and a hand-lettered place card reading gather"
+        image="/images/ChatGPT Image Sep 1, 2026, 08_05_59 PM (6).png"
+        imageAlt="A warm home table set for an inviting gathering"
+        imageCaption="Ideas for the gatherings people are actually having — seasonal, everyday and worth doing."
         stamp={{ top: "Home hosting", bottom: "Made simple" }}
         body={
           <>
