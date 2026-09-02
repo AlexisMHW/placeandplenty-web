@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { StaticImageData } from "next/image";
 import PageHero from "@/components/PageHero";
 import CtaBand from "@/components/CtaBand";
 import GuestListForm from "@/components/GuestListForm";
@@ -22,18 +21,16 @@ export const metadata: Metadata = {
   openGraph: { url: "/coordinated-host" },
 };
 
-// Preserve the approved first-branch article photography. The two new
-// custom images intentionally override their older/default treatments.
-const ARTICLE_IMAGES: Record<string, StaticImageData | string> = {
-  "how-many-dishes-is-enough": howManyDishes,
-  "the-night-before-list": nightBefore,
+const ARTICLE_IMAGES: Record<string, string> = {
+  "how-many-dishes-is-enough": howManyDishes.src,
+  "the-night-before-list": nightBefore.src,
   "how-to-organise-a-potluck": "/images/article-how-to-organise-a-potluck.png",
-  "shop-your-own-cupboards-first": shopCupboards,
-  "where-people-actually-stand": wherePeopleStand,
+  "shop-your-own-cupboards-first": shopCupboards.src,
+  "where-people-actually-stand": wherePeopleStand.src,
   "how-much-ice-do-i-actually-need": "/images/article-how-much-ice.png",
 };
 
-function articleImage(post: Post): StaticImageData | string {
+function articleImage(post: Post): string {
   return ARTICLE_IMAGES[post._sys.filename] || post.featuredImage || "/images/hero-tabletop.jpg";
 }
 
