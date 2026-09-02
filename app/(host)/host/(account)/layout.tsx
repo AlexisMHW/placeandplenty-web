@@ -1,5 +1,6 @@
 import Link from "next/link";
 import HostShell, { type HostNavGroup } from "@/components/host/HostShell";
+import EditableHostName from "@/components/host/EditableHostName";
 import Icon from "@/components/Icon";
 import { getUser } from "@/lib/supabase-server";
 import {
@@ -8,10 +9,6 @@ import {
   getGuestBook,
   getClosetItems,
 } from "@/lib/host-data";
-
-// Account-level Host Web shell. Gathering tools live inside the gathering
-// workspace; this surface is for the host's gatherings and reusable account
-// tools. Keep "My Hosting Hub" reserved for the gathering-level feature hub.
 
 export default async function AccountShellLayout({
   children,
@@ -30,9 +27,6 @@ export default async function AccountShellLayout({
   const name =
     profile?.display_name || profile?.first_name || user?.email || "Your account";
 
-  // Drafts occupy an open-gathering slot, but they are not "active"
-  // gatherings. The shell reports the product concept the cap actually uses:
-  // open gatherings = draft + active + hosting.
   const openCount = gatherings
     ? gatherings.filter((g) =>
         ["draft", "active", "hosting"].includes(g.effective_status)
@@ -99,13 +93,7 @@ export default async function AccountShellLayout({
             Create Gathering
           </Link>
 
-          <Link
-            href="/host/account"
-            className="hidden max-w-[12rem] items-center gap-2 truncate rounded-lg border border-sage/40 px-3 py-2 font-body text-sm text-forest transition-colors duration-400 hover:bg-forest/5 sm:flex"
-          >
-            <Icon name="users" size={17} className="flex-shrink-0" />
-            <span className="truncate">{name}</span>
-          </Link>
+          <EditableHostName name={String(name)} />
 
           <form action="/auth/signout" method="post">
             <button
