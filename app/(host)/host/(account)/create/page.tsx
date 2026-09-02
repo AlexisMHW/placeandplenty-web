@@ -10,6 +10,7 @@ import {
   getGatheringDraftFields,
   signArtwork,
 } from "@/lib/host-data";
+import { getGatheringCreationProgress } from "@/lib/gathering-progress-data";
 import {
   DEFAULT_ARRIVAL_TIME,
   EMPTY_GATHERING_INPUT,
@@ -59,9 +60,10 @@ function resumeInvitation(fields: {
 }
 
 async function loadDraft(editId: string): Promise<ResumedDraft> {
-  const [gathering, fields] = await Promise.all([
+  const [gathering, fields, progress] = await Promise.all([
     getGathering(editId),
     getGatheringDraftFields(editId),
+    getGatheringCreationProgress(editId),
   ]);
 
   if (!gathering || !fields) notFound();
@@ -78,6 +80,8 @@ async function loadDraft(editId: string): Promise<ResumedDraft> {
 
   return {
     id: fields.id,
+    step: progress.step,
+    furthestStep: progress.furthestStep,
     input: {
       ...EMPTY_GATHERING_INPUT,
       name: fields.name ?? "",
@@ -142,7 +146,7 @@ export default async function CreateGatheringPage({
           </h1>
           <p className="mt-3 max-w-prose font-body leading-relaxed text-forest/75">
             {resume
-              ? "Your answers are here, and this is the same gathering you started — nothing new is created by carrying on."
+              ? "Your answers and your exact place in setup are here. This is the same gathering you started — nothing new is created by carrying on."
               : "A few thoughtful questions turn ‘people are coming’ into a real plan. Answer what you know; the rest can wait."}
           </p>
         </div>
