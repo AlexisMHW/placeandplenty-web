@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Display, Band } from "@/components/Display";
-import { BotanicalSprig } from "@/components/Botanical";
 import Icon, { type IconName } from "@/components/Icon";
 import hostingClosetVisual from "../homepage/product-hosting-closet.png";
 import invitationsVisual from "../homepage/product-invitations.png";
@@ -24,9 +23,16 @@ const CLOSET_EXAMPLES = [
 export default function DifferenceBand() {
   return (
     <Band tone="sage">
-      <BotanicalSprig className="pointer-events-none absolute -right-8 bottom-0 hidden text-olive/30 lg:block" size={220} />
-
       <div className="relative mx-auto max-w-editorial px-6 py-16 md:py-20">
+        <Image
+          src="/images/olive-mark.png"
+          alt=""
+          aria-hidden
+          width={150}
+          height={150}
+          className="pointer-events-none absolute right-2 top-8 hidden h-auto w-20 object-contain opacity-15 lg:block"
+        />
+
         <div className="mx-auto max-w-3xl text-center">
           <p className="font-body text-xs font-bold uppercase tracking-[0.22em] text-forest/65">The Place & Plenty difference</p>
           <Display emphasis="real life" className="mt-4 text-3xl leading-tight text-forest md:text-[2.65rem]">The hosting platform built for real life.</Display>
@@ -66,7 +72,14 @@ export default function DifferenceBand() {
               <Image src={hostingClosetVisual} alt="Place & Plenty My Hosting Closet feature preview" fill className="object-cover" sizes="(min-width: 1024px) 34rem, 100vw" />
             </div>
             <div className="relative flex flex-1 flex-col p-6 md:p-7">
-              <BotanicalSprig className="pointer-events-none absolute -right-5 -top-4 text-offwhite/10" size={135} />
+              <Image
+                src="/images/olive-mark.png"
+                alt=""
+                aria-hidden
+                width={140}
+                height={140}
+                className="pointer-events-none absolute right-3 top-3 h-auto w-16 object-contain opacity-10"
+              />
               <div className="relative">
                 <div className="flex items-center gap-3"><span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-offwhite/10 text-gold"><Icon name="closet" size={20} /></span><p className="font-body text-[0.66rem] font-bold uppercase tracking-[0.18em] text-gold">My Hosting Closet</p></div>
                 <Display emphasis="again" className="mt-4 text-[1.85rem] leading-tight text-offwhite">Stop buying things you already own again.</Display>
