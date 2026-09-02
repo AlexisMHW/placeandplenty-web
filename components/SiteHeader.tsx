@@ -6,6 +6,7 @@ import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { PRIMARY_NAV, SECONDARY_NAV } from "@/lib/nav";
 import { PRIMARY_PATH } from "@/lib/conversion";
+import { getBrowserClient } from "@/lib/supabase-browser";
 
 const DESKTOP_NAV = [
   ...PRIMARY_NAV,
@@ -15,6 +16,8 @@ const DESKTOP_NAV = [
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
   const pathname = usePathname();
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -33,6 +36,30 @@ export default function SiteHeader() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
+
+  useEffect(() => {
+    const supabase = getBrowserClient();
+    let active = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+      setSignedIn(!!data.user);
+      setAuthResolved(true);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      setSignedIn(!!session?.user);
+      setAuthResolved(true);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-sage/25 bg-offwhite/95 backdrop-blur">
@@ -58,18 +85,29 @@ export default function SiteHeader() {
         </nav>
 
         <div className="flex flex-shrink-0 items-center gap-2">
-          <Link
-            href="/login"
-            className="hidden rounded-lg border border-forest/30 px-3.5 py-2 font-body text-sm text-forest transition-colors duration-400 hover:bg-forest/5 sm:block"
-          >
-            Log In
-          </Link>
-          <Link
-            href={PRIMARY_PATH.href}
-            className="hidden rounded-lg bg-forest px-3.5 py-2 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90 sm:block"
-          >
-            Start Free
-          </Link>
+          {authResolved && signedIn ? (
+            <Link
+              href="/host"
+              className="hidden rounded-lg bg-forest px-4 py-2 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90 sm:block"
+            >
+              My Gatherings
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="hidden rounded-lg border border-forest/30 px-3.5 py-2 font-body text-sm text-forest transition-colors duration-400 hover:bg-forest/5 sm:block"
+              >
+                Log In
+              </Link>
+              <Link
+                href={PRIMARY_PATH.href}
+                className="hidden rounded-lg bg-forest px-3.5 py-2 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90 sm:block"
+              >
+                Start Free
+              </Link>
+            </>
+          )}
 
           <button
             ref={triggerRef}
@@ -127,18 +165,29 @@ export default function SiteHeader() {
           </ul>
 
           <div className="mt-5 flex flex-col gap-3 sm:hidden">
-            <Link
-              href={PRIMARY_PATH.href}
-              className="rounded-lg bg-forest px-4 py-3 text-center font-body text-sm font-semibold text-offwhite"
-            >
-              Start Free
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-lg border border-forest/30 px-4 py-3 text-center font-body text-sm text-forest"
-            >
-              Log In
-            </Link>
+            {authResolved && signedIn ? (
+              <Link
+                href="/host"
+                className="rounded-lg bg-forest px-4 py-3 text-center font-body text-sm font-semibold text-offwhite"
+              >
+                My Gatherings
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href={PRIMARY_PATH.href}
+                  className="rounded-lg bg-forest px-4 py-3 text-center font-body text-sm font-semibold text-offwhite"
+                >
+                  Start Free
+                </Link>
+                <Link
+                  href="/login"
+                  className="rounded-lg border border-forest/30 px-4 py-3 text-center font-body text-sm text-forest"
+                >
+                  Log In
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </div>
