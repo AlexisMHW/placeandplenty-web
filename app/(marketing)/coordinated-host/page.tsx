@@ -11,7 +11,6 @@ import { BotanicalDivider } from "@/components/Botanical";
 import { getAllPosts, type Post } from "@/lib/tina-content";
 import howManyDishes from "../../../homepage/article-how-many-dishes.png";
 import nightBefore from "../../../homepage/article-night-before-list.png";
-import potluck from "../../../homepage/article-potluck-without-group-chat.png";
 import shopCupboards from "../../../homepage/article-shop-your-own-cupboards.png";
 import wherePeopleStand from "../../../homepage/article-where-people-stand.png";
 
@@ -23,6 +22,8 @@ export const metadata: Metadata = {
   openGraph: { url: "/coordinated-host" },
 };
 
+// Preserve the approved first-branch article photography. The two new
+// custom images intentionally override their older/default treatments.
 const ARTICLE_IMAGES: Record<string, StaticImageData | string> = {
   "how-many-dishes-is-enough": howManyDishes,
   "the-night-before-list": nightBefore,
@@ -33,7 +34,7 @@ const ARTICLE_IMAGES: Record<string, StaticImageData | string> = {
 };
 
 function articleImage(post: Post): StaticImageData | string {
-  return post.featuredImage || ARTICLE_IMAGES[post._sys.filename] || "/images/hero-tabletop.jpg";
+  return ARTICLE_IMAGES[post._sys.filename] || post.featuredImage || "/images/hero-tabletop.jpg";
 }
 
 const TOPICS: { icon: IconName; title: string; body: string; href: string }[] = [
