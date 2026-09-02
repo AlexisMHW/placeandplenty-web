@@ -43,13 +43,9 @@ const faqs = [
   },
   {
     q: "Do I have to subscribe?",
-    a: `No. Place & Plenty is free to start, and a Gathering Pass is ${PRICING_TIERS[1].priceLine} for one gathering with no subscription behind it. Plus is annual for hosts who want the account-wide smart layer and more room to host.`,
+    a: `No. Place & Plenty is free to start, and a Gathering Pass is ${PRICING_TIERS[1].priceLine} for one gathering with no subscription behind it. Plus is annual for hosts who want paid access across their gatherings all year.`,
   },
   { q: "What does Plus actually include?", a: PLUS_LIMITS_NOTE },
-  {
-    q: "Are any Plus features app-only?",
-    a: "Yes, two. Host Mode and Space Mode need the mobile app, because they depend on what a phone can do — gathering-day notifications in one case and the camera in the other. Plus access follows your account across platforms, but feature availability may vary between web and mobile. Everything else Plus unlocks works in your browser.",
-  },
   { q: "Is a Gathering Pass a subscription?", a: PASS_LIMITS_NOTE },
   {
     q: "Does a draft count against my Plus limits?",
@@ -70,26 +66,10 @@ const faqs = [
 ];
 
 const TRUST: { icon: IconName; title: string; body: string }[] = [
-  {
-    icon: "lock",
-    title: "Secure & private",
-    body: "No advertising and no selling your gathering data. Your gathering is not a data product.",
-  },
-  {
-    icon: "leaf",
-    title: "Clear commitment",
-    body: "A Gathering Pass is a one-off for one gathering. Plus is annual.",
-  },
-  {
-    icon: "card",
-    title: "Fair & transparent",
-    body: "Paid prices call out applicable taxes and fees instead of burying them.",
-  },
-  {
-    icon: "heart",
-    title: "Built for real hosts",
-    body: "Real homes, real budgets, real people coming through the door.",
-  },
+  { icon: "lock", title: "Secure & private", body: "No advertising and no selling your gathering data. Your gathering is not a data product." },
+  { icon: "leaf", title: "Clear commitment", body: "A Gathering Pass is a one-off for one gathering. Plus is annual." },
+  { icon: "card", title: "Fair & transparent", body: "Paid prices call out applicable taxes and fees instead of burying them." },
+  { icon: "heart", title: "Built for real hosts", body: "Real homes, real budgets, real people coming through the door." },
 ];
 
 export default function PricingPage() {
@@ -105,13 +85,7 @@ export default function PricingPage() {
         image="/images/Pricing_Page_Hero.png"
         imageAlt="A warm, lived-in home gathering table styled for an approachable dinner"
         imageCaption="Choose the level of planning help that fits how often — and how deeply — you host."
-        body={
-          <p>
-            Everything you need to plan, stay organised, and enjoy the people at
-            your gathering. Start free, unlock one gathering when you want the
-            smart layer, or choose Plus when hosting is simply something you do.
-          </p>
-        }
+        body={<p>Everything you need to plan, stay organised, and enjoy the people at your gathering. Start free, unlock one gathering with a Gathering Pass, or choose Plus when hosting is something you do again and again.</p>}
       />
 
       <PlanCards />
@@ -119,62 +93,31 @@ export default function PricingPage() {
       <Band tone="sage">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <div className="grid gap-8 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
-            <div className="flex gap-3 text-forest/70">
-              <Icon name="laptop" size={38} />
-              <Icon name="phone" size={38} />
-            </div>
+            <div className="flex gap-3 text-forest/70"><Icon name="laptop" size={38} /><Icon name="phone" size={38} /></div>
             <div>
-              <Display
-                emphasis="wherever"
-                className="text-2xl leading-snug text-forest md:text-[1.85rem]"
-              >
-                One account, wherever you use it.
-              </Display>
-              <p className="mt-4 max-w-3xl font-body text-base leading-relaxed text-forest/80">
-                {CROSS_PLATFORM_PROMISE}
-              </p>
+              <Display emphasis="wherever" className="text-2xl leading-snug text-forest md:text-[1.85rem]">One account, wherever you use it.</Display>
+              <p className="mt-4 max-w-3xl font-body text-base leading-relaxed text-forest/80">{CROSS_PLATFORM_PROMISE}</p>
 
               <dl className="mt-7 grid gap-6 sm:grid-cols-3">
                 {(["web", "apple", "google"] as const).map((channel) => (
                   <div key={channel}>
-                    <dt className="font-body text-[0.68rem] font-bold uppercase tracking-[0.18em] text-forest/60">
-                      {channel === "web" ? "Using the web" : `Bought on ${channelLabel(channel)}`}
-                    </dt>
-                    <dd className="mt-1.5 font-body text-sm leading-relaxed text-forest/75">
-                      {channel === "web"
-                        ? "Sign in to the same account and use the entitlement you already own."
-                        : "The entitlement follows the same account onto the web and the app."}
-                    </dd>
+                    <dt className="font-body text-[0.68rem] font-bold uppercase tracking-[0.18em] text-forest/60">{channel === "web" ? "Using the web" : `Bought on ${channelLabel(channel)}`}</dt>
+                    <dd className="mt-1.5 font-body text-sm leading-relaxed text-forest/75">{channel === "web" ? "Sign in to the same account and use the entitlement you already own." : "The entitlement follows the same account onto the web and the app."}</dd>
                   </div>
                 ))}
               </dl>
 
-              <p className="mt-6 font-body text-sm leading-relaxed text-forest/65">
-                There is no separate web plan and no separate app plan. The
-                canonical entitlement belongs to your Place &amp; Plenty account.
-              </p>
-
-              <div className="mt-7 rounded-xl border border-gold/50 bg-offwhite/70 px-5 py-4">
-                <p className="font-body text-sm font-semibold leading-relaxed text-forest">
-                  {FEATURE_AVAILABILITY_NOTE}
-                </p>
-                <ul className="mt-3 space-y-2">
+              <div className="mt-7 rounded-xl border border-gold/50 bg-offwhite/70 px-5 py-5">
+                <h3 className="font-display text-lg text-forest">Some paid features need the mobile app</h3>
+                <p className="mt-2 font-body text-sm leading-relaxed text-forest/75">{FEATURE_AVAILABILITY_NOTE}</p>
+                <ul className="mt-4 space-y-2">
                   {NATIVE_ONLY_FEATURES.map((f) => (
-                    <li
-                      key={f.name}
-                      className="font-body text-sm leading-relaxed text-forest/70"
-                    >
-                      <strong className="font-semibold text-forest">
-                        {f.name}
-                      </strong>{" "}
-                      — {f.reason}
+                    <li key={f.name} className="font-body text-sm leading-relaxed text-forest/70">
+                      <strong className="font-semibold text-forest">{f.name}</strong> — {f.reason}
                     </li>
                   ))}
                 </ul>
-                <p className="mt-3 font-body text-sm leading-relaxed text-forest/70">
-                  Everything else Plus unlocks works in your browser once the
-                  entitlement is on your account.
-                </p>
+                <p className="mt-3 font-body text-sm leading-relaxed text-forest/70">Everything else unlocked by your Gathering Pass or Plus can be used from the browser when that feature is available on web.</p>
               </div>
             </div>
           </div>
@@ -183,67 +126,31 @@ export default function PricingPage() {
 
       <Band tone="cream">
         <div className="mx-auto max-w-prose px-6 py-16 md:py-20">
-          <Display className="text-2xl text-forest md:text-3xl">
-            Questions people actually ask
-          </Display>
-
+          <Display className="text-2xl text-forest md:text-3xl">Questions people actually ask</Display>
           <dl className="mt-8 divide-y divide-sage/30">
             {faqs.map((item) => (
               <div key={item.q} className="py-5">
-                <dt className="font-body text-base font-bold text-forest">
-                  {item.q}
-                </dt>
-                <dd className="mt-2 font-body text-base leading-relaxed text-forest/80">
-                  {item.a}
-                </dd>
+                <dt className="font-body text-base font-bold text-forest">{item.q}</dt>
+                <dd className="mt-2 font-body text-base leading-relaxed text-forest/80">{item.a}</dd>
               </div>
             ))}
           </dl>
-
-          <p className="mt-8 font-body text-sm leading-relaxed text-forest/70">
-            Anything else — our{" "}
-            <Link
-              href="/support"
-              className="underline decoration-gold underline-offset-4 hover:text-forest"
-            >
-              support page
-            </Link>{" "}
-            has the rest, and a real address to write to.
-          </p>
+          <p className="mt-8 font-body text-sm leading-relaxed text-forest/70">Anything else — our <Link href="/support" className="underline decoration-gold underline-offset-4 hover:text-forest">support page</Link> has the rest, and a real address to write to.</p>
         </div>
       </Band>
 
       <Band tone="parchment">
         <ul className="mx-auto grid max-w-editorial gap-8 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
           {TRUST.map((t, i) => (
-            <li
-              key={t.title}
-              className={`flex gap-4 lg:px-6 ${
-                i > 0 ? "lg:border-l lg:border-sage/30" : ""
-              }`}
-            >
-              <Icon
-                name={t.icon}
-                size={26}
-                className="mt-0.5 flex-shrink-0 text-forest/65"
-              />
-              <div>
-                <h3 className="font-display text-base text-forest">{t.title}</h3>
-                <p className="mt-1.5 font-body text-sm leading-relaxed text-forest/70">
-                  {t.body}
-                </p>
-              </div>
+            <li key={t.title} className={`flex gap-4 lg:px-6 ${i > 0 ? "lg:border-l lg:border-sage/30" : ""}`}>
+              <Icon name={t.icon} size={26} className="mt-0.5 flex-shrink-0 text-forest/65" />
+              <div><h3 className="font-display text-base text-forest">{t.title}</h3><p className="mt-1.5 font-body text-sm leading-relaxed text-forest/70">{t.body}</p></div>
             </li>
           ))}
         </ul>
       </Band>
 
-      <CtaBand
-        headline="Less scrambling."
-        emphasisLine="More gathering."
-        body="Start free in the browser today. Paid purchasing opens with the app release, and that access will follow this same account across web and mobile."
-        showQr
-      />
+      <CtaBand headline="Less scrambling." emphasisLine="More gathering." body="Start free in the browser today. Paid purchasing opens with the app release, and that access will follow this same account across web and mobile." showQr />
     </>
   );
 }
