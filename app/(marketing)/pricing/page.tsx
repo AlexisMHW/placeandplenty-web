@@ -102,8 +102,9 @@ export default function PricingPage() {
         eyebrow="Pricing"
         headline="Find the plan that fits"
         emphasisLine="how you host."
-        image={null}
-        imageCaption="A candlelit table set for a small dinner — linen napkins, wine glasses, place cards"
+        image="/images/Pricing_Page_Hero.png"
+        imageAlt="A warm, lived-in home gathering table styled for an approachable dinner"
+        imageCaption="Choose the level of planning help that fits how often — and how deeply — you host."
         body={
           <p>
             Everything you need to plan, stay organised, and enjoy the people at
