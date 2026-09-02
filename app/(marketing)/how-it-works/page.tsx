@@ -4,7 +4,6 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import Icon, { type IconName } from "@/components/Icon";
 import { Band, Display } from "@/components/Display";
-import hero from "../../../how-it-works/how-it-works-hero.png";
 import peopleFirst from "../../../homepage/product-invitations.png";
 import planWithConfidence from "../../../how-it-works/how-it-works-plan-with-confidence.png";
 import readyForTheDay from "../../../how-it-works/how-it-works-ready-for-the-day.png";
@@ -68,8 +67,8 @@ export default function HowItWorksPage() {
         eyebrow="How It Works"
         headline="From people are coming"
         emphasisLine="to come on in."
-        image={hero.src}
-        imageAlt="A warm, evergreen Place & Plenty home gathering."
+        image="/images/hero-tabletop.jpg"
+        imageAlt="A warm Place & Plenty tablescape in a real home."
         imageCaption="One connected hosting journey, from the first details through gathering day."
         body={
           <p>
