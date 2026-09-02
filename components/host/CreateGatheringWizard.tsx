@@ -152,21 +152,6 @@ export default function CreateGatheringWizard({
   const [uploading, setUploading] = useState(false);
   const [artworkError, setArtworkError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!draftId) return;
-    const currentStep = clampWizardStep(step);
-    const furthestStep = Math.max(currentStep, clampWizardStep(furthest));
-    const supabase = getBrowserClient();
-    void supabase
-      .from("gatherings")
-      .update({
-        creation_step: currentStep,
-        creation_furthest_step: furthestStep,
-      })
-      .eq("id", draftId)
-      .eq("status", "draft");
-  }, [draftId, step, furthest]);
-
   function showRefusal(result: { message: string; limit?: GatheringLimitCode }) {
     setLimit(result.limit ?? null);
     setError(result.limit ? null : result.message);
@@ -212,34 +197,51 @@ export default function CreateGatheringWizard({
     return draftId;
   }
 
+  async function persistProgress(gatheringId: string, next: number, nextFurthest: number) {
+    const supabase = getBrowserClient();
+    await supabase
+      .from("gatherings")
+      .update({
+        creation_step: clampWizardStep(next),
+        creation_furthest_step: clampWizardStep(nextFurthest),
+      })
+      .eq("id", gatheringId)
+      .eq("status", "draft");
+  }
+
   async function persistInvitation(gatheringId: string | null) {
     if (!gatheringId || decision === null) return;
     if (decision === "not_yet" && !mode) return;
     await recordInvitationDecision(gatheringId, decision, mode, styleId);
   }
 
-  function go(next: number) {
+  function go(next: number, commitInvitation: boolean) {
     clearRefusal();
     start(async () => {
       const id = await persistDraft(input);
-      await persistInvitation(id);
-      setStep(next);
-      setFurthest((f) => Math.max(f, next));
+      const nextStep = clampWizardStep(next);
+      const nextFurthest = Math.max(furthest, nextStep);
+      if (id) {
+        await persistProgress(id, nextStep, nextFurthest);
+        if (commitInvitation) await persistInvitation(id);
+      }
+      setStep(nextStep);
+      setFurthest(nextFurthest);
     });
   }
 
   function goNext() {
     if (!canLeave(step)) return;
-    go(Math.min(step + 1, TOTAL_STEPS));
+    go(Math.min(step + 1, TOTAL_STEPS), step === 5);
   }
 
   function goBack() {
-    go(Math.max(step - 1, 1));
+    go(Math.max(step - 1, 1), false);
   }
 
   function jumpTo(target: number) {
     if (target === step || target > furthest) return;
-    go(target);
+    go(target, step === 5 && target > step);
   }
 
   async function pickStyle(id: string) {
@@ -325,6 +327,7 @@ export default function CreateGatheringWizard({
         return;
       }
       if (!draftId) setDraftId(saved.value);
+      await persistProgress(saved.value, TOTAL_STEPS, TOTAL_STEPS);
       await persistInvitation(saved.value);
       const finalised = await finaliseGatheringCreation(saved.value);
       if (!finalised.ok) {
