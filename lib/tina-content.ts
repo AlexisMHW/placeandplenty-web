@@ -446,3 +446,31 @@ export function relatedOf(doc: GatheringIdea | Post) {
 
   return { ideas, articles };
 }
+
+/**
+ * The feature photograph for an article, resolved the same way wherever
+ * it is shown — the journal lead, the journal grid card and the top of
+ * the article itself must never disagree about which picture this is.
+ *
+ * TINA IS CANONICAL. `featuredImage` in the .mdx frontmatter wins
+ * outright; the map below is only the safety net for a piece that has
+ * not been assigned one yet, and the tabletop shot is the last resort
+ * behind that. The cards are photograph-led, so a frame is never
+ * reserved and left empty.
+ *
+ * Do not re-invert this. These entries used to beat the founder's own
+ * choice in Tina, which meant editing the image in the CMS silently did
+ * nothing on the page.
+ */
+const ARTICLE_IMAGE_FALLBACKS: Record<string, string> = {
+  "how-to-organise-a-potluck": "/images/article-how-to-organise-a-potluck.png",
+  "how-much-ice-do-i-actually-need": "/images/article-how-much-ice.png",
+};
+
+export function articleImage(post: Post): string {
+  return (
+    post.featuredImage ||
+    ARTICLE_IMAGE_FALLBACKS[post._sys.filename] ||
+    "/images/hero-tabletop.jpg"
+  );
+}

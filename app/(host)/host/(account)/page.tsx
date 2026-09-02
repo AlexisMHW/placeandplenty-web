@@ -53,15 +53,35 @@ import { ESSENCE } from "@/lib/brand";
 
 export const metadata = { title: "My Host Hub" };
 
-const UPCOMING = ["active", "hosting"];
+// LIFECYCLE PHASES, GROUPED BY WHAT THE BACKEND SAYS THEY ARE.
+//
+// These read `effective_status`, never `status`. A gathering stored as
+// `active` whose evening has passed is not active any more, and nothing
+// rewrites the row as the clock ticks — so the stored value groups it
+// with next week's dinner until a batch worker eventually catches up.
+const OPEN = ["draft", "active", "hosting"];
+const FINISHED = ["completed", "archived", "cancelled"];
 
+/**
+ * The gathering the host is actually about to hold.
+ *
+ * NO DATE ARITHMETIC. This used to filter on `gathering_date >= today`
+ * with `today` taken from `new Date().toISOString()` — a UTC day
+ * compared against a wall-clock date in the gathering's own timezone,
+ * which put a gathering into the wrong bucket for several hours a day
+ * west of Greenwich, and knew nothing about lock-in or completion.
+ *
+ * `effective_gathering_status()` already answers "is this still ahead of
+ * us", so the whole question is: the first one the backend still calls
+ * active or hosting. `list_my_gatherings_with_lifecycle()` orders by
+ * date then arrival time, so the first is the soonest and there is
+ * nothing left to sort.
+ */
 function nextUpcoming(gatherings: GatheringSummary[]): GatheringSummary | null {
-  const today = new Date().toISOString().slice(0, 10);
   return (
-    gatherings
-      .filter((g) => UPCOMING.includes(g.status) && g.gathering_date >= today)
-      .sort((a, b) => a.gathering_date.localeCompare(b.gathering_date))[0] ??
-    null
+    gatherings.find((g) =>
+      ["active", "hosting"].includes(g.effective_status)
+    ) ?? null
   );
 }
 
@@ -111,7 +131,7 @@ function StatTile({
 export default async function HostHomePage() {
   const [gatherings, guestBook, closet, profile] = await Promise.all([
     getMyGatherings(),
-    getGuestBook().catch(() => []),
+    getGuestBook().catch(() => ({ saved: [], history: [] })),
     getClosetItems().catch(() => []),
     getProfile(),
   ]);
@@ -120,11 +140,9 @@ export default async function HostHomePage() {
   const hero = nextUpcoming(gatherings);
   const firstName = profile?.first_name || profile?.display_name || null;
 
-  const listed = gatherings.filter((g) =>
-    ["draft", "active", "hosting"].includes(g.status)
-  );
+  const listed = gatherings.filter((g) => OPEN.includes(g.effective_status));
   const past = gatherings.filter((g) =>
-    ["completed", "archived", "cancelled"].includes(g.status)
+    FINISHED.includes(g.effective_status)
   );
 
   return (
@@ -177,8 +195,16 @@ export default async function HostHomePage() {
             <ul className="mt-5 space-y-3">
               {listed.map((g) => (
                 <li key={g.id}>
+                  {/* An unfinished draft goes back to the question it
+                      was left on, not into a workspace for a gathering
+                      that does not exist yet. Same row either way —
+                      ?editId resumes it rather than starting another. */}
                   <Link
-                    href={`/host/g/${g.id}`}
+                    href={
+                      g.effective_status === "draft"
+                        ? `/host/create?editId=${g.id}`
+                        : `/host/g/${g.id}`
+                    }
                     className="group flex items-stretch gap-4 rounded-xl border border-sage/25 bg-parchment p-3 transition-shadow duration-400 hover:shadow-softer"
                   >
                     <GatheringIdentity
@@ -193,8 +219,11 @@ export default async function HostHomePage() {
                         <h3 className="font-display text-lg leading-snug text-forest transition-colors duration-400 group-hover:text-sage">
                           {g.name}
                         </h3>
+                        {/* The phase, not the stored value — a badge
+                            reading "active" on a gathering that finished
+                            last night is the row talking, not the truth. */}
                         <span className="rounded-md bg-forest/10 px-2 py-0.5 font-body text-[0.6rem] font-bold uppercase tracking-[0.12em] text-forest/75">
-                          {g.status}
+                          {g.effective_status}
                         </span>
                       </div>
 
@@ -247,10 +276,17 @@ export default async function HostHomePage() {
             </ul>
           )}
 
-          <p className="mt-5 rounded-xl border border-dashed border-sage/45 px-5 py-4 text-center font-body text-sm text-forest/70">
-            Gatherings are created in the Place &amp; Plenty app, and appear
-            here the moment they are.
-          </p>
+          {/* This used to say gatherings are created in the app and
+              appear here. They can now be created here too, on the same
+              eight questions and into the same row, so the note has
+              become the door. */}
+          <Link
+            href="/host/create"
+            className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-dashed border-sage/55 px-5 py-4 text-center font-body text-sm font-semibold text-forest transition-colors duration-400 hover:border-forest hover:bg-forest/5"
+          >
+            <Icon name="plus" size={16} />
+            Start a gathering
+          </Link>
 
           {past.length > 0 && (
             <details className="mt-5">
@@ -343,9 +379,9 @@ export default async function HostHomePage() {
             <StatTile
               icon="book"
               label="My Guest Book"
-              value={String(guestBook.length)}
+              value={String(guestBook.saved.length)}
               sub={
-                guestBook.length === 1
+                guestBook.saved.length === 1
                   ? "person you host"
                   : "people you host most"
               }

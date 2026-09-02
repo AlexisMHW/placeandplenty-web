@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getUser } from "@/lib/supabase-server";
 import { getProfile } from "@/lib/host-data";
+import { getProfileAvatarState } from "@/lib/profile-data";
 import { WorkspaceHeader, Panel } from "@/components/host/Workspace";
 import PlanPanel from "@/components/host/PlanPanel";
+import ProfilePhotoPanel from "@/components/host/ProfilePhotoPanel";
 
 // ACCOUNT / PROFILE / SETTINGS (§11).
 //
@@ -25,15 +27,20 @@ import PlanPanel from "@/components/host/PlanPanel";
 //   deleted and what is retained. Duplicating it would create a second
 //   copy to drift.
 //
-// Profile fields are read-only for the same reason every other host
-// surface is: the web app reads canonical data and does not write it
-// yet. Showing an editable-looking name field that silently discards
-// changes would be worse than showing the value.
+// Profile identity remains canonical in `profiles`. The account photo is
+// also stored there as a private storage path; Guest Book hosts never get
+// a copied image or a searchable account record. They only receive a
+// signed image when a guest email they already own matches a verified
+// P&P account whose owner allows Guest Book display.
 
 export const metadata = { title: "Account" };
 
 export default async function AccountPage() {
-  const [user, profile] = await Promise.all([getUser(), getProfile()]);
+  const [user, profile, avatar] = await Promise.all([
+    getUser(),
+    getProfile(),
+    getProfileAvatarState(),
+  ]);
 
   const rows = [
     { label: "Name", value: profile?.display_name || profile?.first_name },
@@ -42,6 +49,14 @@ export default async function AccountPage() {
     { label: "Language", value: profile?.preferred_locale },
   ].filter((r) => r.value);
 
+  const displayName = String(profile?.display_name || profile?.first_name || user?.email || "");
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
   return (
     <div className="mx-auto max-w-[70rem] px-6 py-10 md:py-14">
       <WorkspaceHeader
@@ -49,7 +64,15 @@ export default async function AccountPage() {
         description="The same Place & Plenty account you use in the app."
       />
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className="mt-8">
+        <ProfilePhotoPanel
+          avatarUrl={avatar.avatarUrl}
+          shareWithGuestBooks={avatar.shareWithGuestBooks}
+          initials={initials}
+        />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <PlanPanel />
 
         <Panel>
@@ -66,7 +89,7 @@ export default async function AccountPage() {
             ))}
           </dl>
           <p className="mt-4 font-body text-sm leading-relaxed text-forest/65">
-            Change these in the app and they update here instantly.
+            Your account details stay the same everywhere you use Place &amp; Plenty.
           </p>
         </Panel>
 

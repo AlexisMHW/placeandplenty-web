@@ -42,8 +42,8 @@ export function WorkspaceHeader({
 
 /**
  * The empty state. Takes the olive mark rather than an icon font,
- * because §4 wants botanical language used "as punctuation" — this is
- * the one place per screen where it earns its keep.
+ * because botanicals are punctuation — this is the one place per screen
+ * where they earn their keep.
  */
 export function EmptyState({
   title,
@@ -52,7 +52,6 @@ export function EmptyState({
 }: {
   title: string;
   body: string;
-  /** What the host should do about it, usually "in the app". */
   hint?: string;
 }) {
   return (
@@ -96,24 +95,17 @@ export function Panel({
 }
 
 /**
- * The read/write split, stated once per surface.
- *
- * THE WEB APP READS CANONICAL DATA AND DOES NOT WRITE IT. Saying so
- * plainly beats shipping controls that look editable and silently do
- * nothing — §30's warning against calling a placeholder complete.
- *
- * TONE: this describes a workflow, not a shortfall. "Editing on web is
- * coming; for now, changes are made in the app" makes an established
- * product sound half-built. The split is genuinely useful — the phone is
- * where hosting happens, the desktop is where you see the whole thing —
- * so it reads as the design it is.
+ * Shared copy for a surface that is intentionally read-only in this
+ * context. It describes canonical product truth without implying that
+ * the web and app maintain separate records or that one platform is a
+ * delayed copy of the other.
  */
 export function ReadOnlyNote({ what }: { what: string }) {
   return (
     <p className="mt-6 rounded-card border border-sage/30 bg-cream px-4 py-3 font-body text-sm leading-relaxed text-forest/75">
-      Your live {what} — the same record the app is reading right now.
-      Make changes in the Place &amp; Plenty app and they appear here
-      instantly.
+      This is the live {what} for this gathering — the same saved record
+      Place &amp; Plenty uses everywhere. If it changes on another device,
+      refresh or re-enter this view to pull the latest saved state.
     </p>
   );
 }

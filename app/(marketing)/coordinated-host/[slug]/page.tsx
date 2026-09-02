@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
-import { getAllPosts, getPostBySlug } from "@/lib/tina-content";
+import { getAllPosts, getPostBySlug, articleImage } from "@/lib/tina-content";
 import { ArticleSchema } from "@/components/StructuredData";
+import Photo from "@/components/Photo";
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
@@ -90,6 +91,19 @@ export default async function ArticlePage({
               year: "numeric",
             })}`}
         </p>
+
+        {/* The same photograph the journal lead and the grid card carry —
+            resolved through articleImage() so the three can never
+            disagree about which picture this piece is. */}
+        <Photo
+          src={articleImage(post)}
+          alt={post.featuredImageAlt || post.title}
+          caption={post.featuredImageAlt || `${post.title} — a real home, warm natural light`}
+          tone="forest"
+          className="mt-8 aspect-[16/10] w-full rounded-card"
+          sizes="(min-width: 768px) 65ch, 100vw"
+          priority
+        />
 
         {post.shortAnswer && (
           <div className="mt-8 rounded-card border border-gold bg-cream p-6">

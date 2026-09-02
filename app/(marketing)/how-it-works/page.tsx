@@ -1,120 +1,62 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
-import FounderBand from "@/components/FounderBand";
-import CtaBand from "@/components/CtaBand";
-import GuestManagementSection from "@/components/GuestManagementSection";
-import { Band, Display } from "@/components/Display";
-import { SplitCard } from "@/components/Cards";
 import Icon, { type IconName } from "@/components/Icon";
-import { BotanicalDivider } from "@/components/Botanical";
-import { PROMISE } from "@/lib/brand";
-
-// HOW IT WORKS, composed to `how_it_works Page.png`.
-//
-// The reference's order, and what each band is for:
-//
-//   PageHero        the split editorial opening every page shares
-//   THE PATH        five steps on a dashed line — the hosting journey
-//   ALL IN ONE      the capability grid, copy left, six split cards right
-//   GuestManagement §8's connected loop, in full
-//   FounderBand     a person stands behind this
-//   CtaBand         the close
-//
-// WHAT THE REFERENCE SHOWS THAT PRODUCT TRUTH OVERRIDES. Its grid says
-// "My Shopping List", which §9 renamed to My Shopping, and it gives
-// Guest Communications a card of its own, which §9 forbids as a
-// standalone Hub card. Composition, pacing and weight come from the
-// reference; names come from lib/features.ts and the reconciliation.
-//
-// WHY FIVE STEPS AND NOT THREE. §8 warns specifically against "generic
-// Step 1 / Step 2 / Step 3 SaaS filler without real hosting context".
-// The reference draws five and they are the actual arc of hosting
-// something — invite, plan, organise, gather, remember. The fifth step
-// matters most for the product: the gathering does not end when everyone
-// leaves, and My Guest Book is the reason someone comes back.
+import { Band, Display } from "@/components/Display";
+import peopleFirst from "../../../homepage/product-invitations.png";
+import planWithConfidence from "../../../how-it-works/how-it-works-plan-with-confidence.png";
+import readyForTheDay from "../../../how-it-works/how-it-works-ready-for-the-day.png";
+import connectedExperience from "../../../how-it-works/how-it-works-connected-experience - Copy.png";
 
 export const metadata: Metadata = {
   title: "How It Works",
   description:
-    "The simple path from invite to incredible. How Place & Plenty handles everything between “people are coming” and the doorbell ringing.",
+    "From people are coming to come on in. See how Place & Plenty supports the real hosting journey from first details through gathering day.",
   alternates: { canonical: "/how-it-works" },
   openGraph: { url: "/how-it-works" },
 };
 
-const STEPS: {
+const JOURNEY: Array<{
+  label: string;
+  detail: string;
   icon: IconName;
-  title: string;
-  body: string;
-}[] = [
-  {
-    icon: "envelope",
-    title: "Invite",
-    body: "Send invitations — ours or your own — add your people, and collect RSVPs in one place.",
-  },
-  {
-    icon: "table",
-    title: "Plan",
-    body: "Build your menu, set the vibe, and work out quantities. Figure It Out For Me does the heavy lifting.",
-  },
-  {
-    icon: "check",
-    title: "Organise",
-    body: "Shopping, prep, contributions and your HostReady score — all in one place instead of five.",
-  },
-  {
-    icon: "heart",
-    title: "Gather",
-    body: "Feel ready, present, and actually able to enjoy the people you invited.",
-  },
-  {
-    icon: "book",
-    title: "Remember",
-    body: "Keep the photos, the notes and the people — so next time doesn’t start from scratch.",
-  },
+}> = [
+  { label: "Start", detail: "Create the gathering.", icon: "calendar" },
+  { label: "Bring In Your People", detail: "Invite, RSVP, organize.", icon: "people" },
+  { label: "Plan It", detail: "Food, shopping, what you own.", icon: "table" },
+  { label: "Get Ready", detail: "Know what needs attention next.", icon: "gauge" },
+  { label: "Gather", detail: "Host, enjoy, remember.", icon: "heart" },
 ];
 
-const CAPABILITIES: {
-  icon: IconName;
-  title: string;
-  body: string;
-  photoCaption: string;
-}[] = [
+const STORY = [
   {
-    icon: "rsvp",
-    title: "Invitations & RSVPs",
-    body: "Send, track and manage replies. Or bring the invitation you already made and track RSVPs against it.",
-    photoCaption: "A phone showing an invitation, held at a set table",
+    eyebrow: "People first",
+    title: "Bring in your people without losing track of the details.",
+    body: "Send the invitation, follow RSVPs and keep the guest list organized in the same gathering. My People keeps responses and guest details close, while My Guest Book makes familiar people easier to bring back next time.",
+    image: peopleFirst,
+    alt: "Place & Plenty invitation experience for inviting guests and tracking responses.",
   },
   {
-    icon: "people",
-    title: "My People",
-    body: "Your guest command centre for this gathering — who’s coming, who they’re coming with, what they can’t eat, and every message you’ve sent them.",
-    photoCaption: "Guests around a kitchen island, mid-conversation",
+    eyebrow: "Plan with confidence",
+    title: "Food, shopping and what you already own work together.",
+    body: "Build the menu in My Table, keep the shopping list tied to the plan and check My Hosting Closet before buying more. Quantities, contributions and the pieces you already have stay connected to the gathering instead of scattered across separate lists.",
+    image: planWithConfidence,
+    alt: "Place & Plenty planning experience showing My Table, My Shopping and My Hosting Closet working together.",
   },
   {
-    icon: "cart",
-    title: "My Shopping",
-    body: "One list with everything you need — food, supplies, the ice you always forget — with the budget beside it.",
-    photoCaption: "A basket of groceries on a counter, warm daylight",
+    eyebrow: "Ready for the day",
+    title: "Know what matters now — and what can wait.",
+    body: "HostReady and Next Up turn the plan into a clear sense of readiness as the gathering gets closer. Space Mode and Host Mode support the final stretch so gathering day feels less like managing a project and more like welcoming people in.",
+    image: readyForTheDay,
+    alt: "Place & Plenty gathering-day experience with HostReady and next-step guidance.",
   },
   {
-    icon: "gift",
-    title: "Who’s Bringing What",
-    body: "Coordinate contributions and potluck items without running the whole thing out of a group chat.",
-    photoCaption: "A guest arriving at the door holding a covered dish",
-  },
-  {
-    icon: "book",
-    title: "My Guest Book",
-    body: "The people you host most often, kept in one place, so you never rebuild the same guest list twice.",
-    photoCaption: "An open notebook and pen beside a candle",
-  },
-  {
-    icon: "grid",
-    title: "…and the rest of it",
-    body: "Menus, the space, the music, your hosting closet, co-hosts, photos, and the readiness score that ties it together.",
-    photoCaption: "A table mid-setup — plates stacked, greenery, candles unlit",
+    eyebrow: "Connected experience",
+    title: "Plan on the web. Carry the same gathering with you on your phone.",
+    body: "The gathering stays with the same account across web and mobile. Use the bigger screen when you want room to plan, then take the useful parts with you while you shop, set up and host.",
+    image: connectedExperience,
+    alt: "Place & Plenty web and mobile experience shown together for the same gathering.",
   },
 ];
 
@@ -123,123 +65,72 @@ export default function HowItWorksPage() {
     <>
       <PageHero
         eyebrow="How It Works"
-        headline="Home hosting."
-        emphasisLine="Made simple."
-        imageCaption="A long table set for dinner at home — candles lit, greenery down the middle"
-        image={null}
+        headline="From people are coming"
+        emphasisLine="to come on in."
+        image="/images/hero-tabletop.jpg"
+        imageAlt="A warm Place & Plenty tablescape in a real home."
+        imageCaption="One connected hosting journey, from the first details through gathering day."
         body={
-          <>
-            <p>{PROMISE}</p>
-            <p className="mt-3">
-              We help you plan, stay organised, and actually enjoy your own
-              gathering.
-            </p>
-          </>
+          <p>
+            Start with the gathering, bring in your people, build the plan, get ready, and host with the same connected Place &amp; Plenty experience from beginning to end.
+          </p>
+        }
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90"
+            >
+              Start Hosting Free
+            </Link>
+            <Link
+              href="/what-it-does"
+              className="inline-flex items-center justify-center rounded-lg border border-forest/25 bg-offwhite/70 px-6 py-3 font-body text-sm font-semibold text-forest transition-colors duration-300 hover:bg-offwhite"
+            >
+              See What It Does
+            </Link>
+          </div>
         }
       />
 
-      {/* ---- the path ------------------------------------------------ */}
-      <Band tone="parchment">
-        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
-          <Display
-            emphasis="incredible"
-            className="text-center text-3xl leading-tight text-forest md:text-[2.4rem]"
-          >
-            The simple path from invite to incredible.
-          </Display>
-
-          <ol className="relative mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6">
-            {/* The dashed connector, desktop only. It is decoration: the
-                list is already ordered, and a rule that only exists at one
-                breakpoint must not carry meaning. */}
-            <span
-              aria-hidden
-              className="absolute left-0 right-0 top-7 hidden border-t border-dashed border-sage/50 lg:block"
-            />
-
-            {STEPS.map((step, i) => (
-              <li key={step.title} className="relative text-center">
-                <span className="relative z-10 inline-flex h-14 w-14 items-center justify-center rounded-full bg-forest text-offwhite ring-8 ring-parchment">
-                  <Icon name={step.icon} size={22} />
-                </span>
-                <h3 className="mt-5 font-display text-lg text-forest">
-                  {i + 1}. {step.title}
-                </h3>
-                <p className="mx-auto mt-2 max-w-[16rem] font-body text-sm leading-relaxed text-forest/70">
-                  {step.body}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </Band>
-
-      {/* ---- everything in one place --------------------------------- */}
       <Band tone="cream">
-        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:gap-14">
-            <div className="lg:sticky lg:top-28 lg:self-start">
-              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
-                P&amp;P brings it all together
-              </p>
-              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.3rem]">
-                Everything you need.
-              </Display>
-              <p className="font-display text-3xl italic leading-tight text-sage md:text-[2.3rem]">
-                All in one place.
-              </p>
-              <p className="mt-6 max-w-prose font-body text-base leading-relaxed text-forest/75">
-                From the first invitation to the last thank you, Place &amp;
-                Plenty keeps the details organised so you can spend the evening
-                on what you actually invited people for.
-              </p>
-              <Link
-                href="/what-it-does"
-                className="mt-7 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
-              >
-                Explore What It Does
-              </Link>
-            </div>
-
-            <ul className="grid gap-4 sm:grid-cols-2">
-              {CAPABILITIES.map((c) => (
-                <li key={c.title}>
-                  <SplitCard
-                    icon={c.icon}
-                    title={c.title}
-                    body={c.body}
-                    photoCaption={c.photoCaption}
-                  />
+        <div className="mx-auto max-w-editorial px-5 py-14 md:px-6 md:py-18">
+          <div className="text-center">
+            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/70">The hosting journey</p>
+            <Display className="mx-auto mt-4 max-w-3xl text-3xl leading-tight text-forest md:text-[2.5rem]">One gathering. Five simple moments.</Display>
+          </div>
+          <div className="relative mt-12 md:mt-14">
+            <div aria-hidden className="absolute left-[10%] right-[10%] top-9 hidden h-[2px] bg-gold/70 md:block" />
+            <ol className="grid gap-8 md:grid-cols-5 md:gap-4">
+              {JOURNEY.map((step, index) => (
+                <li key={step.label} className="relative text-center">
+                  <div className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-2 border-gold bg-parchment text-goldInk shadow-softer"><Icon name={step.icon} size={32} strokeWidth={1.9} /></div>
+                  <p className="mt-4 font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-goldInk">{String(index + 1).padStart(2, "0")}</p>
+                  <h2 className="mt-1 font-display text-xl leading-tight text-forest">{step.label}</h2>
+                  <p className="mx-auto mt-2 max-w-[11rem] font-body text-sm leading-snug text-forest/70">{step.detail}</p>
                 </li>
               ))}
-            </ul>
+            </ol>
           </div>
-
-          <BotanicalDivider className="mt-14" />
-
-          <p className="mt-8 text-center">
-            <Link
-              href="/what-it-does"
-              className="font-body text-sm font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4 transition-colors duration-400 hover:text-sage"
-            >
-              See everything Place &amp; Plenty can do{" "}
-              <span aria-hidden>&rarr;</span>
-            </Link>
-          </p>
         </div>
       </Band>
 
-      {/* §8 requires the connected loop and the invitation line here, in
-          full rather than as a mention. */}
-      <GuestManagementSection />
-
-      <FounderBand />
-
-      <CtaBand
-        headline="Ready to host"
-        emphasisLine="with more ease?"
-        body="Create your account and plan your next gathering in the browser. Nothing to download, nothing to install."
-      />
+      <section aria-label="How Place and Plenty works" className="bg-parchment">
+        <div className="mx-auto max-w-editorial space-y-16 px-6 py-16 md:space-y-20 md:py-24">
+          {STORY.map((stage, index) => (
+            <article key={stage.eyebrow} className="grid items-center gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-12">
+              <div className={index % 2 === 1 ? "lg:order-2" : ""}>
+                <div className="flex items-center gap-3"><span className="h-px w-8 bg-gold" aria-hidden /><p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.22em] text-forest/75">{stage.eyebrow}</p></div>
+                <h2 className="mt-4 font-display text-3xl leading-tight text-forest md:text-[2.25rem]">{stage.title}</h2>
+                <p className="mt-5 font-body text-base leading-relaxed text-forest/75">{stage.body}</p>
+              </div>
+              <div className={`relative aspect-[16/10] overflow-hidden rounded-3xl shadow-soft ${index % 2 === 1 ? "lg:order-1" : ""}`}>
+                <Image src={stage.image} alt={stage.alt} fill className="object-cover" sizes="(min-width: 1024px) 65vw, 100vw" />
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </>
   );
 }

@@ -1,29 +1,14 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Display, Band } from "@/components/Display";
 import { BotanicalSprig } from "@/components/Botanical";
-import GatheringIdeaCard from "@/components/GatheringIdeaCard";
-import type { GatheringIdea } from "@/lib/tina-content";
+import { ideaCard, type GatheringIdea } from "@/lib/tina-content";
+import gameDay from "../public/images/gathering-game-day.png";
+import backyardDinner from "../public/images/gathering-backyard-dinner.png";
+import halloween from "../public/images/gathering-halloween-spooktacular.png";
+import friendsgiving from "../public/images/gathering-friendsgiving.png";
 
-// "Reasons people are hosting right now." — §12's homepage concept, and
-// the reference's second band.
-//
-// THE HEADING IS CENTRED AND FLANKED BY BOTANICALS, exactly as the
-// reference has it, with italic emphasis on "hosting". Centring is not a
-// default here: everything else on the page is left-aligned, and this is
-// the one moment the page addresses the room rather than the reader.
-//
-// THE SEASONAL LINE SITS UNDER THE HEADING as the deck. It used to live
-// in the hero; the reference puts the brand line up there and the
-// seasonal reason here, which is the more durable arrangement — the
-// thing that changes four times a year sits next to the cards that
-// change with it.
-//
-// Which ideas appear is a Tina reference list (§6), so a rotation is
-// four picks in the editor. Nothing about a card is typed twice: the
-// headline and image come from the idea it opens.
-//
-// RENDERS NOTHING WHEN EMPTY. Four empty boxes would be worse than no
-// section.
+const SEASONAL_IMAGES = [gameDay, backyardDinner, halloween, friendsgiving];
 
 export default function SeasonalCards({
   ideas,
@@ -38,21 +23,11 @@ export default function SeasonalCards({
     <Band tone="cream">
       <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
         <div className="flex items-center justify-center gap-5">
-          <BotanicalSprig
-            className="hidden flex-shrink-0 text-olive sm:block"
-            size={44}
-          />
-          <Display
-            emphasis="hosting"
-            className="text-center text-3xl leading-tight text-forest md:text-4xl"
-          >
+          <BotanicalSprig className="hidden flex-shrink-0 text-olive sm:block" size={44} />
+          <Display emphasis="hosting" className="text-center text-3xl leading-tight text-forest md:text-4xl">
             Reasons people are hosting right now.
           </Display>
-          <BotanicalSprig
-            className="hidden flex-shrink-0 text-olive sm:block"
-            size={44}
-            flip
-          />
+          <BotanicalSprig className="hidden flex-shrink-0 text-olive sm:block" size={44} flip />
         </div>
 
         {reasonLine && (
@@ -62,22 +37,38 @@ export default function SeasonalCards({
         )}
 
         <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {ideas.map((idea, i) => (
-            <GatheringIdeaCard
-              key={idea._sys.filename}
-              idea={idea}
-              priority={i < 2}
-            />
-          ))}
+          {ideas.slice(0, 4).map((idea, i) => {
+            const card = ideaCard(idea);
+            const image = SEASONAL_IMAGES[i];
+            return (
+              <Link
+                key={idea._sys.filename}
+                href={card.href}
+                className="group overflow-hidden rounded-card border border-sage/30 bg-offwhite shadow-softer transition-shadow duration-400 hover:shadow-soft"
+              >
+                <Image
+                  src={image}
+                  alt={card.imageAlt || card.headline}
+                  className="h-auto w-full"
+                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                  priority={i < 2}
+                />
+                <div className="border-t border-sage/25 px-5 py-5 text-center">
+                  <h3 className="min-h-[3.25rem] font-display text-xl leading-snug text-forest">{card.headline}</h3>
+                  {card.deck && (
+                    <p className="mt-2 font-body text-xs uppercase leading-relaxed tracking-[0.1em] text-forest/60">
+                      {card.deck}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
         <div className="mt-10 text-center">
-          <Link
-            href="/gathering-ideas"
-            className="inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage"
-          >
-            All Gathering Ideas
-            <span aria-hidden>&rarr;</span>
+          <Link href="/gathering-ideas" className="inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage">
+            All Gathering Ideas <span aria-hidden>&rarr;</span>
           </Link>
         </div>
       </div>

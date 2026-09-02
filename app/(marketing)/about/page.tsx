@@ -3,41 +3,8 @@ import Image from "next/image";
 import PageHero from "@/components/PageHero";
 import CtaBand from "@/components/CtaBand";
 import Photo from "@/components/Photo";
-import Stamp from "@/components/Stamp";
 import { Band, Display } from "@/components/Display";
-import { IconPlate, type IconName } from "@/components/Icon";
-import { BotanicalBough } from "@/components/Botanical";
 import { FOUNDER_PHOTO } from "@/lib/founder";
-import { ESSENCE } from "@/lib/brand";
-
-// ABOUT, composed to `about_me.png`.
-//
-//   PageHero      the founder photograph fills the right half; the left
-//                 carries "Hi, I'm Alexis." over three italic lines
-//   MY STORY      heading left, the story right, bough between
-//   MY APPROACH   five principles in a row behind hairlines
-//   WHY I BUILT   photograph left, the reason right, seal at the corner
-//   CtaBand
-//
-// FIRST PERSON THROUGHOUT. §16 and §9 of the visual directive both
-// require it and the page had it wrong before — a founder page written
-// in the third person reads as a company describing an employee. Every
-// sentence below is Alexis speaking.
-//
-// THE KEY LINE IS VERBATIM, because §16 quotes it exactly:
-//
-//   "I didn't need another place to make a pretty invitation. I needed
-//    something that could help me manage everything between 'people are
-//    coming' and the doorbell ringing. So I built it."
-//
-// WHAT IS DELIBERATELY ABSENT. No dates, no "a few years ago", no
-// company history, no résumé, no titles held. §16 forbids the vague
-// origin phrasing outright — it misstates the timing — and §9 of the
-// visual directive rules out turning this into a CEO biography.
-//
-// THE FOUNDER PHOTOGRAPH IS THE APPROVED ONE and must never be swapped
-// for stock (§16). It comes from lib/founder.ts, which is also the file
-// to change if the founder confirms the other candidate.
 
 export const metadata: Metadata = {
   title: "About",
@@ -47,219 +14,98 @@ export const metadata: Metadata = {
   openGraph: { url: "/about" },
 };
 
-const PRINCIPLES: { icon: IconName; title: string; body: string }[] = [
-  {
-    icon: "heart",
-    title: "People first",
-    body: "The preparation serves the people. The people are the point.",
-  },
-  {
-    icon: "check",
-    title: "Thoughtful planning",
-    body: "The right plan makes everything feel easier, and more enjoyable.",
-  },
-  {
-    icon: "house",
-    title: "Real life, real homes",
-    body: "Not every home is perfect. That’s fine. What matters is how we make people feel in it.",
-  },
-  {
-    icon: "leaf",
-    title: "Simple is powerful",
-    body: "Clear tools and smart guidance, so there’s less chaos and you can be present.",
-  },
-  {
-    icon: "cohosts",
-    title: "Better together",
-    body: "Hosting is better when we support and inspire each other.",
-  },
-];
-
 export default function AboutPage() {
   return (
     <>
       <PageHero
-        eyebrow="About the founder"
-        headline="Hi, I’m Alexis."
-        emphasisLine="The organised host behind Place & Plenty."
+        eyebrow="About Place & Plenty"
+        headline="Made for real hosts."
+        emphasisLine="With real lives."
         image={FOUNDER_PHOTO.src}
         imageAlt={FOUNDER_PHOTO.alt}
         body={
           <>
-            <p>
-              I built Place &amp; Plenty to help you host with more ease and
-              less stress — so you can focus on what matters most:
+            <p className="font-display text-xl leading-relaxed text-forest">
+              I’m Alexis — the organized-ish host behind Place &amp; Plenty.
             </p>
-            <p className="mt-3 font-display text-xl italic text-goldInk">
-              the people at your table.
+            <p className="mt-3">
+              I built the thing I kept wishing existed: one place for everything between “people are coming” and the doorbell ringing.
             </p>
           </>
         }
       />
 
-      {/* ---- my story ------------------------------------------------ */}
       <Band tone="cream">
-        <div className="relative">
-          <BotanicalBough
-            className="pointer-events-none absolute -right-10 top-1/2 hidden -translate-y-1/2 text-olive/40 lg:block"
-            width={220}
-            flip
-          />
+        <div className="mx-auto grid max-w-editorial gap-10 px-6 py-16 md:py-20 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:gap-16">
+          <div>
+            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">The real-life part</p>
+            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.35rem]">
+              I love bringing people together. I just got tired of holding the whole plan in my head.
+            </Display>
+            <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
+          </div>
 
-          <div className="relative mx-auto max-w-editorial px-6 py-16 md:py-20">
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
-              <div>
-                <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
-                  My story
-                </p>
-                <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.2rem]">
-                  A lifelong love of people, planning, and the little details.
-                </Display>
-                <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
-              </div>
-
-              <div className="max-w-prose space-y-5 font-body text-base leading-relaxed text-forest/80">
-                <p>
-                  I have always been the one who brings people together. Family
-                  dinners, celebrations with friends, the ordinary Tuesday that
-                  turns into eleven people in my kitchen — I have loved making
-                  the kind of moment where everyone feels welcome and cared
-                  for.
-                </p>
-                <p>
-                  I also knew what it costs. My son’s 17th. My youngest son’s
-                  first birthday. My husband’s 40th. My own 39th. Granny’s 80th.
-                  Thanksgiving, Christmas, Valentine’s. Every one of them was
-                  worth it, and every one of them was too many lists, too many
-                  moving parts, and too many “did I forget” moments at eleven at
-                  night.
-                </p>
-                <p className="border-l-2 border-gold pl-5 font-display text-lg italic leading-relaxed text-forest">
-                  I didn’t need another place to make a pretty invitation. I
-                  needed something that could help me manage everything between
-                  “people are coming” and the doorbell ringing. So I built it.
-                </p>
-                <p>
-                  Place &amp; Plenty is that thing — a home hosting companion
-                  that keeps it all in one place, tells you where you actually
-                  stand, and gets out of the way so you can enjoy the gathering
-                  you spent all week on.
-                </p>
-              </div>
-            </div>
+          <div className="max-w-prose space-y-5 font-body text-base leading-relaxed text-forest/80">
+            <p>
+              Family dinners, birthdays, holidays, the gathering that starts small and somehow ends with eleven people in the kitchen — I have always loved creating the kind of moment where people feel welcome and cared for.
+            </p>
+            <p>
+              But the part before everyone arrived was another story. My son’s 17th. My youngest son’s first birthday. My husband’s 40th. My own 39th. Granny’s 80th. Thanksgiving, Christmas, Valentine’s. Too many lists. Too many tabs. Too many group texts. Too many “did I forget something?” moments at eleven at night.
+            </p>
+            <p className="border-l-2 border-gold pl-5 font-display text-xl italic leading-relaxed text-forest">
+              I didn’t need another place to make a pretty invitation. I needed help getting the whole house, plan and people ready.
+            </p>
           </div>
         </div>
       </Band>
 
-      {/* ---- my approach --------------------------------------------- */}
       <Band tone="plain">
-        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
-          <p className="text-center font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
-            My approach
-          </p>
-          <Display className="mt-4 text-center text-3xl leading-tight text-forest md:text-[2.2rem]">
-            Hosting with heart. Organised with intention.
-          </Display>
-
-          <ul className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
-            {PRINCIPLES.map((p, i) => (
-              <li
-                key={p.title}
-                className={`px-4 text-center lg:px-5 ${
-                  i > 0 ? "lg:border-l lg:border-sage/25" : ""
-                }`}
-              >
-                <IconPlate name={p.icon} className="mx-auto" />
-                <h3 className="mt-5 font-display text-lg text-forest">
-                  {p.title}
-                </h3>
-                <p className="mx-auto mt-2.5 max-w-[15rem] font-body text-sm leading-relaxed text-forest/70">
-                  {p.body}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Band>
-
-      {/* ---- why I built this ----------------------------------------- */}
-      <Band tone="cream">
-        <div className="grid items-stretch gap-0 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="mx-auto grid max-w-editorial items-center gap-10 px-6 py-16 md:py-20 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-16">
           <Photo
-            src={null}
-            caption="A grazing table at home — cheeses, olives, candles, greenery in glass jars"
+            src="/images/hero-tabletop.jpg"
+            alt="A warm Place & Plenty tablescape at home"
+            caption="The kind of real, lived-in gathering Place & Plenty was built around"
             tone="sage"
-            className="aspect-[4/3] w-full md:aspect-auto md:min-h-[26rem]"
-            sizes="(min-width: 768px) 45vw, 100vw"
+            className="aspect-[4/3] w-full"
+            sizes="(min-width: 1024px) 54vw, 100vw"
           />
 
-          <div className="relative flex items-center px-6 py-14 md:px-12 md:py-16">
-            <Stamp
-              top="Home hosting"
-              bottom="Made simple"
-              size={116}
-              className="absolute right-6 top-8 hidden xl:block"
-            />
-
-            <div>
-              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
-                Why I built this
+          <div>
+            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">Why I built this</p>
+            <Display className="mt-4 text-3xl leading-[1.12] text-forest md:text-[2.55rem]">
+              I built Place &amp; Plenty for you because I needed it too.
+            </Display>
+            <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
+            <div className="mt-6 max-w-prose space-y-4 font-body text-base leading-relaxed text-forest/80">
+              <p>
+                I wanted one connected place to keep the menu, guest list, shopping, what I already owned, contributions, readiness and the hundred little details that make hosting feel bigger than it should.
               </p>
-              <Display className="mt-4 max-w-lg text-2xl leading-tight text-forest md:text-[2rem]">
-                I wanted hosting to feel less overwhelming — and more you.
-              </Display>
-              <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
-
-              <div className="mt-6 max-w-prose space-y-4 font-body text-base leading-relaxed text-forest/80">
-                <p>
-                  You shouldn’t have to juggle a dozen apps, sticky notes and
-                  group texts just to get people together.
-                </p>
-                <p>
-                  Place &amp; Plenty brings it into one place — so you can plan
-                  with confidence, stay organised, and be in the room for the
-                  part you actually did it for.
-                </p>
-                <p className="font-display text-lg italic text-goldInk">
-                  I built it for you, because I needed it too.
-                </p>
-              </div>
-
-              <p className="mt-8 font-body text-sm uppercase tracking-[0.18em] text-forest/60">
-                {ESSENCE}
+              <p>
+                Not because the planning is the point. It isn’t. The preparation serves the people. The people are the point.
+              </p>
+              <p>
+                Place &amp; Plenty exists so the work before the gathering can feel clearer, calmer and more manageable — and so you can actually be there when your people walk through the door.
               </p>
             </div>
           </div>
         </div>
       </Band>
 
-      {/* The founder photograph appears twice on this page and nowhere
-          else on the site — §16's "one strong About image, an optional
-          smaller teaser". This is the smaller one, in the sign-off. */}
-      <Band tone="parchment">
-        <div className="mx-auto flex max-w-editorial flex-col items-center gap-6 px-6 py-12 text-center">
-          <div className="relative h-20 w-20 overflow-hidden rounded-full">
-            <Image
-              src={FOUNDER_PHOTO.src}
-              alt=""
-              aria-hidden
-              fill
-              sizes="80px"
-              className="object-cover object-top"
-            />
-          </div>
-          <p className="max-w-xl font-display text-xl italic leading-relaxed text-forest">
-            Let’s make hosting simple — and unforgettable.
+      <Band tone="forest">
+        <div className="mx-auto max-w-editorial px-6 py-16 text-center md:py-20">
+          <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-offwhite/65">What I believe</p>
+          <p className="mx-auto mt-5 max-w-3xl font-display text-3xl leading-tight text-offwhite md:text-[2.6rem]">
+            A good plan should make more room for the people — not become the whole experience.
           </p>
-          <p className="font-body text-sm uppercase tracking-[0.22em] text-forest/60">
-            Alexis · Founder
+          <p className="mx-auto mt-6 max-w-2xl font-body text-base leading-relaxed text-offwhite/78">
+            Home hosting does not need to look perfect to feel thoughtful. Real homes, real budgets, real families and real life belong here.
           </p>
         </div>
       </Band>
 
       <CtaBand
-        headline="Ready to host with more ease"
-        emphasisLine="and less stress?"
+        headline="Less scrambling."
+        emphasisLine="More gathering."
         body="Create your account and start planning in the browser. It’s free to begin, and it’s the same account you’ll use in the app."
       />
     </>

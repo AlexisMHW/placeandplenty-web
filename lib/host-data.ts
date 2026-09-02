@@ -1,4 +1,8 @@
 import { createClient } from "@/lib/supabase-server";
+import {
+  INVITATION_ARTWORK_BUCKET,
+  isRenderableArtwork,
+} from "@/lib/invitations";
 
 // Data access for the authenticated host web app.
 //
@@ -25,7 +29,6 @@ export interface GatheringSummary {
   gathering_type: string;
   gathering_date: string;
   arrival_time: string;
-  status: string;
   readiness_state: string | null;
   current_hostready_score: number | null;
   expected_guest_count: number;
@@ -49,17 +52,61 @@ export interface GatheringSummary {
   invitation_artwork_path: string | null;
   /** PDFs are allowed in the bucket and cannot render in an <img>. */
   invitation_artwork_mime_type: string | null;
+
+  /* ---- lifecycle, and it is not this app's to work out -------------- */
+
+  /**
+   * WHAT THE ROW SAYS. Kept, because some things genuinely key off the
+   * stored value rather than the phase — the draft → active transition
+   * is guarded by `WHERE status = 'draft'`, and resuming the wizard has
+   * to ask the same question that guard asks.
+   */
+  status: string;
+
+  /**
+   * WHAT IS ACTUALLY TRUE RIGHT NOW, from `effective_gathering_status()`.
+   *
+   * A gathering stored as `active` whose evening has passed is not
+   * active any more, and the row does not change at the moment it stops
+   * being — nothing writes to it as the clock ticks. Every list,
+   * grouping, badge and "up next" therefore reads THIS, and the web
+   * works out none of it: there is no date comparison in this app that
+   * decides a lifecycle phase, because two implementations of "is it
+   * over yet" is two answers.
+   */
+  effective_status: string;
+
+  /** Set by the batch worker when it closed the gathering out. */
+  lifecycle_completed_at: string | null;
+  /** Set on the draft → non-draft transition, immutable afterwards. */
+  locked_in_at: string | null;
+  /** The gathering's own wall-clock zone. */
+  timezone: string;
 }
+
+// ONE READ FOR GATHERINGS, AND IT IS AN RPC.
+//
+// `list_my_gatherings_with_lifecycle()` is security invoker and takes no
+// arguments: RLS decides which rows come back, exactly as the table
+// select it replaces did, and the ordering (date then arrival time) is
+// the function's own. What it adds is the part a client must not compute
+// — `effective_status` per row, from the single canonical
+// `effective_gathering_status()`, plus the two terminal timestamps.
+//
+// The old select could not have done this. `effective_status` is a
+// function of the row and the clock, not a column, so the choice was
+// always between calling the canonical one and re-deriving it here in
+// JavaScript. This app used to do the latter, in one line on the home
+// page, and it was wrong twice over: it compared against a UTC date
+// while gatherings are wall-clock in their own timezone, and it knew
+// nothing about lock-in or the batch worker.
 
 /** Gatherings the signed-in user owns or co-hosts. Soonest first. */
 export async function getMyGatherings(): Promise<GatheringSummary[]> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("gatherings")
-    .select(
-      "id, name, gathering_type, gathering_date, arrival_time, status, readiness_state, current_hostready_score, expected_guest_count, adult_count, child_count, location_name, owner_user_id, invitation_mode, invitation_status, invitation_artwork_path, invitation_artwork_mime_type"
-    )
-    .order("gathering_date", { ascending: true });
+  const { data, error } = await supabase.rpc(
+    "list_my_gatherings_with_lifecycle"
+  );
 
   if (error) throw error;
   return (data ?? []) as GatheringSummary[];
@@ -69,11 +116,13 @@ export async function getGathering(
   id: string
 ): Promise<GatheringSummary | null> {
   const supabase = createClient();
+
+  // PostgREST filters a set-returning function's result, so one
+  // projection serves both the list and a single gathering. A second
+  // read shaped differently is how the two drift apart, and this one
+  // would be the one missing `effective_status`.
   const { data, error } = await supabase
-    .from("gatherings")
-    .select(
-      "id, name, gathering_type, gathering_date, arrival_time, status, readiness_state, current_hostready_score, expected_guest_count, adult_count, child_count, location_name, owner_user_id, invitation_mode, invitation_status, invitation_artwork_path, invitation_artwork_mime_type"
-    )
+    .rpc("list_my_gatherings_with_lifecycle")
     .eq("id", id)
     .maybeSingle();
 
@@ -82,7 +131,79 @@ export async function getGathering(
   // cannot see is indistinguishable from one that does not exist, and
   // the page turns both into a 404.
   if (error) throw error;
-  return (data as GatheringSummary) ?? null;
+  const gathering = (data as GatheringSummary) ?? null;
+  if (!gathering) return null;
+
+  // HostReady's stored columns are a cache/snapshot, not a second source of
+  // truth. Read the canonical backend computation for every gathering
+  // workspace render so web cannot show a stale score after an edit made on
+  // either platform. The wrapper enforces accepted gathering membership.
+  const { data: hostReady, error: hostReadyError } = await supabase.rpc(
+    "hostready_read",
+    { p_gathering_id: id }
+  );
+  if (hostReadyError) throw hostReadyError;
+
+  if (hostReady && typeof hostReady === "object") {
+    const result = hostReady as {
+      score?: number;
+      readinessState?: GatheringSummary["readiness_state"];
+    };
+    if (typeof result.score === "number") {
+      gathering.current_hostready_score = result.score;
+    }
+    if (result.readinessState) {
+      gathering.readiness_state = result.readinessState;
+    }
+  }
+
+  return gathering;
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * The wizard's own answers for one gathering, so a draft can be resumed
+ * where it was left.
+ *
+ * A PLAIN COLUMN READ, AND DELIBERATELY NOT A SECOND LIFECYCLE READ.
+ * `list_my_gatherings_with_lifecycle()` does not project `budget_target`,
+ * `food_style`, `notes` or `invitation_style` — they are wizard answers
+ * rather than lifecycle facts — so those come from the table under the
+ * same RLS. Nothing here derives a phase: the caller pairs this with
+ * getGathering() above when it needs to know where the gathering stands.
+ */
+export interface GatheringDraftFields {
+  id: string;
+  name: string;
+  gathering_type: string;
+  gathering_date: string;
+  arrival_time: string;
+  location_name: string | null;
+  adult_count: number;
+  child_count: number;
+  budget_target: number | null;
+  food_style: string | null;
+  notes: string | null;
+  invitation_mode: string;
+  invitation_status: string;
+  invitation_style: string | null;
+}
+
+export async function getGatheringDraftFields(
+  id: string
+): Promise<GatheringDraftFields | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("gatherings")
+    .select(
+      "id, name, gathering_type, gathering_date, arrival_time, location_name, adult_count, child_count, budget_target, food_style, notes, invitation_mode, invitation_status, invitation_style"
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as GatheringDraftFields) ?? null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -259,25 +380,51 @@ export interface SavedGuest {
   guest_type: string;
   dietary_notes: string | null;
   allergy_notes: string | null;
+  accessibility_notes: string | null;
   is_saved: boolean;
+}
+
+export interface GuestBook {
+  /** The reusable book: people the host deliberately kept. */
+  saved: SavedGuest[];
+  /**
+   * People created in passing for one gathering and never saved. Kept
+   * in the database forever so RSVP history survives; shown separately
+   * so they are never mistaken for Guest Book entries.
+   */
+  history: SavedGuest[];
 }
 
 /**
  * My Guest Book — account-level reusable people (§10). Distinct from My
- * People, which is `gathering_guests` for one gathering. `is_saved`
- * separates people the host deliberately kept from those created in
- * passing for a single gathering.
+ * People, which is `gathering_guests` for one gathering.
+ *
+ * `is_saved` IS THE WHOLE DISTINCTION, and this function returns the two
+ * groups apart rather than one list with a flag. My Guest Book means the
+ * people you keep; a one-off guest typed in for a single dinner is not
+ * one of them, however much the row looks the same.
+ *
+ * The unsaved rows are still returned, because deleting them is not an
+ * option — `gathering_guests` references them and they carry the RSVP,
+ * the dietary note and the contribution for a real gathering. They
+ * belong under "Previously invited", where they can be promoted into the
+ * book, and nowhere else.
  */
-export async function getGuestBook(): Promise<SavedGuest[]> {
+export async function getGuestBook(): Promise<GuestBook> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("guests")
     .select(
-      "id, first_name, last_name, household_name, email, phone, guest_type, dietary_notes, allergy_notes, is_saved"
+      "id, first_name, last_name, household_name, email, phone, guest_type, dietary_notes, allergy_notes, accessibility_notes, is_saved"
     )
     .order("first_name", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as SavedGuest[];
+
+  const rows = (data ?? []) as SavedGuest[];
+  return {
+    saved: rows.filter((g) => g.is_saved),
+    history: rows.filter((g) => !g.is_saved),
+  };
 }
 
 export interface ClosetItem {
@@ -291,27 +438,174 @@ export interface ClosetItem {
   size_label: string | null;
   capacity_label: string | null;
   archived_at: string | null;
+  /** Private bucket path. Not a URL — see signClosetPhotos(). */
+  storage_path: string | null;
+  mime_type: string | null;
 }
 
+const CLOSET_COLUMNS =
+  "id, name, category, quantity_owned, notes, color, material, size_label, capacity_label, archived_at, storage_path, mime_type";
+
 /**
- * My Hosting Closet. Its RLS policy carries an entitlement gate —
- * `user_can_access_closet(auth.uid())` — so an unentitled user gets an
- * empty list rather than an error. The page distinguishes "you own
- * nothing yet" from "this is a paid feature" rather than showing an
- * empty state that quietly misrepresents the second as the first.
+ * My Hosting Closet — everything the host currently owns.
+ *
+ * AN EMPTY RESULT HERE MEANS EMPTY, and that is new. The RLS policy on
+ * `hosting_closet_items` used to be
+ *
+ *   owner_user_id = auth.uid() AND user_can_access_closet(auth.uid())
+ *
+ * which gated ordinary inventory behind a purchase, so an unentitled
+ * host got zero rows — indistinguishable from owning nothing. The policy
+ * is now `owner_user_id = auth.uid()`, full stop. Basic Closet is a Free
+ * capability; what is paid is the SMART layer that matches a gathering's
+ * needs against these rows. No surface built on this function may show a
+ * paywall.
  */
 export async function getClosetItems(): Promise<ClosetItem[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("hosting_closet_items")
-    .select(
-      "id, name, category, quantity_owned, notes, color, material, size_label, capacity_label, archived_at"
-    )
+    .select(CLOSET_COLUMNS)
     .is("archived_at", null)
     .order("category", { ascending: true })
     .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []) as ClosetItem[];
+}
+
+/**
+ * Things the host has marked as no longer owned.
+ *
+ * Archived rather than deleted, because `gathering_closet_items` rows
+ * from past gatherings still point at them — the provenance of "you
+ * already had this" outlives the platter.
+ */
+export async function getArchivedClosetItems(): Promise<ClosetItem[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("hosting_closet_items")
+    .select(CLOSET_COLUMNS)
+    .not("archived_at", "is", null)
+    .order("archived_at", { ascending: false });
+  if (error) return [];
+  return (data ?? []) as ClosetItem[];
+}
+
+/**
+ * Signed URLs for closet item photos, one round trip for the whole page.
+ *
+ * The `hosting-closet` bucket is PRIVATE and its policies key on the
+ * first path segment being the owner's user id, so a stored path is not
+ * something a browser can load. Same reasoning as signArtwork(): sign on
+ * the server, for exactly the paths about to be rendered, never by
+ * making the bucket public.
+ */
+export async function signClosetPhotos(
+  items: Pick<ClosetItem, "id" | "storage_path">[]
+): Promise<Map<string, string>> {
+  const withPhotos = items.filter((i) => i.storage_path);
+  if (withPhotos.length === 0) return new Map();
+
+  const supabase = createClient();
+  const { data, error } = await supabase.storage
+    .from("hosting-closet")
+    .createSignedUrls(
+      withPhotos.map((i) => i.storage_path as string),
+      ARTWORK_TTL_SECONDS
+    );
+
+  // A failure here costs a thumbnail, not a page.
+  if (error || !data) return new Map();
+
+  const byPath = new Map<string, string>();
+  for (const row of data) {
+    if (row.signedUrl && row.path) byPath.set(row.path, row.signedUrl);
+  }
+
+  const byItem = new Map<string, string>();
+  for (const i of withPhotos) {
+    const url = byPath.get(i.storage_path as string);
+    if (url) byItem.set(i.id, url);
+  }
+  return byItem;
+}
+
+export interface GatheringClosetUse {
+  id: string;
+  quantity_planned: number | null;
+  notes: string | null;
+  item: {
+    id: string;
+    name: string;
+    category: string | null;
+    quantity_owned: number | null;
+  } | null;
+}
+
+/**
+ * What this gathering is using from the host's Hosting Closet.
+ *
+ * REFERENCE, NEVER TRANSFER. `gathering_closet_items` records that a
+ * gathering is drawing on an account-level item; the item itself stays
+ * in the closet and remains available to every future gathering. That
+ * row is also the PROVENANCE behind a reduced shopping quantity — the
+ * reason the list says "buy 4" instead of "buy 12".
+ *
+ * A CO-HOST SEES THIS AND NOT THE REST OF THE CLOSET. The SELECT policy
+ * on hosting_closet_items grants an accepted member only the items
+ * attached to a gathering they share, so this join returns the six
+ * platters in use and nothing else the host owns. That boundary is in
+ * the database, not in this query.
+ */
+export async function getGatheringClosetUse(
+  gatheringId: string
+): Promise<GatheringClosetUse[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("gathering_closet_items")
+    .select(
+      "id, quantity_planned, notes, item:hosting_closet_items(id, name, category, quantity_owned)"
+    )
+    .eq("gathering_id", gatheringId);
+  if (error) return [];
+  return (data ?? []) as unknown as GatheringClosetUse[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Smart Closet entitlement                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Whether the SMART Closet layer is available for one gathering.
+ *
+ * THE TWO QUESTIONS ARE NOT THE SAME QUESTION, which is the correction
+ * this whole sweep turns on:
+ *
+ *   "May I use My Hosting Closet?"   always yes for a signed-in account
+ *   "May Place & Plenty work out      a Gathering Pass bound to THIS
+ *    what I still need?"              gathering, or account Plus
+ *
+ * So this is gathering-scoped and takes a gathering id. There is no
+ * account-level version of the second question that a Pass can answer,
+ * because a Pass is not an account capability — see
+ * gathering_can_access_smart_closet() in the database.
+ *
+ * A co-host of a Pass gathering gets `true` here, and gets no
+ * account-level Plus anywhere else. That is deliberate.
+ */
+export async function gatheringHasSmartCloset(
+  gatheringId: string
+): Promise<boolean> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc(
+    "gathering_can_access_smart_closet",
+    { p_gathering_id: gatheringId }
+  );
+  // Fail closed. Showing a locked state to someone who has paid is a
+  // support ticket; showing an unlocked one to someone who has not is a
+  // broken promise when they tap it.
+  if (error) return false;
+  return data === true;
 }
 
 export interface Profile {
@@ -550,13 +844,13 @@ export async function signArtwork(
   const renderable = gatherings.filter(
     (g) =>
       g.invitation_artwork_path &&
-      g.invitation_artwork_mime_type !== "application/pdf"
+      isRenderableArtwork(g.invitation_artwork_mime_type)
   );
   if (renderable.length === 0) return new Map();
 
   const supabase = createClient();
   const { data, error } = await supabase.storage
-    .from("invitation-artwork")
+    .from(INVITATION_ARTWORK_BUCKET)
     .createSignedUrls(
       renderable.map((g) => g.invitation_artwork_path as string),
       ARTWORK_TTL_SECONDS

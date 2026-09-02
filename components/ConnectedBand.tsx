@@ -5,46 +5,89 @@ import { BotanicalSprig } from "@/components/Botanical";
 import ConversionPaths from "@/components/ConversionPaths";
 import { CROSS_PLATFORM_PROMISE } from "@/lib/entitlements";
 
-// "One seamless experience. Web and app, connected." — the reference's
-// forest band, and now a true statement rather than an aspiration: the
-// authenticated host web app exists, reads and writes the same canonical
-// records, and is gated by the same RLS.
-//
-// §2's governing architecture — one backend, one canonical record,
-// multiple interfaces — is the actual claim here, so the copy says the
-// concrete version of it: same account, same gatherings, nothing to sync.
-//
-// THE REFERENCE'S SPACE MODE COPY IS WRONG AND IS NOT REPEATED. It reads
-// "Your guests stay in the app — private, simple, and distraction-free",
-// which describes the guest experience, not Space Mode. Space Mode is
-// about working out how a ROOM flows, from a photograph of it. Product
-// truth comes from the reconciliation document; the reference governs
-// composition. So the third column keeps the reference's shape and says
-// what Space Mode actually is — and why it stays native (§29 requires a
-// product reason, not "the app already has it").
-//
-// THE FOUR CONVERSION PATHS LIVE HERE, and this is the right band for
-// them rather than an arbitrary one: it is the band that has just
-// finished explaining that web and app are the same product on the same
-// account. The choice between "start on the web" and "get it on your
-// phone" is only a comfortable choice once someone believes that, which
-// is why the promise sits directly above the buttons rather than in the
-// footer somewhere.
-
 const COLUMNS = [
   {
     label: "Plan on the web",
     body: "Create, organise and edit from a proper keyboard — your gatherings, guests, menu and list, on a screen big enough to see all of it.",
   },
   {
-    label: "Host Mode",
-    body: "On the day, on your phone: what to do right now, with the notifications that make it useful. Native, because that is where you'll be standing.",
+    label: "Carry it with you",
+    body: "Open the same gathering on your phone when you leave the kitchen table. Same account, same information, no handoff to manage.",
   },
   {
-    label: "Space Mode",
-    body: "Work out how the room actually flows before you move furniture. Native, because it starts with a camera pointed at the room.",
+    label: "Use the phone when it matters",
+    body: "Host Mode and Space Mode stay native because they rely on notifications and the camera — exactly where the phone is useful.",
   },
 ];
+
+function WebPreview() {
+  return (
+    <div className="relative w-full max-w-[31rem]">
+      <div className="overflow-hidden rounded-[1.35rem] border border-offwhite/20 bg-offwhite shadow-lift">
+        <div className="flex items-center gap-2 border-b border-sage/20 bg-parchment px-4 py-3">
+          <span className="h-2.5 w-2.5 rounded-full bg-sage/50" />
+          <span className="h-2.5 w-2.5 rounded-full bg-sage/35" />
+          <span className="h-2.5 w-2.5 rounded-full bg-sage/25" />
+          <span className="ml-3 h-6 flex-1 rounded-md bg-offwhite" />
+        </div>
+
+        <div className="grid min-h-[19rem] grid-cols-[5.5rem_1fr] bg-offwhite">
+          <div className="bg-forest px-3 py-5">
+            <p className="font-display text-[0.66rem] leading-tight text-offwhite">
+              Place &amp;<br />Plenty
+            </p>
+            <div className="mt-7 space-y-2.5">
+              {["Gathering", "My Table", "My People", "Shopping", "Closet"].map((item, i) => (
+                <div
+                  key={item}
+                  className={`rounded-md px-2 py-1.5 font-body text-[0.48rem] ${
+                    i === 0 ? "bg-offwhite/14 text-offwhite" : "text-offwhite/65"
+                  }`}
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-5">
+            <p className="font-body text-[0.5rem] font-bold uppercase tracking-[0.18em] text-forest/50">
+              Saturday dinner
+            </p>
+            <div className="mt-2 flex items-end justify-between gap-4">
+              <div>
+                <p className="font-display text-xl text-forest">You’re 82% HostReady.</p>
+                <p className="mt-1 font-body text-[0.56rem] text-forest/55">A few things left. Nothing dramatic.</p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border-[4px] border-gold font-display text-xs text-forest">
+                82%
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {[
+                ["My Table", "6 dishes"],
+                ["My People", "12 coming"],
+                ["My Shopping", "4 left"],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-sage/20 bg-parchment p-3">
+                  <p className="font-body text-[0.46rem] uppercase tracking-[0.1em] text-forest/50">{label}</p>
+                  <p className="mt-1 font-display text-sm text-forest">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 rounded-lg border border-gold/30 bg-cream p-3">
+              <p className="font-body text-[0.46rem] font-bold uppercase tracking-[0.12em] text-forest/50">Next up</p>
+              <p className="mt-1 font-body text-[0.58rem] text-forest/75">Confirm ice, assign the salad, and you’re almost there.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="mx-auto h-3 w-[58%] rounded-b-xl bg-offwhite/35" />
+    </div>
+  );
+}
 
 export default function ConnectedBand() {
   return (
@@ -54,10 +97,10 @@ export default function ConnectedBand() {
         size={170}
       />
 
-      <div className="relative mx-auto grid max-w-editorial items-center gap-12 px-6 py-16 md:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-16">
+      <div className="relative mx-auto grid max-w-editorial items-center gap-12 px-6 py-16 md:py-20 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-14">
         <div>
           <p className="font-body text-xs font-bold uppercase tracking-[0.22em] text-gold">
-            How it works
+            Web + mobile
           </p>
 
           <Display
@@ -68,12 +111,12 @@ export default function ConnectedBand() {
           </Display>
 
           <p className="mt-5 max-w-prose font-body text-lg leading-relaxed text-offwhite/80">
-            The same account and the same gatherings, wherever you open
-            them. Plan at the kitchen table on a laptop, carry it in your
-            pocket on the day. Nothing to sync, nothing to import.
+            Plan from your computer when you want the room to think. Pick up the
+            same gathering on your phone when you need it in your hand. One
+            account. One gathering. Nothing to sync.
           </p>
 
-          <ul className="mt-10 grid gap-8 sm:grid-cols-3">
+          <ul className="mt-9 grid gap-6 sm:grid-cols-3">
             {COLUMNS.map((c) => (
               <li key={c.label}>
                 <span aria-hidden className="mb-3 block h-px w-8 bg-gold" />
@@ -102,19 +145,23 @@ export default function ConnectedBand() {
           </Link>
         </div>
 
-        {/* The product, shown in context rather than as a screenshot wall
-            (§32). One device, cropped by its own frame. */}
-        <div className="mx-auto w-full max-w-[17rem] lg:max-w-[19rem]">
-          <div className="overflow-hidden rounded-[2rem] border border-offwhite/25 shadow-lift">
+        <div className="relative mx-auto w-full max-w-[36rem] pb-5 pt-4">
+          <WebPreview />
+
+          <div className="absolute -bottom-3 right-0 w-[9.5rem] overflow-hidden rounded-[1.75rem] border border-offwhite/30 bg-forest shadow-lift sm:right-4 sm:w-[10.5rem] lg:-right-2 lg:w-[11.5rem]">
             <Image
               src="/images/hero-app-screen.png"
-              alt="Place & Plenty on a phone, showing a gathering at 82% HostReady with what's left to do."
+              alt="Place & Plenty mobile app showing the same gathering on a phone."
               width={510}
               height={1080}
-              sizes="(min-width: 1024px) 19rem, 60vw"
-              className="h-full w-full object-cover"
+              sizes="12rem"
+              className="h-auto w-full object-cover"
             />
           </div>
+
+          <p className="mt-7 max-w-[24rem] font-display text-base italic leading-relaxed text-offwhite/70 sm:pr-20">
+            Start on the screen that suits the moment. Your gathering follows you.
+          </p>
         </div>
       </div>
     </Band>

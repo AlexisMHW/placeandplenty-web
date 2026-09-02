@@ -10,35 +10,16 @@ import {
   CROSS_PLATFORM_PROMISE,
   FEATURE_AVAILABILITY_NOTE,
 } from "@/lib/entitlements";
-import { PRICING_TIERS, FREE_LIMITS_NOTE } from "@/lib/pricing";
+import {
+  FREE_LIMITS_NOTE,
+  PASS_LIMITS_NOTE,
+  PLUS_LIMITS_NOTE,
+  PURCHASE_AVAILABILITY_NOTE,
+} from "@/lib/pricing";
 
-// YOUR PLAN — the account area's billing surface, reading the canonical
-// entitlement rows.
-//
-// Founder requirement: "Website account/billing areas must reflect the
-// user's actual canonical entitlement state, regardless of where the
-// entitlement was purchased." That is exactly what this does, and the
-// important part is what it does NOT do:
-//
-//   - It does not keep a web-side copy of anyone's plan.
-//   - It does not infer a tier from a flag, a profile column or a
-//     cached value. Free is the ABSENCE of a live entitlement row, so
-//     it is computed rather than stored.
-//   - It does not hide a store purchase. A Pass bought on an iPhone
-//     shows here, named as an App Store purchase, because it is the
-//     same row.
-//
-// WHERE BILLING IS MANAGED IS A FACT ABOUT THE CHANNEL, not a Place &
-// Plenty decision, and getting it wrong is the kind of thing that
-// generates support mail. A subscription bought through Apple can only
-// be cancelled in Apple's settings; saying anything else here would be
-// false, and §19 forbids claiming subscription-management capability
-// that does not exist. billingHomeFor() carries that per row.
-//
-// A PASS SHOWS EVEN AFTER IT IS CONSUMED. Consumption is what "bound to
-// that gathering" means — the Pass was applied, and the access continues.
-// Telling a host who used their Pass that they no longer have one would
-// be both wrong and alarming. See isLive() in lib/entitlements.ts.
+// Account billing is a read of canonical gathering_entitlements, never a
+// website-side plan cache. Free is the absence of a live paid entitlement.
+// Purchase channel is provenance only; access follows the account everywhere.
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -52,10 +33,7 @@ export default async function PlanPanel() {
   const entitlements = await getMyEntitlements();
   const state = summarise(entitlements);
   const live = entitlements.filter((e) => isLive(e));
-
   const free = state.tier === "Free";
-  const passTier = PRICING_TIERS.find((t) => t.name === "Gathering Pass")!;
-  const plusTier = PRICING_TIERS.find((t) => t.name === "Place & Plenty Plus")!;
 
   return (
     <Panel className="lg:col-span-2">
@@ -76,18 +54,21 @@ export default async function PlanPanel() {
           <p className="max-w-prose font-body text-base leading-relaxed text-forest/80">
             {FREE_LIMITS_NOTE}
           </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <p className="mt-3 max-w-prose font-body text-sm leading-relaxed text-forest/65">
+            {PURCHASE_AVAILABILITY_NOTE}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
             <Link
-              href="/checkout/gathering-pass"
-              className="rounded-lg border border-forest/30 px-5 py-3 text-center font-body text-sm font-semibold text-forest transition-colors duration-400 hover:bg-forest/5"
-            >
-              Get a Gathering Pass · {passTier.priceLine}
-            </Link>
-            <Link
-              href="/checkout/plus"
+              href="/get"
               className="rounded-lg bg-forest px-5 py-3 text-center font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
             >
-              Go Plus · {plusTier.priceLine}
+              Get the app to unlock
+            </Link>
+            <Link
+              href="/pricing"
+              className="rounded-lg border border-forest/30 px-5 py-3 text-center font-body text-sm font-semibold text-forest transition-colors duration-400 hover:bg-forest/5"
+            >
+              Compare plans
             </Link>
           </div>
         </div>
@@ -95,13 +76,12 @@ export default async function PlanPanel() {
         <ul className="mt-6 divide-y divide-sage/20">
           {live.map((e) => {
             const channel = e.provider || e.source || "";
+            const isPlus = e.entitlement_type === "plus";
             return (
               <li key={e.id} className="py-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                   <p className="font-display text-lg text-forest">
-                    {e.entitlement_type === "plus"
-                      ? "Place & Plenty Plus"
-                      : "Gathering Pass"}
+                    {isPlus ? "Place & Plenty Plus" : "Gathering Pass"}
                   </p>
                   <p className="font-body text-xs uppercase tracking-[0.14em] text-forest/60">
                     {e.scope === "account" ? "Whole account" : "One gathering"}
@@ -112,6 +92,10 @@ export default async function PlanPanel() {
                   Bought {formatDate(e.purchased_at)}
                   {channel ? ` through ${channelLabel(channel)}` : ""}
                   {e.expires_at ? ` · renews ${formatDate(e.expires_at)}` : ""}
+                </p>
+
+                <p className="mt-2 max-w-3xl font-body text-sm leading-relaxed text-forest/70">
+                  {isPlus ? PLUS_LIMITS_NOTE : PASS_LIMITS_NOTE}
                 </p>
 
                 <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-forest/65">
@@ -138,14 +122,16 @@ export default async function PlanPanel() {
         {FEATURE_AVAILABILITY_NOTE}
       </p>
 
-      <p className="mt-4 font-body text-sm text-forest/65">
-        <Link
-          href="/pricing"
-          className="underline decoration-gold decoration-2 underline-offset-4 hover:text-forest"
-        >
-          Compare the plans
-        </Link>
-      </p>
+      {!free && (
+        <p className="mt-4 font-body text-sm text-forest/65">
+          <Link
+            href="/pricing"
+            className="underline decoration-gold decoration-2 underline-offset-4 hover:text-forest"
+          >
+            Compare the plans
+          </Link>
+        </p>
+      )}
     </Panel>
   );
 }

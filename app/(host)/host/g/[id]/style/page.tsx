@@ -1,138 +1,57 @@
-import { getStyleBoard } from "@/lib/host-data";
-import { WorkspaceHeader, EmptyState, Panel } from "@/components/host/Workspace";
-
-// MY STYLE BOARD (§9, the look & the day).
-//
-// READ-ONLY, AND FOR A PRODUCT REASON RATHER THAN AN UNFINISHED ONE.
-// The board's content is photographs the host uploads and an AI analysis
-// of them (gathering_style_board_analysis, gathering_style_components).
-// The inputs are images and the outputs are derived; there is no
-// meaningful text field for a desktop to edit. Adding an image from web
-// would need the storage upload path and the analysis trigger the app
-// owns, which is a bigger piece than it looks and belongs with the
-// feature, not beside it.
-//
-// What a desktop IS good for here is seeing the whole board at once —
-// which is the thing a phone is worst at — so that is what this does.
-//
-// COMPONENTS ARE SEARCH LANGUAGE, NOT PRODUCTS. The table comment is
-// explicit: "Never brands, prices, retailers or URLs — those cannot be
-// known from a photo." So they are presented as things to look for, and
-// nothing here implies a shop.
+import { notFound } from "next/navigation";
+import { getGathering } from "@/lib/host-data";
+import { getStyleBoardWorkspace } from "@/lib/style-board-data";
+import { WorkspaceHeader } from "@/components/host/Workspace";
+import StyleBoardWorkspace from "@/components/host/StyleBoardWorkspace";
 
 export const metadata = { title: "My Style Board" };
 
-export default async function StylePage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { board, images, components } = await getStyleBoard(params.id);
+export default async function StylePage({ params }: { params: { id: string } }) {
+  const [gathering, workspace] = await Promise.all([
+    getGathering(params.id),
+    getStyleBoardWorkspace(params.id),
+  ]);
+  if (!gathering) notFound();
 
-  const hasAnything =
-    board?.theme ||
-    board?.vision_notes ||
-    (board?.mood_descriptors?.length ?? 0) > 0 ||
-    images.length > 0 ||
-    components.length > 0;
+  const readOnly = ["completed", "cancelled", "archived"].includes(gathering.effective_status);
 
   return (
     <div>
       <WorkspaceHeader
         title="My Style Board"
-        description="The look you're going for, and what it needs."
+        description="Collect the feeling, colors and visual cues you want to carry through the gathering."
       />
 
-      {!hasAnything ? (
-        <EmptyState
-          title="No look set yet."
-          body="Collect a few images in the app and Place & Plenty pulls out the pieces that make them work — colours, textures, the things worth finding."
-          hint="Style boards are built in the app, where the camera is."
-        />
-      ) : (
-        <div className="mt-8 space-y-6">
-          {(board?.theme ||
-            board?.vision_notes ||
-            (board?.mood_descriptors?.length ?? 0) > 0) && (
-            <Panel>
-              {board?.theme && (
-                <h3 className="font-display text-2xl text-forest">
-                  {board.theme}
-                </h3>
-              )}
-              {board?.mood_descriptors && board.mood_descriptors.length > 0 && (
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {board.mood_descriptors.map((mood) => (
-                    <li
-                      key={mood}
-                      className="rounded-full border border-sage/40 px-3 py-1 font-body text-sm text-forest/75"
-                    >
-                      {mood}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {board?.vision_notes && (
-                <p className="mt-4 font-body text-base leading-relaxed text-forest/80">
-                  {board.vision_notes}
-                </p>
-              )}
-            </Panel>
-          )}
-
-          {components.length > 0 && (
-            <Panel>
-              <h3 className="font-display text-xl text-forest">
-                What it&rsquo;s made of
-              </h3>
-              <p className="mt-1 font-body text-sm text-forest/65">
-                Things to look for — in your own cupboards first.
-              </p>
-              <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {components.map((c) => (
-                  <li
-                    key={c.id}
-                    className="rounded-card border border-sage/25 bg-offwhite p-3"
-                  >
-                    <p className="font-body text-base text-forest">
-                      {c.component_name}
-                    </p>
-                    {(c.descriptor || c.component_type) && (
-                      <p className="mt-0.5 font-body text-sm text-forest/60">
-                        {[c.descriptor, c.component_type]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-          )}
-
-          {images.length > 0 && (
-            <Panel>
-              <h3 className="font-display text-xl text-forest">
-                {images.length} {images.length === 1 ? "image" : "images"} on
-                this board
-              </h3>
-              {/* Storage paths, not URLs — these live in a private bucket
-                  and need a signed URL to display. Signing them from web
-                  is a follow-up; listing them is honest in the meantime,
-                  and better than a grid of broken images. */}
-              <ul className="mt-4 space-y-1.5">
-                {images.map((img) => (
-                  <li key={img.id} className="font-body text-sm text-forest/70">
-                    {img.caption || "Untitled"}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-4 font-body text-sm text-forest/60">
-                Open the board in the app to see them.
-              </p>
-            </Panel>
-          )}
+      {!workspace.entitled ? (
+        <div className="mt-8 overflow-hidden rounded-card border border-gold/45 bg-parchment shadow-softer">
+          <div className="p-6 md:p-7">
+            <p className="font-body text-xs font-bold uppercase tracking-[0.18em] text-goldInk">Premium planning</p>
+            <h2 className="mt-2 font-display text-2xl text-forest">Build the look before you start buying things.</h2>
+            <p className="mt-3 max-w-2xl font-body leading-relaxed text-forest/70">
+              My Style Board keeps your theme, palette, mood, inspiration photos and visual analysis with this gathering. It’s included when this gathering is unlocked with a Gathering Pass or through Place & Plenty Plus.
+            </p>
+            <p className="mt-4 font-body text-sm text-forest/55">
+              Gathering Pass — $9.99 + applicable taxes and fees · Plus — $59.99/year + applicable taxes and fees
+            </p>
+          </div>
         </div>
+      ) : (
+        <>
+          {readOnly && (
+            <div className="mt-6 rounded-card border border-sage/30 bg-cream px-5 py-4 font-body text-sm leading-relaxed text-forest/75">
+              This gathering is finished. Your Style Board is preserved here exactly as part of the gathering record.
+            </div>
+          )}
+          <StyleBoardWorkspace
+            gatheringId={params.id}
+            occasion={gathering.gathering_type}
+            readOnly={readOnly}
+            board={workspace.board}
+            images={workspace.images}
+            components={workspace.components}
+            synthesis={workspace.synthesis}
+          />
+        </>
       )}
     </div>
   );

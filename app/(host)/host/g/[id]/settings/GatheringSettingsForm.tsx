@@ -5,16 +5,14 @@ import { Field } from "@/components/host/Editable";
 import { updateGatheringDetails } from "@/lib/host-actions";
 import type { GatheringSummary } from "@/lib/host-data";
 
-// Always-visible form rather than the AddForm disclosure: this page
-// exists to edit these fields, so hiding them behind a button would be
-// a click in front of the only thing here.
+// Always-visible form rather than the AddForm disclosure: this page exists
+// to edit these fields, so hiding them behind a button would put a click in
+// front of the only thing here.
 //
-// The success message persists rather than flashing. A host who saves
-// and then looks away should still be able to tell it worked.
-//
-// arrival_time comes back from Postgres as "18:00:00"; <input type=time>
-// wants "18:00". Slicing rather than parsing avoids a timezone round
-// trip on a value that has no timezone — see lib/host-format.ts.
+// Lifecycle actions are intentionally separate below this form. These fields
+// are ordinary gathering details; finish/cancel/Gather Again have their own
+// canonical RPC authority and should never look like another settings dropdown.
+// Archival is automatic and archived gatherings are read-only history.
 
 export default function GatheringSettingsForm({
   gathering,
@@ -90,8 +88,10 @@ export default function GatheringSettingsForm({
         {message && (
           <p
             role={message.kind === "error" ? "alert" : "status"}
-            className={`mt-5 font-body text-sm ${
-              message.kind === "error" ? "text-error" : "text-forest"
+            className={`mt-5 rounded-lg border px-4 py-3 font-body text-sm ${
+              message.kind === "error"
+                ? "border-error/30 bg-offwhite text-error"
+                : "border-sage/35 bg-parchment text-forest"
             }`}
           >
             {message.text}
@@ -107,9 +107,9 @@ export default function GatheringSettingsForm({
       </fieldset>
 
       <p className="mt-8 font-body text-sm leading-relaxed text-forest/65">
-        Moving the date or time may notify guests who have already
-        replied. Status changes — locking in, completing, archiving — are
-        handled in the app, where the steps around them live.
+        Moving the date or time may notify guests who have already replied.
+        Finishing, cancelling, and Gather Again live in their own section below;
+        old gatherings archive automatically and remain read-only history.
       </p>
     </form>
   );

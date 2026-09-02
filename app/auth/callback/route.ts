@@ -3,32 +3,21 @@ import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { safeNext, RESET_PASSWORD_PATH } from "@/lib/auth-redirects";
 
-// Exchanges a magic-link, OAuth or password-recovery code for a session.
+// Exchanges a magic-link, OAuth or password-recovery credential for a session.
 //
-// A Route Handler rather than a page because it must SET cookies, which
-// Server Components cannot do. This is the one place a session is
-// written on sign-in, and the single URL that needs allowlisting in the
-// Supabase dashboard — see lib/auth-redirects.ts.
-//
-// FAILURES ARE ROUTED TO WHERE THEY CAN BE FIXED. An expired link is the
-// most common real failure, and the right response depends on what the
-// person was trying to do: someone recovering a password needs the
-// "request a new link" form, not a login page that asks for the password
-// they have forgotten. So the error follows `next` rather than always
-// landing on /login.
-//
-// The open-redirect guard on `next` lives in safeNext() and is shared
-// with LoginForm, so both cannot drift apart.
+// Supabase can return either a PKCE `code` or an email-template `token_hash`.
+// Supporting both keeps the recovery flow reliable across branded auth emails
+// without changing any account, entitlement, or product behavior.
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const tokenHash = searchParams.get("token_hash");
+  const type = searchParams.get("type");
   const next = safeNext(searchParams.get("next"));
 
-  // Supabase reports link-level problems on the redirect itself —
-  // an already-used link, or one that expired before it was opened.
   const authError = searchParams.get("error");
-  const isRecovery = next.startsWith(RESET_PASSWORD_PATH);
+  const isRecovery = next.startsWith(RESET_PASSWORD_PATH) || type === "recovery";
   const failure = (reason: string) =>
     NextResponse.redirect(
       isRecovery
@@ -37,7 +26,7 @@ export async function GET(request: NextRequest) {
     );
 
   if (authError) return failure("link_expired");
-  if (!code) return failure("missing_code");
+  if (!code && !tokenHash) return failure("missing_code");
 
   const cookieStore = cookies();
   const supabase = createServerClient(
@@ -57,11 +46,22 @@ export async function GET(request: NextRequest) {
     }
   );
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (tokenHash) {
+    // Branded recovery emails use token_hash so the email can point at the
+    // Place & Plenty callback directly. Recovery is the only supported type
+    // here for token-hash verification; other auth flows continue to use PKCE.
+    if (type !== "recovery") return failure("invalid_type");
 
-  // A recovery code is single-use and short-lived. Exchange failing is
-  // overwhelmingly "they opened it twice" or "it sat in an inbox too
-  // long" — both recoverable, neither worth an error page.
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "recovery",
+    });
+
+    if (error) return failure("link_expired");
+    return NextResponse.redirect(`${origin}${RESET_PASSWORD_PATH}`);
+  }
+
+  const { error } = await supabase.auth.exchangeCodeForSession(code!);
   if (error) return failure("link_expired");
 
   return NextResponse.redirect(`${origin}${next}`);

@@ -1,41 +1,31 @@
-// V1 pricing — APPROVED, not draft. The single source of truth for every
-// public price reference on the website. Import from here; never retype a
-// price into a page.
+// V1 pricing — APPROVED. This is the single source of truth for public
+// website price and limit copy. Import from here; never retype a paid price.
 //
-// THE QUALIFIER IS NOT OPTIONAL. Founder standard, 28 Aug 2026: anywhere
-// a paid price appears — Pricing, comparisons, FAQs, support and legal
-// copy, CTAs, structured data — it reads
+// Paid prices always include the approved qualifier:
+//   $9.99 + applicable taxes and fees
+//   $59.99/year + applicable taxes and fees
 //
-//     $9.99 + applicable taxes and fees
-//     $59.99/year + applicable taxes and fees
-//
-// Never "+ tax", never "plus tax", never bare. `priceLine` below is the
-// pre-assembled string so a surface cannot accidentally drop it.
-//
-// PURCHASING IS NOT LIVE. The app has no monetization client yet
-// (`react-native-purchases` is absent; there is no paywall, purchase
-// flow or restore). /pricing is published and indexed because §5 lists
-// it as a minimum V1 destination and §20 fixes the model — but nothing
-// on the website may imply a purchase can be made today. Say what it
-// will cost, not "buy now". See PURCHASE_AVAILABILITY_NOTE.
-//
-// Directive §20 also settles what must NOT appear here: no monthly Plus
-// at V1, and never the word "unlimited". Plus is bounded — 6 active
-// gatherings at once, 12 locked-in per annual term, drafts excluded,
-// Gathering Passes beyond that.
+// No monthly Plus at V1 and never "unlimited". Plus has two separate bounds:
+//   • up to 6 OPEN gatherings at one time (draft / active / hosting)
+//   • up to 12 LOCKED-IN gatherings per annual term
+// A draft therefore occupies an open working slot, but does not use one of the
+// 12 annual lock-ins until the create-gathering wizard is completed.
 
 export const TAX_QUALIFIER = "+ applicable taxes and fees";
 
+/**
+ * My Hosting Closet is basic/free at the account layer. Paid entitlement adds
+ * the smart matching/intelligence layer; it never paywalls the basic organizer.
+ */
+export const CLOSET_TIER_RULE =
+  "Free organises what you own. A Gathering Pass or Plus works out what you still need.";
+
 export interface PricingTier {
   name: string;
-  /** Bare amount, e.g. "$9.99". Never rendered alone for a paid tier. */
   price: string;
-  /** Billing unit shown next to the amount, e.g. "/year". */
   billing: string;
-  /** The full, compliant string. This is what surfaces should render. */
   priceLine: string;
   description: string;
-  /** What you actually get. Kept short enough to read on a phone. */
   includes: string[];
   highlight?: boolean;
 }
@@ -46,12 +36,13 @@ export const PRICING_TIERS: PricingTier[] = [
     price: "$0",
     billing: "",
     priceLine: "$0",
-    description: "One gathering at a time, start to doorbell.",
+    description: "One open gathering at a time, start to doorbell.",
     includes: [
-      "One active gathering at a time",
+      "One open gathering at a time",
       "Menu, shopping list and timeline",
       "Invite your people and track RSVPs",
       "My Guest Book — the people you host most",
+      "My Hosting Closet — organise what you already own",
     ],
   },
   {
@@ -65,6 +56,7 @@ export const PRICING_TIERS: PricingTier[] = [
       "Unlocks one gathering, and stays with it",
       "HostReady readiness score",
       "Contributions, registry links and song requests",
+      "Smart Closet matching — what you have, what you still need",
       "The gathering photo gallery",
     ],
   },
@@ -75,9 +67,10 @@ export const PRICING_TIERS: PricingTier[] = [
     priceLine: `$59.99/year ${TAX_QUALIFIER}`,
     description: "For people who keep having people over.",
     includes: [
-      "Up to 6 active gatherings at one time",
-      "Up to 12 locked-in gatherings per year",
-      "Drafts don't count toward either limit",
+      "Up to 6 open gatherings at one time",
+      "Up to 12 locked-in gatherings per annual term",
+      "Drafts use an open slot but not an annual lock-in",
+      "Smart Closet matching on every gathering",
       "Account features stay on all year",
     ],
     highlight: true,
@@ -85,31 +78,19 @@ export const PRICING_TIERS: PricingTier[] = [
 ];
 
 /**
- * Shown wherever pricing appears, so no surface reads as a storefront
- * while the purchase path does not exist.
- *
- * TONE: this states a fact about timing, not an apology. "Isn't
- * available yet" centres the absence and makes an established product
- * sound like it is still being decided; "opens with the app release"
- * says the same thing as a schedule. The constraint from §17/§32 is
- * only that nothing may imply a purchase can be made TODAY — it does
- * not require sounding tentative about it.
- *
- * Update this — and only this — when monetization ships.
+ * Release-state truth. Native purchase code is wired, but store/RevenueCat
+ * setup and real-purchase verification still have to clear the release gate.
+ * Stripe/web checkout is also not enabled yet. Public copy therefore states
+ * availability without pretending either channel is already live.
  */
 export const PURCHASE_AVAILABILITY_NOTE =
-  "These are the plans. Purchasing opens with the app release.";
+  "Purchasing opens with the app release. Web card checkout is not currently enabled.";
 
-/**
- * §17 entitlement truth, in one place. Free is bounded too — that was
- * missing entirely and is the fact most likely to surprise someone.
- */
 export const FREE_LIMITS_NOTE =
-  "Free covers one active gathering at a time. Finish it or close it and you can start the next one.";
+  "Free covers one open gathering at a time. A draft occupies that working slot until you finish or close it.";
 
 export const PASS_LIMITS_NOTE =
   "A Gathering Pass unlocks one gathering and is bound to it. It isn't a subscription and there's nothing to cancel.";
 
-/** The bounded-Plus explainer. Never soften this into "unlimited". */
 export const PLUS_LIMITS_NOTE =
-  "Plus covers up to 6 active gatherings at a time and up to 12 locked-in gatherings per annual term. Drafts don't count toward either. If you pass 12 in one year, additional gatherings can use a Gathering Pass, and your account features keep working.";
+  "Plus covers up to 6 open gatherings at a time and up to 12 locked-in gatherings per annual term. Drafts occupy an open working slot but do not use the annual allowance until you finish creating and lock in the gathering. After 12 lock-ins in the same annual term, additional gatherings can use a Gathering Pass while your account-level Plus features stay active.";
