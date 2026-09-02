@@ -4,47 +4,20 @@ import { Band } from "@/components/Display";
 import { BotanicalBough } from "@/components/Botanical";
 import { FOUNDER_PHOTO } from "@/lib/founder";
 
-// THE FOUNDER BAND. Three references show it and they show the same
-// thing: the photograph on the left with the Life with Lexi seal
-// overlapping its corner, and on the right an eyebrow, a three-line
-// serif statement in the first person, the philosophy line, and a quiet
-// link deeper into the About page.
+// THE FOUNDER BAND. The photograph on the left carries the founder identity,
+// and the copy on the right carries the first-person story. The approved
+// retouched founder image already includes the Life with Lexi identity, so
+// no second seal is layered over it here.
 //
 // FIRST PERSON, ALWAYS. §16 of the reconciliation is explicit, and the
 // page had this wrong before: a founder page written about the founder
 // reads as a company describing an employee. "I built Place & Plenty" is
 // the whole difference.
 //
-// THE SEAL IS A REAL ARTEFACT, not decoration. Life with Lexi is the
-// founder's own mark and the references place it deliberately — it says
-// a specific person stands behind this, which is the entire job of the
-// band. It is drawn rather than imported because the only copy in the
-// repository is a 400px social crop with the seal burned into it.
-//
 // ONE PHOTOGRAPH, USED TWICE AT MOST. §16 asks for restraint: a strong
 // About image and an optional smaller teaser elsewhere. Both read from
 // lib/founder.ts so the alt text cannot drift and a third use is a
 // deliberate act rather than a copy-paste.
-
-function LifeWithLexiSeal({ className = "" }: { className?: string }) {
-  return (
-    <span
-      aria-hidden
-      className={`flex h-28 w-28 flex-col items-center justify-center rounded-full bg-offwhite/95 text-center shadow-soft ${className}`}
-    >
-      <span className="font-display text-[1.35rem] italic leading-none text-forest">
-        Life with
-      </span>
-      <span className="-mt-0.5 font-display text-[1.7rem] italic leading-none text-forest">
-        Lexi
-      </span>
-      <span className="mt-1.5 h-px w-10 bg-gold" />
-      <span className="mt-1.5 font-body text-[0.42rem] font-bold uppercase tracking-[0.2em] text-forest/60">
-        Alexis Marie
-      </span>
-    </span>
-  );
-}
 
 export default function FounderBand({
   eyebrow = "Hi, I’m Alexis",
@@ -85,7 +58,6 @@ export default function FounderBand({
                 className="object-cover object-top"
               />
             </div>
-            <LifeWithLexiSeal className="absolute -bottom-6 -left-6 hidden sm:flex" />
           </div>
 
           <div>
