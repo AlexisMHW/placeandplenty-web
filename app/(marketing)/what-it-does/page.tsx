@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import PageHero from "@/components/PageHero";
 import { Band, Display } from "@/components/Display";
 import Icon, { type IconName } from "@/components/Icon";
 import { CROSS_PLATFORM_PROMISE } from "@/lib/entitlements";
@@ -22,33 +23,15 @@ const FEATURES: Feature[] = [
   { name: "My Table", image: "/images/what-it-does-my-table.png" },
   { name: "My People", image: "/images/what-it-does-my-people.png" },
   { name: "My Shopping", image: "/images/what-it-does-my-shopping.png" },
-  {
-    name: "Who’s Bringing What",
-    image: "/images/what-it-does-whos-bringing-what.png",
-  },
-  {
-    name: "My Hosting Closet",
-    image: "/images/what-it-does-my-hosting-closet.png",
-  },
-  {
-    name: "My Music & Media",
-    image: "/images/what-it-does-my-music-media.png",
-  },
-  {
-    name: "My Style Board",
-    image: "/images/what-it-does-my-style-board.png",
-  },
+  { name: "Who’s Bringing What", image: "/images/what-it-does-whos-bringing-what.png" },
+  { name: "My Hosting Closet", image: "/images/what-it-does-my-hosting-closet.png" },
+  { name: "My Music & Media", image: "/images/what-it-does-my-music-media.png" },
+  { name: "My Style Board", image: "/images/what-it-does-my-style-board.png" },
   { name: "Space Mode", image: "/images/what-it-does-space-mode.png" },
-  {
-    name: "My Co-Hosts",
-    image: "/images/what-it-does-my-co-hosts.png",
-  },
+  { name: "My Co-Hosts", image: "/images/what-it-does-my-co-hosts.png" },
   { name: "Host Mode", image: "/images/what-it-does-host-mode.png" },
   { name: "Find Help", image: "/images/what-it-does-find-help.png" },
-  {
-    name: "My Gathering Photos",
-    image: "/images/what-it-does-my-gathering-photos.png",
-  },
+  { name: "My Gathering Photos", image: "/images/what-it-does-my-gathering-photos.png" },
 ];
 
 const PLANNING_FLOW: { name: string; icon: IconName; body: string }[] = [
@@ -110,29 +93,27 @@ const GUEST_LOOP: { name: string; icon: IconName; body: string }[] = [
 export default function WhatItDoesPage() {
   return (
     <>
-      <section className="bg-cream">
-        <div className="mx-auto max-w-editorial px-6 py-20 text-center md:py-24">
-          <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">
-            What It Does
-          </p>
-          <Display
-            as="h1"
-            emphasis="one place"
-            className="mx-auto mt-5 max-w-4xl text-4xl leading-tight text-forest sm:text-5xl md:text-6xl"
-          >
-            Everything you need. All in one place.
-          </Display>
-          <p className="mx-auto mt-6 max-w-2xl font-body text-lg leading-relaxed text-forest/75">
+      <PageHero
+        eyebrow="What It Does"
+        headline="Everything you need."
+        emphasisLine="All in one place."
+        image="/images/ChatGPT Image Sep 1, 2026, 08_05_57 PM (2).png"
+        imageAlt="A host preparing for a warm home gathering with Place & Plenty"
+        imageCaption="Home hosting, connected from the first idea to the doorbell."
+        body={
+          <p>
             Place &amp; Plenty keeps the real moving pieces of home hosting connected — from the people and the food to the shopping, space and gathering day.
           </p>
+        }
+        action={
           <Link
             href="#features"
-            className="mt-8 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90"
+            className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90"
           >
             Explore the Features
           </Link>
-        </div>
-      </section>
+        }
+      />
 
       <Band tone="parchment" id="features">
         <div className="mx-auto max-w-[88rem] px-5 py-14 sm:px-6 md:py-18">
