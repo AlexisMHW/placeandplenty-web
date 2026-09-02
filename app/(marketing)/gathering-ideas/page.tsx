@@ -64,7 +64,6 @@ export default async function GatheringIdeasPage() {
         image="/images/ChatGPT Image Sep 1, 2026, 08_05_59 PM (6).png"
         imageAlt="A warm home table set for an inviting gathering"
         imageCaption="Ideas for the gatherings people are actually having — seasonal, everyday and worth doing."
-        stamp={{ top: "Home hosting", bottom: "Made simple" }}
         body={
           <>
             <p>Real ideas. Real hosts. Real moments.</p>
