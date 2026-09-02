@@ -2,22 +2,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { Band } from "@/components/Display";
 import { BotanicalBough } from "@/components/Botanical";
-import { FOUNDER_PHOTO } from "@/lib/founder";
 
-// THE FOUNDER BAND. The photograph on the left carries the founder identity,
-// and the copy on the right carries the first-person story. The approved
-// retouched founder image already includes the Life with Lexi identity, so
-// no second seal is layered over it here.
+const HOMEPAGE_FOUNDER_PHOTO = {
+  src: "/images/ChatGPT Image Sep 2, 2026, 11_02_35 AM.png",
+  alt: "Alexis, the founder of Place & Plenty, smiling at home.",
+};
+
+// THE FOUNDER BAND. The homepage uses the clean founder portrait without an
+// embedded Life with Lexi mark so the photograph and founder copy can breathe
+// as one editorial composition. The About page may use a separate treatment.
 //
 // FIRST PERSON, ALWAYS. §16 of the reconciliation is explicit, and the
 // page had this wrong before: a founder page written about the founder
 // reads as a company describing an employee. "I built Place & Plenty" is
 // the whole difference.
-//
-// ONE PHOTOGRAPH, USED TWICE AT MOST. §16 asks for restraint: a strong
-// About image and an optional smaller teaser elsewhere. Both read from
-// lib/founder.ts so the alt text cannot drift and a third use is a
-// deliberate act rather than a copy-paste.
 
 export default function FounderBand({
   eyebrow = "Hi, I’m Alexis",
@@ -51,11 +49,11 @@ export default function FounderBand({
           <div className="relative mx-auto w-full max-w-sm md:mx-0">
             <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
               <Image
-                src={FOUNDER_PHOTO.src}
-                alt={FOUNDER_PHOTO.alt}
+                src={HOMEPAGE_FOUNDER_PHOTO.src}
+                alt={HOMEPAGE_FOUNDER_PHOTO.alt}
                 fill
                 sizes="(min-width: 768px) 30vw, 90vw"
-                className="object-cover object-top"
+                className="object-cover object-center"
               />
             </div>
           </div>
