@@ -50,8 +50,8 @@ export default async function HomePage() {
 
       <FounderBand
         eyebrow="Founder & host"
-        headline="Hi, I’m Alexis. I built Place & Plenty for hosts like you."
-        body="I’ve always believed the best memories happen around the table. But hosting? It can be a lot. Place & Plenty is the tool I wished I had — to plan with confidence, stay organised, and be present with my people."
+        headline="I built Place & Plenty for you because I needed it too."
+        body="I’ve always believed the best memories happen around the table. But hosting can be a lot. Place & Plenty is the tool I wished I had — to plan with confidence, stay organized, and be present with my people."
         linkLabel="Read my story"
         tone="cream"
       />
