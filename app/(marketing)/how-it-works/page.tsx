@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import PageHero from "@/components/PageHero";
 import Icon, { type IconName } from "@/components/Icon";
 import { Band, Display } from "@/components/Display";
 import hero from "../../../how-it-works/how-it-works-hero.png";
@@ -63,31 +64,35 @@ const STORY = [
 export default function HowItWorksPage() {
   return (
     <>
-      <section className="bg-cream">
-        <div className="w-full overflow-hidden">
-          <Image
-            src={hero}
-            alt="A warm, evergreen Place & Plenty home gathering."
-            className="h-auto w-full"
-            priority
-            sizes="100vw"
-          />
-        </div>
-        <div className="mx-auto flex max-w-editorial flex-wrap justify-center gap-3 px-6 py-7 md:py-8">
-          <Link
-            href="/signup"
-            className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90"
-          >
-            Start Hosting Free
-          </Link>
-          <Link
-            href="/what-it-does"
-            className="inline-flex items-center justify-center rounded-lg border border-forest/25 bg-offwhite/70 px-6 py-3 font-body text-sm font-semibold text-forest transition-colors duration-300 hover:bg-offwhite"
-          >
-            See What It Does
-          </Link>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="How It Works"
+        headline="From people are coming"
+        emphasisLine="to come on in."
+        image={hero.src}
+        imageAlt="A warm, evergreen Place & Plenty home gathering."
+        imageCaption="One connected hosting journey, from the first details through gathering day."
+        body={
+          <p>
+            Start with the gathering, bring in your people, build the plan, get ready, and host with the same connected Place &amp; Plenty experience from beginning to end.
+          </p>
+        }
+        action={
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-300 hover:bg-forest/90"
+            >
+              Start Hosting Free
+            </Link>
+            <Link
+              href="/what-it-does"
+              className="inline-flex items-center justify-center rounded-lg border border-forest/25 bg-offwhite/70 px-6 py-3 font-body text-sm font-semibold text-forest transition-colors duration-300 hover:bg-offwhite"
+            >
+              See What It Does
+            </Link>
+          </div>
+        }
+      />
 
       <Band tone="cream">
         <div className="mx-auto max-w-editorial px-5 py-14 md:px-6 md:py-18">
