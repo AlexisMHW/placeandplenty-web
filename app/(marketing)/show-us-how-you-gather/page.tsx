@@ -8,40 +8,6 @@ import Icon, { type IconName } from "@/components/Icon";
 import { BotanicalSprig } from "@/components/Botanical";
 import { getAllCommunityStories } from "@/lib/tina-content";
 
-// SHOW US HOW YOU GATHER, composed to `show_us_how_you_gather.png`.
-//
-//   PageHero      the OUR COMMUNITY / OUR INSPIRATION seal on the photo
-//   THREE STEPS   snap, share, inspire — with the submit card as the
-//                 fourth cell, exactly as the reference lays it out
-//   THE GALLERY   the community grid
-//   WHAT COUNTS   the "your gathering counts too" band
-//   CtaBand
-//
-// §13's EMOTIONAL RULE IS "Your gathering counts too", and it governs
-// every word here. Not a competition, not a styled-shoot showcase.
-// Apartments, backyards, paper plates, Grandma's china, mismatched
-// chairs, a birthday on a Tuesday.
-//
-// THE GALLERY IS EMPTY, AND IT SAYS SO HONESTLY. This is the one place
-// on the site where the missing-content problem cannot be solved with a
-// designed placeholder, and §13 is explicit about why: "Do not fabricate
-// fake real-user stories as production content." Ten invented gatherings
-// with invented cities and invented like counts — which is what the
-// reference shows — would be the single most dishonest thing this
-// website could ship, because the whole premise of the page is that
-// these are real people.
-//
-// So the grid architecture is built and renders from Tina the moment
-// approved stories exist, and until then the space is an invitation
-// rather than a fake gallery. That is a deliberate difference from the
-// reference, and the only one on this page.
-//
-// CONSENT IS A SEPARATE GATE FROM PUBLISHING, enforced in
-// lib/tina-content.ts rather than here. Publishing is an editorial act;
-// consent is someone else's decision, and one must never stand in for
-// the other. A story with `consentConfirmed` unset does not render even
-// if it is marked published.
-
 export const metadata: Metadata = {
   title: "Show Us How You Gather",
   description:
@@ -86,8 +52,9 @@ export default async function ShowUsPage() {
         eyebrow="Show Us How You Gather"
         headline="Real hosts. Real gatherings."
         emphasisLine="Real inspiration."
-        image={null}
-        imageCaption="Hands holding a phone, photographing a laid table from above"
+        image="/images/show_us_how_you_gather-hero.png"
+        imageAlt="Friends gathered around a warm, lived-in home table"
+        imageCaption="The point is not a perfect party. It is how people really gather."
         stamp={{ top: "Our community", bottom: "Our inspiration", tone: "dark" }}
         body={
           <p>
@@ -106,7 +73,6 @@ export default async function ShowUsPage() {
         }
       />
 
-      {/* ---- three steps + the submit card --------------------------- */}
       <Band tone="parchment" id="share">
         <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
           <Display
@@ -159,7 +125,6 @@ export default async function ShowUsPage() {
         </div>
       </Band>
 
-      {/* ---- the gallery ---------------------------------------------- */}
       <Band tone="plain">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <h2 className="flex items-center gap-4 font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/65">
@@ -224,7 +189,6 @@ export default async function ShowUsPage() {
         </div>
       </Band>
 
-      {/* ---- your gathering counts too --------------------------------- */}
       <Band tone="cream">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <Display
