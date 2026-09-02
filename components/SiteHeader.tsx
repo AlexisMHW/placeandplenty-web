@@ -14,6 +14,9 @@ const DESKTOP_NAV = [
   SECONDARY_NAV.find((item) => item.href === "/about")!,
 ];
 
+type HeaderAuthResult = { data: { user: unknown | null } };
+type HeaderSession = { user?: unknown } | null;
+
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
@@ -41,15 +44,15 @@ export default function SiteHeader() {
     const supabase = getBrowserClient();
     let active = true;
 
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then((result: HeaderAuthResult) => {
       if (!active) return;
-      setSignedIn(!!data.user);
+      setSignedIn(!!result.data.user);
       setAuthResolved(true);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: string, session: HeaderSession) => {
       if (!active) return;
       setSignedIn(!!session?.user);
       setAuthResolved(true);
