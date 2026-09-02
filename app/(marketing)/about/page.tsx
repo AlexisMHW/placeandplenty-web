@@ -30,7 +30,7 @@ export default function AboutPage() {
       <PageHero
         eyebrow="About the founder"
         headline="Hi, I’m Alexis."
-        emphasisLine="The organised host behind Place & Plenty."
+        emphasisLine="The organized-ish host behind Place & Plenty."
         image={FOUNDER_PHOTO.src}
         imageAlt={FOUNDER_PHOTO.alt}
         body={
@@ -70,7 +70,7 @@ export default function AboutPage() {
       <Band tone="plain">
         <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
           <p className="text-center font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">My approach</p>
-          <Display className="mt-4 text-center text-3xl leading-tight text-forest md:text-[2.2rem]">Hosting with heart. Organised with intention.</Display>
+          <Display className="mt-4 text-center text-3xl leading-tight text-forest md:text-[2.2rem]">Hosting with heart. Organized with intention.</Display>
           <ul className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
             {PRINCIPLES.map((p, i) => (
               <li key={p.title} className={`px-4 text-center lg:px-5 ${i > 0 ? "lg:border-l lg:border-sage/25" : ""}`}>
@@ -104,12 +104,14 @@ export default function AboutPage() {
             />
             <div>
               <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">Why I built this</p>
-              <Display className="mt-4 max-w-lg text-2xl leading-tight text-forest md:text-[2rem]">I wanted hosting to feel less overwhelming — and more you.</Display>
+              <p className="mt-4 max-w-xl font-display text-3xl leading-[1.15] text-forest md:text-[2.45rem]">
+                I built Place &amp; Plenty for you because I needed it too.
+              </p>
               <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
               <div className="mt-6 max-w-prose space-y-4 font-body text-base leading-relaxed text-forest/80">
+                <p className="font-display text-xl italic leading-relaxed text-goldInk">I wanted hosting to feel less overwhelming — and more you.</p>
                 <p>You shouldn’t have to juggle a dozen apps, sticky notes and group texts just to get people together.</p>
-                <p>Place &amp; Plenty brings it into one place — so you can plan with confidence, stay organised, and be in the room for the part you actually did it for.</p>
-                <p className="font-display text-lg italic text-goldInk">I built it for you, because I needed it too.</p>
+                <p>Place &amp; Plenty brings it into one place — so you can plan with confidence, stay organized, and be in the room for the part you actually did it for.</p>
               </div>
               <p className="mt-8 font-body text-sm uppercase tracking-[0.18em] text-forest/60">{ESSENCE}</p>
             </div>
