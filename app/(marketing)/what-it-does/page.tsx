@@ -1,20 +1,9 @@
 import type { Metadata } from "next";
-import Image, { type StaticImageData } from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import { Band, Display } from "@/components/Display";
-import FeatureMiniVisual from "@/components/FeatureMiniVisual";
 import Icon, { type IconName } from "@/components/Icon";
 import { CROSS_PLATFORM_PROMISE } from "@/lib/entitlements";
-import myTable from "../../../what-it-does/what-it-does-01-my-table.png";
-import hostingCloset from "../../../what-it-does/what-it-does-02-my-hosting-closet.png";
-import coHosts from "../../../what-it-does/what-it-does-03-my-co-hosts.png";
-import myPeople from "../../../what-it-does/what-it-does-04-my-people.png";
-import musicMedia from "../../../what-it-does/what-it-does-05-my-music-media.png";
-import hostMode from "../../../what-it-does/what-it-does-06-host-mode.png";
-import myShopping from "../../../what-it-does/what-it-does-07-my-shopping.png";
-import styleBoard from "../../../what-it-does/what-it-does-08-my-style-board.png";
-import guestBook from "../../../what-it-does/what-it-does-09-my-guest-book.png";
-import invitations from "../../../what-it-does/what-it-does-11-my-invitations.png";
 
 export const metadata: Metadata = {
   title: "What It Does",
@@ -25,73 +14,96 @@ export const metadata: Metadata = {
 };
 
 type Feature = {
-  number: string;
   name: string;
-  image?: StaticImageData;
-  visualKind?: "contributions" | "space" | "photos";
+  image: string;
 };
 
 const FEATURES: Feature[] = [
-  { number: "01", name: "My Table", image: myTable },
-  { number: "02", name: "My Hosting Closet", image: hostingCloset },
-  { number: "03", name: "My Co-Hosts", image: coHosts },
-  { number: "04", name: "My People", image: myPeople },
-  { number: "05", name: "My Music & Media", image: musicMedia },
-  { number: "06", name: "Host Mode", image: hostMode },
-  { number: "07", name: "My Shopping", image: myShopping },
-  { number: "08", name: "My Style Board", image: styleBoard },
-  { number: "09", name: "My Guest Book", image: guestBook },
-  { number: "10", name: "Who’s Bringing What", visualKind: "contributions" },
-  { number: "11", name: "My Invitations", image: invitations },
-  { number: "12", name: "Space Mode", visualKind: "space" },
-  { number: "13", name: "My Gathering Photos", visualKind: "photos" },
+  { name: "My Table", image: "/images/what-it-does-my-table.png" },
+  { name: "My People", image: "/images/what-it-does-my-people.png" },
+  { name: "My Shopping", image: "/images/what-it-does-my-shopping.png" },
+  {
+    name: "Who’s Bringing What",
+    image: "/images/what-it-does-whos-bringing-what.png",
+  },
+  {
+    name: "My Hosting Closet",
+    image: "/images/what-it-does-my-hosting-closet.png",
+  },
+  {
+    name: "My Music & Media",
+    image: "/images/what-it-does-my-music-media.png",
+  },
+  {
+    name: "My Style Board",
+    image: "/images/what-it-does-my-style-board.png",
+  },
+  { name: "Space Mode", image: "/images/what-it-does-space-mode.png" },
+  {
+    name: "My Co-Hosts",
+    image: "/images/what-it-does-my-co-hosts.png",
+  },
+  { name: "Host Mode", image: "/images/what-it-does-host-mode.png" },
+  { name: "Find Help", image: "/images/what-it-does-find-help.png" },
+  {
+    name: "My Gathering Photos",
+    image: "/images/what-it-does-my-gathering-photos.png",
+  },
 ];
 
-const CONNECTED: { name: string; icon: IconName; body: string }[] = [
+const PLANNING_FLOW: { name: string; icon: IconName; body: string }[] = [
   {
-    name: "HostReady Score",
+    name: "Figure It Out",
+    icon: "sparkle",
+    body: "Start with AI-assisted help when you need ideas, quantities, direction, or help making the pieces of the gathering make sense together.",
+  },
+  {
+    name: "Budget",
+    icon: "cart",
+    body: "Keep what you need to buy and what you are spending together inside My Shopping, instead of building a second money system somewhere else.",
+  },
+  {
+    name: "HostReady™",
     icon: "gauge",
-    body: "A live view of how prepared your gathering is, based on what has been decided and what is still open.",
+    body: "See a live readiness score based on what is actually settled and what still needs attention before people arrive.",
   },
   {
     name: "Next Up",
     icon: "arrow",
-    body: "Surfaces the next useful things to handle instead of asking you to stare at the whole plan at once.",
-  },
-  {
-    name: "Figure It Out",
-    icon: "sparkle",
-    body: "AI-assisted planning help when you want ideas or need the pieces of the gathering to make more sense together.",
-  },
-  {
-    name: "Find Help",
-    icon: "search",
-    body: "A practical path to the outside help a gathering may need, from rentals and food to childcare, entertainment and other services.",
+    body: "Let Place & Plenty surface the next useful thing to handle so the whole plan does not have to live in your head at once.",
   },
   {
     name: "Weather Contingency",
     icon: "sun",
-    body: "Keeps an eye on the gathering context so an outdoor plan can have a backup before the weather becomes the emergency.",
-  },
-  {
-    name: "Budget inside My Shopping",
-    icon: "cart",
-    body: "Keeps spending context close to the list so the shopping plan and the money do not become two separate systems.",
+    body: "Keep an eye on the forecast and connect a Plan B to the gathering before weather becomes a last-minute emergency.",
   },
   {
     name: "Gather Again",
     icon: "arrow",
-    body: "Starts a new gathering from a previous one without repurposing the original gathering or erasing its history.",
+    body: "Use a gathering that worked as the starting point for a new one without repurposing the original or losing its history.",
   },
+];
+
+const GUEST_LOOP: { name: string; icon: IconName; body: string }[] = [
   {
-    name: "Guest Communications",
-    icon: "chat",
-    body: "Keeps gathering updates connected to the people who need them instead of scattering the conversation across unrelated threads.",
+    name: "Invitations",
+    icon: "envelope",
+    body: "Send a Place & Plenty invitation or bring the artwork you already have.",
   },
   {
     name: "RSVP Tracking",
     icon: "rsvp",
-    body: "Responses stay tied to the gathering and feed the people side of the plan as guests reply.",
+    body: "Responses, attendance and guest details stay connected to the gathering as people reply.",
+  },
+  {
+    name: "Guest Communications",
+    icon: "chat",
+    body: "Send gathering updates to the people who need them without reconstructing the guest list in a separate group chat.",
+  },
+  {
+    name: "My Guest Book",
+    icon: "book",
+    body: "Keep the people you host most often in one reusable account-level place for the next gathering too.",
   },
 ];
 
@@ -111,7 +123,7 @@ export default function WhatItDoesPage() {
             Everything you need. All in one place.
           </Display>
           <p className="mx-auto mt-6 max-w-2xl font-body text-lg leading-relaxed text-forest/75">
-            Place &amp; Plenty keeps the real moving pieces of home hosting connected — from the people and the food to the shopping, space, invitations and gathering day.
+            Place &amp; Plenty keeps the real moving pieces of home hosting connected — from the people and the food to the shopping, space and gathering day.
           </p>
           <Link
             href="#features"
@@ -129,30 +141,28 @@ export default function WhatItDoesPage() {
               The toolkit
             </p>
             <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">
-              The places your gathering lives.
+              The tools behind a put-together get-together.
             </Display>
             <p className="mt-4 font-body text-base leading-relaxed text-forest/70">
-              Each feature has a job. Together, they keep you from rebuilding the same gathering in five different places.
+              Each has a job. Together, they keep the people, food, shopping, space, help and gathering day connected.
             </p>
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map((feature) => (
+            {FEATURES.map((feature, index) => (
               <article
-                key={feature.number}
+                key={feature.name}
                 className="overflow-hidden rounded-2xl border border-sage/20 bg-offwhite shadow-softer"
               >
-                {feature.image ? (
-                  <Image
-                    src={feature.image}
-                    alt={`${feature.name} Place & Plenty feature card`}
-                    className="h-auto w-full"
-                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                    priority={feature.number === "01"}
-                  />
-                ) : feature.visualKind ? (
-                  <FeatureMiniVisual kind={feature.visualKind} number={feature.number} />
-                ) : null}
+                <Image
+                  src={feature.image}
+                  alt={`${feature.name} — Place & Plenty home-hosting feature`}
+                  width={1024}
+                  height={1024}
+                  className="h-auto w-full"
+                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                  priority={index < 4}
+                />
               </article>
             ))}
           </div>
@@ -161,33 +171,69 @@ export default function WhatItDoesPage() {
 
       <Band tone="cream">
         <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
-          <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-14">
-            <div>
-              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
-                Everything Works Together
-              </p>
-              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">
-                The useful parts that connect the whole plan.
-              </Display>
-              <p className="mt-5 font-body text-base leading-relaxed text-forest/75">
-                These are not extra photo cards. They are the intelligence, continuity and utility that work across the rest of Place &amp; Plenty.
-              </p>
-            </div>
-
-            <ul className="grid gap-4 sm:grid-cols-2">
-              {CONNECTED.map((item) => (
-                <li key={item.name} className="rounded-2xl border border-sage/25 bg-offwhite p-6 shadow-softer">
-                  <Icon name={item.icon} size={24} className="text-forest/70" />
-                  <h3 className="mt-4 font-display text-xl text-forest">{item.name}</h3>
-                  <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">{item.body}</p>
-                </li>
-              ))}
-            </ul>
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
+              Everything Works Together
+            </p>
+            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">
+              Smart help from “people are coming” to gathering again.
+            </Display>
+            <p className="mt-4 font-body text-base leading-relaxed text-forest/75">
+              The cards above are where you work. This is the intelligence and continuity running through the plan as the gathering moves forward.
+            </p>
           </div>
+
+          <ol className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {PLANNING_FLOW.map((item, index) => (
+              <li
+                key={item.name}
+                className="relative rounded-2xl border border-sage/25 bg-offwhite p-6 shadow-softer"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <Icon name={item.icon} size={24} className="text-forest/70" />
+                  <span className="font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-gold">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                </div>
+                <h3 className="mt-4 font-display text-xl text-forest">{item.name}</h3>
+                <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">{item.body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </Band>
 
       <Band tone="sage">
+        <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
+              The Guest Loop
+            </p>
+            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.35rem]">
+              Bring in your people. Keep the details with them.
+            </Display>
+            <p className="mt-4 font-body text-base leading-relaxed text-forest/75">
+              Invitations → RSVPs → communications → the people worth gathering with again.
+            </p>
+          </div>
+
+          <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {GUEST_LOOP.map((item) => (
+              <li key={item.name} className="rounded-2xl border border-forest/10 bg-offwhite/80 p-6">
+                <Icon name={item.icon} size={24} className="text-forest/70" />
+                <h3 className="mt-4 font-display text-lg text-forest">{item.name}</h3>
+                <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">{item.body}</p>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mx-auto mt-8 max-w-2xl text-center font-display text-xl italic leading-relaxed text-forest">
+            Got your own invitations? Bring them over — yeah, we handle that too.
+          </p>
+        </div>
+      </Band>
+
+      <Band tone="parchment">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <div className="grid items-center gap-8 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
             <div className="flex gap-3 text-forest/70">
