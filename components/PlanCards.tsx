@@ -1,6 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Band, Display } from "@/components/Display";
-import { BotanicalBough } from "@/components/Botanical";
 import Icon from "@/components/Icon";
 import {
   PRICING_TIERS,
@@ -68,9 +68,24 @@ export default function PlanCards() {
 
   return (
     <Band tone="plain">
-      <div className="relative">
-        <BotanicalBough className="pointer-events-none absolute -left-12 top-24 hidden text-olive/35 xl:block" width={200} />
-        <BotanicalBough className="pointer-events-none absolute -right-12 top-24 hidden text-olive/35 xl:block" width={200} flip />
+      <div className="relative overflow-hidden">
+        <Image
+          src="/images/olive-mark.png"
+          alt=""
+          aria-hidden
+          width={160}
+          height={160}
+          className="pointer-events-none absolute -left-4 top-20 hidden h-auto w-24 object-contain opacity-15 xl:block"
+        />
+        <Image
+          src="/images/olive-mark.png"
+          alt=""
+          aria-hidden
+          width={160}
+          height={160}
+          className="pointer-events-none absolute -right-4 top-20 hidden h-auto w-24 scale-x-[-1] object-contain opacity-15 xl:block"
+        />
+
         <div className="relative mx-auto max-w-editorial px-6 py-16 md:py-20">
           <Display emphasis="more ease" className="text-center text-3xl leading-tight text-forest md:text-[2.3rem]">Three simple ways to host with more ease.</Display>
           <p className="mx-auto mt-4 max-w-3xl text-center font-body text-base leading-relaxed text-forest/70">
