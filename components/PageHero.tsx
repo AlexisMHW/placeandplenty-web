@@ -6,12 +6,15 @@ import { Display } from "@/components/Display";
 import heroGathering from "../homepage/hero-fall-gathering.png.png";
 import backyardDinner from "../homepage/gathering-backyard-dinner.png";
 import peopleFirst from "../homepage/product-invitations.png";
-import nightBefore from "../homepage/article-night-before-list.png";
+
+// Served from `public/images` rather than bundled, because the article
+// feature photos are addressed by URL from Tina frontmatter now.
+const nightBefore = "/images/article-night-before-list.png";
 
 function fallbackHeroFor(caption?: string): string {
   const subject = (caption ?? "").toLowerCase();
   if (subject.includes("phone") || subject.includes("photograph")) return peopleFirst.src;
-  if (subject.includes("night") || subject.includes("editorial") || subject.includes("centre") || subject.includes("center")) return nightBefore.src;
+  if (subject.includes("night") || subject.includes("editorial") || subject.includes("centre") || subject.includes("center")) return nightBefore;
   if (subject.includes("backyard") || subject.includes("greenery") || subject.includes("laid table")) return backyardDinner.src;
   return heroGathering.src;
 }

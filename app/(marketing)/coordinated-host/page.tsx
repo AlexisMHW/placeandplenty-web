@@ -7,11 +7,7 @@ import { Band, Display } from "@/components/Display";
 import { EditorialCard, FeatureLede } from "@/components/Cards";
 import Icon, { type IconName } from "@/components/Icon";
 import { BotanicalDivider } from "@/components/Botanical";
-import { getAllPosts, type Post } from "@/lib/tina-content";
-import howManyDishes from "../../../homepage/article-how-many-dishes.png";
-import nightBefore from "../../../homepage/article-night-before-list.png";
-import shopCupboards from "../../../homepage/article-shop-your-own-cupboards.png";
-import wherePeopleStand from "../../../homepage/article-where-people-stand.png";
+import { getAllPosts, articleImage } from "@/lib/tina-content";
 
 export const metadata: Metadata = {
   title: "The Coordinated Host",
@@ -20,19 +16,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/coordinated-host" },
   openGraph: { url: "/coordinated-host" },
 };
-
-const ARTICLE_IMAGES: Record<string, string> = {
-  "how-many-dishes-is-enough": howManyDishes.src,
-  "the-night-before-list": nightBefore.src,
-  "how-to-organise-a-potluck": "/images/article-how-to-organise-a-potluck.png",
-  "shop-your-own-cupboards-first": shopCupboards.src,
-  "where-people-actually-stand": wherePeopleStand.src,
-  "how-much-ice-do-i-actually-need": "/images/article-how-much-ice.png",
-};
-
-function articleImage(post: Post): string {
-  return ARTICLE_IMAGES[post._sys.filename] || post.featuredImage || "/images/hero-tabletop.jpg";
-}
 
 const TOPICS: { icon: IconName; title: string; body: string; href: string }[] = [
   { icon: "envelope", title: "Invitations", body: "Design, send and track with ease — or bring the artwork you already have.", href: "/what-it-does" },

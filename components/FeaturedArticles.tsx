@@ -1,22 +1,19 @@
 import Link from "next/link";
-import Image, { type StaticImageData } from "next/image";
+import Image from "next/image";
 import { Display, Band } from "@/components/Display";
 import type { Post } from "@/lib/tina-content";
-import howManyDishes from "../homepage/article-how-many-dishes.png";
-import nightBefore from "../homepage/article-night-before-list.png";
-import potluck from "../homepage/article-potluck-without-group-chat.png";
-import shopCupboards from "../homepage/article-shop-your-own-cupboards.png";
-import wherePeopleStand from "../homepage/article-where-people-stand.png";
 
-const ARTICLE_IMAGES: Record<string, StaticImageData> = {
-  "how-many-dishes-is-enough": howManyDishes,
-  "the-night-before-list": nightBefore,
-  "how-to-organise-a-potluck": potluck,
-  "shop-your-own-cupboards-first": shopCupboards,
-  "where-people-actually-stand": wherePeopleStand,
-};
-
-const ARTICLE_FALLBACKS = [howManyDishes, nightBefore, potluck, shopCupboards, wherePeopleStand];
+// The approved feature photos now live in `public/images` so that Tina
+// can address them by URL — the frontmatter is the canonical source and
+// a bundler import cannot be written into a .mdx file. See the same note
+// in app/(marketing)/coordinated-host/page.tsx.
+const ARTICLE_FALLBACKS = [
+  "/images/article-how-many-dishes.png",
+  "/images/article-night-before-list.png",
+  "/images/article-how-to-organise-a-potluck.png",
+  "/images/article-shop-your-own-cupboards.png",
+  "/images/article-where-people-stand.png",
+];
 
 export default function FeaturedArticles({ posts }: { posts: Post[] }) {
   return (
@@ -35,10 +32,11 @@ export default function FeaturedArticles({ posts }: { posts: Post[] }) {
         {posts.length > 0 && (
           <ul className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {posts.slice(0, 4).map((post, index) => {
-              // Never reserve a photo frame and leave it empty. New editorial
-              // posts can ship before a bespoke card image is assigned, so a
-              // warm hosting image is used until the final article art exists.
-              const image = ARTICLE_IMAGES[post._sys.filename] ?? ARTICLE_FALLBACKS[index % ARTICLE_FALLBACKS.length];
+              // Never reserve a photo frame and leave it empty. The article's
+              // own Tina image wins; new editorial posts can ship before a
+              // bespoke card image is assigned, so a warm hosting image stands
+              // in until the final article art exists.
+              const image = post.featuredImage || ARTICLE_FALLBACKS[index % ARTICLE_FALLBACKS.length];
               return (
                 <li key={post._sys.filename}>
                   <Link href={`/coordinated-host/${post._sys.filename}`} className="group flex h-full flex-col overflow-hidden rounded-card border border-sage/30 bg-parchment transition-shadow duration-400 hover:shadow-softer">
