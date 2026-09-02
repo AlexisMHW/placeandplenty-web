@@ -9,34 +9,6 @@ import Icon, { type IconName } from "@/components/Icon";
 import { BotanicalDivider } from "@/components/Botanical";
 import { getAllPosts } from "@/lib/tina-content";
 
-// THE COORDINATED HOST, composed to `the_coordinated_host.png`.
-//
-//   PageHero      EDITORIAL eyebrow, the masthead, an italic strapline
-//   FeatureLede   the horizontal featured story straddling the hero
-//   TOPIC STRIP   four editorial entry points behind hairlines
-//   THE GRID      four-across article cards, photo-led
-//   NEWSLETTER    the closing subscribe panel
-//   CtaBand
-//
-// §12 IS THE BRIEF: this should read as a real Place & Plenty
-// publication, not a blog placeholder and never "articles coming soon".
-// It no longer says that — there are three cornerstone pieces published
-// in approved franchises, and the page is built as a magazine front:
-// one story given the lead, the rest in a grid, and a masthead that
-// looks like it has been running for a while.
-//
-// CATEGORY AND FRANCHISE STAY SEPARATE, per §14 of the reconciliation.
-// Category is the broad subject; franchise is the recurring named series
-// (Host Math, Space & Flow, The Real-Life Version, and so on). The card
-// kicker shows the franchise where a piece has one and falls back to the
-// category, because the franchise is the thing a returning reader is
-// looking for.
-//
-// THE GRID ADAPTS TO WHAT IS PUBLISHED. Three pieces do not fill a
-// four-across grid, so the lead is pulled out and the remainder run
-// beneath it. §7 forbids placeholders, which includes empty cards
-// padding a row to look busier than the library is.
-
 export const metadata: Metadata = {
   title: "The Coordinated Host",
   description:
@@ -67,7 +39,7 @@ const TOPICS: { icon: IconName; title: string; body: string; href: string }[] = 
   {
     icon: "book",
     title: "Guest Book",
-    body: "Capture the memories that last, and the people worth inviting again.",
+    body: "Keep the people worth inviting again connected to your account-level Guest Book.",
     href: "/what-it-does",
   },
 ];
@@ -83,8 +55,9 @@ export default async function CoordinatedHostPage() {
         headline="The Coordinated Host."
         emphasisLine="Thoughtful hosting, simplified."
         emphasisSize="small"
-        image={null}
-        imageCaption="An olive-branch centrepiece on a laid table, candles and glassware, evening light"
+        image="/images/ChatGPT Image Sep 1, 2026, 08_06_00 PM (7).png"
+        imageAlt="A warm, editorial home-hosting table in natural evening light"
+        imageCaption="Practical hosting guidance, grounded in the homes and gatherings people actually have."
         body={
           <p>
             Ideas, guidance and real-world tools for hosts who care about
@@ -101,7 +74,6 @@ export default async function CoordinatedHostPage() {
         }
       />
 
-      {/* ---- the lead story, straddling the hero --------------------- */}
       {lead && (
         <div className="relative z-10 bg-offwhite px-3 sm:px-5">
           <div className="mx-auto -mt-10 max-w-editorial md:-mt-14">
@@ -125,7 +97,6 @@ export default async function CoordinatedHostPage() {
         </div>
       )}
 
-      {/* ---- topic strip --------------------------------------------- */}
       <Band tone="parchment">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <BotanicalDivider className="mb-6" />
@@ -162,7 +133,6 @@ export default async function CoordinatedHostPage() {
         </div>
       </Band>
 
-      {/* ---- the grid ------------------------------------------------- */}
       <Band tone="plain" id="the-journal">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <h2 className="flex items-center gap-4 font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/65">
@@ -175,9 +145,6 @@ export default async function CoordinatedHostPage() {
               More pieces are on the way. The lead story is above.
             </p>
           ) : (
-            // Three across, not four. The library is small and one piece
-            // is the lead, so a four-column grid left the remainder
-            // stranded at the left edge of a mostly empty row.
             <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {rest.map((post, i) => (
                 <li key={post._sys.filename}>
@@ -201,7 +168,6 @@ export default async function CoordinatedHostPage() {
         </div>
       </Band>
 
-      {/* ---- newsletter ----------------------------------------------- */}
       <Band tone="cream">
         <div className="mx-auto max-w-editorial px-6 py-12 md:py-14">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-12">
