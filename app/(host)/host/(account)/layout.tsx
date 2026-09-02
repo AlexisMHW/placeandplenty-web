@@ -30,13 +30,13 @@ export default async function AccountShellLayout({
   const name =
     profile?.display_name || profile?.first_name || user?.email || "Your account";
 
-  const activeCount = gatherings
-    ? // effective_status, so the badge stops counting a gathering the
-      // moment it is actually over rather than when the row catches up.
-      gatherings.filter((g) =>
+  // Drafts occupy an open-gathering slot, but they are not "active"
+  // gatherings. The shell reports the product concept the cap actually uses:
+  // open gatherings = draft + active + hosting.
+  const openCount = gatherings
+    ? gatherings.filter((g) =>
         ["draft", "active", "hosting"].includes(g.effective_status)
-      )
-        .length
+      ).length
     : null;
 
   const groups: HostNavGroup[] = [
@@ -85,10 +85,10 @@ export default async function AccountShellLayout({
       title="My Gatherings"
       topBar={
         <>
-          {typeof activeCount === "number" && activeCount > 0 && (
+          {typeof openCount === "number" && openCount > 0 && (
             <span className="hidden items-center gap-2 rounded-lg bg-cream px-3 py-2 font-body text-sm text-forest/80 md:flex">
               <Icon name="calendar" size={16} />
-              {activeCount} active
+              {openCount} open
             </span>
           )}
 
