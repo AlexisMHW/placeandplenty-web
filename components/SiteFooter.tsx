@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BotanicalBough } from "@/components/Botanical";
 import Icon, { type IconName } from "@/components/Icon";
 import QrCode from "@/components/QrCode";
 import Wordmark from "@/components/Wordmark";
@@ -196,10 +195,13 @@ export default function SiteFooter() {
 
       {/* Universal navigation footer */}
       <section className="relative overflow-hidden bg-forest">
-        <BotanicalBough
-          className="pointer-events-none absolute -right-10 bottom-0 hidden text-gold/18 lg:block"
-          width={250}
-          flip
+        <Image
+          src="/images/olive-mark.png"
+          alt=""
+          width={158}
+          height={158}
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-8 -right-5 hidden h-auto w-36 opacity-[0.08] lg:block"
         />
 
         <div className="relative mx-auto max-w-editorial px-6 py-14 md:py-16">
