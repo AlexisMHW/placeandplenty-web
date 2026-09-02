@@ -11,6 +11,7 @@ import {
   signArtwork,
 } from "@/lib/host-data";
 import { getGatheringCreationProgress } from "@/lib/gathering-progress-data";
+import { hasEstablishedPlanningData } from "@/lib/established-gathering";
 import {
   DEFAULT_ARRIVAL_TIME,
   EMPTY_GATHERING_INPUT,
@@ -68,6 +69,14 @@ async function loadDraft(editId: string): Promise<ResumedDraft> {
 
   if (!gathering || !fields) notFound();
   if (gathering.status !== "draft") redirect(`/host/g/${editId}`);
+
+  // A draft that already has real planning data is no longer just a setup
+  // form. It belongs in the gathering workspace, where its menu, people,
+  // shopping, Space Mode, etc. remain canonical and cannot be overwritten
+  // by replaying creation questions from another platform.
+  if (await hasEstablishedPlanningData(editId)) {
+    redirect(`/host/g/${editId}`);
+  }
 
   const artwork = gathering.invitation_artwork_path
     ? {
