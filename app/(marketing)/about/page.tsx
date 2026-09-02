@@ -3,10 +3,8 @@ import Image from "next/image";
 import PageHero from "@/components/PageHero";
 import CtaBand from "@/components/CtaBand";
 import Photo from "@/components/Photo";
-import Stamp from "@/components/Stamp";
 import { Band, Display } from "@/components/Display";
 import { IconPlate, type IconName } from "@/components/Icon";
-import { BotanicalBough } from "@/components/Botanical";
 import { FOUNDER_PHOTO } from "@/lib/founder";
 import { ESSENCE } from "@/lib/brand";
 
@@ -44,21 +42,26 @@ export default function AboutPage() {
       />
 
       <Band tone="cream">
-        <div className="relative">
-          <BotanicalBough className="pointer-events-none absolute -right-10 top-1/2 hidden -translate-y-1/2 text-olive/40 lg:block" width={220} flip />
-          <div className="relative mx-auto max-w-editorial px-6 py-16 md:py-20">
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
-              <div>
-                <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">My story</p>
-                <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.2rem]">A lifelong love of people, planning, and the little details.</Display>
-                <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
-              </div>
-              <div className="max-w-prose space-y-5 font-body text-base leading-relaxed text-forest/80">
-                <p>I have always been the one who brings people together. Family dinners, celebrations with friends, the ordinary Tuesday that turns into eleven people in my kitchen — I have loved making the kind of moment where everyone feels welcome and cared for.</p>
-                <p>I also knew what it costs. My son’s 17th. My youngest son’s first birthday. My husband’s 40th. My own 39th. Granny’s 80th. Thanksgiving, Christmas, Valentine’s. Every one of them was worth it, and every one of them was too many lists, too many moving parts, and too many “did I forget” moments at eleven at night.</p>
-                <p className="border-l-2 border-gold pl-5 font-display text-lg italic leading-relaxed text-forest">I didn’t need another place to make a pretty invitation. I needed something that could help me manage everything between “people are coming” and the doorbell ringing. So I built it.</p>
-                <p>Place &amp; Plenty is that thing — a home hosting companion that keeps it all in one place, tells you where you actually stand, and gets out of the way so you can enjoy the gathering you spent all week on.</p>
-              </div>
+        <div className="relative mx-auto max-w-editorial px-6 py-16 md:py-20">
+          <Image
+            src="/images/olive-mark.png"
+            alt=""
+            aria-hidden
+            width={150}
+            height={150}
+            className="pointer-events-none absolute right-4 top-8 hidden h-auto w-20 object-contain opacity-14 lg:block"
+          />
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
+            <div>
+              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">My story</p>
+              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.2rem]">A lifelong love of people, planning, and the little details.</Display>
+              <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
+            </div>
+            <div className="max-w-prose space-y-5 font-body text-base leading-relaxed text-forest/80">
+              <p>I have always been the one who brings people together. Family dinners, celebrations with friends, the ordinary Tuesday that turns into eleven people in my kitchen — I have loved making the kind of moment where everyone feels welcome and cared for.</p>
+              <p>I also knew what it costs. My son’s 17th. My youngest son’s first birthday. My husband’s 40th. My own 39th. Granny’s 80th. Thanksgiving, Christmas, Valentine’s. Every one of them was worth it, and every one of them was too many lists, too many moving parts, and too many “did I forget” moments at eleven at night.</p>
+              <p className="border-l-2 border-gold pl-5 font-display text-lg italic leading-relaxed text-forest">I didn’t need another place to make a pretty invitation. I needed something that could help me manage everything between “people are coming” and the doorbell ringing. So I built it.</p>
+              <p>Place &amp; Plenty is that thing — a home hosting companion that keeps it all in one place, tells you where you actually stand, and gets out of the way so you can enjoy the gathering you spent all week on.</p>
             </div>
           </div>
         </div>
@@ -91,7 +94,14 @@ export default function AboutPage() {
             sizes="(min-width: 768px) 45vw, 100vw"
           />
           <div className="relative flex items-center px-6 py-14 md:px-12 md:py-16">
-            <Stamp top="Home Hosting" bottom="Made Simple." size={116} className="absolute right-6 top-8 hidden xl:block" />
+            <Image
+              src="/images/olive-mark.png"
+              alt=""
+              aria-hidden
+              width={150}
+              height={150}
+              className="pointer-events-none absolute right-7 top-7 hidden h-auto w-20 object-contain opacity-18 xl:block"
+            />
             <div>
               <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">Why I built this</p>
               <Display className="mt-4 max-w-lg text-2xl leading-tight text-forest md:text-[2rem]">I wanted hosting to feel less overwhelming — and more you.</Display>
