@@ -4,7 +4,7 @@ import Photo from "@/components/Photo";
 import Stamp from "@/components/Stamp";
 import { Display } from "@/components/Display";
 import heroGathering from "../homepage/hero-fall-gathering.png.png";
-import backyardDinner from "../homepage/gathering-backyard-dinner.png";
+import backyardDinner from "../public/images/gathering-backyard-dinner.png";
 import peopleFirst from "../homepage/product-invitations.png";
 
 // Served from `public/images` rather than bundled, because the article

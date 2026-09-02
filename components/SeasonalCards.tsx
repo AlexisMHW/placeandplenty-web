@@ -3,10 +3,10 @@ import Link from "next/link";
 import { Display, Band } from "@/components/Display";
 import { BotanicalSprig } from "@/components/Botanical";
 import { ideaCard, type GatheringIdea } from "@/lib/tina-content";
-import gameDay from "../homepage/gathering-game-day.png";
-import backyardDinner from "../homepage/gathering-backyard-dinner.png";
-import halloween from "../homepage/gathering-halloween-spooktacular.png";
-import friendsgiving from "../homepage/gathering-friendsgiving.png";
+import gameDay from "../public/images/gathering-game-day.png";
+import backyardDinner from "../public/images/gathering-backyard-dinner.png";
+import halloween from "../public/images/gathering-halloween-spooktacular.png";
+import friendsgiving from "../public/images/gathering-friendsgiving.png";
 
 const SEASONAL_IMAGES = [gameDay, backyardDinner, halloween, friendsgiving];
 
