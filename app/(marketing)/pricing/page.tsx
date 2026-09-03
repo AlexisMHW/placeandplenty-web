@@ -19,6 +19,7 @@ import {
   NATIVE_ONLY_FEATURES,
   channelLabel,
 } from "@/lib/entitlements";
+import { REFUND_POLICY } from "@/lib/refund-policy";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -56,8 +57,16 @@ const faqs = [
     a: `Your account-level Plus features keep working, and an additional gathering can use a Gathering Pass at ${PRICING_TIERS[1].priceLine}.`,
   },
   {
+    q: "What happens if I cancel Plus?",
+    a: REFUND_POLICY.plus.short,
+  },
+  {
+    q: "What is the refund policy?",
+    a: `${REFUND_POLICY.gatheringPass.short} ${REFUND_POLICY.initialPlusRefund}`,
+  },
+  {
     q: "Where will I manage or cancel what I buy?",
-    a: "A Plus subscription bought through Apple or Google is managed in that store. When web card checkout is enabled, web purchases will be managed through your Place & Plenty account. Access itself follows the same account across web and mobile.",
+    a: "A Plus subscription bought through Apple or Google is managed in that store. A direct web purchase is managed through your Place & Plenty account. Access itself follows the same account across web and mobile.",
   },
   {
     q: "Can guests use it without paying?",
@@ -68,7 +77,7 @@ const faqs = [
 const TRUST: { icon: IconName; title: string; body: string }[] = [
   { icon: "lock", title: "Secure & private", body: "No advertising and no selling your gathering data. Your gathering is not a data product." },
   { icon: "leaf", title: "Clear commitment", body: "A Gathering Pass is a one-off for one gathering. Plus is annual." },
-  { icon: "card", title: "Fair & transparent", body: "Paid prices call out applicable taxes and fees instead of burying them." },
+  { icon: "card", title: "Fair & transparent", body: "Prices, renewal terms, cancellation and refund rules are stated before purchase." },
   { icon: "heart", title: "Built for real hosts", body: "Real homes, real budgets, real people coming through the door." },
 ];
 
@@ -89,6 +98,24 @@ export default function PricingPage() {
       />
 
       <PlanCards />
+
+      <Band tone="parchment">
+        <div className="mx-auto max-w-editorial px-6 py-12 md:py-14">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-2xl border border-sage/30 bg-cream px-6 py-6">
+              <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.18em] text-forest/55">Gathering Pass</p>
+              <h2 className="mt-2 font-display text-xl text-forest">One gathering. One purchase.</h2>
+              <p className="mt-3 font-body text-sm leading-relaxed text-forest/72">{REFUND_POLICY.gatheringPass.short}</p>
+            </div>
+            <div className="rounded-2xl border border-gold/40 bg-offwhite px-6 py-6">
+              <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.18em] text-forest/55">Place &amp; Plenty Plus</p>
+              <h2 className="mt-2 font-display text-xl text-forest">Annual, with a clear way out.</h2>
+              <p className="mt-3 font-body text-sm leading-relaxed text-forest/72">{REFUND_POLICY.plus.short}</p>
+              <p className="mt-3 font-body text-xs leading-relaxed text-forest/60">First-time direct web purchases may qualify for the 7-day discretionary refund window described in our <Link href="/terms" className="underline decoration-gold underline-offset-4">Terms</Link>.</p>
+            </div>
+          </div>
+        </div>
+      </Band>
 
       <Band tone="sage">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
