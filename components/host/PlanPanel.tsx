@@ -16,10 +16,7 @@ import {
   PLUS_LIMITS_NOTE,
   PURCHASE_AVAILABILITY_NOTE,
 } from "@/lib/pricing";
-
-// Account billing is a read of canonical gathering_entitlements, never a
-// website-side plan cache. Free is the absence of a live paid entitlement.
-// Purchase channel is provenance only; access follows the account everywhere.
+import { REFUND_POLICY } from "@/lib/refund-policy";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -91,7 +88,7 @@ export default async function PlanPanel() {
                 <p className="mt-1.5 font-body text-sm text-forest/70">
                   Bought {formatDate(e.purchased_at)}
                   {channel ? ` through ${channelLabel(channel)}` : ""}
-                  {e.expires_at ? ` · renews ${formatDate(e.expires_at)}` : ""}
+                  {isPlus && e.expires_at ? ` · current term through ${formatDate(e.expires_at)}` : ""}
                 </p>
 
                 <p className="mt-2 max-w-3xl font-body text-sm leading-relaxed text-forest/70">
@@ -100,6 +97,10 @@ export default async function PlanPanel() {
 
                 <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-forest/65">
                   {billingHomeFor(channel)}
+                </p>
+
+                <p className="mt-2 max-w-3xl font-body text-sm leading-relaxed text-forest/65">
+                  {isPlus ? REFUND_POLICY.plus.short : REFUND_POLICY.gatheringPass.short}
                 </p>
               </li>
             );
@@ -123,14 +124,17 @@ export default async function PlanPanel() {
       </p>
 
       {!free && (
-        <p className="mt-4 font-body text-sm text-forest/65">
-          <Link
-            href="/pricing"
-            className="underline decoration-gold decoration-2 underline-offset-4 hover:text-forest"
-          >
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 font-body text-sm text-forest/65">
+          <Link href="/pricing" className="underline decoration-gold decoration-2 underline-offset-4 hover:text-forest">
             Compare the plans
           </Link>
-        </p>
+          <Link href="/terms" className="underline decoration-gold decoration-2 underline-offset-4 hover:text-forest">
+            Refund &amp; cancellation policy
+          </Link>
+          <a href="mailto:support@placeandplenty.com" className="underline decoration-gold decoration-2 underline-offset-4 hover:text-forest">
+            Billing help
+          </a>
+        </div>
       )}
     </Panel>
   );
