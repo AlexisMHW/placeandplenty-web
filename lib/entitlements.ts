@@ -23,6 +23,7 @@ export interface Entitlement {
   revoked_at: string | null;
   provider: string | null;
   source: string | null;
+  provider_customer_id: string | null;
 }
 
 export function isLive(e: Entitlement, now = new Date()): boolean {
