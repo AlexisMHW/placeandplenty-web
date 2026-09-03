@@ -74,6 +74,9 @@ export default async function PlanPanel() {
           {live.map((e) => {
             const channel = e.provider || e.source || "";
             const isPlus = e.entitlement_type === "plus";
+            const canManageWebPlus =
+              isPlus && channel === "web" && Boolean(e.provider_customer_id);
+
             return (
               <li key={e.id} className="py-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -102,6 +105,17 @@ export default async function PlanPanel() {
                 <p className="mt-2 max-w-3xl font-body text-sm leading-relaxed text-forest/65">
                   {isPlus ? REFUND_POLICY.plus.short : REFUND_POLICY.gatheringPass.short}
                 </p>
+
+                {canManageWebPlus && (
+                  <form action="/api/billing-portal" method="post" className="mt-4">
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-forest/30 px-4 py-2.5 font-body text-sm font-semibold text-forest transition-colors duration-400 hover:bg-forest/5"
+                    >
+                      Manage billing &amp; renewal
+                    </button>
+                  </form>
+                )}
               </li>
             );
           })}
