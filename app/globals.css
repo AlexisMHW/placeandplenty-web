@@ -50,6 +50,38 @@ select:focus-visible {
   border-radius: 2px;
 }
 
+/*
+ * The Create Gathering wizard uses real native date/time controls so the
+ * browser owns the picker behavior. Production previously hid those inputs
+ * at opacity: 0, which left desktop Chrome with a field that looked tappable
+ * but did not reliably open its picker. Keep the P&P card shell, but expose
+ * the actual control inside it so date/time selection works consistently.
+ */
+label:has(> input[type="date"].opacity-0),
+label:has(> input[type="time"].opacity-0) {
+  padding-bottom: 0.75rem;
+}
+
+label:has(> input[type="date"].opacity-0) > span:nth-of-type(2),
+label:has(> input[type="time"].opacity-0) > span:nth-of-type(2) {
+  display: none;
+}
+
+label > input[type="date"].opacity-0,
+label > input[type="time"].opacity-0 {
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: 2.75rem !important;
+  margin-top: 0.25rem;
+  cursor: pointer;
+  opacity: 1 !important;
+  border: 0;
+  background: transparent;
+  color: #1f3d2e;
+  font: inherit;
+}
+
 ::selection {
   background-color: #e6ded0;
   color: #1f3d2e;
