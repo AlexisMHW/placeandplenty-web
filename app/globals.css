@@ -39,6 +39,45 @@ h4 {
   font-weight: 600;
 }
 
+/*
+ * The Create Gathering wizard uses native date/time inputs for the actual
+ * browser picker. They used to be fully transparent overlays, which can make
+ * the picker fail to open in some browsers even though the field looks
+ * clickable. Keep the real controls visible and interactive while retaining
+ * the surrounding P&P selector treatment.
+ */
+label:has(> input[type="date"].opacity-0),
+label:has(> input[type="time"].opacity-0) {
+  cursor: default;
+}
+
+label:has(> input[type="date"].opacity-0) > span:nth-of-type(2),
+label:has(> input[type="time"].opacity-0) > span:nth-of-type(2) {
+  display: none;
+}
+
+input[type="date"].opacity-0,
+input[type="time"].opacity-0 {
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  margin-top: 0.25rem;
+  padding: 0;
+  opacity: 1 !important;
+  cursor: pointer;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #1f3d2e;
+  font: inherit;
+}
+
+input[type="date"].opacity-0::-webkit-calendar-picker-indicator,
+input[type="time"].opacity-0::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
 /* Visible keyboard focus everywhere — never remove outline without replacement */
 a:focus-visible,
 button:focus-visible,
