@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
@@ -29,7 +29,7 @@ declare global {
   }
 }
 
-export default function MobileTurnstilePage() {
+function MobileTurnstileContent() {
   const searchParams = useSearchParams();
   const flow = searchParams.get("flow") ?? "sign-in";
   const returnPath = useMemo(() => RETURN_PATHS[flow] ?? RETURN_PATHS["sign-in"], [flow]);
@@ -75,5 +75,13 @@ export default function MobileTurnstilePage() {
         <p className="mt-4 text-sm text-[#1E3A2E]/65">{message}</p>
       </div>
     </main>
+  );
+}
+
+export default function MobileTurnstilePage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-[#F7F3EA]" />}>
+      <MobileTurnstileContent />
+    </Suspense>
   );
 }
