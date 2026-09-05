@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
+import AuthTurnstile, { authTurnstileEnabled } from "@/components/AuthTurnstile";
 
 // Sign-in for the host web app. Same Supabase Auth identity as the
 // native app (§11) — this creates no separate web account model.
@@ -15,30 +16,17 @@ import { callbackUrl, safeNext } from "@/lib/auth-redirects";
 // on a shared or unfamiliar computer, but it fails silently when mail is
 // slow, and defaulting to it makes signing in feel unreliable.
 //
-// SIGN-UP LIVES AT /signup, and it is a real web account. This file
-// used to say accounts could only be made in the app, on the reasoning
-// that a web sign-up would create profiles that had never seen
-// onboarding or entitlement setup. Checked against the live database,
-// that reasoning does not hold: `on_auth_user_created` fires for every
-// client and writes the canonical profile, and Free is the absence of an
-// entitlement row rather than something to provision. Creating an
-// account on the web is now a V1 requirement, so this page links to it.
-//
-// ERROR HANDLING: Supabase returns "Invalid login credentials" for both
-// a wrong password and an unknown email, on purpose — telling a stranger
-// which one it was confirms whether an address has an account. That
-// wording is passed through rather than "improved" into a leak.
-//
-// The `next` param is a PATH ONLY, validated below. Accepting an
-// absolute URL here would make this an open redirect: a link to
-// /login?next=https://evil.example could bounce a freshly authenticated
-// host straight off the site.
+// Turnstile is enforced by Supabase Auth when configured. This form must
+// send a fresh captcha token for both password and magic-link sign-in.
+// The token is single-use, so failed attempts reset the widget.
 
 export default function LoginForm({ next }: { next?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [status, setStatus] = useState<
     "idle" | "submitting" | "sent" | "error"
   >("idle");
@@ -48,24 +36,29 @@ export default function LoginForm({ next }: { next?: string }) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setStatus("submitting");
     setMessage("");
 
+    if (authTurnstileEnabled && !captchaToken) {
+      setMessage("Please complete the quick security check and try again.");
+      setStatus("error");
+      return;
+    }
+
+    setStatus("submitting");
     const supabase = getBrowserClient();
 
     if (mode === "password") {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        ...(authTurnstileEnabled ? { options: { captchaToken } } : {}),
       });
       if (error) {
+        setCaptchaResetKey((value) => value + 1);
         setMessage(error.message);
         setStatus("error");
         return;
       }
-      // refresh() so the server re-renders with the new session cookie
-      // before we navigate; push() alone can land on a page that was
-      // rendered as signed-out.
       router.refresh();
       router.push(destination);
       return;
@@ -75,10 +68,12 @@ export default function LoginForm({ next }: { next?: string }) {
       email,
       options: {
         emailRedirectTo: callbackUrl(window.location.origin, destination),
+        ...(authTurnstileEnabled ? { captchaToken } : {}),
       },
     });
 
     if (error) {
+      setCaptchaResetKey((value) => value + 1);
       setMessage(error.message);
       setStatus("error");
       return;
@@ -99,7 +94,10 @@ export default function LoginForm({ next }: { next?: string }) {
         </p>
         <button
           type="button"
-          onClick={() => setStatus("idle")}
+          onClick={() => {
+            setStatus("idle");
+            setCaptchaResetKey((value) => value + 1);
+          }}
           className="mt-6 font-body text-sm font-semibold underline decoration-gold underline-offset-4 text-forest"
         >
           Use a different email
@@ -180,6 +178,8 @@ export default function LoginForm({ next }: { next?: string }) {
           />
         </div>
       )}
+
+      <AuthTurnstile onToken={setCaptchaToken} resetKey={captchaResetKey} />
 
       {status === "error" && (
         <p role="alert" className="mt-4 font-body text-sm text-error">
