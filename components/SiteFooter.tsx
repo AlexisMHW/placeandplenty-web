@@ -10,6 +10,7 @@ import {
   UTILITY_NAV,
   ACCOUNT_NAV,
   SOCIAL_LINKS,
+  PLANNING_NAV,
   type NavItem,
 } from "@/lib/nav";
 import {
@@ -38,6 +39,7 @@ const LEGAL: NavItem[] = UTILITY_NAV;
 
 const COLUMNS = [
   { heading: "Explore", items: EXPLORE },
+  { heading: "Plan", items: PLANNING_NAV },
   { heading: "Company", items: COMPANY },
   { heading: "Support", items: SUPPORT },
   { heading: "Legal", items: LEGAL },
@@ -237,7 +239,7 @@ export default function SiteFooter() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 xl:grid-cols-5">
               {COLUMNS.map((column) => (
                 <nav key={column.heading} aria-label={column.heading}>
                   <h2 className="font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">

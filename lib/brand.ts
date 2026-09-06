@@ -36,5 +36,5 @@ export const ESSENCE =
 
 export const RALLY = "Less scrambling. More gathering.";
 
-/** "Place & Plenty | Home Hosting. Made Simple." — the default page title. */
-export const BRAND_TITLE = `${BRAND_NAME} | ${TAGLINE}`;
+/** Category-explicit default title for branded discovery. The visible tagline is unchanged. */
+export const BRAND_TITLE = `${BRAND_NAME} | Home Party Planning, Invitations & RSVPs`;

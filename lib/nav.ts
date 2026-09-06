@@ -28,6 +28,14 @@ export const SECONDARY_NAV: NavItem[] = [
   { label: "Support", href: "/support" },
 ];
 
+/** Search-led product pages. Kept out of the primary bar to preserve its hierarchy. */
+export const PLANNING_NAV: NavItem[] = [
+  { label: "Online Invitations", href: "/invitations" },
+  { label: "Party Planning App", href: "/party-planning-app" },
+  { label: "RSVP & Guest List", href: "/rsvp-and-guest-list" },
+  { label: "Potluck Planner", href: "/potluck-planner" },
+];
+
 /**
  * Account entry points (§7, §11). Kept out of PRIMARY_NAV so the desktop
  * bar stays editorial, but present in the header's own slot and in the
@@ -70,6 +78,7 @@ export const STATIC_SITEMAP_ROUTES: string[] = [
   ...PRIMARY_NAV.map((n) => n.href),
   ...SECONDARY_NAV.map((n) => n.href),
   ...UTILITY_NAV.map((n) => n.href),
+  ...PLANNING_NAV.map((n) => n.href),
   "/founding-host",
   // /login, /forgot-password, /reset-password, /get and every /host route
   // are deliberately absent: each is noindex, and a sign-in form has

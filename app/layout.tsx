@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND_NAME}`,
   },
   description:
-    `Place & Plenty helps you figure out what needs to happen, when it needs to happen, and whether you're actually ready before people arrive. ${TAGLINE}`,
+    "Plan invitations, RSVPs, menus, shopping, guests and gathering-day details in one connected home-hosting platform. Start planning free with Place & Plenty.",
   openGraph: {
     title: BRAND_TITLE,
     description:
