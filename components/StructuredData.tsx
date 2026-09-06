@@ -23,6 +23,30 @@ import { PRICING_TIERS } from "@/lib/pricing";
 
 const ORG_ID = "https://placeandplenty.com/#organization";
 const SITE_ID = "https://placeandplenty.com/#website";
+const FOUNDER_ID = "https://placeandplenty.com/about#alexis-hughes-williams";
+const APP_ID = "https://placeandplenty.com/#software";
+
+const FOUNDER_DATA = {
+  "@type": "Person",
+  "@id": FOUNDER_ID,
+  name: "Alexis Hughes-Williams",
+  url: "https://placeandplenty.com/about",
+  image:
+    "https://placeandplenty.com/images/ChatGPT%20Image%20Sep%202%2C%202026%2C%2009_20_59%20AM.png",
+  jobTitle: "Founder of Place & Plenty",
+  worksFor: { "@id": ORG_ID },
+  alumniOf: {
+    "@type": "CollegeOrUniversity",
+    name: "Tennessee State University",
+  },
+  knowsAbout: ["Home hosting", "Gathering planning", "Hospitality", "Marketing"],
+  sameAs: [
+    "https://www.linkedin.com/in/alexis-hughes-williams-924b6739",
+    "https://www.somethingsweetllc.com/about/",
+    "https://alexishugheswilliams.com",
+    "https://citycurrent.com/2021/02/girl-unknown-inc-making-the-unknowns-known-in-finding-you/",
+  ],
+};
 
 function JsonLd({ data }: { data: unknown }) {
   return (
@@ -55,6 +79,7 @@ export function OrganizationSchema() {
             description:
               "Place & Plenty helps you plan everything between “people are coming” and the doorbell ringing.",
             logo: "https://placeandplenty.com/images/pp-mark.png",
+            founder: { "@id": FOUNDER_ID },
             sameAs: [
               "https://instagram.com/placeandplenty",
               "https://facebook.com/placeandplenty",
@@ -62,12 +87,38 @@ export function OrganizationSchema() {
               "https://youtube.com/@placeandplenty",
             ],
           },
+          FOUNDER_DATA,
           {
             "@type": "WebSite",
             "@id": SITE_ID,
             url: "https://placeandplenty.com",
             name: BRAND_NAME,
             publisher: { "@id": ORG_ID },
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": APP_ID,
+            name: BRAND_NAME,
+            url: "https://placeandplenty.com",
+            applicationCategory: "LifestyleApplication",
+            operatingSystem: "Web",
+            description:
+              "A consumer home-hosting platform for invitations, RSVPs, guests, menus, shopping, contributions, space and gathering-day readiness.",
+            publisher: { "@id": ORG_ID },
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "USD",
+              description: "Start planning one active gathering for free.",
+            },
+            featureList: [
+              "Online invitations",
+              "RSVP and guest list tracking",
+              "Who’s Bringing What contributions",
+              "Menu and shopping planning",
+              "My Guest Book reusable contacts",
+              "HostReady gathering readiness",
+            ],
           },
         ],
       }}
@@ -102,12 +153,39 @@ export function ArticleSchema({
         image: image ? `https://placeandplenty.com${image}` : undefined,
         datePublished: datePublished || undefined,
         dateModified: dateModified || datePublished || undefined,
-        author: { "@id": ORG_ID },
+        author: FOUNDER_DATA,
         publisher: { "@id": ORG_ID },
         isPartOf: { "@id": SITE_ID },
       }}
     />
   );
+}
+
+/** A visible breadcrumb trail, used on public search landing pages. */
+export function BreadcrumbSchema({
+  items,
+}: {
+  items: { name: string; url: string }[];
+}) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      }}
+    />
+  );
+}
+
+/** Founder identity on the page where that experience is visible. */
+export function FounderSchema() {
+  return <JsonLd data={{ "@context": "https://schema.org", ...FOUNDER_DATA }} />;
 }
 
 /** Pricing. See the availability note at the top of this file. */

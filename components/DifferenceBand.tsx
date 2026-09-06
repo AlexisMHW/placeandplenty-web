@@ -63,7 +63,10 @@ export default function DifferenceBand() {
               </div>
 
               <p className="mt-6 font-body text-sm leading-relaxed text-forest/75">Invite them, know who is coming, keep track of what they are bringing, and save the people you host most for next time. No rebuilding the same guest list every time people come over.</p>
-              <div className="mt-auto pt-6"><p className="border-l-2 border-gold pl-4 font-display text-lg italic leading-snug text-forest">Got your own invitations? Bring them over. Yeah, we handle that too.</p></div>
+              <div className="mt-auto pt-6">
+                <p className="border-l-2 border-gold pl-4 font-display text-lg italic leading-snug text-forest">Got your own invitations? Bring them over. Yeah, we handle that too.</p>
+                <Link href="/invitations" className="mt-5 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-xs font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage">Explore invitations <span aria-hidden>→</span></Link>
+              </div>
             </div>
           </article>
 
@@ -96,7 +99,10 @@ export default function DifferenceBand() {
 
         <div className="mx-auto mt-8 flex max-w-[68rem] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-2xl font-body text-sm leading-relaxed text-forest/70">HostReady™ can see the bigger picture too — what is decided, what is still open, and what deserves your attention next.</p>
-          <Link href="/what-it-does" className="inline-flex flex-shrink-0 items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage">See what it does <span aria-hidden>→</span></Link>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            <Link href="/party-planning-app" className="inline-flex flex-shrink-0 items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage">Explore the planning app <span aria-hidden>→</span></Link>
+            <Link href="/what-it-does" className="inline-flex flex-shrink-0 items-center gap-1.5 border-b border-gold pb-0.5 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage">See every feature <span aria-hidden>→</span></Link>
+          </div>
         </div>
       </div>
     </Band>

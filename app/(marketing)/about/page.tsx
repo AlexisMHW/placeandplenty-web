@@ -5,6 +5,7 @@ import CtaBand from "@/components/CtaBand";
 import Photo from "@/components/Photo";
 import { Band, Display } from "@/components/Display";
 import { FOUNDER_PHOTO } from "@/lib/founder";
+import { FounderSchema } from "@/components/StructuredData";
 
 export const metadata: Metadata = {
   title: "About",
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
+      <FounderSchema />
       <PageHero
         eyebrow="About Place & Plenty"
         headline="Made for real hosts."
@@ -100,6 +102,32 @@ export default function AboutPage() {
           <p className="mx-auto mt-6 max-w-2xl font-body text-base leading-relaxed text-offwhite/78">
             Home hosting does not need to look perfect to feel thoughtful. Real homes, real budgets, real families and real life belong here.
           </p>
+        </div>
+      </Band>
+
+      <Band tone="cream">
+        <div id="alexis-hughes-williams" className="mx-auto grid max-w-editorial gap-10 px-6 py-16 md:py-20 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+          <div>
+            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/65">Founder experience</p>
+            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.35rem]">
+              Hospitality is not a new lane for me.
+            </Display>
+            <span aria-hidden className="mt-6 block h-[2px] w-14 bg-gold" />
+          </div>
+          <div className="max-w-prose space-y-5 font-body text-base leading-relaxed text-forest/80">
+            <p>
+              I’m Alexis Hughes-Williams, a Nashville entrepreneur, marketer and longtime host. Before Place &amp; Plenty, I built Something Sweet, LLC and founded Girl, unKnown Inc. My work has always lived where food, people, purpose and making others feel cared for meet.
+            </p>
+            <p>
+              I earned my marketing degree from Tennessee State University, built a bakery around family recipes and real hospitality, and spent years creating community experiences. Place &amp; Plenty brings that experience into one practical home-hosting platform.
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 pt-2 text-sm font-semibold">
+              <a className="underline decoration-gold underline-offset-4 hover:text-goldInk" href="https://www.somethingsweetllc.com/about/" target="_blank" rel="noopener noreferrer">Something Sweet, LLC</a>
+              <a className="underline decoration-gold underline-offset-4 hover:text-goldInk" href="https://citycurrent.com/2021/02/girl-unknown-inc-making-the-unknowns-known-in-finding-you/" target="_blank" rel="noopener noreferrer">cityCURRENT profile</a>
+              <a className="underline decoration-gold underline-offset-4 hover:text-goldInk" href="https://tntribune.com/something-sweet-llc-cookies-for-a-cause/" target="_blank" rel="noopener noreferrer">Tennessee Tribune feature</a>
+              <a className="underline decoration-gold underline-offset-4 hover:text-goldInk" href="https://www.linkedin.com/in/alexis-hughes-williams-924b6739" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </div>
+          </div>
         </div>
       </Band>
 
