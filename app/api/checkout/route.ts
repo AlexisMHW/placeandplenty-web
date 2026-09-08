@@ -111,6 +111,7 @@ export async function POST(req: NextRequest) {
   stripe.set("client_reference_id", user.id);
   if (user.email) stripe.set("customer_email", user.email);
   stripe.set("allow_promotion_codes", "false");
+  stripe.set("automatic_tax[enabled]", "true");
 
   stripe.set("metadata[user_id]", user.id);
   stripe.set("metadata[canonical_product_id]", product.canonicalProductId);
