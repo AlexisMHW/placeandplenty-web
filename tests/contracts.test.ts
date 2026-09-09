@@ -209,6 +209,7 @@ describe("entitlements — the canonical model", () => {
     refunded_at: null,
     revoked_at: null,
     provider: "apple",
+    provider_customer_id: null,
     source: null,
   };
 
