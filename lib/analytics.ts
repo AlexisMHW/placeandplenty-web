@@ -3,6 +3,10 @@
 // every call site in the app already goes through this one function.
 
 export type AnalyticsEvent =
+  | "checklist_requested"
+  | "checklist_signup_completed"
+  | "checklist_downloaded"
+  | "checklist_account_clicked"
   | "homepage_view"
   | "guest_list_signup_started"
   | "guest_list_signup_completed"
