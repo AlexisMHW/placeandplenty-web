@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
-import Photo from "@/components/Photo";
 import Stamp from "@/components/Stamp";
 import { Display } from "@/components/Display";
 import heroGathering from "../homepage/hero-fall-gathering.png.png";
@@ -78,8 +77,8 @@ export default function PageHero({
           </div>
         </div>
 
-        <div className="relative min-h-[16rem] lg:min-h-full">
-          <Photo src={resolvedImage} alt={resolvedAlt} tone="sage" className="absolute inset-0 h-full w-full" sizes="(min-width: 1024px) 60vw, 100vw" priority />
+        <div className="relative aspect-[4/3] min-h-[16rem] w-full overflow-hidden lg:aspect-auto lg:min-h-full" data-page-hero-image>
+          <Image src={resolvedImage} alt={resolvedAlt} fill className="object-cover" sizes="(min-width: 1024px) 60vw, 100vw" priority />
           <div aria-hidden className={`pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-40 bg-gradient-to-r lg:block ${tone === "cream" ? "from-cream via-cream/70 to-transparent" : "from-parchment via-parchment/70 to-transparent"}`} />
           <div aria-hidden className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b lg:hidden ${tone === "cream" ? "from-cream to-transparent" : "from-parchment to-transparent"}`} />
           {stamp && <Stamp top={stamp.top} bottom={stamp.bottom} tone={stamp.tone} size={128} className="absolute bottom-6 right-6 z-20 hidden drop-shadow-sm sm:block lg:bottom-10 lg:right-12" />}

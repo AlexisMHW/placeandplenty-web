@@ -49,8 +49,8 @@ export default function GatheringIdeaCard({
         alt={card.imageAlt}
         compact
         tone="forest"
-        className="aspect-[4/3] w-full"
-        imageClassName="transition-transform duration-400 group-hover:scale-[1.04]"
+        className="aspect-[4/5] w-full bg-parchment"
+        fit="contain"
         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
         priority={priority}
       />

@@ -58,6 +58,7 @@ export default function Photo({
   sizes = "100vw",
   priority = false,
   compact = false,
+  fit = "cover",
 }: {
   src?: string | null;
   /** Required whenever `src` is set. The plate carries no information. */
@@ -80,6 +81,8 @@ export default function Photo({
    * linework alone.
    */
   compact?: boolean;
+  /** Posters need their full composition; photography normally fills the frame. */
+  fit?: "cover" | "contain";
 }) {
   const plate = PLATES[tone];
 
@@ -92,7 +95,7 @@ export default function Photo({
           fill
           sizes={sizes}
           priority={priority}
-          className={`object-cover ${imageClassName}`}
+          className={`${fit === "contain" ? "object-contain" : "object-cover"} ${imageClassName}`}
         />
       </div>
     );

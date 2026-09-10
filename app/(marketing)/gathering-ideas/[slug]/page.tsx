@@ -102,15 +102,17 @@ export default async function GatheringIdeaPage({
         </header>
 
         {idea.heroImage && (
-          <div className="relative aspect-[16/9] w-full sm:aspect-[21/9]">
+          <div className="bg-cream px-6 py-8">
+          <div className="relative mx-auto aspect-[4/5] w-full max-w-[35rem]">
             <Image
               src={idea.heroImage}
               alt={idea.heroImageAlt || ""}
               fill
-              sizes="100vw"
+              sizes="(min-width: 640px) 560px, calc(100vw - 48px)"
               priority
-              className="object-cover"
+              className="object-contain"
             />
+          </div>
           </div>
         )}
 

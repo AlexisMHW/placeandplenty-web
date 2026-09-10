@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import CommunityCarousel from "@/components/CommunityCarousel";
+import { SOCIAL_LINKS } from "@/lib/nav";
 import CtaBand from "@/components/CtaBand";
 import Photo from "@/components/Photo";
 import { Band, Display } from "@/components/Display";
@@ -16,21 +18,24 @@ export const metadata: Metadata = {
   openGraph: { url: "/show-us-how-you-gather" },
 };
 
+const instagram = SOCIAL_LINKS.find(link => link.label === "Instagram")!.href;
+const facebook = SOCIAL_LINKS.find(link => link.label === "Facebook")!.href;
+
 const STEPS: { icon: IconName; title: string; body: string }[] = [
   {
     icon: "camera",
-    title: "Snap a few photos",
-    body: "The moments, the details, and the vibe. Phone photos are exactly right.",
+    title: "Capture your gathering",
+    body: "A few photos or a short video. The food, the people, the detail you almost forgot. Your phone is perfect.",
   },
   {
     icon: "heart",
-    title: "Share your story",
-    body: "Tell us about your gathering — what you planned, what you loved, and what you learned.",
+    title: "Tag us or send a message",
+    body: "Tag @placeandplenty and use #ShowUsHowYouGather on Instagram or Facebook. Prefer a private first look? Send us a DM with your story.",
   },
   {
     icon: "sparkle",
-    title: "Inspire others",
-    body: "Your ideas might be just what another host is looking for this weekend.",
+    title: "Be part of the inspiration",
+    body: "Alexis selects gatherings to feature and confirms permission with the host before sharing on P&P’s socials or website.",
   },
 ];
 
@@ -106,20 +111,16 @@ export default async function ShowUsPage() {
 
             <div className="rounded-2xl border border-sage/30 bg-cream p-6">
               <p className="font-body text-sm leading-relaxed text-forest/80">
-                It only takes a few minutes, but the inspiration lasts a long
-                time.
+                Your people came over. Something made you smile. Show us that part.
               </p>
               <a
-                href="mailto:support@placeandplenty.com?subject=Show%20Us%20How%20You%20Gather"
+                href={instagram}
                 className="mt-4 block w-full rounded-lg bg-forest px-5 py-3 text-center font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
               >
-                Share Your Gathering
+                Share on Instagram
               </a>
-              <p className="mt-3 font-body text-xs leading-relaxed text-forest/60">
-                Send photos and a few lines to{" "}
-                <span className="font-semibold">support@placeandplenty.com</span>
-                . We&rsquo;ll reply about permission before anything appears.
-              </p>
+              <a href={facebook} className="mt-3 block rounded-lg border border-forest px-5 py-3 text-center font-body text-sm font-semibold text-forest">Share on Facebook</a>
+              <p className="mt-3 font-body text-xs leading-relaxed text-forest/70">Find @placeandplenty, tag your post, or send us a message. A tag is an invitation to look, not permission to republish.</p>
             </div>
           </div>
         </div>
@@ -133,7 +134,7 @@ export default async function ShowUsPage() {
           </h2>
 
           {stories.length > 0 ? (
-            <ul className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <CommunityCarousel>
               {stories.map((story, i) => (
                 <li key={story._sys.filename}>
                   <Link
@@ -165,25 +166,23 @@ export default async function ShowUsPage() {
                   </Link>
                 </li>
               ))}
-            </ul>
+            </CommunityCarousel>
           ) : (
             <div className="mt-8 rounded-2xl border border-sage/30 bg-cream px-6 py-14 text-center">
               <BotanicalSprig className="mx-auto text-olive" size={56} />
               <p className="mx-auto mt-5 max-w-lg font-display text-2xl leading-snug text-forest">
-                This is where your gatherings will be.
+                Your people. Your place. Your way of gathering.
               </p>
               <p className="mx-auto mt-3 max-w-xl font-body text-base leading-relaxed text-forest/75">
-                Every gathering here is a real one, shared by the person who
-                hosted it and published only with their permission. That is
-                the whole point of the page, so the ones you see will always
-                be real — starting with yours.
+                Follow along on Instagram and Facebook for hosting ideas and share a gathering of your own. We select community features with the host’s permission. Paper plates absolutely count.
               </p>
               <a
-                href="mailto:support@placeandplenty.com?subject=Show%20Us%20How%20You%20Gather"
+                href={instagram}
                 className="mt-7 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
               >
-                Share your gathering
+                Follow P&P on Instagram
               </a>
+              <a href={facebook} className="mt-4 block font-body font-semibold text-forest underline underline-offset-4">Find P&P on Facebook</a>
             </div>
           )}
         </div>
