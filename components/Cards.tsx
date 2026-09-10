@@ -196,13 +196,13 @@ export function TagCard({
           caption={photoCaption}
           compact={!photoCaption}
           tone="forest"
-          className="aspect-[4/3] w-full"
-          imageClassName="transition-transform duration-400 group-hover:scale-[1.03]"
+          className="aspect-[4/5] w-full bg-parchment"
+          fit="contain"
           sizes="(min-width: 1280px) 20vw, (min-width: 640px) 45vw, 100vw"
           priority={priority}
         />
         {tag && (
-          <span className="absolute left-3 top-3 rounded-md bg-forest/90 px-2.5 py-1 font-body text-[0.6rem] font-bold uppercase tracking-[0.14em] text-offwhite backdrop-blur-sm">
+          <span className="mx-5 mt-4 inline-flex rounded-md bg-forest px-2.5 py-1 font-body text-[0.6rem] font-bold uppercase tracking-[0.14em] text-offwhite">
             {tag}
           </span>
         )}

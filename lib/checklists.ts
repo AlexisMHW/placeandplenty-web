@@ -1,6 +1,6 @@
 export const CHECKLISTS = [
   {
-    slug: "before-the-doorbell", name: "Before the Doorbell", image: "/images/article-night-before-list.png",
+    slug: "before-the-doorbell", name: "Before the Doorbell", image: "/images/checklist-kits/before-the-doorbell.webp",
     headline: "The doorbell rings. You're still in a towel.",
     description: "The food is almost ready. The house is mostly ready. You? Not even close. Get a free hosting checklist that makes room for the person doing the hosting, too.",
     note: "Put the shower on the list. You are part of the gathering, too.",
@@ -12,7 +12,7 @@ export const CHECKLISTS = [
     ],
   },
   {
-    slug: "halloween", name: "Halloween", image: "/images/gathering-halloween-spooktacular.png",
+    slug: "halloween", name: "Halloween", image: "/images/checklist-kits/halloween.webp",
     headline: "A little spooky. A lot more ready.",
     description: "A free Halloween hosting checklist for the food, the fun, and the details that tend to sneak up on you.",
     note: "The only surprise should be the costume reveal.",
@@ -24,7 +24,7 @@ export const CHECKLISTS = [
     ],
   },
   {
-    slug: "friendsgiving", name: "Friendsgiving", image: "/images/gathering-friendsgiving.png",
+    slug: "friendsgiving", name: "Friendsgiving", image: "/images/checklist-kits/friendsgiving.webp",
     headline: "Everyone brings something. You keep your sanity.",
     description: "A free Friendsgiving checklist to sort out the guest list, shared dishes, and all the little details before everyone arrives.",
     note: "Five desserts are lovely. A main dish would also be nice.",
@@ -36,7 +36,7 @@ export const CHECKLISTS = [
     ],
   },
   {
-    slug: "thanksgiving", name: "Thanksgiving", image: "/images/gathering-friendsgiving.png",
+    slug: "thanksgiving", name: "Thanksgiving", image: "/images/checklist-kits/thanksgiving.webp",
     headline: "More time at the table. Less time keeping it all in your head.",
     description: "A free Thanksgiving hosting checklist for the menu, shopping, kitchen timing, and a home ready to welcome everyone.",
     note: "You can be the host without being the entire kitchen staff.",
@@ -48,7 +48,7 @@ export const CHECKLISTS = [
     ],
   },
   {
-    slug: "game-day", name: "Game Day", image: "/images/gathering-game-day.png",
+    slug: "game-day", name: "Game Day", image: "/images/checklist-kits/game-day.webp",
     headline: "The game can be unpredictable. Your hosting plan doesn't have to be.",
     description: "A free game day checklist for a crowd that is fed, a screen everyone can see, and a host who gets to watch, too.",
     note: "You deserve to see more than the score from the kitchen.",
