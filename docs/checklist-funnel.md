@@ -2,12 +2,12 @@
 
 ## Public entry points
 
-- /hosting-checklists
-- /hosting-checklists/before-the-doorbell
-- /hosting-checklists/halloween
-- /hosting-checklists/friendsgiving
-- /hosting-checklists/thanksgiving
-- /hosting-checklists/game-day
+- /gathering-checklists
+- /gathering-checklists/before-the-doorbell
+- /gathering-checklists/halloween
+- /gathering-checklists/friendsgiving
+- /gathering-checklists/thanksgiving
+- /gathering-checklists/game-day
 
 Five occasion pages share one form and handler. On successful contact capture,
 the visitor can download the matching two-page PDF and explicitly create a free
@@ -107,7 +107,7 @@ Hook: The doorbell rings. You're still in a towel.
 Supporting copy: The food is almost ready. The house is mostly ready. You?
 Not even close. Let’s make room for the person doing the hosting, too.
 CTA: Help Me Beat the Doorbell.
-Destination: /hosting-checklists/before-the-doorbell
+Destination: /gathering-checklists/before-the-doorbell
 
 The hub features this hook year-round. The checklist protects a personal
 getting-ready break and explains delegation without promising that P&P has

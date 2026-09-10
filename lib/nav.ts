@@ -30,7 +30,7 @@ export const SECONDARY_NAV: NavItem[] = [
 
 /** Search-led product pages. Kept out of the primary bar to preserve its hierarchy. */
 export const PLANNING_NAV: NavItem[] = [
-  { label: "Free Hosting Checklists", href: "/hosting-checklists" },
+  { label: "Free Gathering Checklists", href: "/gathering-checklists" },
   { label: "Online Invitations", href: "/invitations" },
   { label: "Party Planning App", href: "/party-planning-app" },
   { label: "RSVP & Guest List", href: "/rsvp-and-guest-list" },
@@ -81,11 +81,11 @@ export const STATIC_SITEMAP_ROUTES: string[] = [
   ...UTILITY_NAV.map((n) => n.href),
   ...PLANNING_NAV.map((n) => n.href),
   "/founding-host",
-  "/hosting-checklists/before-the-doorbell",
-  "/hosting-checklists/halloween",
-  "/hosting-checklists/friendsgiving",
-  "/hosting-checklists/thanksgiving",
-  "/hosting-checklists/game-day",
+  "/gathering-checklists/before-the-doorbell",
+  "/gathering-checklists/halloween",
+  "/gathering-checklists/friendsgiving",
+  "/gathering-checklists/thanksgiving",
+  "/gathering-checklists/game-day",
   // /login, /forgot-password, /reset-password, /get and every /host route
   // are deliberately absent: each is noindex, and a sign-in form has
   // nothing to offer search.

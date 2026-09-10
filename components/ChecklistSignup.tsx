@@ -42,7 +42,7 @@ export default function ChecklistSignup({ slug, name }: { slug: string; name: st
         <p className="mt-3 font-body text-sm text-forest/70">Already have an account? <Link className="underline underline-offset-4" href="/host">Open My Gatherings</Link></p>
         <p className="mt-3 font-body text-xs text-forest/60">Requesting a checklist does not create a website account.</p>
       </div>
-      <Link className="mt-6 inline-block font-body text-sm text-forest underline underline-offset-4" href="/hosting-checklists">Explore the other free checklists</Link>
+      <Link className="mt-6 inline-block font-body text-sm text-forest underline underline-offset-4" href="/gathering-checklists">Explore the other free checklists</Link>
     </div>
   );
 
