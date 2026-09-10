@@ -10,7 +10,7 @@ export const COMPARISONS = [
     source: "https://www.evite.com/", sourceLabel: "Evite’s invitations and hosting tools",
     rows: [
       { topic: "Invitation & RSVP", other: "Digital invitations, RSVP tracking and guest messages.", pp: "Invitations and RSVPs alongside the gathering’s menu, shopping list and timeline." },
-      { topic: "Shared dishes", other: "SignUp Sheets for food contributions and other tasks.", pp: "Who’s Bringing What keeps contributions within your gathering plan; paid access applies." },
+      { topic: "Shared dishes", other: "SignUp Sheets for food contributions and other tasks.", pp: "Who’s Bringing What keeps contributions within your gathering plan, including on Free." },
       { topic: "Where to begin", other: "Choose an invitation or create a shareable event page.", pp: "Start with your gathering, then work through your people, food and preparation." },
     ],
     faqs: [

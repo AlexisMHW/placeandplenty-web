@@ -40,6 +40,8 @@ export const PRICING_TIERS: PricingTier[] = [
     includes: [
       "One open gathering at a time",
       "Menu, shopping list and timeline",
+      "HostReady readiness score",
+      "Who’s Bringing What — coordinate guest contributions",
       "Invite your people and track RSVPs",
       "My Guest Book — the people you host most",
       "My Hosting Closet — organise what you already own",
@@ -51,11 +53,10 @@ export const PRICING_TIERS: PricingTier[] = [
     billing: "/gathering",
     priceLine: `$9.99 ${TAX_QUALIFIER}`,
     description:
-      "Everything Place & Plenty can do, for one gathering. Not a subscription.",
+      "Premium gathering features for one gathering. Not a subscription.",
     includes: [
       "Unlocks one gathering, and stays with it",
-      "HostReady readiness score",
-      "Contributions, registry links and song requests",
+      "Includes the Free gathering tools",
       "Smart Closet matching — what you have, what you still need",
       "The gathering photo gallery",
     ],

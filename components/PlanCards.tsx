@@ -39,7 +39,7 @@ function PlanCard({ tier, checkoutLive }: { tier: PricingTier; checkoutLive: boo
   return (
     <div className={`relative flex h-full flex-col rounded-2xl bg-offwhite p-7 text-center ${highlight ? "border-2 border-forest shadow-lift lg:-mt-6 lg:mb-6" : "border border-sage/30 shadow-softer"}`}>
       {highlight && (
-        <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-forest px-3.5 py-1.5 font-body text-[0.6rem] font-bold uppercase tracking-[0.18em] text-offwhite">Most popular</span>
+        <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-forest px-3.5 py-1.5 font-body text-[0.6rem] font-bold uppercase tracking-[0.18em] text-offwhite">For frequent hosts</span>
       )}
       <p className="font-body text-[0.72rem] font-bold uppercase tracking-[0.22em] text-forest/70">{tier.name}</p>
       <p className="mt-4 flex items-start justify-center font-display text-forest">
@@ -47,7 +47,7 @@ function PlanCard({ tier, checkoutLive }: { tier: PricingTier; checkoutLive: boo
         <span className="text-[3.2rem] leading-none">{tier.price.slice(1)}</span>
         {tier.billing && <span className="mt-6 ml-1.5 font-body text-base text-forest/70">{tier.billing}</span>}
       </p>
-      <p className="mt-2 font-body text-xs text-forest/65">{free ? "forever" : qualifier}</p>
+      <p className="mt-2 font-body text-xs text-forest/65">{free ? "No subscription required" : qualifier}</p>
       <span aria-hidden className="mx-auto mt-5 block h-px w-14 bg-gold" />
       <p className="mt-5 font-body text-sm leading-relaxed text-forest/75">{tier.description}</p>
       <ul className="mt-6 space-y-3 text-left">
