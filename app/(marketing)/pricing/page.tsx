@@ -1,3 +1,4 @@
+import HostingComparisonTable from "@/components/HostingComparisonTable";
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
@@ -150,6 +151,8 @@ export default function PricingPage() {
           </div>
         </div>
       </Band>
+
+      <HostingComparisonTable compact />
 
       <Band tone="cream">
         <div className="mx-auto max-w-prose px-6 py-16 md:py-20">
