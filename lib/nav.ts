@@ -30,6 +30,7 @@ export const SECONDARY_NAV: NavItem[] = [
 
 /** Search-led product pages. Kept out of the primary bar to preserve its hierarchy. */
 export const PLANNING_NAV: NavItem[] = [
+  { label: "Compare Hosting Tools", href: "/compare" },
   { label: "Free Gathering Checklists", href: "/gathering-checklists" },
   { label: "Online Invitations", href: "/invitations" },
   { label: "Party Planning App", href: "/party-planning-app" },
@@ -81,6 +82,8 @@ export const STATIC_SITEMAP_ROUTES: string[] = [
   ...UTILITY_NAV.map((n) => n.href),
   ...PLANNING_NAV.map((n) => n.href),
   "/founding-host",
+  "/compare/evite",
+  "/compare/paperless-post",
   "/gathering-checklists/before-the-doorbell",
   "/gathering-checklists/halloween",
   "/gathering-checklists/friendsgiving",
