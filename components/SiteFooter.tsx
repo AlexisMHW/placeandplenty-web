@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import Icon, { type IconName } from "@/components/Icon";
+import Icon from "@/components/Icon";
 import QrCode from "@/components/QrCode";
 import Wordmark from "@/components/Wordmark";
 import { BRAND_NAME, TAGLINE } from "@/lib/brand";
@@ -45,12 +45,14 @@ const COLUMNS = [
   { heading: "Legal", items: LEGAL },
 ];
 
-const SOCIAL_ICONS: Record<string, IconName> = {
-  Instagram: "camera",
-  Facebook: "chat",
-  TikTok: "music",
-  YouTube: "photo",
-};
+function SocialMark({ name }: { name: string }) {
+  return <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" className="shrink-0">
+    {name === "Instagram" && <g fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r=".9" fill="currentColor" stroke="none" /></g>}
+    {name === "Facebook" && <path fill="currentColor" d="M14 22v-9h3l.5-4H14V7c0-1.2.4-2 2-2h2V1.5A24 24 0 0 0 15 1c-3 0-5 1.8-5 5v3H7v4h3v9z" />}
+    {name === "TikTok" && <path fill="currentColor" d="M15 2h3c.3 2.6 1.8 4.2 4 4.5v3.2a9 9 0 0 1-4-1.3v7a6.5 6.5 0 1 1-5.5-6.4v3.3a3.2 3.2 0 1 0 2.5 3.1z" />}
+    {name === "YouTube" && <><rect x="1" y="4.5" width="22" height="15" rx="4.5" fill="currentColor" /><path d="m10 8 6 4-6 4z" className="fill-forest" /></>}
+  </svg>;
+}
 
 function StoreBadge({
   href,
@@ -219,19 +221,21 @@ export default function SiteFooter() {
 
               <div className="mt-8">
                 <h2 className="font-body text-xs font-bold uppercase tracking-[0.2em] text-gold">
-                  Let&apos;s Connect
+                  Good company, wherever you scroll.
                 </h2>
-                <ul className="mt-4 flex flex-wrap gap-3">
+                <p className="mt-3 font-body text-sm text-offwhite/75">Follow @placeandplenty for ideas, real gatherings, and the details that make hosting easier.</p>
+                <ul className="mt-5 grid max-w-sm grid-cols-2 gap-3">
                   {SOCIAL_LINKS.map((social) => (
                     <li key={social.label}>
                       <a
                         href={social.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-offwhite/25 text-offwhite/80 transition-colors duration-300 hover:border-gold hover:text-offwhite"
+                        aria-label={`Follow Place & Plenty on ${social.label} (opens in a new tab)`}
+                        className="group flex min-h-12 items-center gap-3 rounded-xl border border-gold/45 bg-offwhite/5 px-4 py-3 text-offwhite shadow-sm transition-colors duration-300 hover:border-gold hover:bg-offwhite/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
                       >
-                        <span className="sr-only">{social.label}</span>
-                        <Icon name={SOCIAL_ICONS[social.label] || "heart"} size={17} />
+                        <SocialMark name={social.label} />
+                        <span className="font-body text-sm font-semibold">{social.label}</span>
                       </a>
                     </li>
                   ))}
