@@ -72,7 +72,7 @@ export default function GetPage() {
           <p className="mt-4 font-body text-lg leading-relaxed text-forest/80">
             {hasAnyStoreLink()
               ? "Choose your phone below, or open this page on the device you want it on."
-              : "The iPhone and Android apps arrive with the app release. Everything Place & Plenty does works in your browser today — start free and your gatherings will be waiting when the apps land."}
+              : "The iPhone and Android apps arrive with the app release. Start planning free in your browser today. Some features require the mobile app; your account and gatherings carry across when the apps arrive."}
           </p>
 
           {!hasAnyStoreLink() && (
