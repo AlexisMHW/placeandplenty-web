@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import CommunityCarousel from "@/components/CommunityCarousel";
+import CuratorFeed from "@/components/CuratorFeed";
 import { SOCIAL_LINKS } from "@/lib/nav";
 import CtaBand from "@/components/CtaBand";
 import Photo from "@/components/Photo";
 import { Band, Display } from "@/components/Display";
 import Icon, { type IconName } from "@/components/Icon";
-import { BotanicalSprig } from "@/components/Botanical";
 import { getAllCommunityStories } from "@/lib/tina-content";
 
 export const metadata: Metadata = {
@@ -133,6 +133,10 @@ export default async function ShowUsPage() {
             The community gallery
           </h2>
 
+          <p className="mt-5 max-w-2xl font-display text-2xl leading-snug text-forest">Your people. Your place. Your way of gathering.</p>
+          <p className="mt-3 max-w-2xl font-body leading-relaxed text-forest/75">A little inspiration from @placeandplenty. Paper plates absolutely count.</p>
+          <CuratorFeed />
+
           {stories.length > 0 ? (
             <CommunityCarousel>
               {stories.map((story, i) => (
@@ -167,24 +171,7 @@ export default async function ShowUsPage() {
                 </li>
               ))}
             </CommunityCarousel>
-          ) : (
-            <div className="mt-8 rounded-2xl border border-sage/30 bg-cream px-6 py-14 text-center">
-              <BotanicalSprig className="mx-auto text-olive" size={56} />
-              <p className="mx-auto mt-5 max-w-lg font-display text-2xl leading-snug text-forest">
-                Your people. Your place. Your way of gathering.
-              </p>
-              <p className="mx-auto mt-3 max-w-xl font-body text-base leading-relaxed text-forest/75">
-                Follow along on Instagram and Facebook for hosting ideas and share a gathering of your own. We select community features with the host’s permission. Paper plates absolutely count.
-              </p>
-              <a
-                href={instagram}
-                className="mt-7 inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
-              >
-                Follow P&P on Instagram
-              </a>
-              <a href={facebook} className="mt-4 block font-body font-semibold text-forest underline underline-offset-4">Find P&P on Facebook</a>
-            </div>
-          )}
+          ) : null}
         </div>
       </Band>
 
