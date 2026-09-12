@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Suspense } from "react";
 import { Playfair_Display, Lato } from "next/font/google";
 import "./globals.css";
 import { BRAND_NAME, BRAND_TITLE, TAGLINE } from "@/lib/brand";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -87,6 +89,9 @@ export default function RootLayout({
     <html lang="en" className={`${playfair.variable} ${lato.variable}`}>
       <body className="font-body antialiased">
         {children}
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
           strategy="afterInteractive"
