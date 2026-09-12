@@ -1,7 +1,9 @@
-// Minimal analytics wrapper. Swap the `track` implementation for
-// Plausible/Fathom/PostHog (privacy-conscious options) at deploy time —
-// every call site in the app already goes through this one function.
+"use client";
 
+// One canonical client-side analytics wrapper. Keep event payloads free of
+// names, emails, invitation content, guest data, or other private content.
+// GA4 and PostHog receive the same business events so acquisition and product
+// behavior can be reconciled without maintaining two vocabularies.
 export type AnalyticsEvent =
   | "checklist_requested"
   | "checklist_signup_completed"
@@ -15,16 +17,41 @@ export type AnalyticsEvent =
   | "app_store_clicked"
   | "google_play_clicked"
   | "pricing_viewed"
-  | "support_viewed";
+  | "support_viewed"
+  | "signup_started"
+  | "account_created"
+  | "app_store_click"
+  | "play_store_click"
+  | "gathering_started"
+  | "gathering_created"
+  | "paywall_viewed"
+  | "checkout_started"
+  | "purchase_completed";
 
-export function track(event: AnalyticsEvent, meta?: Record<string, string>) {
+type AnalyticsValue = string | number | boolean | null | undefined;
+type AnalyticsMeta = Record<string, AnalyticsValue>;
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+    posthog?: {
+      capture?: (event: string, properties?: Record<string, unknown>) => void;
+    };
+  }
+}
+
+export function track(event: AnalyticsEvent, meta: AnalyticsMeta = {}) {
   if (typeof window === "undefined") return;
-  // No sensitive form content (names, emails) ever passed here — only
-  // event name + non-identifying metadata (e.g. gathering type category).
+
+  const cleanMeta = Object.fromEntries(
+    Object.entries(meta).filter(([, value]) => value !== undefined)
+  );
+
+  window.gtag?.("event", event, cleanMeta);
+  window.posthog?.capture?.(event, cleanMeta);
+
   if (process.env.NODE_ENV !== "production") {
     // eslint-disable-next-line no-console
-    console.log("[analytics]", event, meta ?? {});
-    return;
+    console.log("[analytics]", event, cleanMeta);
   }
-  // window.plausible?.(event, { props: meta });
 }
