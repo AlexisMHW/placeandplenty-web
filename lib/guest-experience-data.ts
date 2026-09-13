@@ -14,7 +14,7 @@ export interface GuestExperienceParty {
   name: string;
 }
 
-export interface GuestExperienceUpdate {
+interface GuestUpdateRow {
   id: string;
   category: string;
   title: string;
@@ -23,9 +23,16 @@ export interface GuestExperienceUpdate {
   require_acknowledgement: boolean;
   audience: string;
   published_at: string;
+}
+
+export interface GuestExperienceUpdate extends GuestUpdateRow {
   targeted: number;
   seen: number;
   acknowledged: number;
+  seenNames: string[];
+  unseenNames: string[];
+  acknowledgedNames: string[];
+  unacknowledgedNames: string[];
 }
 
 export async function getGuestExperience(gatheringId: string): Promise<{
@@ -55,20 +62,22 @@ export async function getGuestExperience(gatheringId: string): Promise<{
   if (guestError) throw guestError;
   if (updateError) throw updateError;
 
-  const parties = (partyRows ?? []).map((p: { id: string; party_name: string | null }) => ({
+  const parties: GuestExperienceParty[] = (partyRows ?? []).map((p: { id: string; party_name: string | null }) => ({
     id: p.id,
     name: p.party_name || "Guest / household",
   }));
-  const allPartyIds = new Set(parties.map((p) => p.id));
+  const partyNameById = new Map(parties.map((party) => [party.id, party.name]));
+  const allPartyIds = new Set(parties.map((party) => party.id));
   const comingPartyIds = new Set<string>();
   const awaitingPartyIds = new Set<string>();
   for (const row of guestRows ?? []) {
     if (!row.invitation_party_id) continue;
     if (row.rsvp_status === "yes" || row.rsvp_status === "maybe") comingPartyIds.add(row.invitation_party_id);
-    if (row.rsvp_status === "invited" || row.rsvp_status === "no_response") awaitingPartyIds.add(row.invitation_party_id);
+    if (row.rsvp_status === "no_response") awaitingPartyIds.add(row.invitation_party_id);
   }
 
-  const updateIds = (updateRows ?? []).map((u: { id: string }) => u.id);
+  const rows = (updateRows ?? []) as GuestUpdateRow[];
+  const updateIds = rows.map((u) => u.id);
   const [{ data: selectedRows }, { data: receiptRows }] = updateIds.length > 0
     ? await Promise.all([
         supabase.from("guest_update_audience_parties").select("guest_update_id, invitation_party_id").in("guest_update_id", updateIds),
@@ -82,6 +91,7 @@ export async function getGuestExperience(gatheringId: string): Promise<{
     set.add(row.invitation_party_id);
     selectedByUpdate.set(row.guest_update_id, set);
   }
+
   const receiptsByUpdate = new Map<string, Array<{ invitation_party_id: string; acknowledged_at: string | null }>>();
   for (const row of receiptRows ?? []) {
     const list = receiptsByUpdate.get(row.guest_update_id) ?? [];
@@ -89,7 +99,11 @@ export async function getGuestExperience(gatheringId: string): Promise<{
     receiptsByUpdate.set(row.guest_update_id, list);
   }
 
-  const updates = (updateRows ?? []).map((u: any) => {
+  const namesFor = (ids: Iterable<string>) => Array.from(ids)
+    .map((id) => partyNameById.get(id) ?? "Guest / household")
+    .sort((a, b) => a.localeCompare(b));
+
+  const updates: GuestExperienceUpdate[] = rows.map((u) => {
     const targetIds = u.audience === "coming"
       ? comingPartyIds
       : u.audience === "awaiting"
@@ -98,12 +112,21 @@ export async function getGuestExperience(gatheringId: string): Promise<{
           ? selectedByUpdate.get(u.id) ?? new Set<string>()
           : allPartyIds;
     const receipts = (receiptsByUpdate.get(u.id) ?? []).filter((r) => targetIds.has(r.invitation_party_id));
+    const seenIds = new Set(receipts.map((r) => r.invitation_party_id));
+    const acknowledgedIds = new Set(receipts.filter((r) => !!r.acknowledged_at).map((r) => r.invitation_party_id));
+    const unseenIds = new Set(Array.from(targetIds).filter((id) => !seenIds.has(id)));
+    const unacknowledgedIds = new Set(Array.from(targetIds).filter((id) => !acknowledgedIds.has(id)));
+
     return {
       ...u,
       targeted: targetIds.size,
-      seen: receipts.length,
-      acknowledged: receipts.filter((r) => !!r.acknowledged_at).length,
-    } as GuestExperienceUpdate;
+      seen: seenIds.size,
+      acknowledged: acknowledgedIds.size,
+      seenNames: namesFor(seenIds),
+      unseenNames: namesFor(unseenIds),
+      acknowledgedNames: namesFor(acknowledgedIds),
+      unacknowledgedNames: namesFor(unacknowledgedIds),
+    };
   });
 
   return {
