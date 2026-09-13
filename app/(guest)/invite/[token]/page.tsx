@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import GuestPageClient from "./GuestPageClient";
+import GuestLivingPanel from "@/components/guest/GuestLivingPanel";
 import { lookupGuestPage } from "@/lib/guest-api";
+import { lookupGuestLivingPage } from "@/lib/guest-living-api";
 
 // This route must never be indexed — it's reached only via a
 // bearer-token link sent in an invitation. robots.txt also disallows
@@ -10,10 +12,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// Never prerendered, never cached. guest-page-lookup resolves live, and
-// the app repo is explicit that an edited invitation must not be served
-// from a frozen copy — a guest page that disagrees with My People is
-// worse than a slow one.
+// Never prerendered, never cached. Guest surfaces resolve live so an
+// edited invitation or update cannot disagree with the host workspace.
 export const dynamic = "force-dynamic";
 
 export default async function InvitePage({
@@ -21,15 +21,11 @@ export default async function InvitePage({
 }: {
   params: { token: string };
 }) {
-  // Fetched on the server so the invitation is painted on first byte.
-  // This is opened on a phone, from a message, by someone deciding
-  // whether to tap through — a blank skeleton while JS boots and a
-  // round-trip completes was the wrong trade on the most mobile-
-  // critical surface in the product.
-  const result = await lookupGuestPage(params.token);
+  const [result, livingResult] = await Promise.all([
+    lookupGuestPage(params.token),
+    lookupGuestLivingPage(params.token),
+  ]);
 
-  // An invalid token is a final answer, so say so without shipping a
-  // client render to discover it.
   if (result.status === 404) {
     return (
       <div className="mx-auto max-w-prose px-6 py-24 text-center">
@@ -43,10 +39,17 @@ export default async function InvitePage({
     );
   }
 
-  // Anything else — a transient upstream failure — falls through with no
-  // initial data and the client retries. Better than showing a dead end
-  // for something that may work a second later.
   const initialData = result.ok ? result.data : null;
+  const livingData = livingResult.ok ? livingResult.data : null;
 
-  return <GuestPageClient token={params.token} initialData={initialData} />;
+  return (
+    <>
+      <GuestPageClient token={params.token} initialData={initialData} />
+      <GuestLivingPanel
+        token={params.token}
+        gatheringName={initialData?.displayName || "this gathering"}
+        initialData={livingData}
+      />
+    </>
+  );
 }
