@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, RESET_PASSWORD_PATH } from "@/lib/auth-redirects";
+import AuthTurnstile, { authTurnstileEnabled } from "@/components/AuthTurnstile";
 
 // Request a password-reset email.
 //
@@ -29,6 +30,8 @@ import { callbackUrl, RESET_PASSWORD_PATH } from "@/lib/auth-redirects";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [status, setStatus] = useState<
     "idle" | "submitting" | "sent" | "error"
   >("idle");
@@ -36,15 +39,24 @@ export default function ForgotPasswordForm() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setStatus("submitting");
     setMessage("");
+
+    if (authTurnstileEnabled && !captchaToken) {
+      setMessage("Please complete the quick security check and try again.");
+      setStatus("error");
+      return;
+    }
+
+    setStatus("submitting");
 
     const supabase = getBrowserClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: callbackUrl(window.location.origin, RESET_PASSWORD_PATH),
+      ...(authTurnstileEnabled ? { captchaToken } : {}),
     });
 
     if (error) {
+      setCaptchaResetKey((value) => value + 1);
       // Rate limiting is the realistic failure and is worth naming.
       // Anything else is reported without echoing whether the address
       // exists.
@@ -77,7 +89,10 @@ export default function ForgotPasswordForm() {
         <div className="mt-6 flex flex-wrap gap-4 font-body text-sm">
           <button
             type="button"
-            onClick={() => setStatus("idle")}
+            onClick={() => {
+              setStatus("idle");
+              setCaptchaResetKey((value) => value + 1);
+            }}
             className="font-semibold underline decoration-gold underline-offset-4 text-forest"
           >
             Use a different email
@@ -117,6 +132,8 @@ export default function ForgotPasswordForm() {
       <p className="mt-2 font-body text-sm text-forest/60">
         The address you use for Place &amp; Plenty.
       </p>
+
+      <AuthTurnstile onToken={setCaptchaToken} resetKey={captchaResetKey} />
 
       {status === "error" && (
         <p role="alert" className="mt-4 font-body text-sm text-error">
