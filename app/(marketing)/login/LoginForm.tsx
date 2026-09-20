@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
+import AuthTurnstile, { authTurnstileEnabled } from "@/components/AuthTurnstile";
 
 // Sign-in for the host web app. Same Supabase Auth identity as the
 // native app (§11) — this creates no separate web account model.
@@ -39,6 +40,8 @@ export default function LoginForm({ next }: { next?: string }) {
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [status, setStatus] = useState<
     "idle" | "submitting" | "sent" | "error"
   >("idle");
@@ -48,8 +51,15 @@ export default function LoginForm({ next }: { next?: string }) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setStatus("submitting");
     setMessage("");
+
+    if (authTurnstileEnabled && !captchaToken) {
+      setMessage("Please complete the quick security check and try again.");
+      setStatus("error");
+      return;
+    }
+
+    setStatus("submitting");
 
     const supabase = getBrowserClient();
 
@@ -57,8 +67,10 @@ export default function LoginForm({ next }: { next?: string }) {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        ...(authTurnstileEnabled ? { options: { captchaToken } } : {}),
       });
       if (error) {
+        setCaptchaResetKey((value) => value + 1);
         setMessage(error.message);
         setStatus("error");
         return;
@@ -75,10 +87,12 @@ export default function LoginForm({ next }: { next?: string }) {
       email,
       options: {
         emailRedirectTo: callbackUrl(window.location.origin, destination),
+        ...(authTurnstileEnabled ? { captchaToken } : {}),
       },
     });
 
     if (error) {
+      setCaptchaResetKey((value) => value + 1);
       setMessage(error.message);
       setStatus("error");
       return;
@@ -99,7 +113,10 @@ export default function LoginForm({ next }: { next?: string }) {
         </p>
         <button
           type="button"
-          onClick={() => setStatus("idle")}
+          onClick={() => {
+            setStatus("idle");
+            setCaptchaResetKey((value) => value + 1);
+          }}
           className="mt-6 font-body text-sm font-semibold underline decoration-gold underline-offset-4 text-forest"
         >
           Use a different email
@@ -180,6 +197,8 @@ export default function LoginForm({ next }: { next?: string }) {
           />
         </div>
       )}
+
+      <AuthTurnstile onToken={setCaptchaToken} resetKey={captchaResetKey} />
 
       {status === "error" && (
         <p role="alert" className="mt-4 font-body text-sm text-error">
