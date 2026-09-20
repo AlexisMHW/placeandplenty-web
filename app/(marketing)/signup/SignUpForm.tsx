@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
+import AuthTurnstile, { authTurnstileEnabled } from "@/components/AuthTurnstile";
 
 // WEB ACCOUNT CREATION. Founder requirement, 28 Aug 2026: a person must
 // be able to create an account on the website and use Place & Plenty
@@ -53,6 +54,9 @@ export default function SignUpForm({ next }: { next?: string }) {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [status, setStatus] = useState<
     "idle" | "submitting" | "check-inbox" | "error"
   >("idle");
@@ -63,8 +67,21 @@ export default function SignUpForm({ next }: { next?: string }) {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
+    // Honeypot: bots that fill every field receive a success-shaped response
+    // without creating an account.
+    if (companyWebsite.trim()) {
+      setStatus("check-inbox");
+      return;
+    }
+
     if (password.length < MIN_PASSWORD) {
       setMessage(`Please use at least ${MIN_PASSWORD} characters.`);
+      setStatus("error");
+      return;
+    }
+
+    if (authTurnstileEnabled && !captchaToken) {
+      setMessage("Please complete the quick security check and try again.");
       setStatus("error");
       return;
     }
@@ -83,10 +100,12 @@ export default function SignUpForm({ next }: { next?: string }) {
           last_name: lastName.trim() || null,
         },
         emailRedirectTo: callbackUrl(window.location.origin, destination),
+        ...(authTurnstileEnabled ? { captchaToken } : {}),
       },
     });
 
     if (error) {
+      setCaptchaResetKey((value) => value + 1);
       setMessage(error.message);
       setStatus("error");
       return;
@@ -131,8 +150,13 @@ export default function SignUpForm({ next }: { next?: string }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-2xl border border-sage/30 bg-offwhite p-7 shadow-softer md:p-8"
+      className="relative rounded-2xl border border-sage/30 bg-offwhite p-7 shadow-softer md:p-8"
     >
+      <div aria-hidden="true" className="pointer-events-none absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
+        <label htmlFor="signup-company-website">Company website</label>
+        <input id="signup-company-website" type="text" tabIndex={-1} autoComplete="off" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} />
+      </div>
+
       <h2 className="font-display text-2xl text-forest">Create your account</h2>
       <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">
         Free to start. One active gathering at a time, and everything you need
@@ -217,6 +241,8 @@ export default function SignUpForm({ next }: { next?: string }) {
           At least {MIN_PASSWORD} characters.
         </p>
       </div>
+
+      <AuthTurnstile onToken={setCaptchaToken} resetKey={captchaResetKey} />
 
       {status === "error" && (
         <p
