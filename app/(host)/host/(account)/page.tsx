@@ -303,7 +303,7 @@ export default async function HostHomePage() {
                     >
                       <span className="truncate">{g.name}</span>
                       <span className="flex flex-shrink-0 items-center gap-2 text-xs text-forest/50">
-                        <span>{statusLabel(g.effective_status)}</span>
+                        <span className="capitalize">{g.effective_status}</span>
                         <span>{formatGatheringDate(g.gathering_date, g.arrival_time)}</span>
                       </span>
                     </Link>
