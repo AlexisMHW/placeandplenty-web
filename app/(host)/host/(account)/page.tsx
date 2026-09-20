@@ -19,17 +19,6 @@ export const metadata = { title: "My Gatherings" };
 const OPEN = ["draft", "active", "hosting"];
 const FINISHED = ["completed", "archived", "cancelled"];
 
-function todayInTimeZone(timeZone: string): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${value.year}-${value.month}-${value.day}`;
-}
-
 function nextLockedIn(gatherings: GatheringSummary[]): GatheringSummary | null {
   return (
     gatherings.find((g) =>
@@ -206,17 +195,10 @@ export default async function HostHomePage() {
   ]);
 
   const artwork = await signArtwork(gatherings);
-  const timeZone = profile?.timezone || "America/Chicago";
-  const today = todayInTimeZone(timeZone);
   const displayName = profile?.display_name || profile?.first_name || null;
 
   const openAll = gatherings.filter((g) => OPEN.includes(g.effective_status));
-  const pastDrafts = openAll.filter(
-    (g) => g.effective_status === "draft" && g.gathering_date < today
-  );
-  const listed = openAll.filter(
-    (g) => !(g.effective_status === "draft" && g.gathering_date < today)
-  );
+  const listed = openAll;
   const drafts = listed.filter((g) => g.effective_status === "draft");
   const lockedIn = listed.filter((g) =>
     ["active", "hosting"].includes(g.effective_status)
@@ -307,32 +289,6 @@ export default async function HostHomePage() {
             Start a gathering
           </Link>
 
-          {pastDrafts.length > 0 && (
-            <details className="mt-5 border-t border-sage/20 pt-4">
-              <summary className="cursor-pointer font-body text-sm text-forest/70 hover:text-forest">
-                {pastDrafts.length} past {pastDrafts.length === 1 ? "draft" : "drafts"}
-              </summary>
-              <p className="mt-2 font-body text-xs leading-relaxed text-forest/55">
-                These are still saved drafts, but their dates have passed. Open one to update the date and continue, or leave it here.
-              </p>
-              <ul className="mt-3 space-y-2">
-                {pastDrafts.map((g) => (
-                  <li key={g.id}>
-                    <Link
-                      href={`/host/create?editId=${g.id}`}
-                      className="flex items-center justify-between gap-4 rounded-lg px-3 py-2 font-body text-sm text-forest/70 hover:bg-forest/5"
-                    >
-                      <span className="truncate">{g.name}</span>
-                      <span className="flex-shrink-0 text-xs text-forest/50">
-                        {formatGatheringDate(g.gathering_date, g.arrival_time)}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-
           {past.length > 0 && (
             <details className="mt-4 border-t border-sage/20 pt-4">
               <summary className="cursor-pointer font-body text-sm text-forest/70 hover:text-forest">
@@ -346,8 +302,9 @@ export default async function HostHomePage() {
                       className="flex items-center justify-between gap-4 rounded-lg px-3 py-2 font-body text-sm text-forest/75 hover:bg-forest/5"
                     >
                       <span className="truncate">{g.name}</span>
-                      <span className="flex-shrink-0 text-xs text-forest/50">
-                        {formatGatheringDate(g.gathering_date, g.arrival_time)}
+                      <span className="flex flex-shrink-0 items-center gap-2 text-xs text-forest/50">
+                        <span>{statusLabel(g.effective_status)}</span>
+                        <span>{formatGatheringDate(g.gathering_date, g.arrival_time)}</span>
                       </span>
                     </Link>
                   </li>
@@ -502,12 +459,6 @@ export default async function HostHomePage() {
               Explore Ideas
             </Link>
           </div>
-
-          {pastDrafts.length > 0 && (
-            <p className="px-1 font-body text-xs leading-relaxed text-forest/55">
-              Past drafts remain saved and still occupy an open-gathering slot until you finish or otherwise resolve them. They do not count toward the Plus annual lock-in allowance until they are locked in.
-            </p>
-          )}
 
           {lockedIn.length === 0 && drafts.length > 1 && (
             <p className="px-1 font-body text-xs leading-relaxed text-forest/55">
