@@ -1171,7 +1171,9 @@ function gatheringPatch(input: CreateGatheringInput) {
   return {
     name: input.name.trim().slice(0, 120),
     gathering_type: input.gatheringType,
+    duration_type: input.durationType,
     gathering_date: input.gatheringDate,
+    gathering_end_date: input.durationType === "multi_day" ? input.gatheringEndDate : null,
     arrival_time: input.arrivalTime,
     location_name: input.locationName.trim().slice(0, 160) || null,
     budget_target:
