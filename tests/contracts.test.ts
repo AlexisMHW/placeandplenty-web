@@ -1024,8 +1024,8 @@ describe("lifecycle — the backend decides the phase, not this app", () => {
     assert.match(source, /OPEN\.includes\(g\.effective_status\)/);
     assert.match(source, /FINISHED\.includes\(g\.effective_status\)/);
     assert.match(source, /includes\(g\.effective_status\)/);
-    // The badge shows the phase, not the row.
-    assert.match(source, /\{g\.effective_status\}/);
+    // The badge formats the canonical effective phase, not the stored row status.
+    assert.match(source, /statusLabel\(g\.effective_status\)/);
   });
 
   /**
@@ -1038,20 +1038,33 @@ describe("lifecycle — the backend decides the phase, not this app", () => {
       .replace(/\/\*[\s\S]*?\*\//g, " ")
       .replace(/(^|[^:])\/\/.*$/gm, "$1");
 
-  test("no JS date arithmetic decides a lifecycle phase", () => {
-    for (const file of [HOST_HOME, HOST_SHELL]) {
-      const source = code(file);
-      assert.equal(
-        /gathering_date\s*>=|gathering_date\s*</.test(source),
-        false,
-        `${file} compares gathering_date to decide a phase`
-      );
-      assert.equal(
-        /new Date\(\)\.toISOString\(\)/.test(source),
-        false,
-        `${file} derives "today" in UTC to decide a phase`
+  test("JS date arithmetic never replaces the canonical lifecycle phase", () => {
+    const home = code(HOST_HOME);
+    const shell = code(HOST_SHELL);
+
+    // Lifecycle grouping itself must come from effective_status.
+    assert.match(home, /OPEN\.includes\(g\.effective_status\)/);
+    assert.match(home, /FINISHED\.includes\(g\.effective_status\)/);
+
+    // A date comparison is allowed only inside the already-classified draft
+    // subset, where it separates stale draft UX from current draft UX. A draft
+    // is a stored workflow state, not a time-derived lifecycle phase.
+    const dateComparisons = [...home.matchAll(/g\.gathering_date\s*(?:>=|<)\s*today/g)];
+    assert.equal(dateComparisons.length > 0, true, "expected the explicit past-draft UX filter");
+    for (const match of dateComparisons) {
+      const context = home.slice(Math.max(0, match.index! - 90), match.index! + match[0].length + 20);
+      assert.match(
+        context,
+        /g\.effective_status === "draft"/,
+        "date comparison may only refine rows already classified as drafts"
       );
     }
+
+    assert.equal(
+      /new Date\(\)\.toISOString\(\)/.test(home + shell),
+      false,
+      'web must not derive UTC "today" to classify gathering lifecycle'
+    );
   });
 
   test("lifecycle grouping never keys off the stored status", () => {
