@@ -51,6 +51,8 @@ export const GATHERING_TYPES = [
 
 export type GatheringType = (typeof GATHERING_TYPES)[number];
 
+export type GatheringDurationType = "single_day" | "multi_day";
+
 export function isGatheringType(value: string): value is GatheringType {
   return (GATHERING_TYPES as readonly string[]).includes(value);
 }
@@ -94,8 +96,11 @@ export const FOOD_STYLE_LABELS: Record<FoodStyle, string> = {
 export interface CreateGatheringInput {
   name: string;
   gatheringType: GatheringType | null;
+  durationType: GatheringDurationType;
   /** "YYYY-MM-DD" */
   gatheringDate: string | null;
+  /** Inclusive final date for Multi-Day; null for single-day. */
+  gatheringEndDate: string | null;
   /** "HH:MM", 24-hour */
   arrivalTime: string | null;
   locationName: string;
@@ -116,7 +121,9 @@ export const DEFAULT_ARRIVAL_TIME = "18:00";
 export const EMPTY_GATHERING_INPUT: CreateGatheringInput = {
   name: "",
   gatheringType: null,
+  durationType: "single_day",
   gatheringDate: null,
+  gatheringEndDate: null,
   arrivalTime: null,
   locationName: "",
   adultCount: 0,
@@ -134,6 +141,9 @@ export type GatheringValidationErrorCode =
   | "name_required"
   | "type_required"
   | "date_required"
+  | "end_date_required"
+  | "end_date_invalid"
+  | "duration_too_long"
   | "arrival_time_required"
   | "headcount_required";
 
@@ -160,6 +170,20 @@ export function validateGatheringInput(
   }
   if (!input.gatheringDate) {
     errors.push({ code: "date_required", field: "gatheringDate" });
+  }
+  if (input.durationType === "multi_day") {
+    if (!input.gatheringEndDate) {
+      errors.push({ code: "end_date_required", field: "gatheringEndDate" });
+    } else if (input.gatheringDate) {
+      const start = new Date(`${input.gatheringDate}T00:00:00Z`);
+      const end = new Date(`${input.gatheringEndDate}T00:00:00Z`);
+      const days = Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
+      if (!Number.isFinite(days) || days < 2) {
+        errors.push({ code: "end_date_invalid", field: "gatheringEndDate" });
+      } else if (days > 4) {
+        errors.push({ code: "duration_too_long", field: "gatheringEndDate" });
+      }
+    }
   }
   if (!input.arrivalTime) {
     errors.push({ code: "arrival_time_required", field: "arrivalTime" });
@@ -190,6 +214,9 @@ export const VALIDATION_MESSAGES: Record<
   name_required: "Give your gathering a name to continue.",
   type_required: "Choose what kind of gathering this is.",
   date_required: "Enter a date to continue.",
+  end_date_required: "Choose when this Multi-Day gathering ends.",
+  end_date_invalid: "Multi-Day needs at least two calendar days.",
+  duration_too_long: "A Multi-Day Pass starts with 2–4 calendar days. Days 5–7 use the one-time extension after the gathering is created.",
   arrival_time_required: "Enter an arrival time to continue.",
   headcount_required: "Add at least one guest.",
 };
