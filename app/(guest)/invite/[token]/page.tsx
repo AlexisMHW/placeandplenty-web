@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import GuestPageClient from "./GuestPageClient";
 import GuestLivingPanel from "@/components/guest/GuestLivingPanel";
 import { lookupGuestPage } from "@/lib/guest-api";
-import { lookupGuestLivingPage } from "@/lib/guest-living-api";
+import { lookupGuestLivingPage } from "@/lib/guest-living-server";
 
 // This route must never be indexed — it's reached only via a
 // bearer-token link sent in an invitation. robots.txt also disallows
