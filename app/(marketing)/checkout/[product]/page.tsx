@@ -16,9 +16,14 @@ import {
   FEATURE_AVAILABILITY_NOTE,
 } from "@/lib/entitlements";
 import { getMyEntitlementState } from "@/lib/entitlement-data";
-import { getUser } from "@/lib/supabase-server";
+import { createClient, getUser } from "@/lib/supabase-server";
 import { getMyGatherings } from "@/lib/host-data";
-import { PLUS_LIMITS_NOTE, PASS_LIMITS_NOTE } from "@/lib/pricing";
+import {
+  MULTI_DAY_NOTE,
+  MULTI_DAY_PRICING,
+  PLUS_LIMITS_NOTE,
+  PASS_LIMITS_NOTE,
+} from "@/lib/pricing";
 import CheckoutAction from "./CheckoutAction";
 
 // /checkout/[product] — BUYING ON THE WEB.
@@ -90,10 +95,40 @@ export default async function CheckoutPage({
   // A Pass has to name its gathering before an intent can exist.
   const gatherings =
     user && product.requiresGathering
-      ? (await getMyGatherings()).filter((g) =>
-          ["draft", "active", "hosting"].includes(g.status)
-        )
+      ? (await getMyGatherings()).filter((g) => {
+          if (!["draft", "active", "hosting"].includes(g.status)) return false;
+          if (
+            product.canonicalProductId === "multi_day_pass" ||
+            product.canonicalProductId === "multi_day_extension"
+          ) {
+            return g.duration_type === "multi_day";
+          }
+          return true;
+        })
       : [];
+
+  const multiDayPriceByGathering = new Map<string, string>();
+  if (user && product.canonicalProductId === "multi_day_pass" && gatherings.length > 0) {
+    const supabase = createClient();
+    await Promise.all(
+      gatherings.map(async (g) => {
+        const { data: tier } = await supabase.rpc("resolve_multi_day_purchase_tier", {
+          p_gathering_id: g.id,
+        });
+        const key =
+          tier === "plus" || tier === "gathering_pass" || tier === "standard"
+            ? tier
+            : "standard";
+        multiDayPriceByGathering.set(g.id, MULTI_DAY_PRICING[key].priceLine);
+      })
+    );
+  }
+
+  if (user && product.canonicalProductId === "multi_day_extension") {
+    for (const g of gatherings) {
+      multiDayPriceByGathering.set(g.id, MULTI_DAY_PRICING.extension.priceLine);
+    }
+  }
 
   const alreadyHasPlus =
     product.canonicalProductId === "plus_annual" && Boolean(state?.plus);
@@ -127,7 +162,9 @@ export default async function CheckoutPage({
           </Display>
 
           <p className="mt-4 font-display text-2xl text-forest">
-            {product.priceLine}
+            {product.canonicalProductId === "multi_day_pass"
+              ? `${MULTI_DAY_PRICING.plus.price}–${MULTI_DAY_PRICING.standard.price} + applicable taxes and fees`
+              : product.priceLine}
           </p>
 
           <span aria-hidden className="mt-6 block h-[2px] w-16 bg-gold" />
@@ -139,7 +176,10 @@ export default async function CheckoutPage({
           <p className="mt-4 max-w-prose font-body text-sm leading-relaxed text-forest/70">
             {product.canonicalProductId === "plus_annual"
               ? PLUS_LIMITS_NOTE
-              : PASS_LIMITS_NOTE}
+              : product.canonicalProductId === "multi_day_pass" ||
+                  product.canonicalProductId === "multi_day_extension"
+                ? MULTI_DAY_NOTE
+                : PASS_LIMITS_NOTE}
           </p>
 
           <div className="mt-10 rounded-2xl border border-sage/30 bg-cream p-6">
@@ -180,6 +220,7 @@ export default async function CheckoutPage({
               id: g.id,
               name: g.name,
               date: g.gathering_date,
+              priceLine: multiDayPriceByGathering.get(g.id),
             }))}
           />
         </div>
