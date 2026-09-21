@@ -11,6 +11,7 @@ import {
   initializeMultiDaySchedule,
   moveScheduleActivity,
   setActivityVisibleGuests,
+  setPlanningAssociation,
   updateScheduleActivity,
   updateScheduleDay,
 } from "@/lib/multi-day-actions";
@@ -131,6 +132,156 @@ export default function MultiDayScheduleClient({
           );
         })}
       </div>
+
+      <PlanningLinksPanel
+        gatheringId={gatheringId}
+        workspace={workspace}
+        pending={pending}
+        run={run}
+      />
+    </div>
+  );
+}
+
+type PlanningKind = "menu" | "shopping" | "contribution" | "expense";
+
+function PlanningLinksPanel({
+  gatheringId,
+  workspace,
+  pending,
+  run,
+}: {
+  gatheringId: string;
+  workspace: MultiDayWorkspace;
+  pending: boolean;
+  run: (a: () => Promise<{ ok: true } | { ok: false; message: string }>) => void;
+}) {
+  const groups: Array<{ kind: PlanningKind; label: string; records: MultiDayWorkspace["planning"]["menu"] }> = [
+    { kind: "menu", label: "My Table", records: workspace.planning.menu },
+    { kind: "shopping", label: "My Shopping", records: workspace.planning.shopping },
+    { kind: "contribution", label: "Who’s Bringing What", records: workspace.planning.contributions },
+    { kind: "expense", label: "Expenses", records: workspace.planning.expenses },
+  ];
+
+  const hasRecords = groups.some((group) => group.records.length > 0);
+  if (!hasRecords) return null;
+
+  return (
+    <section className="mt-8 rounded-2xl border border-sage/25 bg-parchment p-5">
+      <p className="font-body text-[0.65rem] font-bold uppercase tracking-[0.16em] text-forest/55">
+        Keep the plan connected
+      </p>
+      <h3 className="mt-1 font-display text-2xl text-forest">Link planning items to a day or activity</h3>
+      <p className="mt-2 max-w-2xl font-body text-sm leading-relaxed text-forest/65">
+        Your Table, Shopping, contributions and expenses stay in their existing places. These links simply tell Place &amp; Plenty which day or activity they belong to.
+      </p>
+
+      <div className="mt-5 space-y-6">
+        {groups.filter((group) => group.records.length > 0).map((group) => (
+          <div key={group.kind}>
+            <h4 className="font-body text-sm font-bold text-forest">{group.label}</h4>
+            <div className="mt-2 space-y-2">
+              {group.records.map((record) => (
+                <PlanningLinkRow
+                  key={record.id}
+                  gatheringId={gatheringId}
+                  kind={group.kind}
+                  record={record}
+                  days={workspace.days}
+                  activities={workspace.activities}
+                  pending={pending}
+                  run={run}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PlanningLinkRow({
+  gatheringId,
+  kind,
+  record,
+  days,
+  activities,
+  pending,
+  run,
+}: {
+  gatheringId: string;
+  kind: PlanningKind;
+  record: MultiDayWorkspace["planning"]["menu"][number];
+  days: ScheduleDay[];
+  activities: ScheduleActivity[];
+  pending: boolean;
+  run: (a: () => Promise<{ ok: true } | { ok: false; message: string }>) => void;
+}) {
+  const [dayId, setDayId] = useState(record.gathering_day_id ?? "");
+  const [activityId, setActivityId] = useState(record.gathering_activity_id ?? "");
+
+  const activitiesForDay = dayId
+    ? activities.filter((activity) => activity.gathering_day_id === dayId)
+    : activities;
+
+  function chooseDay(nextDayId: string) {
+    setDayId(nextDayId);
+    if (activityId) {
+      const activity = activities.find((item) => item.id === activityId);
+      if (activity && activity.gathering_day_id !== nextDayId) setActivityId("");
+    }
+  }
+
+  function chooseActivity(nextActivityId: string) {
+    setActivityId(nextActivityId);
+    const activity = activities.find((item) => item.id === nextActivityId);
+    if (activity) setDayId(activity.gathering_day_id);
+  }
+
+  return (
+    <div className="grid gap-2 rounded-xl border border-sage/20 bg-offwhite px-3 py-3 md:grid-cols-[minmax(0,1fr)_180px_220px_auto] md:items-center">
+      <p className="font-body text-sm font-semibold text-forest">{record.label}</p>
+      <select
+        value={dayId}
+        onChange={(event) => chooseDay(event.target.value)}
+        className="rounded-lg border border-sage/35 bg-white px-3 py-2 font-body text-sm text-forest"
+      >
+        <option value="">No day</option>
+        {days.map((day, index) => (
+          <option key={day.id} value={day.id}>
+            Day {index + 1}{day.title ? ` · ${day.title}` : ""}
+          </option>
+        ))}
+      </select>
+      <select
+        value={activityId}
+        onChange={(event) => chooseActivity(event.target.value)}
+        className="rounded-lg border border-sage/35 bg-white px-3 py-2 font-body text-sm text-forest"
+      >
+        <option value="">No activity</option>
+        {activitiesForDay.map((activity) => (
+          <option key={activity.id} value={activity.id}>{activity.title}</option>
+        ))}
+      </select>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          run(() =>
+            setPlanningAssociation(
+              gatheringId,
+              kind,
+              record.id,
+              dayId || null,
+              activityId || null
+            )
+          )
+        }
+        className="rounded-full border border-forest px-4 py-2 font-body text-xs font-semibold text-forest disabled:opacity-50"
+      >
+        Save link
+      </button>
     </div>
   );
 }
