@@ -1,5 +1,5 @@
 import type { CanonicalProductId } from "@/lib/entitlements";
-import { PRICING_TIERS } from "@/lib/pricing";
+import { MULTI_DAY_NOTE, MULTI_DAY_PRICING, PRICING_TIERS } from "@/lib/pricing";
 
 // WEB PURCHASE — the third channel into the one canonical entitlement
 // model. Founder requirement, 28 Aug 2026: buying a Gathering Pass or
@@ -75,6 +75,22 @@ export const WEB_PRODUCTS: WebProduct[] = [
     priceLine: PLUS.priceLine,
     description: PLUS.description,
     requiresGathering: false,
+  },
+  {
+    slug: "multi-day",
+    canonicalProductId: "multi_day_pass",
+    name: "Multi-Day Pass",
+    priceLine: MULTI_DAY_PRICING.standard.priceLine,
+    description: MULTI_DAY_NOTE,
+    requiresGathering: true,
+  },
+  {
+    slug: "multi-day-extension",
+    canonicalProductId: "multi_day_extension",
+    name: "Multi-Day Extension",
+    priceLine: MULTI_DAY_PRICING.extension.priceLine,
+    description: "Extend an active Multi-Day gathering from four days up to seven without creating a second gathering.",
+    requiresGathering: true,
   },
 ];
 
