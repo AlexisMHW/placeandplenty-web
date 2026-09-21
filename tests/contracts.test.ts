@@ -1048,3 +1048,58 @@ describe("lifecycle — the backend decides the phase, not this app", () => {
     assert.match(page, /gathering\.status !== "draft"/);
   });
 });
+
+
+describe("guest Multi-Day experience — one canonical schedule contract", () => {
+  const read = (p: string) =>
+    readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+
+  const GUEST_API = "lib/guest-api.ts";
+  const GUEST_PAGE = "app/(guest)/invite/[token]/GuestPageClient.tsx";
+
+  test("the guest API carries the server's day and activity schedule", () => {
+    const source = read(GUEST_API);
+    assert.match(source, /export interface GuestScheduleDay/);
+    assert.match(source, /export interface GuestScheduleActivity/);
+    assert.match(source, /displayEndDate: string \| null/);
+    assert.match(source, /schedule: GuestScheduleDay\[\]/);
+  });
+
+  test("activity responses use the token-resolving Edge Function", () => {
+    const source = read(GUEST_API);
+    assert.match(source, /export async function submitActivityRsvp/);
+    assert.match(source, /"guest-activity-rsvp-submit"/);
+    assert.match(source, /activityId/);
+    assert.match(source, /gatheringGuestId/);
+  });
+
+  test("the invitation page renders My Schedule from data.schedule", () => {
+    const source = read(GUEST_PAGE);
+    assert.match(source, /My Schedule for \{data\.displayName\}/);
+    assert.match(source, /data\.schedule\.map/);
+    assert.match(source, /activity\.responses\.find/);
+    assert.match(source, /handleActivityResponse/);
+  });
+
+  test("capacity and selectable activity states are visible to guests", () => {
+    const source = read(GUEST_PAGE);
+    assert.match(source, /seatsRemaining/);
+    assert.match(source, /activity\.isSelectable/);
+    assert.match(source, /Choose this option/);
+    assert.match(source, /activity_full/);
+  });
+
+  test("Multi-Day uses a date range without changing single-day behavior", () => {
+    const source = read(GUEST_PAGE);
+    assert.match(source, /formattedEndDate/);
+    assert.match(source, /formattedEndDate !== formattedDate/);
+    assert.match(source, /formattedTime/);
+  });
+
+  test("archived gatherings cannot submit activity responses", () => {
+    const source = read(GUEST_PAGE);
+    assert.match(source, /disabled=\{busy \|\| !canWrite\}/);
+    assert.match(source, /setReadOnly\(true\)/);
+    assert.match(source, /ARCHIVED_NOTICE/);
+  });
+});
