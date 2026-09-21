@@ -11,15 +11,19 @@ export type HostNotification = {
   deepLinkPath: string | null;
 };
 
-export async function getHostNotifications(): Promise<HostNotification[]> {
+export async function getHostNotifications(gatheringId?: string): Promise<HostNotification[]> {
   const user = await getUser();
   if (!user) return [];
 
   const supabase = createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("host_notifications")
     .select("id, gathering_id, type, title, body, read_at, created_at, deep_link_path")
-    .eq("user_id", user.id)
+    .eq("user_id", user.id);
+
+  if (gatheringId) query = query.eq("gathering_id", gatheringId);
+
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .limit(50);
 
