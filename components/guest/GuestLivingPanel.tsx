@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  acknowledgeGuestUpdate,
-  type GuestLivingData,
-  type GuestUpdateItem,
+import { acknowledgeGuestUpdate } from "@/lib/guest-living-actions";
+import type {
+  GuestLivingData,
+  GuestUpdateItem,
 } from "@/lib/guest-living-api";
 
 const CATEGORY_LABELS: Record<string, string> = {
