@@ -13,6 +13,7 @@ import {
 } from "@/lib/host-data";
 import { formatGatheringDate } from "@/lib/host-format";
 import { ESSENCE } from "@/lib/brand";
+import { getMyInvitedGatherings } from "@/lib/invited-gatherings";
 
 export const metadata = { title: "My Gatherings" };
 
@@ -198,11 +199,12 @@ function GatheringRow({
 }
 
 export default async function HostHomePage() {
-  const [gatherings, guestBook, closet, profile] = await Promise.all([
+  const [gatherings, guestBook, closet, profile, invited] = await Promise.all([
     getMyGatherings(),
     getGuestBook().catch(() => ({ saved: [], history: [] })),
     getClosetItems().catch(() => []),
     getProfile(),
+    getMyInvitedGatherings().catch(() => ({ verifiedEmail: "", upcoming: [], past: [] })),
   ]);
 
   const artwork = await signArtwork(gatherings);
@@ -472,6 +474,18 @@ export default async function HostHomePage() {
               }
               href="/host/guest-book"
               action="Open Guest Book"
+            />
+            <StatTile
+              icon="users"
+              label="Gatherings I’m Invited To"
+              value={String(invited.upcoming.length)}
+              sub={
+                invited.upcoming.length === 1
+                  ? "upcoming invitation"
+                  : "upcoming invitations"
+              }
+              href="/host/invited"
+              action="View Invitations"
             />
             <StatTile
               icon="closet"
