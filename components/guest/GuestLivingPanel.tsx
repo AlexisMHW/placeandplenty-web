@@ -102,7 +102,7 @@ export default function GuestLivingPanel({
   if (!initialData || (details.length === 0 && initialData.updates.length === 0)) return null;
 
   return (
-    <section className="mx-auto max-w-3xl px-5 pb-16 sm:px-6">
+    <section className="mx-auto max-w-prose px-6 pb-16">
       <div className="border-t border-sage/25 pt-10">
         <p className="font-body text-[0.66rem] font-bold uppercase tracking-[0.2em] text-forest/50">
           Your gathering
