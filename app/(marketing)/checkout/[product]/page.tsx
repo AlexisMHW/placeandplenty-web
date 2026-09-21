@@ -115,7 +115,7 @@ export default async function CheckoutPage({
         const { data: tier } = await supabase.rpc("resolve_multi_day_purchase_tier", {
           p_gathering_id: g.id,
         });
-        const key =
+        const key: keyof Pick<typeof MULTI_DAY_PRICING, "standard" | "gathering_pass" | "plus"> =
           tier === "plus" || tier === "gathering_pass" || tier === "standard"
             ? tier
             : "standard";
