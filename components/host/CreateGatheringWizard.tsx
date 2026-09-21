@@ -93,6 +93,24 @@ function formatDateDisplay(value: string | null): string {
   }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
+function addDaysISO(value: string, days: number): string {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function inclusiveDays(start: string | null, end: string | null): number {
+  if (!start || !end) return 0;
+  const a = new Date(`${start}T00:00:00Z`).getTime();
+  const b = new Date(`${end}T00:00:00Z`).getTime();
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+  return Math.floor((b - a) / 86_400_000) + 1;
+}
+
 function formatTimeDisplay(value: string | null): string {
   if (!value) return "Choose a time";
   const [hourText, minuteText] = value.split(":");
@@ -166,10 +184,51 @@ export default function CreateGatheringWizard({
     setInput((prev) => ({ ...prev, [key]: value }));
   }
 
+  function setDurationType(durationType: "single_day" | "multi_day") {
+    setInput((prev) => {
+      if (durationType === "single_day") {
+        return { ...prev, durationType, gatheringEndDate: null };
+      }
+      const start = prev.gatheringDate ?? todayISODate();
+      const existingDays = inclusiveDays(start, prev.gatheringEndDate);
+      return {
+        ...prev,
+        durationType,
+        gatheringDate: start,
+        gatheringEndDate:
+          existingDays >= 2 && existingDays <= 4
+            ? prev.gatheringEndDate
+            : addDaysISO(start, 1),
+      };
+    });
+  }
+
+  function setStartDate(value: string) {
+    setInput((prev) => {
+      const start = value || null;
+      if (prev.durationType !== "multi_day" || !start) {
+        return { ...prev, gatheringDate: start };
+      }
+      const days = inclusiveDays(start, prev.gatheringEndDate);
+      return {
+        ...prev,
+        gatheringDate: start,
+        gatheringEndDate:
+          days >= 2 && days <= 4 ? prev.gatheringEndDate : addDaysISO(start, 1),
+      };
+    });
+  }
+
   function canLeave(current: number): boolean {
     switch (current) {
       case 1:
         return input.name.trim().length > 0 && input.gatheringType !== null;
+      case 2: {
+        if (!input.gatheringDate || !input.arrivalTime) return false;
+        if (input.durationType !== "multi_day") return true;
+        const days = inclusiveDays(input.gatheringDate, input.gatheringEndDate);
+        return days >= 2 && days <= 4;
+      }
       case 3:
         return input.adultCount + input.childCount > 0;
       case 5:
@@ -402,8 +461,45 @@ export default function CreateGatheringWizard({
 
           {step === 2 && (
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              <NativeSelectorField label="Date" displayValue={formatDateDisplay(input.gatheringDate)} inputType="date" value={input.gatheringDate ?? ""} onChange={(value) => update("gatheringDate", value || null)} />
+              <div className="sm:col-span-2">
+                <p className="mb-2 font-body text-sm font-semibold text-forest">How long are people gathering?</p>
+                <ChipGrid>
+                  <Chip selected={input.durationType === "single_day"} onClick={() => setDurationType("single_day")}>Single Day</Chip>
+                  <Chip selected={input.durationType === "multi_day"} onClick={() => setDurationType("multi_day")}>Multi-Day</Chip>
+                </ChipGrid>
+                {input.durationType === "multi_day" && (
+                  <p className="mt-3 font-body text-sm leading-relaxed text-forest/65">
+                    A Multi-Day Pass keeps one gathering, one guest list and one plan across 2–4 calendar days. Days 5–7 can be added later with the one-time extension.
+                  </p>
+                )}
+              </div>
+
+              <NativeSelectorField
+                label={input.durationType === "multi_day" ? "Starts" : "Date"}
+                displayValue={formatDateDisplay(input.gatheringDate)}
+                inputType="date"
+                value={input.gatheringDate ?? ""}
+                onChange={setStartDate}
+              />
+
+              {input.durationType === "multi_day" && (
+                <NativeSelectorField
+                  label="Ends"
+                  displayValue={formatDateDisplay(input.gatheringEndDate)}
+                  inputType="date"
+                  value={input.gatheringEndDate ?? ""}
+                  onChange={(value) => update("gatheringEndDate", value || null)}
+                />
+              )}
+
               <NativeSelectorField label="Start time" displayValue={formatTimeDisplay(input.arrivalTime)} inputType="time" value={input.arrivalTime ?? ""} onChange={(value) => update("arrivalTime", value || null)} />
+
+              {input.durationType === "multi_day" && input.gatheringDate && input.gatheringEndDate && (
+                <p className="font-body text-sm text-forest/70">
+                  {inclusiveDays(input.gatheringDate, input.gatheringEndDate)} calendar days
+                </p>
+              )}
+
               {pastWarning && <p className="font-body text-sm text-forest/70 sm:col-span-2">That time has already passed — that&apos;s okay if you&apos;re catching up, just double check the date.</p>}
             </div>
           )}
