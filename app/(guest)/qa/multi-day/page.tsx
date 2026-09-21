@@ -214,6 +214,7 @@ const livingData: GuestLivingData = {
       importance: "important",
       requireAcknowledgement: true,
       acknowledgedAt: null,
+      seenAt: null,
       publishedAt: "2026-11-25T18:00:00Z",
     },
   ],
