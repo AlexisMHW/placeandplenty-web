@@ -9,6 +9,7 @@ import {
   getGuestBook,
   getClosetItems,
 } from "@/lib/host-data";
+import { getHostNotifications } from "@/lib/notification-data";
 
 export default async function AccountShellLayout({
   children,
@@ -17,11 +18,12 @@ export default async function AccountShellLayout({
 }) {
   const user = await getUser();
 
-  const [profile, gatherings, guestBook, closet] = await Promise.all([
+  const [profile, gatherings, guestBook, closet, notifications] = await Promise.all([
     getProfile(),
     getMyGatherings().catch(() => null),
     getGuestBook().catch(() => null),
     getClosetItems().catch(() => null),
+    getHostNotifications().catch(() => null),
   ]);
 
   const name =
@@ -49,6 +51,14 @@ export default async function AccountShellLayout({
           href: "/host/guest-book",
           icon: "book",
           count: guestBook?.saved.length ?? null,
+        },
+        {
+          label: "Notifications",
+          href: "/host/notifications",
+          icon: "bell",
+          count: notifications
+            ? notifications.filter((item) => !item.readAt).length
+            : null,
         },
       ],
     },
