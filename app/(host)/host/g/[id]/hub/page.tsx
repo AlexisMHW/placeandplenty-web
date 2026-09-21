@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
 import { BotanicalSprig } from "@/components/Botanical";
+import { getGathering } from "@/lib/host-data";
 
 const sections: Array<{
   heading: string;
@@ -35,7 +36,8 @@ const sections: Array<{
   },
 ];
 
-export default function HostingHubPage({ params }: { params: { id: string } }) {
+export default async function HostingHubPage({ params }: { params: { id: string } }) {
+  const gathering = await getGathering(params.id);
   const base = `/host/g/${params.id}`;
 
   return (
@@ -62,6 +64,25 @@ export default function HostingHubPage({ params }: { params: { id: string } }) {
               <span className="h-px flex-1 bg-sage/25" />
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {section.heading === "Your people" && gathering?.duration_type === "multi_day" && (
+                <Link
+                  href={`${base}/schedule`}
+                  className="rounded-2xl border border-gold/35 bg-cream p-5 shadow-soft transition duration-300 hover:-translate-y-0.5 hover:border-gold/60"
+                >
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-parchment text-forest">
+                    <Icon name="calendar" size={19} />
+                  </span>
+                  <div className="mt-5">
+                    <h4 className="font-display text-lg text-forest">My Schedule</h4>
+                    <p className="mt-2 font-body text-sm leading-relaxed text-forest/65">
+                      Days, activities, guest choices and activity costs for this Multi-Day gathering.
+                    </p>
+                  </div>
+                  <span className="mt-5 inline-block font-body text-xs font-semibold text-forest/70 underline decoration-gold decoration-2 underline-offset-4">
+                    Open <span aria-hidden>→</span>
+                  </span>
+                </Link>
+              )}
               {section.items.map((item) => {
                 const content = (
                   <>
