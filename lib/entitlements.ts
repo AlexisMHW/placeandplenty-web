@@ -6,7 +6,11 @@
 // from a profile flag or local cache. Purchase channel is provenance;
 // entitlement identity and access remain canonical across surfaces.
 
-export type CanonicalProductId = "gathering_pass" | "plus_annual";
+export type CanonicalProductId =
+  | "gathering_pass"
+  | "plus_annual"
+  | "multi_day_pass"
+  | "multi_day_extension";
 export type EntitlementProvider = "apple" | "google" | "web" | "beta";
 
 export interface Entitlement {
@@ -43,7 +47,12 @@ export interface EntitlementState {
 export function summarise(entitlements: Entitlement[], now = new Date()): EntitlementState {
   const live = entitlements.filter((e) => isLive(e, now));
   const plus = live.find((e) => e.scope === "account" && e.entitlement_type === "plus") ?? null;
-  const passes = live.filter((e) => e.scope === "gathering");
+  const passes = live.filter(
+    (e) =>
+      e.scope === "gathering" &&
+      (e.canonical_product_id === "gathering_pass" ||
+        e.canonical_product_id === "multi_day_pass")
+  );
   const channels = Array.from(new Set(entitlements.map((e) => e.provider || e.source).filter((c): c is string => Boolean(c))));
   return { plus, passes, tier: plus ? "Place & Plenty Plus" : passes.length ? "Gathering Pass" : "Free", channels };
 }
