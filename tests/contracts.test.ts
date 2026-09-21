@@ -1103,3 +1103,36 @@ describe("guest Multi-Day experience — one canonical schedule contract", () =>
     assert.match(source, /ARCHIVED_NOTICE/);
   });
 });
+
+
+describe("guest visual system — Place & Plenty consistency", () => {
+  const read = (p: string) =>
+    readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+
+  test("guest invitation and living surfaces share one editorial column", () => {
+    const invitation = read("app/(guest)/invite/[token]/GuestPageClient.tsx");
+    const living = read("components/guest/GuestLivingPanel.tsx");
+    assert.match(invitation, /max-w-prose/);
+    assert.match(living, /max-w-prose/);
+    assert.equal(/max-w-3xl/.test(living), false);
+  });
+
+  test("guest surfaces use the P&P font and color tokens", () => {
+    const invitation = read("app/(guest)/invite/[token]/GuestPageClient.tsx");
+    const living = read("components/guest/GuestLivingPanel.tsx");
+    const combined = invitation + living;
+    assert.match(combined, /font-display/);
+    assert.match(combined, /font-body/);
+    assert.match(combined, /text-forest/);
+    assert.match(combined, /bg-(cream|parchment|offwhite)/);
+    assert.match(combined, /border-(sage|gold)/);
+  });
+
+  test("the guest shell carries the Place & Plenty mark without marketing chrome", () => {
+    const shell = read("app/(guest)/layout.tsx");
+    assert.match(shell, /pp-mark\.png/);
+    assert.match(shell, /BRAND_NAME/);
+    assert.match(shell, /max-w-prose/);
+    assert.equal(/Join the Guest List/.test(shell), false);
+  });
+});
