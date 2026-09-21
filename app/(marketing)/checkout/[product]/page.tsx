@@ -83,8 +83,10 @@ export function generateMetadata({
 
 export default async function CheckoutPage({
   params,
+  searchParams,
 }: {
   params: { product: string };
+  searchParams: { gatheringId?: string };
 }) {
   const product = findWebProduct(params.product);
   if (!product) notFound();
@@ -106,6 +108,16 @@ export default async function CheckoutPage({
           return true;
         })
       : [];
+
+  const requestedGatheringId = searchParams.gatheringId;
+  if (
+    requestedGatheringId &&
+    gatherings.some((g) => g.id === requestedGatheringId)
+  ) {
+    gatherings.sort((a, b) =>
+      a.id === requestedGatheringId ? -1 : b.id === requestedGatheringId ? 1 : 0
+    );
+  }
 
   const multiDayPriceByGathering = new Map<string, string>();
   if (user && product.canonicalProductId === "multi_day_pass" && gatherings.length > 0) {
