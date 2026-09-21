@@ -3,15 +3,24 @@
     "apps": [],
     "details": [
       {
-        "appIDs": ["Q3493G8ZAZ.com.placeandplenty.app"],
+        "appIDs": [
+          "Q3493G8ZAZ.com.placeandplenty.app"
+        ],
         "components": [
           {
             "/": "/invite/*",
-            "comment": "Invitation links. Only claim paths the app can actually handle — /gallery/* is deliberately NOT claimed, because no confirmed app screen sits behind it and claiming it would send guests into a dead end."
+            "comment": "Invitation links handled by the native guest/co-host routes."
+          },
+          {
+            "/": "/gallery/*",
+            "comment": "Guest photo gallery links handled by the native gallery route."
           }
         ],
         "appID": "Q3493G8ZAZ.com.placeandplenty.app",
-        "paths": ["/invite/*"]
+        "paths": [
+          "/invite/*",
+          "/gallery/*"
+        ]
       }
     ]
   }
