@@ -10,6 +10,7 @@ interface GatheringOption {
   id: string;
   name: string;
   date: string;
+  priceLine?: string;
 }
 
 export default function CheckoutAction({
@@ -30,6 +31,8 @@ export default function CheckoutAction({
   gatherings: GatheringOption[];
 }) {
   const [gatheringId, setGatheringId] = useState(gatherings[0]?.id ?? "");
+  const selectedGathering = gatherings.find((g) => g.id === gatheringId);
+  const displayedPrice = selectedGathering?.priceLine ?? product.priceLine;
   const returnTo = `/checkout/${product.slug}`;
   const panel = "rounded-2xl border border-sage/30 bg-offwhite p-7 shadow-softer";
 
@@ -79,7 +82,7 @@ export default function CheckoutAction({
   return (
     <div className={panel}>
       <h2 className="font-display text-xl text-forest">{product.name}</h2>
-      <p className="mt-1.5 font-display text-lg text-forest/85">{product.priceLine}</p>
+      <p className="mt-1.5 font-display text-lg text-forest/85">{displayedPrice}</p>
 
       {email && (
         <p className="mt-4 rounded-lg bg-cream px-4 py-3 font-body text-sm text-forest/80">
@@ -90,7 +93,13 @@ export default function CheckoutAction({
       {product.requiresGathering && (
         <div className="mt-5">
           <label htmlFor="checkout-gathering" className="block font-body text-sm font-semibold text-forest">Which gathering?</label>
-          <p className="mt-1 font-body text-xs leading-relaxed text-forest/65">A Pass is bound to the gathering you choose and stays with it.</p>
+          <p className="mt-1 font-body text-xs leading-relaxed text-forest/65">
+            {product.canonicalProductId === "multi_day_pass"
+              ? "Your rate follows this gathering: standard, Gathering Pass upgrade, or Plus."
+              : product.canonicalProductId === "multi_day_extension"
+                ? "The extension stays bound to this Multi-Day gathering."
+                : "A Pass is bound to the gathering you choose and stays with it."}
+          </p>
           <select id="checkout-gathering" value={gatheringId} onChange={(e) => setGatheringId(e.target.value)} className="mt-2 w-full rounded-lg border border-sage/40 bg-parchment px-3.5 py-2.5 font-body text-base text-forest">
             {gatherings.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
