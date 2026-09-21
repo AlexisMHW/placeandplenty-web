@@ -61,20 +61,36 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient();
 
-  // Never sell an entitlement the account already owns.
+  // Never sell an entitlement the account/gathering already owns.
   if (product.canonicalProductId === "plus_annual") {
     const { data: hasPlus, error } = await supabase.rpc("user_has_plus");
     if (error) return NextResponse.json({ error: "entitlement_check_failed" }, { status: 500 });
     if (hasPlus === true) {
       return NextResponse.redirect(new URL("/host/account?billing=already-owned", siteUrl()), 303);
     }
-  } else if (gatheringId) {
+  } else if (gatheringId && product.canonicalProductId === "gathering_pass") {
     const { data: premium, error } = await supabase.rpc("resolve_gathering_is_premium", {
       p_gathering_id: gatheringId,
     });
     if (error) return NextResponse.json({ error: "gathering_check_failed" }, { status: 400 });
     if (premium === true) {
       return NextResponse.redirect(new URL("/host?billing=already-unlocked", siteUrl()), 303);
+    }
+  } else if (gatheringId && product.canonicalProductId === "multi_day_pass") {
+    const { data: hasMultiDay, error } = await supabase.rpc("gathering_has_multi_day_access", {
+      p_gathering_id: gatheringId,
+    });
+    if (error) return NextResponse.json({ error: "multi_day_check_failed" }, { status: 400 });
+    if (hasMultiDay === true) {
+      return NextResponse.redirect(new URL(`/host/g/${gatheringId}/schedule?billing=already-owned`, siteUrl()), 303);
+    }
+  } else if (gatheringId && product.canonicalProductId === "multi_day_extension") {
+    const { data: hasExtension, error } = await supabase.rpc("gathering_has_multi_day_extension", {
+      p_gathering_id: gatheringId,
+    });
+    if (error) return NextResponse.json({ error: "multi_day_extension_check_failed" }, { status: 400 });
+    if (hasExtension === true) {
+      return NextResponse.redirect(new URL(`/host/g/${gatheringId}/schedule?billing=extension-owned`, siteUrl()), 303);
     }
   }
 
@@ -90,10 +106,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "purchase_intent_failed" }, { status: 400 });
   }
 
-  const priceId =
-    product.canonicalProductId === "plus_annual"
-      ? process.env.STRIPE_PLUS_ANNUAL_PRICE_ID
-      : process.env.STRIPE_GATHERING_PASS_PRICE_ID;
+  let priceId: string | undefined;
+  if (product.canonicalProductId === "plus_annual") {
+    priceId = process.env.STRIPE_PLUS_ANNUAL_PRICE_ID;
+  } else if (product.canonicalProductId === "gathering_pass") {
+    priceId = process.env.STRIPE_GATHERING_PASS_PRICE_ID;
+  } else if (product.canonicalProductId === "multi_day_extension") {
+    priceId = process.env.STRIPE_MULTI_DAY_EXTENSION_PRICE_ID;
+  } else {
+    const { data: tier, error: tierError } = await supabase.rpc("resolve_multi_day_purchase_tier", {
+      p_gathering_id: gatheringId,
+    });
+    if (tierError || !["standard", "gathering_pass", "plus"].includes(String(tier))) {
+      return NextResponse.json({ error: "multi_day_tier_failed" }, { status: 400 });
+    }
+    priceId =
+      tier === "plus"
+        ? process.env.STRIPE_MULTI_DAY_PLUS_PRICE_ID
+        : tier === "gathering_pass"
+          ? process.env.STRIPE_MULTI_DAY_GATHERING_PASS_PRICE_ID
+          : process.env.STRIPE_MULTI_DAY_STANDARD_PRICE_ID;
+  }
+
   if (!priceId) {
     return NextResponse.json({ error: "stripe_price_not_configured" }, { status: 503 });
   }
