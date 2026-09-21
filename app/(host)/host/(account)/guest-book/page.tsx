@@ -3,6 +3,7 @@ import { getGuestBookAvatarUrls } from "@/lib/profile-data";
 import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
 import { AddForm, Field } from "@/components/host/Editable";
 import GuestBookEntry from "@/components/host/GuestBookEntry";
+import GuestBookCsvImport from "@/components/host/GuestBookCsvImport";
 import { addGuestBookPerson } from "@/lib/host-actions";
 
 // MY GUEST BOOK — account-level reusable people (§10, §11).
@@ -26,6 +27,15 @@ export default async function GuestBookPage() {
       <WorkspaceHeader
         title="My Guest Book"
         description="Keep the people you host most often in one place."
+      />
+
+      <GuestBookCsvImport
+        existing={saved.map((guest) => ({
+          firstName: guest.first_name,
+          lastName: guest.last_name,
+          email: guest.email,
+          phone: guest.phone,
+        }))}
       />
 
       {saved.length === 0 ? (
