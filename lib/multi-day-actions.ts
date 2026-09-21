@@ -31,6 +31,27 @@ function money(form: FormData, key: string): number {
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : 0;
 }
 
+export async function getMultiDayAccessState(
+  gatheringId: string
+): Promise<{ ok: true; hasPass: boolean; hasExtension: boolean } | { ok: false; message: string }> {
+  const supabase = createClient();
+  const [{ data: hasPass, error: passError }, { data: hasExtension, error: extensionError }] =
+    await Promise.all([
+      supabase.rpc("gathering_has_multi_day_access", { p_gathering_id: gatheringId }),
+      supabase.rpc("gathering_has_multi_day_extension", { p_gathering_id: gatheringId }),
+    ]);
+
+  if (passError || extensionError) {
+    return { ok: false, message: "We couldn’t verify Multi-Day access. Please try again." };
+  }
+
+  return {
+    ok: true,
+    hasPass: hasPass === true,
+    hasExtension: hasExtension === true,
+  };
+}
+
 export async function initializeMultiDaySchedule(gatheringId: string): Promise<Result> {
   const supabase = createClient();
   const { data: hasAccess, error: accessError } = await supabase.rpc("gathering_has_multi_day_access", {
