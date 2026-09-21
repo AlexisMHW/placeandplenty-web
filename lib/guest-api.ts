@@ -73,6 +73,42 @@ export interface PartyMember {
   accessibilityNotes: string | null;
 }
 
+export interface GuestActivityResponse {
+  gatheringGuestId: string;
+  rsvpStatus: "yes" | "maybe" | "no" | "no_response";
+  selected: boolean;
+  notes: string | null;
+  respondedAt: string | null;
+}
+
+export interface GuestScheduleActivity {
+  id: string;
+  title: string;
+  description: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  locationName: string | null;
+  locationAddress: string | null;
+  attireNotes: string | null;
+  transportationNotes: string | null;
+  reservationNotes: string | null;
+  vendorName: string | null;
+  vendorContact: string | null;
+  capacity: number | null;
+  seatsRemaining: number | null;
+  isSelectable: boolean;
+  selectionGroup: string | null;
+  responses: GuestActivityResponse[];
+}
+
+export interface GuestScheduleDay {
+  id: string;
+  date: string;
+  title: string | null;
+  notes: string | null;
+  activities: GuestScheduleActivity[];
+}
+
 /** An open item anyone in the gathering can pick up. */
 export interface Contribution {
   id: string;
@@ -138,6 +174,7 @@ export interface GuestPageData {
   displayName: string;
   hostDisplayName: string;
   displayDate: string;
+  displayEndDate: string | null;
   displayTime: string;
   displayLocation: string | null;
   displayDescription: string | null;
@@ -147,6 +184,7 @@ export interface GuestPageData {
   showSongRequest: boolean;
   showPhotoContributions: boolean;
   showSchedule: boolean;
+  schedule: GuestScheduleDay[];
   contributions: Contribution[];
   assignedContributions: AssignedContribution[];
   gatheringStatus: string;
@@ -199,6 +237,27 @@ export async function submitRsvp(
     ...(plusOneName ? { plusOneName } : {}),
     ...(contactEmail ? { contactEmail } : {}),
   });
+}
+
+export async function submitActivityRsvp(
+  token: string,
+  activityId: string,
+  gatheringGuestId: string,
+  rsvpStatus: "yes" | "maybe" | "no" | "no_response",
+  selected = false,
+  notes?: string
+) {
+  return call<{ success: boolean; respondedAt?: string }>(
+    "guest-activity-rsvp-submit",
+    {
+      token,
+      activityId,
+      gatheringGuestId,
+      rsvpStatus,
+      selected,
+      ...(notes ? { notes } : {}),
+    }
+  );
 }
 
 /* ------------------------------------------------------------------ */
