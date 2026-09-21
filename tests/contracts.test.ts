@@ -403,7 +403,9 @@ describe("creating a gathering — when a draft may be written", () => {
   const full = {
     name: "Barbara's 80th",
     gatheringType: "birthday" as const,
+    durationType: "single_day" as const,
     gatheringDate: "2026-11-26",
+    gatheringEndDate: null,
     arrivalTime: "18:00",
     locationName: "",
     adultCount: 8,
@@ -435,6 +437,33 @@ describe("creating a gathering — when a draft may be written", () => {
       "arrival_time_required",
       "headcount_required",
     ]);
+  });
+
+  test("Multi-Day requires an inclusive 2–4 day range", () => {
+    assert.equal(
+      hasEnoughToSaveDraft({
+        ...full,
+        durationType: "multi_day",
+        gatheringEndDate: "2026-11-27",
+      }),
+      true
+    );
+    assert.deepEqual(
+      validateGatheringInput({
+        ...full,
+        durationType: "multi_day",
+        gatheringEndDate: "2026-11-26",
+      }).map((e) => e.code),
+      ["end_date_invalid"]
+    );
+    assert.deepEqual(
+      validateGatheringInput({
+        ...full,
+        durationType: "multi_day",
+        gatheringEndDate: "2026-11-30",
+      }).map((e) => e.code),
+      ["duration_too_long"]
+    );
   });
 
   test("a gathering with nobody coming is not saveable", () => {
