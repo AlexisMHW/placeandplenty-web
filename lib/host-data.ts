@@ -28,6 +28,8 @@ export interface GatheringSummary {
   name: string;
   gathering_type: string;
   gathering_date: string;
+  gathering_end_date: string | null;
+  duration_type: "single_day" | "multi_day";
   arrival_time: string;
   readiness_state: string | null;
   current_hostready_score: number | null;
@@ -178,6 +180,8 @@ export interface GatheringDraftFields {
   name: string;
   gathering_type: string;
   gathering_date: string;
+  gathering_end_date: string | null;
+  duration_type: "single_day" | "multi_day";
   arrival_time: string;
   location_name: string | null;
   adult_count: number;
@@ -197,7 +201,7 @@ export async function getGatheringDraftFields(
   const { data, error } = await supabase
     .from("gatherings")
     .select(
-      "id, name, gathering_type, gathering_date, arrival_time, location_name, adult_count, child_count, budget_target, food_style, notes, invitation_mode, invitation_status, invitation_style"
+      "id, name, gathering_type, gathering_date, gathering_end_date, duration_type, arrival_time, location_name, adult_count, child_count, budget_target, food_style, notes, invitation_mode, invitation_status, invitation_style"
     )
     .eq("id", id)
     .maybeSingle();
