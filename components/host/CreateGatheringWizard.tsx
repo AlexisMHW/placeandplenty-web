@@ -14,6 +14,7 @@ import {
   saveInvitationArtwork,
 } from "@/lib/host-actions";
 import type { GatheringLimitCode } from "@/lib/gathering-limits";
+import { getMultiDayAccessState } from "@/lib/multi-day-actions";
 import {
   DEFAULT_ARRIVAL_TIME,
   EMPTY_GATHERING_INPUT,
@@ -393,6 +394,18 @@ export default function CreateGatheringWizard({
         showRefusal(finalised);
         return;
       }
+      if (input.durationType === "multi_day") {
+        const access = await getMultiDayAccessState(saved.value);
+        if (!access.ok) {
+          setError(access.message);
+          return;
+        }
+        if (!access.hasPass) {
+          router.replace(`/checkout/multi-day?gatheringId=${saved.value}`);
+          return;
+        }
+      }
+
       router.replace(`/host/g/${saved.value}`);
     });
   }
