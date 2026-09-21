@@ -97,7 +97,10 @@ async function loadDraft(editId: string): Promise<ResumedDraft> {
       gatheringType: isGatheringType(fields.gathering_type)
         ? fields.gathering_type
         : null,
+      durationType: fields.duration_type === "multi_day" ? "multi_day" : "single_day",
       gatheringDate: fields.gathering_date ?? todayISODate(),
+      gatheringEndDate:
+        fields.duration_type === "multi_day" ? fields.gathering_end_date : null,
       arrivalTime: fields.arrival_time
         ? fields.arrival_time.slice(0, 5)
         : DEFAULT_ARRIVAL_TIME,
