@@ -95,3 +95,30 @@ export const PASS_LIMITS_NOTE =
 
 export const PLUS_LIMITS_NOTE =
   "Plus covers up to 6 open gatherings at a time and up to 12 locked-in gatherings per annual term. Drafts occupy an open working slot but do not use the annual allowance until you finish creating and lock in the gathering. After 12 lock-ins in the same annual term, additional gatherings can use a Gathering Pass while your account-level Plus features stay active.";
+
+
+export const MULTI_DAY_PRICING = {
+  standard: {
+    label: "Multi-Day Pass",
+    price: "$59.99",
+    priceLine: `$59.99 ${TAX_QUALIFIER}`,
+  },
+  gathering_pass: {
+    label: "Multi-Day upgrade",
+    price: "$50.00",
+    priceLine: `$50.00 ${TAX_QUALIFIER}`,
+  },
+  plus: {
+    label: "Multi-Day Plus rate",
+    price: "$39.99",
+    priceLine: `$39.99 ${TAX_QUALIFIER}`,
+  },
+  extension: {
+    label: "Multi-Day Extension",
+    price: "$19.99",
+    priceLine: `$19.99 ${TAX_QUALIFIER}`,
+  },
+} as const;
+
+export const MULTI_DAY_NOTE =
+  "A Multi-Day Pass keeps one gathering, one guest list and one planning stack across 2–4 calendar days. A one-time extension can expand that same gathering to as many as 7 calendar days.";
