@@ -9,6 +9,8 @@ import Icon, { type IconName } from "@/components/Icon";
 import { PricingSchema, FaqSchema } from "@/components/StructuredData";
 import {
   PRICING_TIERS,
+  MULTI_DAY_NOTE,
+  MULTI_DAY_PRICING,
   PLUS_LIMITS_NOTE,
   FREE_LIMITS_NOTE,
   PASS_LIMITS_NOTE,
@@ -49,6 +51,10 @@ const faqs = [
   },
   { q: "What does Plus actually include?", a: PLUS_LIMITS_NOTE },
   { q: "Is a Gathering Pass a subscription?", a: PASS_LIMITS_NOTE },
+  {
+    q: "What does Multi-Day cost?",
+    a: `A Multi-Day Pass covers 2–4 calendar days. The standard rate is ${MULTI_DAY_PRICING.standard.priceLine}; a gathering that already has a Gathering Pass pays ${MULTI_DAY_PRICING.gathering_pass.priceLine}; Plus hosts pay ${MULTI_DAY_PRICING.plus.priceLine}. A one-time extension to as many as 7 calendar days is ${MULTI_DAY_PRICING.extension.priceLine}.`,
+  },
   {
     q: "Does a draft count against my Plus limits?",
     a: "A draft occupies one of your 6 open working slots, but it does not use one of the 12 annual lock-ins. The annual allowance is used only when you finish creating the gathering and lock it in.",
@@ -100,6 +106,37 @@ export default function PricingPage() {
 
       <PlanCards />
 
+      <Band tone="cream">
+        <div className="mx-auto max-w-editorial px-6 py-12 md:py-14">
+          <div className="rounded-3xl border border-gold/35 bg-parchment p-7 md:p-9">
+            <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.18em] text-forest/55">Multi-Day gatherings</p>
+            <div className="mt-3 grid gap-8 lg:grid-cols-[1.25fr_1fr]">
+              <div>
+                <Display className="text-2xl text-forest md:text-3xl">One gathering. More than one day.</Display>
+                <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-forest/75">{MULTI_DAY_NOTE}</p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link href="/checkout/multi-day" className="rounded-full bg-forest px-5 py-2.5 font-body text-sm font-semibold text-offwhite">Get Multi-Day Pass</Link>
+                  <Link href="/checkout/multi-day-extension" className="rounded-full border border-forest px-5 py-2.5 font-body text-sm font-semibold text-forest">Days 5–7 extension</Link>
+                </div>
+              </div>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                {[
+                  ["Standard", MULTI_DAY_PRICING.standard.priceLine],
+                  ["With Gathering Pass", MULTI_DAY_PRICING.gathering_pass.priceLine],
+                  ["With Plus", MULTI_DAY_PRICING.plus.priceLine],
+                  ["5–7 day extension", MULTI_DAY_PRICING.extension.priceLine],
+                ].map(([label, price]) => (
+                  <div key={label} className="rounded-2xl border border-sage/25 bg-offwhite px-4 py-4">
+                    <dt className="font-body text-xs font-semibold uppercase tracking-[0.12em] text-forest/55">{label}</dt>
+                    <dd className="mt-1 font-display text-xl text-forest">{price}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+        </div>
+      </Band>
+
       <Band tone="parchment">
         <div className="mx-auto max-w-editorial px-6 py-12 md:py-14">
           <div className="grid gap-6 md:grid-cols-2">
@@ -145,7 +182,7 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-3 font-body text-sm leading-relaxed text-forest/70">Everything else unlocked by your Gathering Pass or Plus can be used from the browser when that feature is available on web.</p>
+                <p className="mt-3 font-body text-sm leading-relaxed text-forest/70">Everything else — including Multi-Day planning and My Schedule — can be used from the browser and the app.</p>
               </div>
             </div>
           </div>
