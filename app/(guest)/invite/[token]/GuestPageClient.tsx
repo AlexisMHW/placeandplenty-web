@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   lookupGuestPage,
   submitRsvp,
+  submitActivityRsvp,
   claimContribution,
   respondToContribution,
   submitSongRequest,
@@ -55,6 +56,8 @@ export default function GuestPageClient({
   const [rsvpSubmitted, setRsvpSubmitted] = useState(false);
   const [rsvpError, setRsvpError] = useState<string | null>(null);
   const [readOnly, setReadOnly] = useState(false);
+  const [activityBusy, setActivityBusy] = useState<string | null>(null);
+  const [activityErrors, setActivityErrors] = useState<Record<string, string>>({});
 
   const [songTitle, setSongTitle] = useState("");
   const [songArtist, setSongArtist] = useState("");
@@ -264,6 +267,61 @@ export default function GuestPageClient({
     await refresh();
   }
 
+  async function handleActivityResponse(
+    activityId: string,
+    gatheringGuestId: string,
+    rsvpStatus: "yes" | "maybe" | "no" | "no_response",
+    selected = false
+  ) {
+    const key = `${activityId}:${gatheringGuestId}`;
+    setActivityErrors((prev) => ({ ...prev, [key]: "" }));
+    setActivityBusy(key);
+
+    const result = await submitActivityRsvp(
+      token,
+      activityId,
+      gatheringGuestId,
+      rsvpStatus,
+      selected
+    );
+
+    setActivityBusy(null);
+
+    if (result.status === 409) {
+      const code = (result.data as any)?.error;
+      if (code === "activity_full") {
+        setActivityErrors((prev) => ({
+          ...prev,
+          [key]: "That activity just filled up. Choose another option or check back with your host.",
+        }));
+        await refresh();
+        return;
+      }
+      setReadOnly(true);
+      setActivityErrors((prev) => ({ ...prev, [key]: ARCHIVED_NOTICE }));
+      return;
+    }
+
+    if (result.status === 403) {
+      setActivityErrors((prev) => ({
+        ...prev,
+        [key]: "This activity is no longer available to your invitation.",
+      }));
+      await refresh();
+      return;
+    }
+
+    if (!result.ok) {
+      setActivityErrors((prev) => ({
+        ...prev,
+        [key]: "That response didn’t go through. Please try again.",
+      }));
+      return;
+    }
+
+    await refresh();
+  }
+
   async function handleSongSubmit() {
     setSongError(null);
     if (!songTitle.trim()) {
@@ -357,6 +415,13 @@ export default function GuestPageClient({
         day: "numeric",
       })
     : null;
+  const formattedEndDate = data.displayEndDate
+    ? new Date(`${data.displayEndDate}T00:00:00`).toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
   const formattedTime = data.displayTime
     ? new Date(`2000-01-01T${data.displayTime}`).toLocaleTimeString("en-US", {
         hour: "numeric",
@@ -396,7 +461,14 @@ export default function GuestPageClient({
       </h1>
 
       <div className="mt-4 space-y-1 font-body text-forest/80">
-        {formattedDate && <p>{formattedDate}</p>}
+        {formattedDate && (
+          <p>
+            {formattedDate}
+            {formattedEndDate && formattedEndDate !== formattedDate
+              ? ` – ${formattedEndDate}`
+              : ""}
+          </p>
+        )}
         {formattedTime && <p>{formattedTime}</p>}
         {data.displayLocation && <p>{data.displayLocation}</p>}
       </div>
@@ -589,6 +661,232 @@ export default function GuestPageClient({
               </button>
             </div>
           )}
+        </section>
+      )}
+
+      {/* --- Multi-Day guest schedule --- */}
+      {data.showSchedule && data.schedule.length > 0 && (
+        <section className="mt-8 rounded-card border border-gold/45 bg-cream p-6 shadow-softer">
+          <p className="font-body text-[0.66rem] font-bold uppercase tracking-[0.2em] text-forest/55">
+            Your gathering
+          </p>
+          <div className="mt-2 h-0.5 w-10 bg-gold" aria-hidden />
+          <h2 className="mt-4 font-display text-2xl text-forest">
+            My Schedule for {data.displayName}
+          </h2>
+          <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">
+            The details your host shared for each day. Activity responses are saved here with your invitation.
+          </p>
+
+          <div className="mt-6 space-y-5">
+            {data.schedule.map((day, dayIndex) => {
+              const dayDate = new Date(`${day.date}T00:00:00`).toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              });
+
+              return (
+                <article
+                  key={day.id}
+                  className="overflow-hidden rounded-2xl border border-sage/25 bg-offwhite"
+                >
+                  <header className="border-b border-sage/20 bg-parchment px-5 py-4">
+                    <p className="font-body text-[0.64rem] font-bold uppercase tracking-[0.16em] text-forest/50">
+                      Day {dayIndex + 1}
+                    </p>
+                    <h3 className="mt-1 font-display text-xl text-forest">
+                      {day.title || dayDate}
+                    </h3>
+                    {day.title && (
+                      <p className="mt-1 font-body text-sm text-forest/65">{dayDate}</p>
+                    )}
+                    {day.notes && (
+                      <p className="mt-2 whitespace-pre-wrap font-body text-sm leading-relaxed text-forest/70">
+                        {day.notes}
+                      </p>
+                    )}
+                  </header>
+
+                  {day.activities.length === 0 ? (
+                    <p className="px-5 py-5 font-body text-sm text-forest/55">
+                      Nothing scheduled here yet.
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-sage/20">
+                      {day.activities.map((activity) => {
+                        const start = activity.startTime
+                          ? new Date(`2000-01-01T${activity.startTime}`).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : null;
+                        const end = activity.endTime
+                          ? new Date(`2000-01-01T${activity.endTime}`).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : null;
+
+                        return (
+                          <li key={activity.id} className="px-5 py-5">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <h4 className="font-display text-lg text-forest">{activity.title}</h4>
+                                {(start || activity.locationName) && (
+                                  <p className="mt-1 font-body text-sm text-forest/65">
+                                    {start}{start && end ? `–${end}` : ""}
+                                    {start && activity.locationName ? " · " : ""}
+                                    {activity.locationName}
+                                  </p>
+                                )}
+                              </div>
+                              {activity.capacity !== null && (
+                                <span className="rounded-full border border-sage/35 bg-cream px-3 py-1 font-body text-xs text-forest/70">
+                                  {activity.seatsRemaining === 0
+                                    ? "Full"
+                                    : `${activity.seatsRemaining} of ${activity.capacity} spots left`}
+                                </span>
+                              )}
+                            </div>
+
+                            {activity.description && (
+                              <p className="mt-3 whitespace-pre-wrap font-body text-sm leading-relaxed text-forest/75">
+                                {activity.description}
+                              </p>
+                            )}
+
+                            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                              {activity.locationAddress && (
+                                <div>
+                                  <dt className="font-body text-[0.62rem] font-bold uppercase tracking-[0.14em] text-forest/50">Location</dt>
+                                  <dd className="mt-1 font-body text-sm text-forest/75">{activity.locationAddress}</dd>
+                                </div>
+                              )}
+                              {activity.attireNotes && (
+                                <div>
+                                  <dt className="font-body text-[0.62rem] font-bold uppercase tracking-[0.14em] text-forest/50">Attire</dt>
+                                  <dd className="mt-1 font-body text-sm text-forest/75">{activity.attireNotes}</dd>
+                                </div>
+                              )}
+                              {activity.transportationNotes && (
+                                <div>
+                                  <dt className="font-body text-[0.62rem] font-bold uppercase tracking-[0.14em] text-forest/50">Transportation</dt>
+                                  <dd className="mt-1 whitespace-pre-wrap font-body text-sm text-forest/75">{activity.transportationNotes}</dd>
+                                </div>
+                              )}
+                              {activity.reservationNotes && (
+                                <div>
+                                  <dt className="font-body text-[0.62rem] font-bold uppercase tracking-[0.14em] text-forest/50">Reservation</dt>
+                                  <dd className="mt-1 whitespace-pre-wrap font-body text-sm text-forest/75">{activity.reservationNotes}</dd>
+                                </div>
+                              )}
+                              {(activity.vendorName || activity.vendorContact) && (
+                                <div>
+                                  <dt className="font-body text-[0.62rem] font-bold uppercase tracking-[0.14em] text-forest/50">Provider</dt>
+                                  <dd className="mt-1 font-body text-sm text-forest/75">
+                                    {[activity.vendorName, activity.vendorContact].filter(Boolean).join(" · ")}
+                                  </dd>
+                                </div>
+                              )}
+                            </dl>
+
+                            {data.partyMembers.length > 0 && (
+                              <div className="mt-5 space-y-4 border-t border-sage/20 pt-4">
+                                {data.partyMembers.map((member) => {
+                                  const response =
+                                    activity.responses.find(
+                                      (r) => r.gatheringGuestId === member.gatheringGuestId
+                                    ) ?? null;
+                                  const key = `${activity.id}:${member.gatheringGuestId}`;
+                                  const busy = activityBusy === key;
+                                  const responseStatus = response?.rsvpStatus ?? "no_response";
+                                  const selected = response?.selected === true;
+
+                                  return (
+                                    <div key={member.gatheringGuestId}>
+                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <p className="font-body text-sm font-semibold text-forest">
+                                          {member.firstName}
+                                          {member.lastName ? ` ${member.lastName}` : ""}
+                                        </p>
+                                        {selected && (
+                                          <span className="rounded-full bg-forest px-3 py-1 font-body text-[0.65rem] font-semibold uppercase tracking-wide text-offwhite">
+                                            Selected
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div className="mt-2 flex flex-wrap gap-2">
+                                        {(["yes", "maybe", "no"] as const).map((status) => (
+                                          <button
+                                            key={status}
+                                            type="button"
+                                            disabled={busy || !canWrite}
+                                            onClick={() =>
+                                              handleActivityResponse(
+                                                activity.id,
+                                                member.gatheringGuestId,
+                                                status,
+                                                false
+                                              )
+                                            }
+                                            className={`rounded-full border px-4 py-1.5 font-body text-xs font-semibold transition-colors disabled:opacity-55 ${
+                                              responseStatus === status && !selected
+                                                ? "border-forest bg-forest text-offwhite"
+                                                : "border-sage/40 text-forest hover:bg-sage/10"
+                                            }`}
+                                          >
+                                            {status === "yes" ? "Going" : status === "maybe" ? "Maybe" : "Can’t make it"}
+                                          </button>
+                                        ))}
+
+                                        {activity.isSelectable && (
+                                          <button
+                                            type="button"
+                                            disabled={busy || !canWrite || (activity.seatsRemaining === 0 && !selected)}
+                                            onClick={() =>
+                                              handleActivityResponse(
+                                                activity.id,
+                                                member.gatheringGuestId,
+                                                "yes",
+                                                true
+                                              )
+                                            }
+                                            className={`rounded-full border px-4 py-1.5 font-body text-xs font-semibold transition-colors disabled:opacity-55 ${
+                                              selected
+                                                ? "border-gold bg-gold/20 text-forest"
+                                                : "border-gold/60 text-forest hover:bg-gold/10"
+                                            }`}
+                                          >
+                                            {selected
+                                              ? "Selected"
+                                              : activity.selectionGroup
+                                                ? "Choose this option"
+                                                : "Choose this"}
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {activityErrors[key] && (
+                                        <p role="alert" className="mt-2 font-body text-xs text-error">
+                                          {activityErrors[key]}
+                                        </p>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </article>
+              );
+            })}
+          </div>
         </section>
       )}
 
