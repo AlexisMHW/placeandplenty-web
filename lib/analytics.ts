@@ -10,6 +10,7 @@ export type AnalyticsEvent =
   | "checklist_downloaded"
   | "checklist_account_clicked"
   | "homepage_view"
+  | "search_landing_view"
   | "guest_list_signup_started"
   | "guest_list_signup_completed"
   | "founding_host_clicked"
