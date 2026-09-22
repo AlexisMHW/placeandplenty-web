@@ -38,6 +38,7 @@ export const PLANNING_NAV: NavItem[] = [
   { label: "RSVP & Guest List", href: "/rsvp-and-guest-list" },
   { label: "Potluck Planner", href: "/potluck-planner" },
   { label: "Bachelorette Weekend Planner", href: "/bachelorette-weekend-planning" },
+  { label: "Family Reunion Planner", href: "/family-reunion-planning" },
 ];
 
 /**
