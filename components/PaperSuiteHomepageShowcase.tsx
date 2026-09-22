@@ -2,17 +2,37 @@ import Link from "next/link";
 import { Display } from "@/components/Display";
 
 const PIECES = [
-  ["Invitation", "Gathering details → coordinated invitation"],
-  ["Menu Card", "My Table → a menu you don’t have to retype"],
-  ["Weekend Itinerary", "My Schedule → a printed weekend plan"],
-  ["Welcome Sign", "Gathering identity → a ready-to-print sign"],
+  {
+    title: "Invitation",
+    body: "Gathering details → coordinated invitation",
+    position: "0% 0%",
+    alt: "A coordinated printed invitation suite",
+  },
+  {
+    title: "Menu Card",
+    body: "My Table → a menu you don’t have to retype",
+    position: "100% 0%",
+    alt: "An elegant printed menu card at a styled table",
+  },
+  {
+    title: "Weekend Itinerary",
+    body: "My Schedule → a printed weekend plan",
+    position: "0% 100%",
+    alt: "A coordinated printed multi-day weekend itinerary",
+  },
+  {
+    title: "Welcome Sign",
+    body: "Gathering identity → a ready-to-print sign",
+    position: "100% 100%",
+    alt: "A coordinated welcome sign for a gathering",
+  },
 ];
 
 export default function PaperSuiteHomepageShowcase() {
   return (
     <section className="border-y border-gold/20 bg-parchment">
-      <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+      <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
+        <div className="grid gap-9 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
               New: My Paper Suite
@@ -54,11 +74,11 @@ export default function PaperSuiteHomepageShowcase() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            {PIECES.map(([title, body], index) => (
+            {PIECES.map((piece, index) => (
               <article
-                key={title}
+                key={piece.title}
                 className={
-                  "min-h-[12rem] rounded-2xl border p-5 shadow-softer " +
+                  "overflow-hidden rounded-2xl border shadow-softer " +
                   (index === 0
                     ? "border-gold/35 bg-cream"
                     : index === 1
@@ -68,12 +88,25 @@ export default function PaperSuiteHomepageShowcase() {
                         : "border-sage/25 bg-sage/15")
                 }
               >
-                <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.16em] text-goldInk">
-                  {String(index + 1).padStart(2, "0")}
-                </p>
-                <h3 className="mt-5 font-display text-xl text-forest">{title}</h3>
-                <div className="mt-3 h-px w-10 bg-gold/55" />
-                <p className="mt-4 font-body text-sm leading-relaxed text-forest/68">{body}</p>
+                <div
+                  role="img"
+                  aria-label={piece.alt}
+                  className="aspect-[4/3] w-full bg-no-repeat"
+                  style={{
+                    backgroundImage: "url('/images/paper-suite-card-sprite.webp')",
+                    backgroundSize: "200% 200%",
+                    backgroundPosition: piece.position,
+                  }}
+                />
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-display text-lg text-forest">{piece.title}</h3>
+                    <span className="font-body text-[0.58rem] font-bold uppercase tracking-[0.14em] text-goldInk">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <p className="mt-2 font-body text-xs leading-relaxed text-forest/68">{piece.body}</p>
+                </div>
               </article>
             ))}
           </div>
