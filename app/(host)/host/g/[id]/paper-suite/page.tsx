@@ -303,7 +303,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
         </div>
       </section>
 
-      <PaperSuiteOrderBuilder gatheringId={params.id} multiDay={gathering.duration_type === "multi_day"} />
+      <PaperSuiteOrderBuilder gatheringId={params.id} multiDay={gathering.duration_type === "multi_day"} invitationUrl={invitationUrl} />
 
 
       {paperOrders.length > 0 && (
