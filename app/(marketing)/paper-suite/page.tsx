@@ -135,9 +135,11 @@ export default function PaperSuiteMarketingPage() {
               <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
                 Match My Invitation
               </p>
-              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.45rem]">
-                Already have the invitation?
-                <span className="block italic">Bring it with you.</span>
+              <Display
+                emphasis="Bring it with you."
+                className="mt-4 text-3xl leading-tight text-forest md:text-[2.45rem]"
+              >
+                {"Already have the invitation? Bring it with you."}
               </Display>
               <p className="mt-5 font-body text-base leading-relaxed text-forest/75">
                 Upload an existing invitation and let Place &amp; Plenty pull a coordinated
