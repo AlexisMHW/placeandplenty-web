@@ -9,6 +9,7 @@ import {
 import { getMultiDayWorkspace } from "@/lib/multi-day-data";
 import GatheringIdentity from "@/components/host/GatheringIdentity";
 import { WorkspaceHeader } from "@/components/host/Workspace";
+import GelatoConnectionPanel from "@/components/host/GelatoConnectionPanel";
 
 export const metadata = { title: "My Paper Suite" };
 export const dynamic = "force-dynamic";
@@ -259,6 +260,8 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
           </article>
         </div>
       </section>
+
+      <GelatoConnectionPanel />
 
       <section className="mt-8 rounded-2xl border border-gold/30 bg-forest p-6 text-offwhite md:p-7">
         <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-gold">Next connection</p>
