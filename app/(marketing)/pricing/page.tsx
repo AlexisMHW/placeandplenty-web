@@ -115,8 +115,8 @@ export default function PricingPage() {
                 <Display className="text-2xl text-forest md:text-3xl">One gathering. More than one day.</Display>
                 <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-forest/75">{MULTI_DAY_NOTE}</p>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <Link href="/checkout/multi-day" className="rounded-full bg-forest px-5 py-2.5 font-body text-sm font-semibold text-offwhite">Get Multi-Day Pass</Link>
-                  <Link href="/checkout/multi-day-extension" className="rounded-full border border-forest px-5 py-2.5 font-body text-sm font-semibold text-forest">Days 5–7 extension</Link>
+                  <Link href="/multi-day" className="rounded-full bg-forest px-5 py-2.5 font-body text-sm font-semibold text-offwhite">See How Multi-Day Works</Link>
+                  <Link href="/signup" className="rounded-full border border-forest px-5 py-2.5 font-body text-sm font-semibold text-forest">Start Hosting Free</Link>
                 </div>
               </div>
               <dl className="grid gap-3 sm:grid-cols-2">
