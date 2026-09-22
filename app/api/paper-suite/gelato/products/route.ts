@@ -14,7 +14,7 @@ const ALLOWED_CATALOGS = new Set([
 ]);
 
 const SIZE_TERMS: Record<PaperSizeId, string[]> = {
-  "4x6": ["4x6", "4 x 6", "10x15", "10 x 15", "a6"],
+  "4x6": ["4x6", "4 x 6", "10x15", "10 x 15"],
   "5x7": ["5x7", "5 x 7", "13x18", "13 x 18", "5r"],
   "4x9": ["4x9", "4 x 9", "dl", "10x21", "10 x 21"],
   "square-5": ["5x5", "5 x 5", "square", "13x13", "13 x 13"],
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
   try {
     const response = await searchGelatoProducts(catalog, { limit: 100, offset: 0 });
 
-    const candidates = (response.products || [])
+    const ranked = (response.products || [])
       .filter((product) => {
         const attrs = product.attributes || {};
         const orientation = String(attrs.Orientation || "").toLowerCase();
@@ -66,15 +66,78 @@ export async function GET(req: NextRequest) {
           (size === "square-5" && orientation.includes("square"));
         const printableColor = !color || color.includes("4-0") || color.includes("4-4");
 
-        return portraitOrUnspecified && printableColor && matchesRequestedSize(attrs, size);
-      })
-      .slice(0, 36)
-      .map((product) => ({
-        productUid: product.productUid,
-        attributes: product.attributes,
-      }));
+        const status = String(attrs.ProductStatus || "").toLowerCase();
+        const folding = String(attrs.FoldingType || "none").toLowerCase();
+        const spot = String(attrs.SpotFinishingType || "none").toLowerCase();
+        const supportsUS = !product.supportedCountries || product.supportedCountries.includes("US");
 
-    return NextResponse.json({ catalog, size, candidates });
+        return (
+          portraitOrUnspecified &&
+          printableColor &&
+          matchesRequestedSize(attrs, size) &&
+          (!status || status === "activated") &&
+          (folding === "none" || folding === "") &&
+          (spot === "none" || spot === "") &&
+          supportsUS
+        );
+      })
+      .map((product) => {
+        const attrs = product.attributes || {};
+        const paperType = String(attrs.PaperType || "");
+        const coating = String(attrs.CoatingType || "none");
+        const protection = String(attrs.ProtectionType || "none");
+
+        let score = 0;
+        if (/cover/i.test(paperType)) score += 40;
+        if (/uncoated/i.test(paperType)) score += 22;
+        if (/silk/i.test(paperType)) score += 18;
+        if (/matt/i.test(coating) || /matt/i.test(protection)) score += 14;
+        if (coating === "none") score += 10;
+        if (protection === "none") score += 8;
+        if (/100-lb|110-lb|120-lb|300|350/i.test(paperType)) score += 10;
+
+        const finishLabel =
+          /uncoated/i.test(paperType)
+            ? "Uncoated"
+            : /silk/i.test(paperType)
+              ? "Silk"
+              : /matt/i.test(coating) || /matt/i.test(protection)
+                ? "Matte"
+                : "Print";
+
+        const weightLabel =
+          paperType
+            .replace(/-/g, " ")
+            .replace(/cover/gi, "")
+            .replace(/coated/gi, "")
+            .replace(/uncoated/gi, "")
+            .replace(/silk/gi, "")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        return {
+          productUid: product.productUid,
+          attributes: product.attributes,
+          score,
+          title: weightLabel ? finishLabel + " · " + weightLabel : finishLabel,
+          finishLabel,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const seen = new Set<string>();
+    const curated = ranked.filter((product) => {
+      const key = product.finishLabel;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 3);
+
+    const candidates = (curated.length > 0 ? curated : ranked.slice(0, 3)).map(
+      ({ score: _score, finishLabel: _finishLabel, ...product }) => product
+    );
+
+    return NextResponse.json({ catalog, size, candidates, curated: true });
   } catch (error) {
     console.error("Gelato product discovery failed", error);
     return NextResponse.json({ error: "gelato_product_discovery_failed" }, { status: 502 });
