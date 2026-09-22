@@ -20,6 +20,8 @@ function pieceLabel(kind: string) {
       return "Menu";
     case "itinerary":
       return "Weekend Itinerary";
+    case "welcome-sign":
+      return "Welcome";
     case "thank-you":
       return "Thank You";
     default:
@@ -66,6 +68,7 @@ export async function GET(req: NextRequest) {
   const isItinerary = payload.kind === "itinerary";
   const isInvitation = payload.kind === "invitation";
   const isDetails = payload.kind === "details";
+  const isWelcomeSign = payload.kind === "welcome-sign";
   const isThankYou = payload.kind === "thank-you";
 
   return new ImageResponse(
@@ -267,7 +270,7 @@ export async function GET(req: NextRequest) {
           </div>
         )}
 
-        {(isInvitation || isDetails || isThankYou) && (
+        {(isInvitation || isDetails || isWelcomeSign || isThankYou) && (
           <div
             style={{
               marginTop: Math.round((square ? 70 : tall ? 90 : 85) * scale),
@@ -288,7 +291,7 @@ export async function GET(req: NextRequest) {
                 We’d love for you to gather with us.
               </div>
             )}
-            {(isDetails || isThankYou) && (
+            {(isDetails || isWelcomeSign || isThankYou) && (
               <div
                 style={{
                   fontSize: bodySize,
@@ -297,10 +300,10 @@ export async function GET(req: NextRequest) {
                   whiteSpace: "pre-wrap",
                 }}
               >
-                {payload.bodyCopy}
+                {isWelcomeSign ? payload.bodyCopy || "We’re glad you’re here." : payload.bodyCopy}
               </div>
             )}
-            {isDetails && (
+            {(isDetails || isWelcomeSign) && (
               <div
                 style={{
                   marginTop: Math.round(44 * scale),
