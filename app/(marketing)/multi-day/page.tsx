@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { Band, Display } from "@/components/Display";
 import Icon, { type IconName } from "@/components/Icon";
@@ -203,12 +202,11 @@ export default function MultiDayPage() {
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
             <article className="overflow-hidden rounded-3xl border border-sage/25 bg-offwhite shadow-soft">
               <div className="relative aspect-[16/9]">
-                <Image
+                <img
                   src="/images/bachelorette-weekend.webp"
                   alt="A diverse group of women celebrating a bachelorette weekend getaway together"
-                  fill
-                  className="object-cover"
-                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
                 />
               </div>
               <div className="p-6">
@@ -241,12 +239,11 @@ export default function MultiDayPage() {
 
             <article className="overflow-hidden rounded-3xl border border-sage/25 bg-offwhite shadow-soft">
               <div className="relative aspect-[16/9]">
-                <Image
+                <img
                   src="/images/harding-family-reunion.webp"
                   alt="The Harding Family Reunion with multiple generations wearing coordinated reunion shirts"
-                  fill
-                  className="object-cover"
-                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
                 />
               </div>
               <div className="p-6">
