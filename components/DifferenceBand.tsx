@@ -97,6 +97,34 @@ export default function DifferenceBand() {
           </article>
         </div>
 
+        <div className="mx-auto mt-8 max-w-[68rem] rounded-3xl border border-gold/35 bg-parchment p-6 shadow-softer md:p-7">
+          <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
+            <div>
+              <p className="font-body text-[0.66rem] font-bold uppercase tracking-[0.18em] text-forest/60">New: Multi-Day</p>
+              <h3 className="mt-2 font-display text-2xl leading-snug text-forest">One gathering can hold the whole weekend.</h3>
+              <p className="mt-3 font-body text-sm leading-relaxed text-forest/75">
+                Reunions, wedding weekends, retreats and family visits do not need separate plans for every day. Keep one guest list, build My Schedule, collect activity responses and connect the rest of the plan to the right day.
+              </p>
+              <Link href="/multi-day" className="mt-5 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-xs font-semibold uppercase tracking-[0.12em] text-forest transition-colors duration-400 hover:text-sage">
+                Explore Multi-Day <span aria-hidden>→</span>
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ["Friday", "Welcome dinner", "6:30 PM"],
+                ["Saturday", "Brunch + activities", "All day"],
+                ["Sunday", "Farewell breakfast", "9:30 AM"],
+              ].map(([day, title, time]) => (
+                <div key={day} className="rounded-2xl border border-sage/25 bg-offwhite px-4 py-4">
+                  <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.14em] text-forest/50">{day}</p>
+                  <p className="mt-2 font-display text-lg leading-snug text-forest">{title}</p>
+                  <p className="mt-2 font-body text-xs text-forest/60">{time}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="mx-auto mt-8 flex max-w-[68rem] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-2xl font-body text-sm leading-relaxed text-forest/70">HostReady™ can see the bigger picture too — what is decided, what is still open, and what deserves your attention next.</p>
           <div className="flex flex-wrap gap-x-6 gap-y-3">
