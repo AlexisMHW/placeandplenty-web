@@ -184,6 +184,38 @@ export default function WhatItDoesPage() {
         </div>
       </Band>
 
+      <Band tone="cream">
+        <div className="mx-auto max-w-editorial px-6 py-14 md:py-18">
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+            <div>
+              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/60">Multi-Day</p>
+              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.4rem]">
+                When the gathering lasts longer than the day.
+              </Display>
+              <p className="mt-4 font-body text-base leading-relaxed text-forest/75">
+                Keep one guest list, one planning stack and one gathering record across multiple days. Build a day-by-day schedule, let guests respond to activities, track capacity and connect food, shopping, contributions and expenses to the day they belong to.
+              </p>
+              <Link href="/multi-day" className="mt-6 inline-flex border-b border-gold pb-1 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest">
+                Explore Multi-Day <span aria-hidden className="ml-1">→</span>
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["One guest list", "No rebuilding the same people for Friday, Saturday and Sunday."],
+                ["My Schedule", "Days, activities, times, locations and provider details stay together."],
+                ["Activity responses", "Guests can respond per person when one activity needs its own headcount."],
+                ["Connected planning", "Table, Shopping, contributions and expenses can belong to a day or activity."],
+              ].map(([title, body]) => (
+                <div key={title} className="rounded-2xl border border-sage/25 bg-offwhite p-5">
+                  <h3 className="font-display text-lg text-forest">{title}</h3>
+                  <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">{body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Band>
+
       <Band tone="sage">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <div className="mx-auto max-w-3xl text-center">
