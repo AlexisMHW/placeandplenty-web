@@ -82,8 +82,8 @@ export default function MultiDayHomepageShowcase() {
 
             <div className="relative min-h-[20rem] overflow-hidden bg-forest lg:min-h-0">
               <img
-                src="https://images.pexels.com/photos/34327735/pexels-photo-34327735/free-photo-of-joyful-bachelorette-party-celebration-indoors.jpeg?auto=compress&dpr=1&h=900&w=1200"
-                alt="A diverse group of women laughing together during a bachelorette weekend celebration"
+                src="/images/bachelorette-weekend.webp"
+                alt="A diverse group of women celebrating together during a bachelorette weekend getaway"
                 className="absolute inset-0 h-full w-full object-cover"
                 loading="lazy"
               />
