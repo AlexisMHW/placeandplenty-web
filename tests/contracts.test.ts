@@ -1025,7 +1025,7 @@ describe("lifecycle — the backend decides the phase, not this app", () => {
     assert.match(source, /FINISHED\.includes\(g\.effective_status\)/);
     assert.match(source, /includes\(g\.effective_status\)/);
     // The badge formats the canonical effective phase, not the stored row status.
-    assert.match(source, /statusLabel\(g\.effective_status\)/);
+    assert.match(source, /statusLabel\(gathering\.effective_status\)/);
   });
 
   /**
