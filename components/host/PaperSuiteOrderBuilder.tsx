@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  PAPER_PIECES,
+  PAPER_SIZES,
+  paperPiece,
+  type PaperPieceKind,
+  type PaperSizeId,
+} from "@/lib/paper-suite-catalog";
 
 type ProductCandidate = {
   productUid: string;
@@ -15,8 +22,8 @@ type TemplateId =
 
 function productLabel(product: ProductCandidate) {
   const attrs = product.attributes || {};
-  const format = String(attrs.PaperFormat || attrs.Format || "").trim();
-  const stock = String(attrs.PaperType || attrs.Media || "").trim();
+  const format = String(attrs.PaperFormat || attrs.Format || attrs.Size || "").trim();
+  const stock = String(attrs.PaperType || attrs.Media || attrs.Material || "").trim();
   const finish = String(attrs.Finish || attrs.Coating || "").trim();
   const pieces = [format, stock, finish].filter(Boolean);
   return pieces.length ? pieces.join(" · ") : product.productUid;
@@ -29,22 +36,47 @@ export default function PaperSuiteOrderBuilder({
   gatheringId: string;
   multiDay: boolean;
 }) {
-  const [kind, setKind] = useState<"menu" | "itinerary">(multiDay ? "itinerary" : "menu");
+  const availablePieces = useMemo(
+    () => PAPER_PIECES.filter((piece) => piece.id !== "itinerary" || multiDay),
+    [multiDay]
+  );
+
+  const initialKind: PaperPieceKind = multiDay ? "itinerary" : "menu";
+  const initialPiece = paperPiece(initialKind)!;
+
+  const [kind, setKind] = useState<PaperPieceKind>(initialKind);
+  const [size, setSize] = useState<PaperSizeId>(initialPiece.defaultSize);
   const [template, setTemplate] = useState<TemplateId>("classic-editorial");
+  const [bodyCopy, setBodyCopy] = useState("");
   const [printUrl, setPrintUrl] = useState<string | null>(null);
   const [products, setProducts] = useState<ProductCandidate[]>([]);
   const [productUid, setProductUid] = useState("");
   const [quantity, setQuantity] = useState(12);
   const [busy, setBusy] = useState(false);
   const [quoteBusy, setQuoteBusy] = useState(false);
+  const [productBusy, setProductBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [quote, setQuote] = useState<unknown>(null);
 
+  const piece = paperPiece(kind)!;
+  const sizeConfig = PAPER_SIZES[size];
+
   useEffect(() => {
-    fetch("/api/paper-suite/gelato/products?catalog=cards", {
-      credentials: "same-origin",
-      cache: "no-store",
-    })
+    setProductBusy(true);
+    setProducts([]);
+    setProductUid("");
+    const catalog = size === "8x10" || size === "a4" ? "posters" : "cards";
+
+    fetch(
+      "/api/paper-suite/gelato/products?catalog=" +
+        encodeURIComponent(catalog) +
+        "&size=" +
+        encodeURIComponent(size),
+      {
+        credentials: "same-origin",
+        cache: "no-store",
+      }
+    )
       .then(async (response) => {
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "product_discovery_failed");
@@ -56,14 +88,26 @@ export default function PaperSuiteOrderBuilder({
         if (next[0]) setProductUid(next[0].productUid);
       })
       .catch(() => {
-        setMessage("Gelato paper sizes are still loading. You can generate the print preview now.");
-      });
-  }, []);
+        setMessage("Gelato products for this size are still being matched. You can generate the preview now.");
+      })
+      .finally(() => setProductBusy(false));
+  }, [size]);
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.productUid === productUid) || null,
     [products, productUid]
   );
+
+  function changeKind(nextKind: PaperPieceKind) {
+    const nextPiece = paperPiece(nextKind);
+    if (!nextPiece) return;
+    setKind(nextKind);
+    setSize(nextPiece.defaultSize);
+    setPrintUrl(null);
+    setQuote(null);
+    setMessage("");
+    setBodyCopy("");
+  }
 
   async function generatePreview() {
     setBusy(true);
@@ -74,12 +118,23 @@ export default function PaperSuiteOrderBuilder({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ gatheringId, kind, template }),
+        body: JSON.stringify({
+          gatheringId,
+          kind,
+          size,
+          template,
+          bodyCopy: bodyCopy || undefined,
+        }),
       });
       const body = await response.json();
       if (!response.ok || !body.url) throw new Error(body.error || "print_file_failed");
       setPrintUrl(body.url);
-      setMessage("Print file generated from the live gathering.");
+      setMessage(
+        piece.label +
+          " preview generated at " +
+          sizeConfig.label +
+          " from the live gathering."
+      );
     } catch {
       setMessage("The print preview could not be generated yet.");
     } finally {
@@ -139,9 +194,9 @@ export default function PaperSuiteOrderBuilder({
       <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-goldInk">
         Build a printable piece
       </p>
-      <h2 className="mt-2 font-display text-2xl text-forest">Preview, size and quote</h2>
+      <h2 className="mt-2 font-display text-2xl text-forest">Choose the piece, size and design</h2>
       <p className="mt-2 max-w-3xl font-body text-sm leading-relaxed text-forest/70">
-        This uses the gathering you already built. Generate the print file first, then choose a Gelato paper product and request a live fulfillment quote.
+        Paper Suite now adapts the same gathering data to different print formats instead of stretching one 5 × 7 design.
       </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -149,16 +204,44 @@ export default function PaperSuiteOrderBuilder({
           <span className="mb-1 block font-body text-sm font-semibold text-forest">Piece</span>
           <select
             value={kind}
+            onChange={(event) => changeKind(event.target.value as PaperPieceKind)}
+            className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
+          >
+            {availablePieces.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 font-body text-[0.68rem] text-forest/50">{piece.source}</p>
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block font-body text-sm font-semibold text-forest">Size</span>
+          <select
+            value={size}
             onChange={(event) => {
-              setKind(event.target.value as "menu" | "itinerary");
+              setSize(event.target.value as PaperSizeId);
               setPrintUrl(null);
               setQuote(null);
             }}
             className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
           >
-            <option value="menu">Menu card</option>
-            {multiDay && <option value="itinerary">Weekend itinerary</option>}
+            {piece.sizes.map((sizeId) => (
+              <option key={sizeId} value={sizeId}>
+                {PAPER_SIZES[sizeId].label}
+              </option>
+            ))}
           </select>
+          <p className="mt-1 font-body text-[0.68rem] text-forest/50">
+            {sizeConfig.family === "tall"
+              ? "Tall layout"
+              : sizeConfig.family === "square"
+                ? "Square layout"
+                : sizeConfig.family === "sign"
+                  ? "Sign layout"
+                  : "Portrait card layout"}
+          </p>
         </label>
 
         <label className="block">
@@ -178,36 +261,67 @@ export default function PaperSuiteOrderBuilder({
             <option value="warm-celebration">Warm Celebration</option>
           </select>
         </label>
+      </div>
 
-        <div>
-          <span className="mb-1 block font-body text-sm font-semibold text-forest">Print file</span>
-          <button
-            type="button"
-            onClick={generatePreview}
-            disabled={busy}
-            className="w-full rounded-full bg-forest px-5 py-2.5 font-body text-sm font-semibold text-offwhite disabled:opacity-60"
-          >
-            {busy ? "Generating…" : "Generate Preview"}
-          </button>
-        </div>
+      {(kind === "thank-you" || kind === "details") && (
+        <label className="mt-5 block">
+          <span className="mb-1 block font-body text-sm font-semibold text-forest">
+            {kind === "thank-you" ? "Thank-you message" : "Details note"}
+          </span>
+          <textarea
+            value={bodyCopy}
+            onChange={(event) => {
+              setBodyCopy(event.target.value.slice(0, 700));
+              setPrintUrl(null);
+              setQuote(null);
+            }}
+            rows={4}
+            placeholder={
+              kind === "thank-you"
+                ? "Thank you for gathering with us…"
+                : "Parking, attire, arrival notes or anything guests should keep handy."
+            }
+            className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
+          />
+          <p className="mt-1 text-right font-body text-[0.68rem] text-forest/45">
+            {bodyCopy.length}/700
+          </p>
+        </label>
+      )}
+
+      <div className="mt-5">
+        <button
+          type="button"
+          onClick={generatePreview}
+          disabled={busy}
+          className="rounded-full bg-forest px-6 py-2.5 font-body text-sm font-semibold text-offwhite disabled:opacity-60"
+        >
+          {busy ? "Generating…" : "Generate " + piece.label + " Preview"}
+        </button>
       </div>
 
       {printUrl && (
         <div className="mt-6 grid gap-5 lg:grid-cols-[18rem_minmax(0,1fr)]">
           <div className="overflow-hidden rounded-xl border border-sage/30 bg-white">
-            <img src={printUrl} alt="Paper Suite print preview" className="h-auto w-full" />
+            <img src={printUrl} alt={piece.label + " print preview"} className="h-auto w-full" />
           </div>
 
           <div>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="mb-1 block font-body text-sm font-semibold text-forest">Gelato paper product</span>
+                <span className="mb-1 block font-body text-sm font-semibold text-forest">
+                  Gelato paper product
+                </span>
                 <select
                   value={productUid}
                   onChange={(event) => setProductUid(event.target.value)}
-                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
+                  disabled={productBusy}
+                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest disabled:opacity-60"
                 >
-                  {products.length === 0 && <option value="">Loading available paper…</option>}
+                  {productBusy && <option value="">Matching {sizeConfig.label} products…</option>}
+                  {!productBusy && products.length === 0 && (
+                    <option value="">No mapped product found yet</option>
+                  )}
                   {products.map((product) => (
                     <option key={product.productUid} value={product.productUid}>
                       {productLabel(product)}
