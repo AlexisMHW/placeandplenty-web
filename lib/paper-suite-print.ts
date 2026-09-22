@@ -17,6 +17,12 @@ export type PaperPrintPayload = {
   timeLabel?: string | null;
   locationName?: string | null;
   bodyCopy?: string | null;
+  palette?: {
+    background: string;
+    text: string;
+    accent: string;
+    rule: string;
+  } | null;
   menu?: Array<{ heading: string; items: string[] }>;
   days?: Array<{
     heading: string;
