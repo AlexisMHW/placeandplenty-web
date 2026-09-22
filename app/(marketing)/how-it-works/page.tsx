@@ -131,6 +131,37 @@ export default function HowItWorksPage() {
           ))}
         </div>
       </section>
+
+      <Band tone="sage">
+        <div className="mx-auto max-w-editorial px-6 py-14 md:py-18">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+            <div>
+              <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.22em] text-forest/60">When one day is not enough</p>
+              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.35rem]">The same journey can stretch across the whole weekend.</Display>
+              <p className="mt-4 font-body text-base leading-relaxed text-forest/75">
+                Multi-Day does not create a new planning universe. It keeps the same gathering, people and plan, then adds the day-by-day structure you need for activities, guest choices and timing.
+              </p>
+              <Link href="/multi-day" className="mt-6 inline-flex items-center gap-1.5 border-b border-gold pb-1 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest">
+                See how Multi-Day works <span aria-hidden>→</span>
+              </Link>
+            </div>
+            <ol className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["1", "Choose 2–4 days", "Set the full range when you create the gathering."],
+                ["2", "Build My Schedule", "Add day-by-day activities, times, locations and capacity."],
+                ["3", "Bring guests into the right moments", "Guests see and respond to the activities meant for them."],
+                ["4", "Keep the plan connected", "Food, shopping, contributions, expenses, weather and AI stay tied to the same gathering."],
+              ].map(([n, title, body]) => (
+                <li key={n} className="rounded-2xl border border-forest/10 bg-offwhite/75 p-5">
+                  <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.16em] text-goldInk">{n}</p>
+                  <h3 className="mt-2 font-display text-lg text-forest">{title}</h3>
+                  <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">{body}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </Band>
     </>
   );
 }
