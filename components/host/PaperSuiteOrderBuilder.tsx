@@ -236,8 +236,9 @@ export default function PaperSuiteOrderBuilder({
 
             <form
               className="mt-5 grid gap-3 sm:grid-cols-2"
-              action={async (formData) => {
-                await requestQuote(formData);
+              onSubmit={async (event) => {
+                event.preventDefault();
+                await requestQuote(new FormData(event.currentTarget));
               }}
             >
               <input name="firstName" required placeholder="First name" className="rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest" />
