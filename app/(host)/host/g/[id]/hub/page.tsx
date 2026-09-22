@@ -29,6 +29,7 @@ const sections: Array<{
       { label: "Space Mode", body: "Use your phone camera to get room-specific setup ideas.", icon: "house", appOnly: true },
       { label: "Find Help", body: "Find the extra hands or services this gathering needs.", href: "find-help", icon: "search" },
       { label: "My Style Board", body: "Keep the visual direction for the gathering in one place.", href: "style", icon: "board" },
+      { label: "My Paper Suite", body: "Turn your invitation, menu, schedule and guest details into coordinated printed pieces.", href: "paper-suite", icon: "photo" },
       { label: "My Music & Media", body: "Build the soundtrack and collect guest song requests.", href: "music", icon: "music" },
       { label: "Host Mode", body: "Gathering-day readiness lives on your phone, where you need it.", icon: "check", appOnly: true },
       { label: "My Gathering Photos", body: "See the photos shared from this gathering.", href: "photos", icon: "photo" },
