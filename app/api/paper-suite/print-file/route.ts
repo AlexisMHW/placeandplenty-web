@@ -58,6 +58,12 @@ export async function POST(req: NextRequest) {
         size?: PaperSizeId;
         template?: PaperTemplate;
         bodyCopy?: string;
+        palette?: {
+          background?: string;
+          text?: string;
+          accent?: string;
+          rule?: string;
+        };
       }
     | null;
 
@@ -75,6 +81,23 @@ export async function POST(req: NextRequest) {
   if (!gathering) return NextResponse.json({ error: "gathering_not_found" }, { status: 404 });
 
   const expiresAt = Date.now() + 1000 * 60 * 60 * 24 * 7;
+  const validHex = (value: unknown): value is string =>
+    typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
+
+  const palette =
+    body.palette &&
+    validHex(body.palette.background) &&
+    validHex(body.palette.text) &&
+    validHex(body.palette.accent) &&
+    validHex(body.palette.rule)
+      ? {
+          background: body.palette.background,
+          text: body.palette.text,
+          accent: body.palette.accent,
+          rule: body.palette.rule,
+        }
+      : null;
+
   const payload: PaperPrintPayload = {
     version: 2,
     kind: body.kind,
@@ -87,6 +110,7 @@ export async function POST(req: NextRequest) {
     timeLabel: formatTime(gathering.arrival_time),
     locationName: gathering.location_name,
     bodyCopy: body.bodyCopy?.trim().slice(0, 700) || null,
+    palette,
     expiresAt,
   };
 
