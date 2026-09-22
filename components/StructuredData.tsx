@@ -1,5 +1,5 @@
 import { BRAND_NAME, TAGLINE } from "@/lib/brand";
-import { PRICING_TIERS } from "@/lib/pricing";
+import { MULTI_DAY_PRICING, PRICING_TIERS } from "@/lib/pricing";
 
 // JSON-LD, kept to the four types that actually earn their place (§19:
 // "structured data where useful" — the qualifier is doing work).
@@ -11,9 +11,9 @@ import { PRICING_TIERS } from "@/lib/pricing";
 //
 // Two consequences worth spelling out, because both look like omissions:
 //
-//   - Offer carries `availability: PreOrder`, not InStock. Nothing can be
-//     bought yet; the app has no purchase flow. Marking a price InStock
-//     would be a lie told to a shopping crawler.
+//   - Offer carries `availability: PreOrder`, not InStock. Public paid
+//     checkout is not live yet. Marking a price InStock would overstate
+//     the current release state to a shopping crawler.
 //   - There is no AggregateRating anywhere. There are no reviews. Review
 //     markup without reviews is the single most common cause of a
 //     structured-data penalty.
@@ -198,16 +198,31 @@ export function PricingSchema() {
         name: BRAND_NAME,
         description: "Home hosting planning for real gatherings.",
         brand: { "@id": ORG_ID },
-        offers: PRICING_TIERS.map((tier) => ({
-          "@type": "Offer",
-          name: tier.name,
-          price: tier.price.replace("$", ""),
-          priceCurrency: "USD",
-          description: tier.description,
-          // Not purchasable yet, and the markup says so.
-          availability: "https://schema.org/PreOrder",
-          url: "https://placeandplenty.com/pricing",
-        })),
+        offers: [
+          ...PRICING_TIERS.map((tier) => ({
+            "@type": "Offer",
+            name: tier.name,
+            price: tier.price.replace("$", ""),
+            priceCurrency: "USD",
+            description: tier.description,
+            availability: "https://schema.org/PreOrder",
+            url: "https://placeandplenty.com/pricing",
+          })),
+          ...[
+            ["Multi-Day Pass", MULTI_DAY_PRICING.standard.price, "Standard Multi-Day rate for one gathering across 2–4 calendar days."],
+            ["Multi-Day with Gathering Pass", MULTI_DAY_PRICING.gathering_pass.price, "Multi-Day rate when the gathering already has a Gathering Pass."],
+            ["Multi-Day with Plus", MULTI_DAY_PRICING.plus.price, "Multi-Day rate for an active Place & Plenty Plus host."],
+            ["Multi-Day Extension", MULTI_DAY_PRICING.extension.price, "One-time extension that expands the same gathering to as many as 7 days."],
+          ].map(([name, price, description]) => ({
+            "@type": "Offer",
+            name,
+            price: price.replace("$", ""),
+            priceCurrency: "USD",
+            description,
+            availability: "https://schema.org/PreOrder",
+            url: "https://placeandplenty.com/multi-day",
+          })),
+        ],
       }}
     />
   );
