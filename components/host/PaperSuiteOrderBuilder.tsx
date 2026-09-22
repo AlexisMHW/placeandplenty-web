@@ -56,7 +56,7 @@ export default function PaperSuiteOrderBuilder({
   const [quoteBusy, setQuoteBusy] = useState(false);
   const [productBusy, setProductBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [quote, setQuote] = useState<unknown>(null);
+  const [quote, setQuote] = useState<Record<string, unknown> | null>(null);
 
   const piece = paperPiece(kind)!;
   const sizeConfig = PAPER_SIZES[size];
