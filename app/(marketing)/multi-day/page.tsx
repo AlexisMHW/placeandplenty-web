@@ -33,6 +33,7 @@ export const metadata: Metadata = {
 };
 
 const WHO = [
+  "Bachelorette weekends",
   "Family reunions",
   "Wedding weekends",
   "Retreats and group weekends",
