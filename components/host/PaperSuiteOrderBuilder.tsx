@@ -20,6 +20,42 @@ type TemplateId =
   | "modern-clean"
   | "warm-celebration";
 
+type Recipient = {
+  country: string;
+  firstName: string;
+  lastName: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  postCode: string;
+  state: string;
+  email: string;
+  phone: string;
+};
+
+type QuoteSummary = {
+  gelatoCostCents: number;
+  productCostCents: number;
+  shippingCostCents: number;
+  shipmentMethodName: string | null;
+  deliveryLabel: string | null;
+  currency: string;
+};
+
+type PricingSummary = {
+  retailSubtotalCents: number;
+  gelatoCostCents: number;
+  marginCents: number;
+  testModeAtCost: boolean;
+};
+
+function money(cents: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(cents / 100);
+}
+
 function productLabel(product: ProductCandidate) {
   const attrs = product.attributes || {};
   const format = String(attrs.PaperFormat || attrs.Format || attrs.Size || "").trim();
@@ -54,9 +90,13 @@ export default function PaperSuiteOrderBuilder({
   const [quantity, setQuantity] = useState(12);
   const [busy, setBusy] = useState(false);
   const [quoteBusy, setQuoteBusy] = useState(false);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [productBusy, setProductBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [quote, setQuote] = useState<Record<string, unknown> | null>(null);
+  const [quoteSummary, setQuoteSummary] = useState<QuoteSummary | null>(null);
+  const [pricing, setPricing] = useState<PricingSummary | null>(null);
+  const [recipient, setRecipient] = useState<Recipient | null>(null);
 
   const piece = paperPiece(kind)!;
   const sizeConfig = PAPER_SIZES[size];
@@ -65,6 +105,12 @@ export default function PaperSuiteOrderBuilder({
     setProductBusy(true);
     setProducts([]);
     setProductUid("");
+    setPrintUrl(null);
+    setQuote(null);
+    setQuoteSummary(null);
+    setPricing(null);
+    setRecipient(null);
+
     const catalog = size === "8x10" || size === "a4" ? "posters" : "cards";
 
     fetch(
@@ -98,13 +144,20 @@ export default function PaperSuiteOrderBuilder({
     [products, productUid]
   );
 
+  function resetQuote() {
+    setQuote(null);
+    setQuoteSummary(null);
+    setPricing(null);
+    setRecipient(null);
+  }
+
   function changeKind(nextKind: PaperPieceKind) {
     const nextPiece = paperPiece(nextKind);
     if (!nextPiece) return;
     setKind(nextKind);
     setSize(nextPiece.defaultSize);
     setPrintUrl(null);
-    setQuote(null);
+    resetQuote();
     setMessage("");
     setBodyCopy("");
   }
@@ -112,7 +165,7 @@ export default function PaperSuiteOrderBuilder({
   async function generatePreview() {
     setBusy(true);
     setMessage("");
-    setQuote(null);
+    resetQuote();
     try {
       const response = await fetch("/api/paper-suite/print-file", {
         method: "POST",
@@ -142,17 +195,8 @@ export default function PaperSuiteOrderBuilder({
     }
   }
 
-  async function requestQuote(form: FormData) {
-    if (!printUrl || !productUid) {
-      setMessage("Generate a print preview and choose a paper product first.");
-      return;
-    }
-
-    setQuoteBusy(true);
-    setMessage("");
-    setQuote(null);
-
-    const recipient = {
+  function recipientFrom(form: FormData): Recipient {
+    return {
       country: String(form.get("country") || "US"),
       firstName: String(form.get("firstName") || ""),
       lastName: String(form.get("lastName") || ""),
@@ -164,6 +208,19 @@ export default function PaperSuiteOrderBuilder({
       email: String(form.get("email") || ""),
       phone: String(form.get("phone") || ""),
     };
+  }
+
+  async function requestQuote(form: FormData) {
+    if (!printUrl || !productUid) {
+      setMessage("Generate a print preview and choose a paper product first.");
+      return;
+    }
+
+    setQuoteBusy(true);
+    setMessage("");
+    resetQuote();
+
+    const nextRecipient = recipientFrom(form);
 
     try {
       const response = await fetch("/api/paper-suite/gelato/quote", {
@@ -175,17 +232,64 @@ export default function PaperSuiteOrderBuilder({
           productUid,
           quantity,
           fileUrl: printUrl,
-          recipient,
+          recipient: nextRecipient,
         }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "quote_failed");
-      setQuote(body.quote);
+      setQuote(body.quote || null);
+      setQuoteSummary(body.normalized || null);
+      setPricing(body.pricing || null);
+      setRecipient(nextRecipient);
       setMessage("Live Gelato quote received. No order has been placed.");
     } catch {
       setMessage("Gelato could not return a quote for that combination yet.");
     } finally {
       setQuoteBusy(false);
+    }
+  }
+
+  async function startCheckout() {
+    if (!printUrl || !productUid || !recipient) {
+      setMessage("Get a current shipping quote before continuing to checkout.");
+      return;
+    }
+
+    setCheckoutBusy(true);
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/paper-suite/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          gatheringId,
+          kind,
+          size,
+          template,
+          productUid,
+          quantity,
+          fileUrl: printUrl,
+          recipient,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok || !body.url) {
+        if (body.error === "paper_suite_pricing_not_configured") {
+          throw new Error("pricing_not_configured");
+        }
+        throw new Error(body.error || "checkout_failed");
+      }
+
+      window.location.assign(body.url);
+    } catch (error) {
+      setMessage(
+        error instanceof Error && error.message === "pricing_not_configured"
+          ? "Paper Suite live retail pricing has not been turned on yet."
+          : "Secure checkout could not be started yet."
+      );
+      setCheckoutBusy(false);
     }
   }
 
@@ -196,7 +300,7 @@ export default function PaperSuiteOrderBuilder({
       </p>
       <h2 className="mt-2 font-display text-2xl text-forest">Choose the piece, size and design</h2>
       <p className="mt-2 max-w-3xl font-body text-sm leading-relaxed text-forest/70">
-        Paper Suite now adapts the same gathering data to different print formats instead of stretching one 5 × 7 design.
+        Paper Suite adapts the same gathering data to each print format instead of stretching one design across every size.
       </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -208,9 +312,7 @@ export default function PaperSuiteOrderBuilder({
             className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
           >
             {availablePieces.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
+              <option key={option.id} value={option.id}>{option.label}</option>
             ))}
           </select>
           <p className="mt-1 font-body text-[0.68rem] text-forest/50">{piece.source}</p>
@@ -222,15 +324,12 @@ export default function PaperSuiteOrderBuilder({
             value={size}
             onChange={(event) => {
               setSize(event.target.value as PaperSizeId);
-              setPrintUrl(null);
-              setQuote(null);
+              setMessage("");
             }}
             className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
           >
             {piece.sizes.map((sizeId) => (
-              <option key={sizeId} value={sizeId}>
-                {PAPER_SIZES[sizeId].label}
-              </option>
+              <option key={sizeId} value={sizeId}>{PAPER_SIZES[sizeId].label}</option>
             ))}
           </select>
           <p className="mt-1 font-body text-[0.68rem] text-forest/50">
@@ -251,7 +350,7 @@ export default function PaperSuiteOrderBuilder({
             onChange={(event) => {
               setTemplate(event.target.value as TemplateId);
               setPrintUrl(null);
-              setQuote(null);
+              resetQuote();
             }}
             className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
           >
@@ -277,7 +376,7 @@ export default function PaperSuiteOrderBuilder({
             onChange={(event) => {
               setBodyCopy(event.target.value.slice(0, 700));
               setPrintUrl(null);
-              setQuote(null);
+              resetQuote();
             }}
             rows={4}
             placeholder={
@@ -289,9 +388,7 @@ export default function PaperSuiteOrderBuilder({
             }
             className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
           />
-          <p className="mt-1 text-right font-body text-[0.68rem] text-forest/45">
-            {bodyCopy.length}/700
-          </p>
+          <p className="mt-1 text-right font-body text-[0.68rem] text-forest/45">{bodyCopy.length}/700</p>
         </label>
       )}
 
@@ -313,46 +410,42 @@ export default function PaperSuiteOrderBuilder({
           </div>
 
           <div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block sm:col-span-2">
-                <span className="mb-1 block font-body text-sm font-semibold text-forest">
-                  Gelato paper product
-                </span>
-                <select
-                  value={productUid}
-                  onChange={(event) => setProductUid(event.target.value)}
-                  disabled={productBusy}
-                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest disabled:opacity-60"
-                >
-                  {productBusy && <option value="">Matching {sizeConfig.label} products…</option>}
-                  {!productBusy && products.length === 0 && (
-                    <option value="">No mapped product found yet</option>
-                  )}
-                  {products.map((product) => (
-                    <option key={product.productUid} value={product.productUid}>
-                      {productLabel(product)}
-                    </option>
-                  ))}
-                </select>
-                {selectedProduct && (
-                  <p className="mt-1 break-all font-body text-[0.68rem] text-forest/45">
-                    {selectedProduct.productUid}
-                  </p>
-                )}
-              </label>
+            <label className="block">
+              <span className="mb-1 block font-body text-sm font-semibold text-forest">Gelato paper product</span>
+              <select
+                value={productUid}
+                onChange={(event) => {
+                  setProductUid(event.target.value);
+                  resetQuote();
+                }}
+                disabled={productBusy}
+                className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest disabled:opacity-60"
+              >
+                {productBusy && <option value="">Matching {sizeConfig.label} products…</option>}
+                {!productBusy && products.length === 0 && <option value="">No mapped product found yet</option>}
+                {products.map((product) => (
+                  <option key={product.productUid} value={product.productUid}>{productLabel(product)}</option>
+                ))}
+              </select>
+              {selectedProduct && (
+                <p className="mt-1 break-all font-body text-[0.68rem] text-forest/45">{selectedProduct.productUid}</p>
+              )}
+            </label>
 
-              <label className="block">
-                <span className="mb-1 block font-body text-sm font-semibold text-forest">Quantity</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={500}
-                  value={quantity}
-                  onChange={(event) => setQuantity(Math.max(1, Number(event.target.value) || 1))}
-                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
-                />
-              </label>
-            </div>
+            <label className="mt-4 block max-w-xs">
+              <span className="mb-1 block font-body text-sm font-semibold text-forest">Quantity</span>
+              <input
+                type="number"
+                min={1}
+                max={500}
+                value={quantity}
+                onChange={(event) => {
+                  setQuantity(Math.max(1, Number(event.target.value) || 1));
+                  resetQuote();
+                }}
+                className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
+              />
+            </label>
 
             <form
               className="mt-5 grid gap-3 sm:grid-cols-2"
@@ -384,19 +477,59 @@ export default function PaperSuiteOrderBuilder({
       )}
 
       {message && (
-        <p className="mt-5 rounded-lg border border-sage/25 bg-offwhite px-4 py-3 font-body text-sm text-forest/70">
-          {message}
-        </p>
+        <p className="mt-5 rounded-lg border border-sage/25 bg-offwhite px-4 py-3 font-body text-sm text-forest/70">{message}</p>
+      )}
+
+      {quoteSummary && (
+        <section className="mt-5 rounded-xl border border-gold/30 bg-offwhite p-5">
+          <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.16em] text-goldInk">Quote summary</p>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div>
+              <dt className="font-body text-xs uppercase tracking-[0.12em] text-forest/50">Print</dt>
+              <dd className="mt-1 font-display text-lg text-forest">{money(quoteSummary.productCostCents)}</dd>
+            </div>
+            <div>
+              <dt className="font-body text-xs uppercase tracking-[0.12em] text-forest/50">Shipping</dt>
+              <dd className="mt-1 font-display text-lg text-forest">{money(quoteSummary.shippingCostCents)}</dd>
+            </div>
+            <div>
+              <dt className="font-body text-xs uppercase tracking-[0.12em] text-forest/50">Estimated delivery</dt>
+              <dd className="mt-1 font-body text-sm text-forest/75">{quoteSummary.deliveryLabel || "Shown at fulfillment"}</dd>
+            </div>
+          </dl>
+
+          {pricing && (
+            <div className="mt-4 border-t border-sage/20 pt-4">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="font-body text-xs uppercase tracking-[0.12em] text-forest/50">
+                    {pricing.testModeAtCost ? "Sandbox checkout total before tax" : "Place & Plenty subtotal before tax"}
+                  </p>
+                  <p className="mt-1 font-display text-2xl text-forest">{money(pricing.retailSubtotalCents)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={startCheckout}
+                  disabled={checkoutBusy}
+                  className="rounded-full bg-forest px-6 py-2.5 font-body text-sm font-semibold text-offwhite disabled:opacity-60"
+                >
+                  {checkoutBusy ? "Opening Checkout…" : "Continue to Secure Checkout"}
+                </button>
+              </div>
+              {pricing.testModeAtCost && (
+                <p className="mt-2 font-body text-xs leading-relaxed text-forest/55">
+                  Sandbox mode is testing at fulfillment cost. A production retail margin is not locked yet.
+                </p>
+              )}
+            </div>
+          )}
+        </section>
       )}
 
       {quote && (
         <details className="mt-4 rounded-lg border border-sage/25 bg-offwhite p-4">
-          <summary className="cursor-pointer font-body text-sm font-semibold text-forest">
-            View Gelato quote details
-          </summary>
-          <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap text-xs text-forest/70">
-            {JSON.stringify(quote, null, 2)}
-          </pre>
+          <summary className="cursor-pointer font-body text-sm font-semibold text-forest">View Gelato quote details</summary>
+          <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap text-xs text-forest/70">{JSON.stringify(quote, null, 2)}</pre>
         </details>
       )}
     </section>
