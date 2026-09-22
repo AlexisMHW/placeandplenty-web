@@ -12,6 +12,7 @@ import {
 type ProductCandidate = {
   productUid: string;
   attributes: Record<string, string | number>;
+  title?: string;
 };
 
 type TemplateId =
@@ -137,6 +138,7 @@ async function extractInvitationPalette(url: string): Promise<MatchedPalette> {
 }
 
 function productLabel(product: ProductCandidate) {
+  if (product.title) return product.title;
   const attrs = product.attributes || {};
   const format = String(attrs.PaperFormat || attrs.Format || attrs.Size || "").trim();
   const stock = String(attrs.PaperType || attrs.Media || attrs.Material || "").trim();
