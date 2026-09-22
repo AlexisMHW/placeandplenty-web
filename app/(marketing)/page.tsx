@@ -3,6 +3,7 @@ import SeasonalHero from "@/components/SeasonalHero";
 import SeasonalCards from "@/components/SeasonalCards";
 import DifferenceBand from "@/components/DifferenceBand";
 import MultiDayHomepageShowcase from "@/components/MultiDayHomepageShowcase";
+import PaperSuiteHomepageShowcase from "@/components/PaperSuiteHomepageShowcase";
 import FeaturedArticles from "@/components/FeaturedArticles";
 import CommunityTeaser from "@/components/CommunityTeaser";
 import FounderBand from "@/components/FounderBand";
@@ -46,6 +47,8 @@ export default async function HomePage() {
       <SeasonalCards ideas={cards} reasonLine={content.reasonLine} />
 
       <MultiDayHomepageShowcase />
+
+      <PaperSuiteHomepageShowcase />
 
       <DifferenceBand />
 
