@@ -163,7 +163,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
           </p>
         </div>
 
-        <div className="mt-5 grid gap-5 xl:grid-cols-3">
+        <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           <article className="rounded-2xl border border-sage/25 bg-cream p-6 shadow-soft">
             <p className="font-body text-[0.6rem] font-bold uppercase tracking-[0.18em] text-goldInk">Menu Card</p>
             <h3 className="mt-3 text-center font-display text-2xl text-forest">{gathering.name}</h3>
@@ -237,6 +237,18 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
             )}
           </article>
 
+          <article className="rounded-2xl border border-gold/25 bg-parchment p-6 shadow-soft">
+            <p className="font-body text-[0.6rem] font-bold uppercase tracking-[0.18em] text-goldInk">Invitation</p>
+            <h3 className="mt-3 text-center font-display text-2xl text-forest">{gathering.name}</h3>
+            <p className="mt-2 text-center font-body text-sm leading-relaxed text-forest/65">
+              Create a coordinated invitation from the gathering details already in Place & Plenty, or use your uploaded invitation as the suite reference.
+            </p>
+            <div className="mx-auto mt-5 h-px w-12 bg-gold/60" />
+            <p className="mt-5 text-center font-body text-xs uppercase tracking-[0.12em] text-forest/50">
+              4 × 6 · 5 × 7 · 5 × 5 square
+            </p>
+          </article>
+
           <article className="rounded-2xl border border-sage/25 bg-offwhite p-6 shadow-soft">
             <p className="font-body text-[0.6rem] font-bold uppercase tracking-[0.18em] text-goldInk">Place Cards</p>
             <h3 className="mt-3 text-center font-display text-2xl text-forest">Your People</h3>
@@ -258,6 +270,18 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
             <Link href={base + "/people"} className="mt-6 block text-center font-body text-xs font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4">
               Review My People →
             </Link>
+          </article>
+
+          <article className="rounded-2xl border border-sage/25 bg-cream p-6 shadow-soft">
+            <p className="font-body text-[0.6rem] font-bold uppercase tracking-[0.18em] text-goldInk">Thank-You Card</p>
+            <h3 className="mt-3 text-center font-display text-2xl text-forest">Keep the suite together after the gathering.</h3>
+            <p className="mt-3 text-center font-body text-sm leading-relaxed text-forest/65">
+              Start with the gathering identity, add an editable message and print a coordinated follow-up card.
+            </p>
+            <div className="mx-auto mt-5 h-px w-12 bg-gold/60" />
+            <p className="mt-5 text-center font-body text-xs uppercase tracking-[0.12em] text-forest/50">
+              4 × 6 · 5 × 7 · 5 × 5 square
+            </p>
           </article>
         </div>
       </section>
