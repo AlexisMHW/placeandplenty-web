@@ -137,6 +137,37 @@ export default function PricingPage() {
         </div>
       </Band>
 
+      <Band tone="cream">
+        <div className="mx-auto max-w-editorial px-6 py-12 md:py-14">
+          <div className="rounded-3xl border border-sage/30 bg-offwhite p-7 md:p-9">
+            <div className="grid gap-7 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+              <div>
+                <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.18em] text-forest/55">
+                  My Paper Suite
+                </p>
+                <Display className="mt-3 text-2xl text-forest md:text-3xl">
+                  Printed pieces are optional add-ons, not another hosting plan.
+                </Display>
+                <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-forest/75">
+                  Create invitations, menus, itineraries, welcome signs and thank-you cards from the gathering you already planned. Print pricing depends on the piece, size, quantity and delivery choice and is shown before checkout.
+                </p>
+                <p className="mt-3 max-w-2xl font-body text-xs leading-relaxed text-forest/55">
+                  Paper Suite creation and ordering launches on the web first. It uses the same account and canonical gathering data as the rest of Place &amp; Plenty.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Link href="/paper-suite" className="rounded-full bg-forest px-5 py-2.5 text-center font-body text-sm font-semibold text-offwhite">
+                  Explore My Paper Suite
+                </Link>
+                <p className="text-center font-body text-xs text-forest/50">
+                  Print + shipping + applicable taxes are calculated at checkout.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Band>
+
       <Band tone="parchment">
         <div className="mx-auto max-w-editorial px-6 py-12 md:py-14">
           <div className="grid gap-6 md:grid-cols-2">
