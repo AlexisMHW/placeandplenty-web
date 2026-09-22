@@ -27,7 +27,11 @@ export type AnalyticsEvent =
   | "gathering_created"
   | "paywall_viewed"
   | "checkout_started"
-  | "purchase_completed";
+  | "purchase_completed"
+  | "paper_suite_viewed"
+  | "paper_suite_preview_generated"
+  | "paper_suite_quote_received"
+  | "paper_suite_checkout_started";
 
 type AnalyticsValue = string | number | boolean | null | undefined;
 type AnalyticsMeta = Record<string, AnalyticsValue>;
