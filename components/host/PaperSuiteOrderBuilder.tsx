@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { track } from "@/lib/analytics";
 import {
   PAPER_PIECES,
   PAPER_SIZES,
@@ -188,6 +189,10 @@ export default function PaperSuiteOrderBuilder({
   const sizeConfig = PAPER_SIZES[size];
 
   useEffect(() => {
+    track("paper_suite_viewed", { gathering_type: multiDay ? "multi_day" : "single_day" });
+  }, [multiDay]);
+
+  useEffect(() => {
     setProductBusy(true);
     setProducts([]);
     setProductUid("");
@@ -290,6 +295,11 @@ export default function PaperSuiteOrderBuilder({
       const body = await response.json();
       if (!response.ok || !body.url) throw new Error(body.error || "print_file_failed");
       setPrintUrl(body.url);
+      track("paper_suite_preview_generated", {
+        piece_type: kind,
+        size_id: size,
+        matched_invitation: Boolean(matchedPalette),
+      });
       setMessage(
         piece.label +
           " preview generated at " +
@@ -349,6 +359,11 @@ export default function PaperSuiteOrderBuilder({
       setQuoteSummary(body.normalized || null);
       setPricing(body.pricing || null);
       setRecipient(nextRecipient);
+      track("paper_suite_quote_received", {
+        piece_type: kind,
+        size_id: size,
+        quantity,
+      });
       setMessage("Live Gelato quote received. No order has been placed.");
     } catch {
       setMessage("Gelato could not return a quote for that combination yet.");
@@ -390,6 +405,11 @@ export default function PaperSuiteOrderBuilder({
         throw new Error(body.error || "checkout_failed");
       }
 
+      track("paper_suite_checkout_started", {
+        piece_type: kind,
+        size_id: size,
+        quantity,
+      });
       window.location.assign(body.url);
     } catch (error) {
       setMessage(
