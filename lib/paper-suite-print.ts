@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import type { PaperPieceKind, PaperSizeId } from "@/lib/paper-suite-catalog";
 
 export type PaperTemplate =
   | "classic-editorial"
@@ -7,12 +8,15 @@ export type PaperTemplate =
   | "warm-celebration";
 
 export type PaperPrintPayload = {
-  version: 1;
-  kind: "menu" | "itinerary";
+  version: 2;
+  kind: PaperPieceKind;
+  size: PaperSizeId;
   template: PaperTemplate;
   gatheringName: string;
   dateLabel?: string;
+  timeLabel?: string | null;
   locationName?: string | null;
+  bodyCopy?: string | null;
   menu?: Array<{ heading: string; items: string[] }>;
   days?: Array<{
     heading: string;
