@@ -17,9 +17,11 @@ export default function PaperSuiteHomepageShowcase() {
             <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
               New: My Paper Suite
             </p>
-            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.6rem]">
-              You already planned it.
-              <span className="block italic">Now let Place &amp; Plenty print it.</span>
+            <Display
+              emphasis="Now let Place & Plenty print it."
+              className="mt-4 text-3xl leading-tight text-forest md:text-[2.6rem]"
+            >
+              {"You already planned it. Now let Place & Plenty print it."}
             </Display>
             <p className="mt-5 max-w-2xl font-body text-base leading-relaxed text-forest/75">
               Turn the details already inside your gathering into coordinated invitations,
