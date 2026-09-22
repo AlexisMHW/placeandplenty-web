@@ -216,6 +216,44 @@ export default function WhatItDoesPage() {
         </div>
       </Band>
 
+
+      <Band tone="parchment">
+        <div className="mx-auto max-w-editorial px-6 py-14 md:py-18">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/60">
+                My Paper Suite
+              </p>
+              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.4rem]">
+                Turn the plan into something your guests can hold.
+              </Display>
+              <p className="mt-4 font-body text-base leading-relaxed text-forest/75">
+                Create invitations, menu cards, weekend itineraries, details cards, welcome signs and thank-you cards from the gathering data already inside Place &amp; Plenty.
+              </p>
+              <p className="mt-3 font-body text-sm leading-relaxed text-forest/65">
+                Already have an invitation? Match My Invitation carries its color direction into a controlled Place &amp; Plenty layout so the rest of the suite feels connected without rebuilding the artwork from scratch.
+              </p>
+              <Link href="/paper-suite" className="mt-6 inline-flex border-b border-gold pb-1 font-body text-sm font-semibold uppercase tracking-[0.12em] text-forest">
+                Explore My Paper Suite <span aria-hidden className="ml-1">→</span>
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["Create from My Table", "Menu cards use the dishes and structure you already planned."],
+                ["Create from My Schedule", "Multi-Day itineraries use the day-by-day activity plan."],
+                ["Match My Invitation", "Coordinate the suite with invitation-inspired colors."],
+                ["Preview + Order", "Choose a size, print option and quantity, then continue to secure checkout."],
+              ].map(([title, body]) => (
+                <div key={title} className="rounded-2xl border border-sage/25 bg-offwhite p-5">
+                  <h3 className="font-display text-lg text-forest">{title}</h3>
+                  <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">{body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Band>
+
       <Band tone="sage">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <div className="mx-auto max-w-3xl text-center">
