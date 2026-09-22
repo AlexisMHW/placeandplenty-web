@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { submitGuestListSignup } from "@/lib/supabase";
 import { track } from "@/lib/analytics";
@@ -10,7 +10,9 @@ function compactSource(topic: string) {
 
   const params = new URLSearchParams(window.location.search);
   const utmSource = params.get("utm_source");
+  const utmMedium = params.get("utm_medium");
   const utmCampaign = params.get("utm_campaign");
+  const path = window.location.pathname;
   let ref = "";
   try {
     ref = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : "";
@@ -20,7 +22,9 @@ function compactSource(topic: string) {
 
   return [
     `seo:${topic}`,
+    `path=${path}`,
     utmSource ? `src=${utmSource}` : "",
+    utmMedium ? `med=${utmMedium}` : "",
     utmCampaign ? `camp=${utmCampaign}` : "",
     ref ? `ref=${ref}` : "",
   ]
@@ -47,6 +51,10 @@ export default function SearchLeadCapture({
   const [consent, setConsent] = useState(true);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const source = useMemo(() => compactSource(topic), [topic]);
+
+  useEffect(() => {
+    track("search_landing_view", { topic, source });
+  }, [topic, source]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
