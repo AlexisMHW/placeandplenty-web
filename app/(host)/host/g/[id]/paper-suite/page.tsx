@@ -12,6 +12,7 @@ import { WorkspaceHeader } from "@/components/host/Workspace";
 import GelatoConnectionPanel from "@/components/host/GelatoConnectionPanel";
 import PaperSuiteOrderBuilder from "@/components/host/PaperSuiteOrderBuilder";
 import PaperSuitePurchaseStatus from "@/components/host/PaperSuitePurchaseStatus";
+import { getPaperOrders } from "@/lib/paper-order-data";
 
 export const metadata = { title: "My Paper Suite" };
 export const dynamic = "force-dynamic";
@@ -55,10 +56,11 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
   const gathering = await getGathering(params.id);
   if (!gathering) notFound();
 
-  const [menu, guests, artwork] = await Promise.all([
+  const [menu, guests, artwork, paperOrders] = await Promise.all([
     getMenuItems(params.id),
     getGatheringGuests(params.id),
     signArtwork([gathering]),
+    getPaperOrders(params.id).catch(() => []),
   ]);
 
   const invitationUrl = artwork.get(gathering.id) ?? null;
@@ -302,6 +304,58 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
       </section>
 
       <PaperSuiteOrderBuilder gatheringId={params.id} multiDay={gathering.duration_type === "multi_day"} />
+
+
+      {paperOrders.length > 0 && (
+        <section className="mt-8 rounded-2xl border border-sage/25 bg-offwhite p-5 md:p-6">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-forest/55">
+                Paper Suite orders
+              </p>
+              <h2 className="mt-2 font-display text-2xl text-forest">Recent orders for this gathering</h2>
+            </div>
+            <p className="font-body text-xs text-forest/50">
+              Payment and fulfillment stay separate from your gathering entitlements.
+            </p>
+          </div>
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full min-w-[42rem] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-sage/25 font-body text-[0.62rem] uppercase tracking-[0.14em] text-forest/50">
+                  <th className="px-2 py-3 font-semibold">Piece</th>
+                  <th className="px-2 py-3 font-semibold">Size</th>
+                  <th className="px-2 py-3 font-semibold">Qty</th>
+                  <th className="px-2 py-3 font-semibold">Subtotal</th>
+                  <th className="px-2 py-3 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paperOrders.map((order) => (
+                  <tr key={order.id} className="border-b border-sage/15 last:border-0">
+                    <td className="px-2 py-3 font-body text-sm text-forest">
+                      {order.piece_type.replace(/-/g, " ")}
+                    </td>
+                    <td className="px-2 py-3 font-body text-sm text-forest/70">{order.size_id}</td>
+                    <td className="px-2 py-3 font-body text-sm text-forest/70">{order.quantity}</td>
+                    <td className="px-2 py-3 font-body text-sm text-forest/70">
+                      {new Intl.NumberFormat("en-US", {
+                        style: "currency",
+                        currency: order.currency || "USD",
+                      }).format(order.retail_subtotal_cents / 100)}
+                    </td>
+                    <td className="px-2 py-3 font-body text-sm text-forest/70">
+                      {order.gelato_order_type === "draft" && order.status === "submitted"
+                        ? "Sandbox draft"
+                        : order.status.replace(/_/g, " ")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <GelatoConnectionPanel />
 
