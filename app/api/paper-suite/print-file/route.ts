@@ -133,6 +133,10 @@ export async function POST(req: NextRequest) {
     }));
   }
 
+  if (body.kind === "welcome-sign" && !payload.bodyCopy) {
+    payload.bodyCopy = "We’re glad you’re here.";
+  }
+
   if (body.kind === "thank-you" && !payload.bodyCopy) {
     payload.bodyCopy =
       "Thank you for gathering with us. We’re so glad you were part of it.";
