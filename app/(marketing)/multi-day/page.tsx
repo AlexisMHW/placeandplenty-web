@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Band, Display } from "@/components/Display";
 import Icon, { type IconName } from "@/components/Icon";
@@ -10,6 +11,18 @@ export const metadata: Metadata = {
   title: "Multi-Day Gathering Planning",
   description:
     "Plan a multi-day gathering, reunion, wedding weekend, retreat or family visit with one guest list, one schedule and connected planning in Place & Plenty.",
+  keywords: [
+    "multi-day gathering planner",
+    "family reunion planning app",
+    "family reunion planner",
+    "bachelorette weekend planner",
+    "bachelorette itinerary app",
+    "wedding weekend planning",
+    "group weekend planner",
+    "multi-day event planning app",
+    "reunion itinerary planner",
+    "weekend hosting planner",
+  ],
   alternates: { canonical: "/multi-day" },
   openGraph: {
     title: "Multi-Day Hosting | Place & Plenty",
@@ -169,6 +182,104 @@ export default function MultiDayPage() {
               ))}
             </ul>
           </div>
+        </div>
+      </Band>
+
+      <Band tone="cream">
+        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.22em] text-forest/60">
+              See it in real life
+            </p>
+            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">
+              Two weekends. One connected way to plan them.
+            </Display>
+            <p className="mt-4 font-body text-base leading-relaxed text-forest/75">
+              Multi-Day is built around what hosts actually have to coordinate — not a generic project board.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <article className="overflow-hidden rounded-3xl border border-sage/25 bg-offwhite shadow-soft">
+              <div className="relative aspect-[16/9]">
+                <Image
+                  src="/images/hero-tabletop.jpg"
+                  alt="An elevated Place & Plenty tabletop used to illustrate planning a bachelorette weekend across multiple days"
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                />
+              </div>
+              <div className="p-6">
+                <p className="font-body text-[0.64rem] font-bold uppercase tracking-[0.16em] text-goldInk">
+                  Bachelorette Weekend
+                </p>
+                <h3 className="mt-2 font-display text-2xl text-forest">
+                  Everyone does not have to do everything.
+                </h3>
+                <p className="mt-3 font-body text-sm leading-relaxed text-forest/75">
+                  Keep the whole weekend in one gathering: arrival drinks, brunch, spa appointments, dinner and the farewell breakfast. Guests can respond to the activities that need a headcount while the host keeps one guest list and one plan.
+                </p>
+                <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+                  {[
+                    "Activity selections",
+                    "Reservation details",
+                    "Transportation notes",
+                    "Attire notes",
+                    "Day-by-day schedule",
+                    "One guest list",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2 font-body text-sm text-forest/70">
+                      <Icon name="check" size={15} className="text-goldInk" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </article>
+
+            <article className="overflow-hidden rounded-3xl border border-sage/25 bg-offwhite shadow-soft">
+              <div className="relative aspect-[16/9]">
+                <Image
+                  src="/images/show_us_how_you_gather-hero.png"
+                  alt="A warm Place & Plenty gathering image used to illustrate planning a family reunion across multiple days"
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                />
+              </div>
+              <div className="p-6">
+                <p className="font-body text-[0.64rem] font-bold uppercase tracking-[0.16em] text-goldInk">
+                  Family Reunion
+                </p>
+                <h3 className="mt-2 font-display text-2xl text-forest">
+                  One family. Several households. A whole weekend to coordinate.
+                </h3>
+                <p className="mt-3 font-body text-sm leading-relaxed text-forest/75">
+                  Arrival night, family breakfast, the outing, the cookout and the goodbye meal can all stay inside the same reunion. Keep one guest list while collecting activity-level responses only where you need them.
+                </p>
+                <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+                  {[
+                    "Multiple households",
+                    "Activity headcounts",
+                    "Capacity limits",
+                    "What to bring",
+                    "Food + shopping links",
+                    "Weather across the weekend",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2 font-body text-sm text-forest/70">
+                      <Icon name="check" size={15} className="text-goldInk" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </article>
+          </div>
+
+          <p className="mt-5 text-center font-body text-xs leading-relaxed text-forest/55">
+            These are illustrative planning scenarios, not customer case studies.
+          </p>
         </div>
       </Band>
 
