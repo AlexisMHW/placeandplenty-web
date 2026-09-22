@@ -48,12 +48,11 @@ export default function MultiDayHomepageShowcase() {
             <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/60">
               Multi-Day Hosting
             </p>
-            <Display
-              id="multi-day-home-heading"
-              className="mt-4 text-3xl leading-tight text-forest md:text-[2.75rem]"
-            >
-              One gathering. More than one day.
-            </Display>
+            <div id="multi-day-home-heading">
+              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.75rem]">
+                One gathering. More than one day.
+              </Display>
+            </div>
             <p className="mt-5 max-w-2xl font-body text-base leading-relaxed text-forest/75">
               Place &amp; Plenty can keep a whole weekend together — one guest list,
               one schedule and one connected planning stack across the days.
