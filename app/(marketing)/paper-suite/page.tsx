@@ -81,6 +81,7 @@ export default function PaperSuiteMarketingPage() {
         image="/images/harding-paper-suite.webp"
         imageAlt="A coordinated Harding Family Reunion paper suite with invitation, itinerary, menu, details card, welcome sign and thank-you card"
         imageCaption="Invitation, itinerary, menu, details, welcome and thank-you pieces — all in one coordinated suite."
+        unoptimizedImage
         body={
           <p>
             Invitations, menus, weekend itineraries, details cards, welcome signs and thank-you
