@@ -263,10 +263,14 @@ export default function PaperSuiteOrderBuilder({
         </label>
       </div>
 
-      {(kind === "thank-you" || kind === "details") && (
+      {(kind === "thank-you" || kind === "details" || kind === "welcome-sign") && (
         <label className="mt-5 block">
           <span className="mb-1 block font-body text-sm font-semibold text-forest">
-            {kind === "thank-you" ? "Thank-you message" : "Details note"}
+            {kind === "thank-you"
+              ? "Thank-you message"
+              : kind === "welcome-sign"
+                ? "Welcome message"
+                : "Details note"}
           </span>
           <textarea
             value={bodyCopy}
@@ -279,7 +283,9 @@ export default function PaperSuiteOrderBuilder({
             placeholder={
               kind === "thank-you"
                 ? "Thank you for gathering with us…"
-                : "Parking, attire, arrival notes or anything guests should keep handy."
+                : kind === "welcome-sign"
+                  ? "Welcome — we’re glad you’re here."
+                  : "Parking, attire, arrival notes or anything guests should keep handy."
             }
             className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
           />
