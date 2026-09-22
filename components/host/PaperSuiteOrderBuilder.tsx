@@ -49,11 +49,91 @@ type PricingSummary = {
   testModeAtCost: boolean;
 };
 
+type MatchedPalette = {
+  background: string;
+  text: string;
+  accent: string;
+  rule: string;
+};
+
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(cents / 100);
+}
+
+function rgbToHex(r: number, g: number, b: number) {
+  return "#" + [r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+function relativeLuminance(r: number, g: number, b: number) {
+  const convert = (value: number) => {
+    const channel = value / 255;
+    return channel <= 0.03928
+      ? channel / 12.92
+      : Math.pow((channel + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * convert(r) + 0.7152 * convert(g) + 0.0722 * convert(b);
+}
+
+async function extractInvitationPalette(url: string): Promise<MatchedPalette> {
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  image.decoding = "async";
+
+  await new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new Error("invitation_image_load_failed"));
+    image.src = url;
+  });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 72;
+  canvas.height = 72;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) throw new Error("canvas_unavailable");
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const buckets = new Map<string, { count: number; r: number; g: number; b: number }>();
+
+  for (let index = 0; index < pixels.length; index += 4) {
+    if (pixels[index + 3] < 180) continue;
+    const r = Math.min(255, Math.round(pixels[index] / 32) * 32);
+    const g = Math.min(255, Math.round(pixels[index + 1] / 32) * 32);
+    const b = Math.min(255, Math.round(pixels[index + 2] / 32) * 32);
+    const key = r + "," + g + "," + b;
+    const current = buckets.get(key);
+    if (current) current.count += 1;
+    else buckets.set(key, { count: 1, r, g, b });
+  }
+
+  const colors = [...buckets.values()].sort((a, b) => b.count - a.count).slice(0, 16);
+  if (colors.length === 0) throw new Error("no_palette");
+
+  const background = colors[0];
+  const distance = (a: typeof background, b: typeof background) =>
+    Math.sqrt(
+      Math.pow(a.r - b.r, 2) +
+        Math.pow(a.g - b.g, 2) +
+        Math.pow(a.b - b.b, 2)
+    );
+
+  const accent =
+    colors.find((color) => distance(background, color) > 105) ||
+    colors.find((color) => distance(background, color) > 65) ||
+    { r: 201, g: 162, b: 39, count: 0 };
+
+  const luminance = relativeLuminance(background.r, background.g, background.b);
+  const text = luminance > 0.46 ? "#142720" : "#F7F4EC";
+
+  return {
+    background: rgbToHex(background.r, background.g, background.b),
+    text,
+    accent: rgbToHex(accent.r, accent.g, accent.b),
+    rule: rgbToHex(accent.r, accent.g, accent.b),
+  };
 }
 
 function productLabel(product: ProductCandidate) {
@@ -68,9 +148,11 @@ function productLabel(product: ProductCandidate) {
 export default function PaperSuiteOrderBuilder({
   gatheringId,
   multiDay,
+  invitationUrl,
 }: {
   gatheringId: string;
   multiDay: boolean;
+  invitationUrl?: string | null;
 }) {
   const availablePieces = useMemo(
     () => PAPER_PIECES.filter((piece) => piece.id !== "itinerary" || multiDay),
@@ -97,6 +179,8 @@ export default function PaperSuiteOrderBuilder({
   const [quoteSummary, setQuoteSummary] = useState<QuoteSummary | null>(null);
   const [pricing, setPricing] = useState<PricingSummary | null>(null);
   const [recipient, setRecipient] = useState<Recipient | null>(null);
+  const [matchedPalette, setMatchedPalette] = useState<MatchedPalette | null>(null);
+  const [matchingBusy, setMatchingBusy] = useState(false);
 
   const piece = paperPiece(kind)!;
   const sizeConfig = PAPER_SIZES[size];
@@ -162,6 +246,27 @@ export default function PaperSuiteOrderBuilder({
     setBodyCopy("");
   }
 
+  async function matchInvitation() {
+    if (!invitationUrl) {
+      setMessage("Upload a JPG or PNG invitation first, then return here to match the suite.");
+      return;
+    }
+
+    setMatchingBusy(true);
+    setMessage("");
+    try {
+      const palette = await extractInvitationPalette(invitationUrl);
+      setMatchedPalette(palette);
+      setPrintUrl(null);
+      resetQuote();
+      setMessage("Invitation colors matched. Choose any Place & Plenty layout and the suite will use this palette.");
+    } catch {
+      setMessage("We could not read that invitation image automatically. You can still use one of the four Place & Plenty designs.");
+    } finally {
+      setMatchingBusy(false);
+    }
+  }
+
   async function generatePreview() {
     setBusy(true);
     setMessage("");
@@ -177,6 +282,7 @@ export default function PaperSuiteOrderBuilder({
           size,
           template,
           bodyCopy: bodyCopy || undefined,
+          palette: matchedPalette || undefined,
         }),
       });
       const body = await response.json();
@@ -359,6 +465,45 @@ export default function PaperSuiteOrderBuilder({
             <option value="modern-clean">Modern Clean</option>
             <option value="warm-celebration">Warm Celebration</option>
           </select>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {invitationUrl && (
+              <button
+                type="button"
+                onClick={matchInvitation}
+                disabled={matchingBusy}
+                className="rounded-full border border-gold/40 bg-cream px-3 py-1.5 font-body text-[0.68rem] font-semibold text-forest disabled:opacity-60"
+              >
+                {matchingBusy ? "Matching…" : "Match My Invitation"}
+              </button>
+            )}
+            {matchedPalette && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMatchedPalette(null);
+                  setPrintUrl(null);
+                  resetQuote();
+                  setMessage("Place & Plenty house colors restored.");
+                }}
+                className="font-body text-[0.68rem] font-semibold text-forest/60 underline decoration-gold underline-offset-4"
+              >
+                Use P&P colors
+              </button>
+            )}
+          </div>
+          {matchedPalette && (
+            <div className="mt-2 flex items-center gap-1.5" aria-label="Matched invitation palette">
+              {[matchedPalette.background, matchedPalette.accent, matchedPalette.text].map((color) => (
+                <span
+                  key={color}
+                  className="h-5 w-5 rounded-full border border-forest/15"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+              <span className="ml-1 font-body text-[0.66rem] text-forest/50">Invitation palette</span>
+            </div>
+          )}
         </label>
       </div>
 
