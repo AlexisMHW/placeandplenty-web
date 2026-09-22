@@ -80,7 +80,7 @@ export function billingHomeFor(channel: string | null): string {
 export const WEB_CHECKOUT_LIVE = false;
 
 export const CROSS_PLATFORM_PROMISE =
-  "One Place & Plenty account across web and mobile. Your Gathering Pass or Plus access follows that account, so signing in on another device does not create a second plan or require a transfer.";
+  "One Place & Plenty account across web and mobile. Gathering Pass, Plus and Multi-Day access stay attached to the same canonical account and gathering, so signing in on another device does not create a second plan or require a transfer.";
 
 export const WEB_ONLY_PROMISE =
   "You can create an account, plan, and host entirely on the web. The app is there when you want your gathering in your pocket — not as a step you have to take first.";
