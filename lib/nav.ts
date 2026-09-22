@@ -18,6 +18,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: "How It Works", href: "/how-it-works" },
   { label: "What It Does", href: "/what-it-does" },
   { label: "Multi-Day", href: "/multi-day" },
+  { label: "Paper Suite", href: "/paper-suite" },
   { label: "Gathering Ideas", href: "/gathering-ideas" },
   { label: "The Coordinated Host", href: "/coordinated-host" },
   { label: "Pricing", href: "/pricing" },
