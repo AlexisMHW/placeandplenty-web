@@ -1,39 +1,19 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Band, Display } from "@/components/Display";
-import Icon, { type IconName } from "@/components/Icon";
 
-const FEATURES: Array<{ icon: IconName; title: string; body: string }> = [
-  {
-    icon: "calendar",
-    title: "Plan the whole weekend",
-    body: "Keep Friday through Sunday together, with separate activities, times, locations and details.",
-  },
-  {
-    icon: "people",
-    title: "One guest list, different plans",
-    body: "Keep everyone in one gathering while tracking who is joining each activity.",
-  },
-  {
-    icon: "rsvp",
-    title: "Collect activity responses",
-    body: "Know who is coming to brunch, the spa, dinner or the night out without chasing a group chat.",
-  },
-  {
-    icon: "check",
-    title: "Coordinate what people bring",
-    body: "Track drinks, snacks, decorations, supplies and contributions in the same plan.",
-  },
-  {
-    icon: "cart",
-    title: "Connect food, shopping and budget",
-    body: "Keep My Table, My Shopping List, My Hosting Closet and My Budget connected to the weekend.",
-  },
-  {
-    icon: "people",
-    title: "Share the work",
-    body: "Co-hosts can help manage the weekend instead of every decision sitting with one person.",
-  },
+const ITINERARY = [
+  "Friday · Welcome drinks · 7:00 PM",
+  "Saturday · Spa time · 11:00 AM",
+  "Saturday · Dinner + night out · 7:30 PM",
+  "Sunday · Farewell breakfast · 9:30 AM",
+];
+
+const BENEFITS = [
+  "One guest list",
+  "Activity-by-activity RSVPs",
+  "Shared itinerary",
+  "Who’s bringing what",
+  "Multi-day schedule",
 ];
 
 export default function MultiDayHomepageShowcase() {
@@ -41,87 +21,86 @@ export default function MultiDayHomepageShowcase() {
     <Band tone="cream">
       <section
         aria-labelledby="multi-day-home-heading"
-        className="mx-auto max-w-editorial px-6 py-16 md:py-20"
+        className="mx-auto max-w-editorial px-5 py-10 sm:px-6 md:py-12"
       >
-        <div className="grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
-          <div>
-            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/60">
-              Multi-Day Gatherings
-            </p>
-            <div id="multi-day-home-heading">
-              <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.75rem]">
-                One weekend. A lot of moving pieces. One place to keep it together.
-              </Display>
-            </div>
-            <p className="mt-5 max-w-2xl font-body text-base leading-relaxed text-forest/75">
-              A bachelorette weekend is not one event. It is arrivals, dinner reservations,
-              brunch, activities, who said yes to what, what everyone is bringing and a group
-              of people who need to know where they are supposed to be. Place &amp; Plenty keeps
-              the whole weekend inside one connected gathering.
-            </p>
+        <div className="overflow-hidden rounded-3xl border border-sage/25 bg-offwhite shadow-soft">
+          <div className="grid lg:grid-cols-[1.02fr_0.98fr]">
+            <div className="p-6 sm:p-7 md:p-8">
+              <p className="font-body text-[0.68rem] font-bold uppercase tracking-[0.2em] text-forest/58">
+                Example Weekend
+              </p>
+              <div id="multi-day-home-heading">
+                <Display
+                  emphasis="Bachelorette Weekend"
+                  className="mt-3 text-3xl leading-tight text-forest md:text-[2.45rem]"
+                >
+                  {"Bachelorette Weekend"}
+                </Display>
+              </div>
 
-            <div className="mt-7 grid gap-x-8 gap-y-6 sm:grid-cols-2">
-              {FEATURES.map((feature) => (
-                <article key={feature.title} className="border-t border-sage/35 pt-4">
-                  <div className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-full bg-parchment text-forest">
-                      <Icon name={feature.icon} size={17} />
-                    </span>
-                    <div>
-                      <h3 className="font-display text-lg text-forest">{feature.title}</h3>
-                      <p className="mt-1 font-body text-sm leading-relaxed text-forest/68">
-                        {feature.body}
-                      </p>
-                    </div>
+              <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-forest/72 md:text-[0.95rem]">
+                Welcome drinks, brunch, spa time, dinner and farewell breakfast can all live inside one connected plan.
+              </p>
+
+              <div className="mt-5 grid gap-2">
+                {ITINERARY.map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-full bg-parchment px-4 py-2.5 font-body text-xs text-forest/78 sm:text-sm"
+                  >
+                    {item}
                   </div>
-                </article>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link
-                href="/bachelorette-weekend-planning"
-                className="rounded-full bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite"
-              >
-                Plan a Bachelorette Weekend
-              </Link>
-              <Link
-                href="/multi-day"
-                className="border-b border-gold pb-1 font-body text-sm font-semibold text-forest"
-              >
-                See how Multi-Day works →
-              </Link>
-            </div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {BENEFITS.map((benefit) => (
+                  <span
+                    key={benefit}
+                    className="rounded-full border border-sage/30 bg-cream px-3 py-1.5 font-body text-[0.68rem] font-semibold text-forest/70"
+                  >
+                    {benefit}
+                  </span>
+                ))}
+              </div>
 
-            <p className="mt-5 font-body text-xs leading-relaxed text-forest/55">
-              Also built for family reunions, wedding weekends, retreats, group trips and other gatherings that span more than one day.
-            </p>
-          </div>
-
-          <article className="overflow-hidden rounded-3xl border border-sage/25 bg-offwhite shadow-soft">
-            <div className="relative aspect-[4/3] overflow-hidden bg-forest">
-              <Image
-                src="/images/article-night-before-list.png"
-                alt="Friends preparing together in a warm home, illustrating a multi-day bachelorette weekend plan"
-                fill
-                className="object-cover"
-                sizes="(min-width: 1024px) 45vw, 100vw"
-              />
-              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-forest/80 via-forest/10 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 text-offwhite md:p-8">
-                <p className="font-body text-[0.64rem] font-bold uppercase tracking-[0.18em] text-gold">
-                  Example · Bachelorette Weekend
-                </p>
-                <h3 className="mt-2 font-display text-3xl leading-tight">
-                  Everyone does not have to do everything.
-                </h3>
-                <p className="mt-3 max-w-xl font-body text-sm leading-relaxed text-offwhite/82">
-                  One guest list. Activity-by-activity responses. One current plan from arrival drinks through farewell brunch.
-                </p>
+              <div className="mt-6 flex flex-wrap items-center gap-4">
+                <Link
+                  href="/multi-day"
+                  className="rounded-full bg-forest px-5 py-2.5 font-body text-sm font-semibold text-offwhite"
+                >
+                  See How Multi-Day Works
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="border-b border-gold pb-1 font-body text-xs font-semibold uppercase tracking-[0.12em] text-forest"
+                >
+                  See Multi-Day Pricing →
+                </Link>
               </div>
             </div>
-          </article>
+
+            <div className="relative min-h-[20rem] overflow-hidden bg-forest lg:min-h-0">
+              <img
+                src="https://images.pexels.com/photos/34327735/pexels-photo-34327735/free-photo-of-joyful-bachelorette-party-celebration-indoors.jpeg?auto=compress&dpr=1&h=900&w=1200"
+                alt="A diverse group of women laughing together during a bachelorette weekend celebration"
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+              />
+              <div
+                aria-hidden
+                className="absolute inset-0 bg-gradient-to-t from-forest/35 via-transparent to-transparent"
+              />
+              <div className="absolute bottom-4 left-4 rounded-full border border-offwhite/30 bg-offwhite/90 px-3 py-1.5 font-body text-[0.62rem] font-bold uppercase tracking-[0.14em] text-forest shadow-sm">
+                Bachelorette weekends · planned together
+              </div>
+            </div>
+          </div>
         </div>
+
+        <p className="mt-3 text-center font-body text-[0.68rem] leading-relaxed text-forest/50">
+          Also built for family reunions, wedding weekends, retreats and group trips.
+        </p>
       </section>
     </Band>
   );
