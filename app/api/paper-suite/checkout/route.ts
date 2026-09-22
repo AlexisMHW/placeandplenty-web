@@ -257,7 +257,18 @@ export async function POST(req: NextRequest) {
     session.set("payment_intent_data[metadata][order_reference_id]", orderReferenceId);
 
     const checkout = await stripeForm("checkout/sessions", session);
-    if (!checkout.url) throw new Error("stripe_session_failed");
+    if (!checkout.url || !checkout.id) throw new Error("stripe_session_failed");
+
+    const { error: checkoutStateError } = await supabase.rpc(
+      "mark_my_paper_order_checkout_pending",
+      {
+        p_order_id: order.id,
+        p_stripe_checkout_session_id: checkout.id,
+      }
+    );
+    if (checkoutStateError) {
+      console.error("Could not mark Paper Suite checkout pending", checkoutStateError.message);
+    }
 
     return NextResponse.json({
       url: checkout.url,
