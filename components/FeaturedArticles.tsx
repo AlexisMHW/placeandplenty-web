@@ -9,11 +9,25 @@ import type { Post } from "@/lib/tina-content";
 // in app/(marketing)/coordinated-host/page.tsx.
 const ARTICLE_FALLBACKS = [
   "/images/article-how-many-dishes.png",
-  "/images/article-night-before-list.png",
+  "/images/article-the-first-fifteen-minutes.png",
   "/images/article-how-to-organise-a-potluck.png",
   "/images/article-shop-your-own-cupboards.png",
   "/images/article-where-people-stand.png",
 ];
+
+function homepageArticleImage(post: Post, index: number) {
+  const title = post.title.toLowerCase();
+
+  // The homepage rail should read like four different stories, not four
+  // crops from the same campaign image. These mappings deliberately win
+  // over Tina's featured image only for the homepage card.
+  if (title.includes("track rsvp")) return "/images/what-it-does-my-people.png";
+  if (title.includes("online party invitation")) return "/images/article-the-first-fifteen-minutes.png";
+  if (title.includes("at-home party planning checklist")) return "/images/article-shop-your-own-cupboards.png";
+  if (title.includes("how much ice")) return "/images/article-how-much-ice.png";
+
+  return post.featuredImage || ARTICLE_FALLBACKS[index % ARTICLE_FALLBACKS.length];
+}
 
 export default function FeaturedArticles({ posts }: { posts: Post[] }) {
   return (
@@ -36,7 +50,7 @@ export default function FeaturedArticles({ posts }: { posts: Post[] }) {
               // own Tina image wins; new editorial posts can ship before a
               // bespoke card image is assigned, so a warm hosting image stands
               // in until the final article art exists.
-              const image = post.featuredImage || ARTICLE_FALLBACKS[index % ARTICLE_FALLBACKS.length];
+              const image = homepageArticleImage(post, index);
               return (
                 <li key={post._sys.filename}>
                   <Link href={`/coordinated-host/${post._sys.filename}`} className="group flex h-full flex-col overflow-hidden rounded-card border border-sage/30 bg-parchment transition-shadow duration-400 hover:shadow-softer">
