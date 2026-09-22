@@ -272,6 +272,18 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
             </Link>
           </article>
 
+          <article className="rounded-2xl border border-gold/25 bg-offwhite p-6 shadow-soft">
+            <p className="font-body text-[0.6rem] font-bold uppercase tracking-[0.18em] text-goldInk">Welcome Sign</p>
+            <h3 className="mt-3 text-center font-display text-2xl text-forest">A larger welcome piece from the same gathering.</h3>
+            <p className="mt-3 text-center font-body text-sm leading-relaxed text-forest/65">
+              Pull the gathering name, date and location into a coordinated 8 × 10 or A4 sign.
+            </p>
+            <div className="mx-auto mt-5 h-px w-12 bg-gold/60" />
+            <p className="mt-5 text-center font-body text-xs uppercase tracking-[0.12em] text-forest/50">
+              8 × 10 · A4
+            </p>
+          </article>
+
           <article className="rounded-2xl border border-sage/25 bg-cream p-6 shadow-soft">
             <p className="font-body text-[0.6rem] font-bold uppercase tracking-[0.18em] text-goldInk">Thank-You Card</p>
             <h3 className="mt-3 text-center font-display text-2xl text-forest">Keep the suite together after the gathering.</h3>
