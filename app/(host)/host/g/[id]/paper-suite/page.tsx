@@ -10,6 +10,7 @@ import { getMultiDayWorkspace } from "@/lib/multi-day-data";
 import GatheringIdentity from "@/components/host/GatheringIdentity";
 import { WorkspaceHeader } from "@/components/host/Workspace";
 import GelatoConnectionPanel from "@/components/host/GelatoConnectionPanel";
+import PaperSuiteOrderBuilder from "@/components/host/PaperSuiteOrderBuilder";
 
 export const metadata = { title: "My Paper Suite" };
 export const dynamic = "force-dynamic";
@@ -260,6 +261,8 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
           </article>
         </div>
       </section>
+
+      <PaperSuiteOrderBuilder gatheringId={params.id} multiDay={gathering.duration_type === "multi_day"} />
 
       <GelatoConnectionPanel />
 
