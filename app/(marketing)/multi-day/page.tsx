@@ -4,11 +4,12 @@ import { Band, Display } from "@/components/Display";
 import Icon, { type IconName } from "@/components/Icon";
 import { MULTI_DAY_NOTE, MULTI_DAY_PRICING } from "@/lib/pricing";
 import { CROSS_PLATFORM_PROMISE } from "@/lib/entitlements";
+import { FaqSchema } from "@/components/StructuredData";
 
 export const metadata: Metadata = {
-  title: "Multi-Day Hosting",
+  title: "Multi-Day Gathering Planning",
   description:
-    "Plan one gathering across multiple days with one guest list, one schedule, connected activities, responses, costs, weather and planning in Place & Plenty.",
+    "Plan a multi-day gathering, reunion, wedding weekend, retreat or family visit with one guest list, one schedule and connected planning in Place & Plenty.",
   alternates: { canonical: "/multi-day" },
   openGraph: {
     title: "Multi-Day Hosting | Place & Plenty",
@@ -60,6 +61,25 @@ const FLOW: Array<{ icon: IconName; title: string; body: string }> = [
   },
 ];
 
+const FAQS = [
+  {
+    q: "What is a Multi-Day gathering in Place & Plenty?",
+    a: "It is one canonical gathering that spans 2–4 calendar days, with one guest list and one planning stack plus a day-by-day schedule. A one-time extension can expand that same gathering to as many as 7 days.",
+  },
+  {
+    q: "Do I need a separate event for each day?",
+    a: "No. The point of Multi-Day is to keep the weekend or multi-day gathering together instead of rebuilding guests, planning and history for each day.",
+  },
+  {
+    q: "Can guests RSVP to individual activities?",
+    a: "Yes. Hosts can make activities selectable or collect per-person activity responses when a meal, outing or reservation needs its own headcount.",
+  },
+  {
+    q: "Can I use Multi-Day on the web and in the app?",
+    a: "Yes. Multi-Day planning and My Schedule use the same canonical backend across web and mobile. Host Mode and Space Mode remain intentionally mobile-only.",
+  },
+];
+
 const DIFFERENCE = [
   ["One gathering record", "No rebuilding people, details or history for every day."],
   ["One connected schedule", "Days and activities stay inside the same planning context."],
@@ -72,6 +92,7 @@ const DIFFERENCE = [
 export default function MultiDayPage() {
   return (
     <>
+      <FaqSchema faqs={FAQS} />
       <section className="relative overflow-hidden bg-cream">
         <div className="mx-auto grid max-w-editorial items-center gap-12 px-6 py-16 md:py-20 lg:grid-cols-[0.92fr_1.08fr] lg:py-24">
           <div>
@@ -207,6 +228,20 @@ export default function MultiDayPage() {
               <Icon name="phone" size={42} />
             </div>
           </div>
+        </div>
+      </Band>
+
+      <Band tone="cream">
+        <div className="mx-auto max-w-prose px-6 py-14 md:py-16">
+          <Display className="text-2xl text-forest md:text-3xl">Questions about Multi-Day</Display>
+          <dl className="mt-7 divide-y divide-sage/30">
+            {FAQS.map((item) => (
+              <div key={item.q} className="py-5">
+                <dt className="font-body text-base font-bold text-forest">{item.q}</dt>
+                <dd className="mt-2 font-body text-base leading-relaxed text-forest/78">{item.a}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </Band>
 
