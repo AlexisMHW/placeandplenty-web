@@ -11,6 +11,7 @@ import GatheringIdentity from "@/components/host/GatheringIdentity";
 import { WorkspaceHeader } from "@/components/host/Workspace";
 import GelatoConnectionPanel from "@/components/host/GelatoConnectionPanel";
 import PaperSuiteOrderBuilder from "@/components/host/PaperSuiteOrderBuilder";
+import PaperSuitePurchaseStatus from "@/components/host/PaperSuitePurchaseStatus";
 
 export const metadata = { title: "My Paper Suite" };
 export const dynamic = "force-dynamic";
@@ -99,6 +100,8 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
         title="My Paper Suite"
         description="Turn the gathering you already planned into coordinated printed pieces — without retyping the details."
       />
+
+      <PaperSuitePurchaseStatus />
 
       <section className="mt-7 grid gap-5 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div className="overflow-hidden rounded-2xl border border-gold/30 bg-cream">
