@@ -204,8 +204,8 @@ export default function MultiDayPage() {
             <article className="overflow-hidden rounded-3xl border border-sage/25 bg-offwhite shadow-soft">
               <div className="relative aspect-[16/9]">
                 <Image
-                  src="/images/hero-tabletop.jpg"
-                  alt="An elevated Place & Plenty tabletop used to illustrate planning a bachelorette weekend across multiple days"
+                  src="/images/bachelorette-weekend.webp"
+                  alt="A diverse group of women celebrating a bachelorette weekend getaway together"
                   fill
                   className="object-cover"
                   sizes="(min-width: 1024px) 50vw, 100vw"
@@ -242,8 +242,8 @@ export default function MultiDayPage() {
             <article className="overflow-hidden rounded-3xl border border-sage/25 bg-offwhite shadow-soft">
               <div className="relative aspect-[16/9]">
                 <Image
-                  src="/images/show_us_how_you_gather-hero.png"
-                  alt="A warm Place & Plenty gathering image used to illustrate planning a family reunion across multiple days"
+                  src="/images/harding-family-reunion.webp"
+                  alt="The Harding Family Reunion with multiple generations wearing coordinated reunion shirts"
                   fill
                   className="object-cover"
                   sizes="(min-width: 1024px) 50vw, 100vw"
