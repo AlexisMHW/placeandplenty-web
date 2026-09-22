@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "invalid_print_size" }, { status: 400 });
   }
 
-  const tokens = paperTemplateTokens(payload.template);
+  const tokens = payload.palette || paperTemplateTokens(payload.template);
   const tall = size.family === "tall" || size.family === "sign";
   const square = size.family === "square";
   const scale = size.widthPx / 1500;
