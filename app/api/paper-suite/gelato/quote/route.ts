@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase-server";
 import { getGathering } from "@/lib/host-data";
 import { quoteGelatoOrder, type GelatoQuoteRequest } from "@/lib/gelato";
+import { normalizeGelatoQuote } from "@/lib/paper-suite-commerce";
+import { paperRetailPrice } from "@/lib/paper-suite-pricing";
 
 export const runtime = "nodejs";
 
@@ -55,7 +57,15 @@ export async function POST(req: NextRequest) {
       ],
     });
 
-    return NextResponse.json({ quote });
+    const normalized = normalizeGelatoQuote(quote);
+    let pricing: ReturnType<typeof paperRetailPrice> | null = null;
+    try {
+      pricing = paperRetailPrice(normalized.gelatoCostCents);
+    } catch {
+      pricing = null;
+    }
+
+    return NextResponse.json({ quote, normalized, pricing });
   } catch (error) {
     console.error("Gelato quote failed", error);
     return NextResponse.json({ error: "gelato_quote_failed" }, { status: 502 });
