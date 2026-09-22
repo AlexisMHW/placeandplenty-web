@@ -4,6 +4,28 @@ import { findWebProduct } from "@/lib/checkout";
 
 export const runtime = "nodejs";
 
+const MULTI_DAY_TEST_PRICE_IDS = {
+  standard: "price_1UI8WY36TUbcLA5LzBxKiyTg",
+  gathering_pass: "price_1UI8YD36TUbcLA5Lr5tWOE4i",
+  plus: "price_1UI8YF36TUbcLA5LyAcJBVOL",
+  extension: "price_1UI8YJ36TUbcLA5LBtE91Kj3",
+} as const;
+
+function configuredStripePrice(
+  envValue: string | undefined,
+  testFallback: string
+): string | undefined {
+  if (envValue) return envValue;
+
+  // Price IDs are not secrets, but sandbox IDs must never leak into a live
+  // checkout. Use the committed fallback only when the configured Stripe
+  // secret is explicitly a test-mode key.
+  const key = process.env.PAYMENT_PROCESSOR_SECRET_KEY;
+  if (key?.startsWith("sk_test_")) return testFallback;
+
+  return undefined;
+}
+
 function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || "https://placeandplenty.com").replace(/\/$/, "");
 }
@@ -112,7 +134,10 @@ export async function POST(req: NextRequest) {
   } else if (product.canonicalProductId === "gathering_pass") {
     priceId = process.env.STRIPE_GATHERING_PASS_PRICE_ID;
   } else if (product.canonicalProductId === "multi_day_extension") {
-    priceId = process.env.STRIPE_MULTI_DAY_EXTENSION_PRICE_ID;
+    priceId = configuredStripePrice(
+      process.env.STRIPE_MULTI_DAY_EXTENSION_PRICE_ID,
+      MULTI_DAY_TEST_PRICE_IDS.extension
+    );
   } else {
     const { data: tier, error: tierError } = await supabase.rpc("resolve_multi_day_purchase_tier", {
       p_gathering_id: gatheringId,
@@ -122,10 +147,19 @@ export async function POST(req: NextRequest) {
     }
     priceId =
       tier === "plus"
-        ? process.env.STRIPE_MULTI_DAY_PLUS_PRICE_ID
+        ? configuredStripePrice(
+            process.env.STRIPE_MULTI_DAY_PLUS_PRICE_ID,
+            MULTI_DAY_TEST_PRICE_IDS.plus
+          )
         : tier === "gathering_pass"
-          ? process.env.STRIPE_MULTI_DAY_GATHERING_PASS_PRICE_ID
-          : process.env.STRIPE_MULTI_DAY_STANDARD_PRICE_ID;
+          ? configuredStripePrice(
+              process.env.STRIPE_MULTI_DAY_GATHERING_PASS_PRICE_ID,
+              MULTI_DAY_TEST_PRICE_IDS.gathering_pass
+            )
+          : configuredStripePrice(
+              process.env.STRIPE_MULTI_DAY_STANDARD_PRICE_ID,
+              MULTI_DAY_TEST_PRICE_IDS.standard
+            );
   }
 
   if (!priceId) {
