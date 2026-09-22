@@ -78,9 +78,9 @@ export default function PaperSuiteMarketingPage() {
         eyebrow="My Paper Suite"
         headline="The plan is already here."
         emphasisLine="Now make it tangible."
-        image="/images/what-it-does-my-table.png"
-        imageAlt="Place & Plenty planning details prepared for a coordinated printed paper suite"
-        imageCaption="From the plan on screen to the pieces your guests can hold."
+        image="/images/harding-paper-suite.webp"
+        imageAlt="A coordinated Harding Family Reunion paper suite with invitation, itinerary, menu, details card, welcome sign and thank-you card"
+        imageCaption="Invitation, itinerary, menu, details, welcome and thank-you pieces — all in one coordinated suite."
         body={
           <p>
             Invitations, menus, weekend itineraries, details cards, welcome signs and thank-you
