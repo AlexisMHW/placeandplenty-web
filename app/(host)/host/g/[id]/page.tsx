@@ -8,6 +8,7 @@ import {
   getMenuItems,
   getExpenses,
   getClosetItems,
+  signArtwork,
 } from "@/lib/host-data";
 import Icon, { type IconName } from "@/components/Icon";
 import HostReadyDial from "@/components/host/HostReadyDial";
@@ -19,6 +20,7 @@ import { getFigureItOutOverviewState } from "@/lib/figure-it-out-data";
 import { getWeatherWorkspace } from "@/lib/weather-data";
 import { formatCurrency } from "@/lib/host-format";
 import { usesOwnArtwork } from "@/lib/invitations";
+import GatheringIdentity from "@/components/host/GatheringIdentity";
 
 // GATHERING COMMAND CENTRAL, composed to `host_web_gathering.png`.
 // Figure It Out and Weather/Plan B belong to the gathering overview as
@@ -84,9 +86,39 @@ export default async function GatheringOverviewPage({ params }: { params: { id: 
   const stillToBuy = shopping.filter((s) => s.status === "need");
   const estimatedRemaining = stillToBuy.reduce((n, s) => n + (s.estimated_cost ?? 0), 0);
   const spent = expenses.reduce((n, e) => n + (e.amount ?? 0), 0);
+  const artwork = await signArtwork([gathering]);
+  const invitationUrl = artwork.get(gathering.id) ?? null;
 
   return (
     <div>
+      <section className="mb-5 overflow-hidden rounded-2xl border border-gold/30 bg-cream shadow-softer">
+        <div className="grid items-stretch md:grid-cols-[minmax(0,0.95fr)_minmax(18rem,1.05fr)]">
+          <div className="p-6 md:p-7">
+            <p className="font-body text-[0.64rem] font-bold uppercase tracking-[0.18em] text-goldInk">
+              Your gathering identity
+            </p>
+            <h1 className="mt-2 font-display text-3xl leading-tight text-forest">{gathering.name}</h1>
+            <p className="mt-3 max-w-xl font-body text-sm leading-relaxed text-forest/70">
+              Your invitation stays at the front of this gathering while RSVPs, contributions and planning build around it.
+            </p>
+            <Link
+              href={`${base}/people`}
+              className="mt-5 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-xs font-semibold uppercase tracking-[0.12em] text-forest"
+            >
+              Open My People &amp; Invitations <span aria-hidden>→</span>
+            </Link>
+          </div>
+          <GatheringIdentity
+            name={gathering.name}
+            artworkUrl={invitationUrl}
+            className="min-h-[14rem] border-t border-gold/20 md:border-l md:border-t-0"
+            sizes="(min-width: 768px) 42vw, 100vw"
+            priority
+            fit="contain"
+          />
+        </div>
+      </section>
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <HostReadyDial score={gathering.current_hostready_score} state={gathering.readiness_state} gatheringId={params.id} />
         <NextUpPanel actions={nextUp} base={base} />
