@@ -88,16 +88,18 @@ export default function PaperSuiteHomepageShowcase() {
                         : "border-sage/25 bg-sage/15")
                 }
               >
-                <div
-                  role="img"
-                  aria-label={piece.alt}
-                  className="aspect-[4/3] w-full bg-no-repeat"
-                  style={{
-                    backgroundImage: "url('/images/paper-suite-card-sprite.webp')",
-                    backgroundSize: "200% 200%",
-                    backgroundPosition: piece.position,
-                  }}
-                />
+                <div className="relative aspect-[4/3] w-full overflow-hidden" role="img" aria-label={piece.alt}>
+                  <img
+                    src="/images/paper-suite-card-sprite.webp"
+                    alt=""
+                    aria-hidden
+                    className="absolute h-[200%] w-[200%] max-w-none object-cover"
+                    style={{
+                      left: piece.position.startsWith("100%") ? "-100%" : "0",
+                      top: piece.position.endsWith("100%") ? "-100%" : "0",
+                    }}
+                  />
+                </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-display text-lg text-forest">{piece.title}</h3>
