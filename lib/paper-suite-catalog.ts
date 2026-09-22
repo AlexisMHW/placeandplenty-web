@@ -3,6 +3,7 @@ export type PaperPieceKind =
   | "details"
   | "menu"
   | "itinerary"
+  | "welcome-sign"
   | "thank-you";
 
 export type PaperSizeId =
@@ -131,6 +132,14 @@ export const PAPER_PIECES: PaperPieceDefinition[] = [
     sizes: ["4x9", "5x7", "a5", "8x10", "a4"],
     defaultSize: "5x7",
     source: "My Schedule",
+  },
+  {
+    id: "welcome-sign",
+    label: "Welcome Sign",
+    description: "A larger-format welcome piece using the gathering identity, date and location.",
+    sizes: ["8x10", "a4"],
+    defaultSize: "8x10",
+    source: "Gathering details",
   },
   {
     id: "thank-you",
