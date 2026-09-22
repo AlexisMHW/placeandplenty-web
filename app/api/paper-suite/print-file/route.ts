@@ -3,6 +3,12 @@ import { getUser } from "@/lib/supabase-server";
 import { getGathering, getMenuItems } from "@/lib/host-data";
 import { getMultiDayWorkspace } from "@/lib/multi-day-data";
 import {
+  paperPiece,
+  paperSize,
+  type PaperPieceKind,
+  type PaperSizeId,
+} from "@/lib/paper-suite-catalog";
+import {
   encodePaperPayload,
   signPaperPayload,
   type PaperPrintPayload,
@@ -24,8 +30,8 @@ function siteUrl() {
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
+    weekday: "long",
+    month: "long",
     day: "numeric",
   }).format(new Date(value + "T12:00:00"));
 }
@@ -48,13 +54,21 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as
     | {
         gatheringId?: string;
-        kind?: "menu" | "itinerary";
+        kind?: PaperPieceKind;
+        size?: PaperSizeId;
         template?: PaperTemplate;
+        bodyCopy?: string;
       }
     | null;
 
-  if (!body?.gatheringId || !body.kind || !body.template || !TEMPLATES.has(body.template)) {
+  if (!body?.gatheringId || !body.kind || !body.size || !body.template || !TEMPLATES.has(body.template)) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  const piece = paperPiece(body.kind);
+  const size = paperSize(body.size);
+  if (!piece || !size || !piece.sizes.includes(body.size)) {
+    return NextResponse.json({ error: "unsupported_piece_size" }, { status: 400 });
   }
 
   const gathering = await getGathering(body.gatheringId);
@@ -62,14 +76,17 @@ export async function POST(req: NextRequest) {
 
   const expiresAt = Date.now() + 1000 * 60 * 60 * 24 * 7;
   const payload: PaperPrintPayload = {
-    version: 1,
+    version: 2,
     kind: body.kind,
+    size: body.size,
     template: body.template,
     gatheringName: gathering.name,
     dateLabel: gathering.gathering_end_date
       ? formatDate(gathering.gathering_date) + " – " + formatDate(gathering.gathering_end_date)
       : formatDate(gathering.gathering_date),
+    timeLabel: formatTime(gathering.arrival_time),
     locationName: gathering.location_name,
+    bodyCopy: body.bodyCopy?.trim().slice(0, 700) || null,
     expiresAt,
   };
 
@@ -92,7 +109,7 @@ export async function POST(req: NextRequest) {
 
     payload.menu = Object.entries(grouped).map(([category, items]) => ({
       heading: labels[category] || category,
-      items: items.slice(0, 10),
+      items: items.slice(0, 12),
     }));
   }
 
@@ -102,18 +119,28 @@ export async function POST(req: NextRequest) {
     }
 
     const workspace = await getMultiDayWorkspace(body.gatheringId);
-    payload.days = workspace.days.slice(0, 4).map((day) => ({
+    payload.days = workspace.days.slice(0, 7).map((day) => ({
       heading: day.title || formatDate(day.day_date),
       activities: workspace.activities
         .filter((activity) => activity.gathering_day_id === day.id)
         .sort((a, b) => a.sort_order - b.sort_order)
-        .slice(0, 6)
+        .slice(0, 8)
         .map((activity) => ({
           time: formatTime(activity.start_time),
           title: activity.title,
           location: activity.location_name,
         })),
     }));
+  }
+
+  if (body.kind === "thank-you" && !payload.bodyCopy) {
+    payload.bodyCopy =
+      "Thank you for gathering with us. We’re so glad you were part of it.";
+  }
+
+  if (body.kind === "details" && !payload.bodyCopy) {
+    payload.bodyCopy =
+      "Keep this card handy for the gathering details, timing and location.";
   }
 
   const encoded = encodePaperPayload(payload);
@@ -125,5 +152,5 @@ export async function POST(req: NextRequest) {
     "&s=" +
     encodeURIComponent(signature);
 
-  return NextResponse.json({ url, expiresAt });
+  return NextResponse.json({ url, expiresAt, piece: body.kind, size: body.size });
 }
