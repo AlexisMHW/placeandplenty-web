@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getUser } from "@/lib/supabase-server";
-import { createGelatoOrder, type GelatoCreateOrderRequest, type GelatoRecipient } from "@/lib/gelato";
+import {
+  createGelatoOrder,
+  GelatoApiError,
+  type GelatoCreateOrderRequest,
+  type GelatoRecipient,
+} from "@/lib/gelato";
 
 export const runtime = "nodejs";
 
@@ -97,6 +102,42 @@ export async function POST(req: NextRequest) {
   const recipient = order.shipping_address as GelatoRecipient;
   const gelatoOrderType: GelatoCreateOrderRequest["orderType"] = isStripeTest ? "draft" : "order";
 
+  // Atomically reserve this paid order before calling Gelato. This closes
+  // the race where two return-page requests could otherwise create two
+  // external print orders before either one records its Gelato id.
+  const { data: claimed, error: claimError } = await supabase.rpc(
+    "claim_my_paper_order_fulfillment",
+    { p_order_id: order.id }
+  );
+
+  if (claimError) {
+    console.error("Paper order fulfillment claim failed", claimError.message);
+    return NextResponse.json({ error: "fulfillment_claim_failed" }, { status: 500 });
+  }
+
+  if (claimed !== true) {
+    const { data: current } = await supabase
+      .from("paper_orders")
+      .select("status,gelato_order_id,gelato_order_type")
+      .eq("id", order.id)
+      .maybeSingle();
+
+    if (current?.gelato_order_id) {
+      return NextResponse.json({
+        fulfilled: true,
+        gelatoOrderId: current.gelato_order_id,
+        orderType: current.gelato_order_type,
+        alreadySubmitted: true,
+      });
+    }
+
+    if (current?.status === "fulfilling" || current?.status === "submitted") {
+      return NextResponse.json({ error: "fulfillment_processing" }, { status: 409 });
+    }
+
+    return NextResponse.json({ error: "fulfillment_not_claimed" }, { status: 409 });
+  }
+
   try {
     const created = await createGelatoOrder({
       orderType: gelatoOrderType,
@@ -159,6 +200,32 @@ export async function POST(req: NextRequest) {
     });
   } catch (fulfillmentError) {
     console.error("Gelato Paper Suite fulfillment failed", fulfillmentError);
-    return NextResponse.json({ error: "gelato_fulfillment_failed" }, { status: 502 });
+
+    // Only release the claim for a definite client/request rejection.
+    // For network failures or provider 5xx responses we keep the order
+    // claimed so a blind browser retry cannot accidentally duplicate a
+    // Gelato order whose response was lost.
+    if (
+      fulfillmentError instanceof GelatoApiError &&
+      fulfillmentError.status >= 400 &&
+      fulfillmentError.status < 500
+    ) {
+      await supabase.rpc("release_my_paper_order_fulfillment", {
+        p_order_id: order.id,
+        p_failure_reason: "gelato_rejected_" + fulfillmentError.status,
+      });
+    }
+
+    return NextResponse.json(
+      {
+        error:
+          fulfillmentError instanceof GelatoApiError &&
+          fulfillmentError.status >= 400 &&
+          fulfillmentError.status < 500
+            ? "gelato_fulfillment_rejected"
+            : "gelato_fulfillment_needs_reconciliation",
+      },
+      { status: 502 }
+    );
   }
 }
