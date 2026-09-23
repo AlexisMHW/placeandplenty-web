@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   listGelatoCatalogs,
+  getGelatoCatalog,
   searchGelatoProducts,
   quoteGelatoOrder,
+  GelatoApiError,
   type GelatoProduct,
 } from "@/lib/gelato";
 import {
@@ -74,6 +76,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    const catalogDetails = await getGelatoCatalog(cardsCatalog.catalogUid);
     const search = await searchGelatoProducts(cardsCatalog.catalogUid, {
       limit: 100,
       offset: 0,
@@ -152,6 +155,8 @@ export async function GET(req: NextRequest) {
           productUid: product.productUid,
           ok: false,
           message: error instanceof Error ? error.message : "unknown_error",
+          status: error instanceof GelatoApiError ? error.status : null,
+          details: error instanceof GelatoApiError ? error.details : null,
         });
       }
     }
@@ -164,6 +169,7 @@ export async function GET(req: NextRequest) {
         catalogCount: catalogs.length,
         catalogs: catalogs.map((c: any) => ({ catalogUid: c.catalogUid, title: c.title })),
         cardsCatalog: { catalogUid: cardsCatalog.catalogUid, title: cardsCatalog.title },
+        catalogDetails,
         searchProductCount: search.products?.length || 0,
         usProductCount: products.length,
         fiveBySevenCount: fiveBySeven.length,
@@ -197,6 +203,8 @@ export async function GET(req: NextRequest) {
         stage: "fatal",
         elapsedMs: Date.now() - startedAt,
         error: error instanceof Error ? error.message : "unknown_error",
+        status: error instanceof GelatoApiError ? error.status : null,
+        details: error instanceof GelatoApiError ? error.details : null,
       },
       { status: 500 }
     );
