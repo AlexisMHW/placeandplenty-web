@@ -5,6 +5,10 @@ import { paperPiece, paperSize, type PaperPieceKind, type PaperSizeId } from "@/
 import { quoteGelatoOrder, type GelatoQuoteRequest } from "@/lib/gelato";
 import { normalizeGelatoQuote } from "@/lib/paper-suite-commerce";
 import { paperRetailPrice } from "@/lib/paper-suite-pricing";
+import {
+  validateGelatoProductForSize,
+  validateGelatoQuantity,
+} from "@/lib/paper-suite-gelato";
 
 export const runtime = "nodejs";
 
@@ -140,16 +144,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "gathering_not_found" }, { status: 404 });
   }
 
-  const posterLike = body.size === "8x10" || body.size === "a4";
-  const minQuantity = posterLike ? 1 : 10;
-  const maxQuantity = posterLike ? 100 : 500;
-  const quantity = Math.max(
-    minQuantity,
-    Math.min(Number(body.quantity) || minQuantity, maxQuantity)
-  );
-  const orderReferenceId = "paper-" + crypto.randomUUID();
+  const quantity = Number(body.quantity);
+  if (!Number.isInteger(quantity)) {
+    return NextResponse.json({ error: "unsupported_gelato_quantity" }, { status: 400 });
+  }
 
   try {
+    const [validProduct, validQuantity] = await Promise.all([
+      validateGelatoProductForSize(body.productUid, body.size),
+      validateGelatoQuantity(body.productUid, quantity),
+    ]);
+
+    if (!validProduct) {
+      return NextResponse.json({ error: "unsupported_gelato_product" }, { status: 400 });
+    }
+    if (!validQuantity) {
+      return NextResponse.json({ error: "unsupported_gelato_quantity" }, { status: 400 });
+    }
+
+    const orderReferenceId = "paper-" + crypto.randomUUID();
     const rawQuote = await quoteGelatoOrder({
       orderReferenceId,
       customerReferenceId: user.id,
