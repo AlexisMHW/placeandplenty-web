@@ -128,8 +128,8 @@ export default function BacheloretteWeekendPlanningPage() {
 
           <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-sage/25 bg-forest shadow-soft">
             <Image
-              src="/images/gathering-backyard-dinner.png"
-              alt="Friends gathered for a warm weekend meal, illustrating a bachelorette weekend planned together"
+              src="/images/bachelorette-weekend.webp"
+              alt="A diverse group of friends celebrating a bachelorette weekend together on a sunny coastal terrace"
               fill
               priority
               className="object-cover"
