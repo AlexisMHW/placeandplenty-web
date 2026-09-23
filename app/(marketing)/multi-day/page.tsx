@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Band, Display } from "@/components/Display";
 import Icon, { type IconName } from "@/components/Icon";
 import { MULTI_DAY_NOTE, MULTI_DAY_PRICING } from "@/lib/pricing";
@@ -130,10 +131,14 @@ export default function MultiDayPage() {
           </div>
 
           <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-sage/25 bg-forest shadow-soft">
-            <img
+            <Image
               src="/images/harding-family-reunion.webp"
-              alt="A multigenerational Harding Family Reunion illustrating one gathering planned across multiple days"
-              className="absolute inset-0 h-full w-full object-cover"
+              alt="The Harding Family Reunion illustrating one gathering planned across multiple days"
+              fill
+              priority
+              quality={92}
+              className="object-cover"
+              sizes="(min-width: 1024px) 52vw, 100vw"
             />
             <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-forest/80 via-forest/10 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-offwhite md:p-8">
