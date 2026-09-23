@@ -129,38 +129,21 @@ export default function MultiDayPage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-sage/25 bg-parchment p-5 shadow-soft md:p-7">
-            <div className="rounded-2xl border border-sage/25 bg-offwhite p-5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.16em] text-forest/50">My Schedule</p>
-                  <h2 className="mt-1 font-display text-2xl text-forest">The Reunion Weekend</h2>
-                </div>
-                <span className="rounded-full bg-sage/15 px-3 py-1.5 font-body text-xs font-semibold text-forest">3 days</span>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                {[
-                  ["Day 1", "Friday", "Welcome dinner · 6:30 PM", "32 coming"],
-                  ["Day 2", "Saturday", "Family brunch · 10:00 AM", "Boat day · 1:00 PM"],
-                  ["Day 3", "Sunday", "Farewell breakfast · 9:30 AM", "Checkout · 11:00 AM"],
-                ].map(([day, title, a, b]) => (
-                  <div key={day} className="rounded-xl border border-sage/20 bg-cream px-4 py-4">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.14em] text-forest/50">{day}</p>
-                      <p className="font-display text-lg text-forest">{title}</p>
-                    </div>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      <span className="rounded-lg bg-offwhite px-3 py-2 font-body text-xs text-forest/70">{a}</span>
-                      <span className="rounded-lg bg-offwhite px-3 py-2 font-body text-xs text-forest/70">{b}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-sage/25 bg-forest shadow-soft">
+            <img
+              src="/images/harding-family-reunion.webp"
+              alt="A multigenerational Harding Family Reunion illustrating one gathering planned across multiple days"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-forest/80 via-forest/10 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 text-offwhite md:p-8">
+              <p className="font-body text-[0.64rem] font-bold uppercase tracking-[0.18em] text-gold">
+                One gathering · Multiple days · One current plan
+              </p>
+              <p className="mt-2 max-w-xl font-body text-sm leading-relaxed text-offwhite/85">
+                Keep the same people, plans and preparation together from the first arrival through the last goodbye.
+              </p>
             </div>
-            <p className="mt-4 text-center font-body text-xs leading-relaxed text-forest/55">
-              One guest list. One plan. Day-by-day detail when you need it.
-            </p>
           </div>
         </div>
       </section>
