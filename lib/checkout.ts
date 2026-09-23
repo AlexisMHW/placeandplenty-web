@@ -122,7 +122,7 @@ export function isCheckoutConfigured(): boolean {
  * pretending to be a live one.
  */
 export const CHECKOUT_PENDING_NOTE =
-  "Card payment opens with the app release. The plan, the price and the account it lands on are all settled — nothing about them changes when it does.";
+  "Card checkout is temporarily unavailable on this deployment. Your plan, price and account stay the same; you can keep planning for free and return to checkout later.";
 
 /**
  * Said on every checkout surface. It is the reason someone can buy here
