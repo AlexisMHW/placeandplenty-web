@@ -21,22 +21,22 @@ const PIECES = [
   {
     title: "Invitations",
     body: "Create a coordinated invitation from your gathering name, date, time and location — or bring the invitation artwork you already have.",
-    sizes: "Small · 5 × 7 · square",
+    sizes: "A6 · 5 × 7 · 5.25 × 5.25 square",
   },
   {
     title: "Details & Welcome Cards",
     body: "Turn location, timing and guest-facing notes into a companion card that stays with the invitation suite.",
-    sizes: "Small · 5 × 7 · DL",
+    sizes: "A6 · 5 × 7 · 4 × 9",
   },
   {
     title: "Menu Cards",
     body: "My Table becomes the source. Your dishes, sections and menu structure flow into a print-ready menu without entering them again.",
-    sizes: "DL · 5 × 7 · A5",
+    sizes: "4 × 9 · 5 × 7 · A5",
   },
   {
     title: "Weekend Itineraries",
     body: "Multi-Day gatherings can turn My Schedule into a printed day-by-day plan for bachelorette weekends, reunions, wedding weekends, retreats and more.",
-    sizes: "DL · 5 × 7 · A5 · 8 × 10 · A4",
+    sizes: "4 × 9 · 5 × 7 · A5 · 8 × 10 · A4",
   },
   {
     title: "Welcome Signs",
@@ -46,7 +46,7 @@ const PIECES = [
   {
     title: "Thank-You Cards",
     body: "Carry the same gathering identity into a coordinated post-gathering card with an editable thank-you message.",
-    sizes: "Small · 5 × 7 · square",
+    sizes: "A6 · 5 × 7 · 5.25 × 5.25 square",
   },
 ];
 
@@ -65,7 +65,7 @@ const faqs = [
   },
   {
     q: "Who prints and ships the stationery?",
-    a: "Place & Plenty prepares the print piece and ordering flow; print fulfillment is handled through an integrated production partner after checkout.",
+    a: "Place & Plenty prepares the print piece and ordering flow; Gelato handles print production and shipping after checkout.",
   },
 ];
 
@@ -149,7 +149,7 @@ export default function PaperSuiteMarketingPage() {
               </p>
               <p className="mt-4 font-body text-sm leading-relaxed text-forest/62">
                 This is style matching, not pixel-for-pixel recreation. That keeps the feature
-                reliable across purchased invitations, flattened PDFs, screenshots and custom artwork.
+                reliable across uploaded JPG or PNG invitation artwork and screenshots.
               </p>
             </div>
 
