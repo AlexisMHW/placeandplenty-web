@@ -4,13 +4,13 @@ import { searchGelatoProducts } from "@/lib/gelato";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function inspectAll(catalogUid: string) {
+async function inspectTail(catalogUid: string) {
   const unique = new Map<string, unknown>();
-  let total = 0;
-  for (const offset of [0, 100, 200, 300, 400]) {
+  let scanned = 0;
+  for (const offset of [500, 600, 700, 800, 900, 1000, 1100, 1200]) {
     const response = await searchGelatoProducts(catalogUid, { limit: 100, offset });
     const products = response.products || [];
-    total += products.length;
+    scanned += products.length;
     for (const p of products) {
       const format = String(p.attributes?.PaperFormat || p.attributes?.Format || "");
       const orientation = String(p.attributes?.Orientation || "");
@@ -22,15 +22,15 @@ async function inspectAll(catalogUid: string) {
     }
     if (products.length < 100) break;
   }
-  return { catalogUid, scanned: total, formats: Array.from(unique.values()) };
+  return { catalogUid, scanned, formats: Array.from(unique.values()) };
 }
 
 export async function GET() {
   try {
     return NextResponse.json({
       ok: true,
-      cards: await inspectAll("cards"),
-      posters: await inspectAll("posters"),
+      cardsTail: await inspectTail("cards"),
+      postersTail: await inspectTail("posters"),
     });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "failed" }, { status: 502 });
