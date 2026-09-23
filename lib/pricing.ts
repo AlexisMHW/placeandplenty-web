@@ -79,13 +79,12 @@ export const PRICING_TIERS: PricingTier[] = [
 ];
 
 /**
- * Release-state truth. Native purchase code is wired, but store/RevenueCat
- * setup and real-purchase verification still have to clear the release gate.
- * Stripe/web checkout is also not enabled yet. Public copy therefore states
- * availability without pretending either channel is already live.
+ * Release-state truth. Web checkout is wired through the canonical
+ * entitlement model. Store/RevenueCat purchase verification still has to
+ * clear the native release gate.
  */
 export const PURCHASE_AVAILABILITY_NOTE =
-  "Purchasing opens with the app release. Web card checkout is not currently enabled.";
+  "Web card checkout is available for signed-in hosts. Purchases attach to the same Place & Plenty account and are recognized across web and mobile.";
 
 export const FREE_LIMITS_NOTE =
   "Free covers one open gathering at a time. A draft occupies that working slot until you finish or close it.";
