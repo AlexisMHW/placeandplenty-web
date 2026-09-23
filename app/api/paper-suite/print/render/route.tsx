@@ -57,8 +57,24 @@ export async function GET(req: NextRequest) {
   const tall = size.family === "tall" || size.family === "sign";
   const square = size.family === "square";
   const scale = size.widthPx / 1500;
-  const padX = Math.round((square ? 110 : tall ? 100 : 120) * scale);
-  const padY = Math.round((square ? 100 : tall ? 125 : 130) * scale);
+
+  // Gelato requires 4 mm bleed on every side. widthPx/heightPx represent
+  // the finished trim size at 300 DPI, so the delivered print file adds
+  // the bleed outside that trim. Important content also stays at least
+  // another 4 mm inside the trim line.
+  const pixelsPerMm = 300 / 25.4;
+  const bleedPx = Math.ceil(4 * pixelsPerMm);
+  const safeInsetFromFileEdge = Math.ceil(8 * pixelsPerMm);
+  const renderWidth = size.widthPx + bleedPx * 2;
+  const renderHeight = size.heightPx + bleedPx * 2;
+  const padX = Math.max(
+    safeInsetFromFileEdge,
+    Math.round((square ? 110 : tall ? 100 : 120) * scale)
+  );
+  const padY = Math.max(
+    safeInsetFromFileEdge,
+    Math.round((square ? 100 : tall ? 125 : 130) * scale)
+  );
   const titleSize = Math.round((square ? 66 : tall ? 62 : 72) * scale);
   const bodySize = Math.round((square ? 29 : tall ? 28 : 31) * scale);
   const eyebrowSize = Math.round(28 * scale);
@@ -342,8 +358,8 @@ export async function GET(req: NextRequest) {
       </div>
     ),
     {
-      width: size.widthPx,
-      height: size.heightPx,
+      width: renderWidth,
+      height: renderHeight,
     }
   );
 }
