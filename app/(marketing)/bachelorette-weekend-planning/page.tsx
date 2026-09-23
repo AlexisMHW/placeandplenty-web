@@ -132,6 +132,7 @@ export default function BacheloretteWeekendPlanningPage() {
               alt="A diverse group of friends celebrating a bachelorette weekend together on a sunny coastal terrace"
               fill
               priority
+              quality={92}
               className="object-cover"
               sizes="(min-width: 1024px) 48vw, 100vw"
             />
