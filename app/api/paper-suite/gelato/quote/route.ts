@@ -5,13 +5,27 @@ import { quoteGelatoOrder, type GelatoQuoteRequest } from "@/lib/gelato";
 import { normalizeGelatoQuote } from "@/lib/paper-suite-commerce";
 import { paperRetailPrice } from "@/lib/paper-suite-pricing";
 import { paperSize, type PaperSizeId } from "@/lib/paper-suite-catalog";
+import {
+  validateGelatoProductForSize,
+  validateGelatoQuantity,
+} from "@/lib/paper-suite-gelato";
 
 export const runtime = "nodejs";
 
-function validHttpsUrl(value: unknown): value is string {
+function siteUrl() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://placeandplenty.com").replace(/\/$/, "");
+}
+
+function validPrintUrl(value: unknown): value is string {
   if (typeof value !== "string") return false;
   try {
-    return new URL(value).protocol === "https:";
+    const file = new URL(value);
+    const site = new URL(siteUrl());
+    return (
+      file.protocol === "https:" &&
+      file.origin === site.origin &&
+      file.pathname === "/api/paper-suite/print/render"
+    );
   } catch {
     return false;
   }
@@ -38,7 +52,7 @@ export async function POST(req: NextRequest) {
     !paperSize(body.size) ||
     !body.productUid ||
     !body.recipient ||
-    !validHttpsUrl(body.fileUrl)
+    !validPrintUrl(body.fileUrl)
   ) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
@@ -46,16 +60,25 @@ export async function POST(req: NextRequest) {
   const gathering = await getGathering(body.gatheringId);
   if (!gathering) return NextResponse.json({ error: "gathering_not_found" }, { status: 404 });
 
-  const posterLike = body.size === "8x10" || body.size === "a4";
-  const minQuantity = posterLike ? 1 : 10;
-  const maxQuantity = posterLike ? 100 : 500;
-  const quantity = Math.max(
-    minQuantity,
-    Math.min(Number(body.quantity) || minQuantity, maxQuantity)
-  );
-  const orderReferenceId = "paper-quote-" + body.gatheringId + "-" + Date.now();
+  const quantity = Number(body.quantity);
+  if (!Number.isInteger(quantity)) {
+    return NextResponse.json({ error: "unsupported_gelato_quantity" }, { status: 400 });
+  }
 
   try {
+    const [validProduct, validQuantity] = await Promise.all([
+      validateGelatoProductForSize(body.productUid, body.size),
+      validateGelatoQuantity(body.productUid, quantity),
+    ]);
+
+    if (!validProduct) {
+      return NextResponse.json({ error: "unsupported_gelato_product" }, { status: 400 });
+    }
+    if (!validQuantity) {
+      return NextResponse.json({ error: "unsupported_gelato_quantity" }, { status: 400 });
+    }
+
+    const orderReferenceId = "paper-quote-" + body.gatheringId + "-" + Date.now();
     const quote = await quoteGelatoOrder({
       orderReferenceId,
       customerReferenceId: user.id,
