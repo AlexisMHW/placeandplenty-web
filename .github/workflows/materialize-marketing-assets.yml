@@ -3,12 +3,11 @@ name: Materialize approved marketing assets
 on:
   push:
     branches:
-      - ui-marketing-asset-fix
+      - main
     paths:
       - "assets/marketing-base64/**"
       - "scripts/materialize-marketing-assets.mjs"
       - ".github/workflows/materialize-marketing-assets.yml"
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,8 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ui-marketing-asset-fix
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -36,4 +33,4 @@ jobs:
             exit 0
           fi
           git commit -m "Materialize approved marketing image assets"
-          git push origin HEAD:ui-marketing-asset-fix
+          git push origin HEAD:main
