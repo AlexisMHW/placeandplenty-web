@@ -4,40 +4,33 @@ import { searchGelatoProducts } from "@/lib/gelato";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function inspect(catalogUid: string) {
-  const response = await searchGelatoProducts(catalogUid, { limit: 100, offset: 0 });
-  const seen = new Map<string, unknown>();
-  for (const p of response.products || []) {
-    const format = String(p.attributes?.PaperFormat || p.attributes?.Format || "");
-    const orientation = String(p.attributes?.Orientation || "");
-    const width = p.dimensions?.Width?.value ?? null;
-    const height = p.dimensions?.Height?.value ?? null;
-    const unit = p.dimensions?.Width?.measureUnit || p.dimensions?.Height?.measureUnit || null;
-    const key = format + "|" + orientation;
-    if (!seen.has(key)) {
-      seen.set(key, {
-        format,
-        orientation,
-        width,
-        height,
-        unit,
-        productUid: p.productUid,
-        color: p.attributes?.ColorType || null,
-        paper: p.attributes?.PaperType || null,
-      });
+async function inspectAll(catalogUid: string) {
+  const unique = new Map<string, unknown>();
+  let total = 0;
+  for (const offset of [0, 100, 200, 300, 400]) {
+    const response = await searchGelatoProducts(catalogUid, { limit: 100, offset });
+    const products = response.products || [];
+    total += products.length;
+    for (const p of products) {
+      const format = String(p.attributes?.PaperFormat || p.attributes?.Format || "");
+      const orientation = String(p.attributes?.Orientation || "");
+      const width = p.dimensions?.Width?.value ?? null;
+      const height = p.dimensions?.Height?.value ?? null;
+      const unit = p.dimensions?.Width?.measureUnit || p.dimensions?.Height?.measureUnit || null;
+      const key = format + "|" + orientation;
+      if (!unique.has(key)) unique.set(key, { format, orientation, width, height, unit });
     }
+    if (products.length < 100) break;
   }
-  return { catalogUid, count: response.products?.length || 0, formats: Array.from(seen.values()) };
+  return { catalogUid, scanned: total, formats: Array.from(unique.values()) };
 }
 
 export async function GET() {
   try {
     return NextResponse.json({
       ok: true,
-      cardsUs: await inspect("cards-us"),
-      cards: await inspect("cards"),
-      posters: await inspect("posters"),
-      flyers: await inspect("flyers"),
+      cards: await inspectAll("cards"),
+      posters: await inspectAll("posters"),
     });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "failed" }, { status: 502 });
