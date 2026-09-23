@@ -4,6 +4,7 @@ import { getGathering } from "@/lib/host-data";
 import { quoteGelatoOrder, type GelatoQuoteRequest } from "@/lib/gelato";
 import { normalizeGelatoQuote } from "@/lib/paper-suite-commerce";
 import { paperRetailPrice } from "@/lib/paper-suite-pricing";
+import { paperSize, type PaperSizeId } from "@/lib/paper-suite-catalog";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null) as
     | {
         gatheringId?: string;
+        size?: PaperSizeId;
         productUid?: string;
         quantity?: number;
         fileUrl?: string;
@@ -30,14 +32,27 @@ export async function POST(req: NextRequest) {
       }
     | null;
 
-  if (!body?.gatheringId || !body.productUid || !body.recipient || !validHttpsUrl(body.fileUrl)) {
+  if (
+    !body?.gatheringId ||
+    !body.size ||
+    !paperSize(body.size) ||
+    !body.productUid ||
+    !body.recipient ||
+    !validHttpsUrl(body.fileUrl)
+  ) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
   const gathering = await getGathering(body.gatheringId);
   if (!gathering) return NextResponse.json({ error: "gathering_not_found" }, { status: 404 });
 
-  const quantity = Math.max(1, Math.min(Number(body.quantity) || 1, 500));
+  const posterLike = body.size === "8x10" || body.size === "a4";
+  const minQuantity = posterLike ? 1 : 10;
+  const maxQuantity = posterLike ? 100 : 500;
+  const quantity = Math.max(
+    minQuantity,
+    Math.min(Number(body.quantity) || minQuantity, maxQuantity)
+  );
   const orderReferenceId = "paper-quote-" + body.gatheringId + "-" + Date.now();
 
   try {
