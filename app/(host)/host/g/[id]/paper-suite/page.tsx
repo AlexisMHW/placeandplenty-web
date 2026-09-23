@@ -250,7 +250,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
             </p>
             <div className="mx-auto mt-5 h-px w-12 bg-gold/60" />
             <p className="mt-5 text-center font-body text-xs uppercase tracking-[0.12em] text-forest/50">
-              4 × 6 · 5 × 7 · 5 × 5 square
+              A6 · 5 × 7 · 5.25 × 5.25 square
             </p>
           </article>
 
@@ -297,7 +297,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
             </p>
             <div className="mx-auto mt-5 h-px w-12 bg-gold/60" />
             <p className="mt-5 text-center font-body text-xs uppercase tracking-[0.12em] text-forest/50">
-              4 × 6 · 5 × 7 · 5 × 5 square
+              A6 · 5 × 7 · 5.25 × 5.25 square
             </p>
           </article>
         </div>
@@ -360,10 +360,10 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
       <GelatoConnectionPanel />
 
       <section className="mt-8 rounded-2xl border border-gold/30 bg-forest p-6 text-offwhite md:p-7">
-        <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-gold">Next connection</p>
+        <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-gold">Print fulfillment</p>
         <h2 className="mt-2 font-display text-2xl">Preview → quantity → print quote → order</h2>
         <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-offwhite/75">
-          The paper content is already reading from your canonical Place & Plenty gathering. Gelato will sit behind this surface for product selection, print quotes and fulfillment; Stripe remains the customer payment layer.
+          The paper content is already reading from your canonical Place & Plenty gathering. Gelato powers verified print products, live quotes and fulfillment behind this surface; Stripe remains the customer payment layer.
         </p>
       </section>
     </div>
