@@ -122,3 +122,19 @@ export const MULTI_DAY_PRICING = {
 
 export const MULTI_DAY_NOTE =
   "A Multi-Day Pass keeps one gathering, one guest list and one planning stack across 2–4 calendar days. A one-time extension can expand that same gathering to as many as 7 calendar days.";
+
+export const MULTI_DAY_TIER: PricingTier = {
+  name: "Multi-Day Pass",
+  price: MULTI_DAY_PRICING.standard.price,
+  billing: "/gathering",
+  priceLine: MULTI_DAY_PRICING.standard.priceLine,
+  description: "For one gathering that spans 2–4 calendar days.",
+  includes: [
+    "One connected gathering across 2–4 calendar days",
+    "One guest list across the full gathering",
+    "Day-by-day My Schedule",
+    "Activity-by-activity RSVPs and headcounts",
+    "Connected menus, shopping and Who’s Bringing What",
+    "Optional one-time extension to as many as 7 calendar days",
+  ],
+};
