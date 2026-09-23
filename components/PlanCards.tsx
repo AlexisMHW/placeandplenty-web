@@ -4,6 +4,7 @@ import { Band, Display } from "@/components/Display";
 import Icon from "@/components/Icon";
 import {
   PRICING_TIERS,
+  MULTI_DAY_TIER,
   PLUS_LIMITS_NOTE,
   PASS_LIMITS_NOTE,
   type PricingTier,
@@ -25,15 +26,33 @@ function PlanCard({ tier, checkoutLive }: { tier: PricingTier; checkoutLive: boo
   const highlight = Boolean(tier.highlight);
   const free = tier.price === "$0";
   const qualifier = tier.priceLine.replace(tier.price, "").replace(tier.billing, "").trim();
-  const product = free ? null : findWebProduct(tier.name === "Gathering Pass" ? "gathering-pass" : "plus");
+  const product = free
+    ? null
+    : findWebProduct(
+        tier.name === "Gathering Pass"
+          ? "gathering-pass"
+          : tier.name === "Multi-Day Pass"
+            ? "multi-day"
+            : "plus"
+      );
   const href = free ? "/signup" : checkoutLive ? `/checkout/${product?.slug ?? "plus"}` : "/get";
-  const label = free ? "Start Hosting" : checkoutLive ? tier.name === "Gathering Pass" ? "Get a Pass" : "Go Plus" : "Get the app";
+  const label = free
+    ? "Start Hosting"
+    : checkoutLive
+      ? tier.name === "Gathering Pass"
+        ? "Get a Pass"
+        : tier.name === "Multi-Day Pass"
+          ? "Get Multi-Day"
+          : "Go Plus"
+      : "Get the app";
   const fineprint = free
     ? "No credit card required"
     : checkoutLive
       ? tier.name === "Gathering Pass"
         ? "Use anytime · not a subscription"
-        : "Billed annually"
+        : tier.name === "Multi-Day Pass"
+          ? "One multi-day gathering · not a subscription"
+          : "Billed annually"
       : "Purchase through Apple or Google when available";
 
   return (
@@ -63,7 +82,7 @@ function PlanCard({ tier, checkoutLive }: { tier: PricingTier; checkoutLive: boo
 
 export default function PlanCards() {
   const [free, pass, plus] = PRICING_TIERS;
-  const ordered = [free, plus, pass];
+  const ordered = [free, pass, MULTI_DAY_TIER, plus];
   const checkoutLive = isCheckoutConfigured();
 
   return (
@@ -87,12 +106,12 @@ export default function PlanCards() {
         />
 
         <div className="relative mx-auto max-w-editorial px-6 py-16 md:py-20">
-          <Display emphasis="more ease" className="text-center text-3xl leading-tight text-forest md:text-[2.3rem]">Three simple ways to host with more ease.</Display>
+          <Display emphasis="more ease" className="text-center text-3xl leading-tight text-forest md:text-[2.3rem]">Four simple ways to host with more ease.</Display>
           <p className="mx-auto mt-4 max-w-3xl text-center font-body text-base leading-relaxed text-forest/70">
             A Gathering Pass unlocks the paid experience for one gathering. Place &amp; Plenty Plus is the annual option for people who host repeatedly and want paid access across their gatherings all year.
           </p>
 
-          <div className="mt-14 grid gap-6 lg:grid-cols-3 lg:gap-5">
+          <div className="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-4 xl:gap-5">
             {ordered.map((tier) => <PlanCard key={tier.name} tier={tier} checkoutLive={checkoutLive} />)}
           </div>
 
