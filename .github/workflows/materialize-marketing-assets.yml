@@ -1,0 +1,39 @@
+name: Materialize approved marketing assets
+
+on:
+  push:
+    branches:
+      - ui-marketing-asset-fix
+    paths:
+      - "assets/marketing-base64/**"
+      - "scripts/materialize-marketing-assets.mjs"
+      - ".github/workflows/materialize-marketing-assets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-marketing-asset-fix
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Decode and validate approved images
+        run: node scripts/materialize-marketing-assets.mjs
+      - name: Commit materialized assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/images/bachelorette-weekend.webp public/images/harding-family-reunion.webp
+          if git diff --cached --quiet; then
+            echo "No asset changes to commit."
+            exit 0
+          fi
+          git commit -m "Materialize approved marketing image assets"
+          git push origin HEAD:ui-marketing-asset-fix
