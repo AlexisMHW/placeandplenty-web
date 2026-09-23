@@ -14,8 +14,9 @@ export async function GET() {
   try {
     const catalogs = await listGelatoCatalogs();
     const preferred =
+      catalogs.find((c) => c.catalogUid === "cards") ||
+      catalogs.find((c) => c.catalogUid === "stationery") ||
       catalogs.find((c) => /cards/i.test(c.catalogUid + " " + c.title)) ||
-      catalogs.find((c) => /stationery/i.test(c.catalogUid + " " + c.title)) ||
       catalogs[0];
 
     if (!preferred) {
@@ -84,6 +85,12 @@ export async function GET() {
       catalogs: catalogs.slice(0, 12).map((c) => ({ uid: c.catalogUid, title: c.title })),
       selectedCatalog: { uid: preferred.catalogUid, title: preferred.title },
       productCount: found.products?.length || 0,
+      sampleProducts: (found.products || []).slice(0, 12).map((p) => ({
+        productUid: p.productUid,
+        attributes: p.attributes,
+        supportedCountries: p.supportedCountries,
+        dimensions: p.dimensions,
+      })),
       selectedProduct: {
         productUid: product.productUid,
         attributes: product.attributes,
