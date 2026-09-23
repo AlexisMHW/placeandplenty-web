@@ -187,12 +187,19 @@ export default function PaperSuiteOrderBuilder({
 
   const piece = paperPiece(kind)!;
   const sizeConfig = PAPER_SIZES[size];
+  const posterLike = size === "8x10" || size === "a4";
+  const minimumQuantity = posterLike ? 1 : 10;
+  const maximumQuantity = posterLike ? 100 : 500;
 
   useEffect(() => {
     track("paper_suite_viewed", { gathering_type: multiDay ? "multi_day" : "single_day" });
   }, [multiDay]);
 
   useEffect(() => {
+    const nextPosterLike = size === "8x10" || size === "a4";
+    setQuantity((current) =>
+      Math.max(nextPosterLike ? 1 : 10, Math.min(nextPosterLike ? 100 : 500, current))
+    );
     setProductBusy(true);
     setProducts([]);
     setProductUid("");
@@ -347,6 +354,7 @@ export default function PaperSuiteOrderBuilder({
         credentials: "same-origin",
         body: JSON.stringify({
           gatheringId,
+          size,
           productUid,
           quantity,
           fileUrl: printUrl,
@@ -603,15 +611,19 @@ export default function PaperSuiteOrderBuilder({
               <span className="mb-1 block font-body text-sm font-semibold text-forest">Quantity</span>
               <input
                 type="number"
-                min={1}
-                max={500}
+                min={minimumQuantity}
+                max={maximumQuantity}
                 value={quantity}
                 onChange={(event) => {
-                  setQuantity(Math.max(1, Number(event.target.value) || 1));
+                  const next = Number(event.target.value) || minimumQuantity;
+                  setQuantity(Math.max(minimumQuantity, Math.min(maximumQuantity, next)));
                   resetQuote();
                 }}
                 className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
               />
+              <p className="mt-1 font-body text-[0.68rem] text-forest/50">
+                {posterLike ? "Posters: 1–100" : "Cards: 10–500"}
+              </p>
             </label>
 
             <form
