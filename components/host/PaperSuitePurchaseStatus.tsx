@@ -73,7 +73,11 @@ export default function PaperSuitePurchaseStatus() {
         }
 
         if (
-          (body.error === "payment_processing" || body.error === "payment_not_verified") &&
+          (
+            body.error === "payment_processing" ||
+            body.error === "payment_not_verified" ||
+            body.error === "fulfillment_processing"
+          ) &&
           attempt < 5
         ) {
           window.setTimeout(fulfill, 1800);
@@ -92,7 +96,9 @@ export default function PaperSuitePurchaseStatus() {
         setState({
           kind: "error",
           message:
-            "Your payment is safe, but the print handoff needs attention. The order has not been sent twice.",
+            body.error === "gelato_fulfillment_needs_reconciliation"
+              ? "Your payment is safe. We stopped automatic retries because Gelato may already have received the order; this prevents an accidental duplicate while the handoff is reconciled."
+              : "Your payment is safe, but the print handoff needs attention. The order has not been sent twice.",
         });
       } catch {
         if (!cancelled) {
