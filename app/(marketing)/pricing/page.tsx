@@ -26,11 +26,11 @@ import { REFUND_POLICY } from "@/lib/refund-policy";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `Place & Plenty pricing: Free, a Gathering Pass at ${PRICING_TIERS[1].priceLine}, or Place & Plenty Plus at ${PRICING_TIERS[2].priceLine}. One account across web and mobile.`,
+  description: `Place & Plenty pricing: Free, Gathering Pass, Multi-Day Pass, and Place & Plenty Plus. One account across web and mobile.`,
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "Pricing | Place & Plenty",
-    description: `Free, a Gathering Pass at ${PRICING_TIERS[1].priceLine}, or Plus at ${PRICING_TIERS[2].priceLine}.`,
+    description: `Free, Gathering Pass, Multi-Day Pass, and Place & Plenty Plus — four ways to host with the level of planning support you need.`,
     url: "/pricing",
   },
 };
@@ -101,7 +101,7 @@ export default function PricingPage() {
         image="/images/Pricing_Page_Hero.png"
         imageAlt="A warm, lived-in home gathering table styled for an approachable dinner"
         imageCaption="Choose the level of planning help that fits how often — and how deeply — you host."
-        body={<p>Everything you need to plan, stay organised, and enjoy the people at your gathering. Start free, unlock one gathering with a Gathering Pass, or choose Plus when hosting is something you do again and again.</p>}
+        body={<p>Start free, unlock one gathering with a Gathering Pass, choose a Multi-Day Pass for a 2–4 day gathering, or choose Plus when hosting is something you do again and again.</p>}
       />
 
       <PlanCards />
