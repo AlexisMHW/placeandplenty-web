@@ -49,10 +49,20 @@ export async function GET(req: NextRequest) {
   const startedAt = Date.now();
 
   try {
-    const catalogs = await listGelatoCatalogs();
+    const catalogsRaw = (await listGelatoCatalogs()) as unknown;
+    if (!Array.isArray(catalogsRaw)) {
+      return NextResponse.json({
+        ok: false,
+        stage: "catalog_shape",
+        elapsedMs: Date.now() - startedAt,
+        rawType: typeof catalogsRaw,
+        raw: catalogsRaw,
+      });
+    }
+    const catalogs = catalogsRaw;
     const cardsCatalog =
-      catalogs.find((c) => c.catalogUid === "cards") ||
-      catalogs.find((c) => /card/i.test(c.catalogUid + " " + c.title));
+      catalogs.find((c: any) => c.catalogUid === "cards") ||
+      catalogs.find((c: any) => /card/i.test(String(c.catalogUid || "") + " " + String(c.title || "")));
 
     if (!cardsCatalog) {
       return NextResponse.json({
@@ -152,7 +162,7 @@ export async function GET(req: NextRequest) {
       elapsedMs: Date.now() - startedAt,
       gelato: {
         catalogCount: catalogs.length,
-        catalogs: catalogs.map((c) => ({ catalogUid: c.catalogUid, title: c.title })),
+        catalogs: catalogs.map((c: any) => ({ catalogUid: c.catalogUid, title: c.title })),
         cardsCatalog: { catalogUid: cardsCatalog.catalogUid, title: cardsCatalog.title },
         searchProductCount: search.products?.length || 0,
         usProductCount: products.length,
