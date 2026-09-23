@@ -75,7 +75,7 @@ export type GelatoProduct = {
   productUid: string;
   attributes: Record<string, string | number>;
   weight?: { value: number; measureUnit: string };
-  dimensions?: Record<string, { value: number; measureUnit: string }>;
+  dimensions?: Record<string, { value: number | string; measureUnit: string }>;
   supportedCountries?: string[];
   notSupportedCountries?: string[];
   isStockable?: boolean;
