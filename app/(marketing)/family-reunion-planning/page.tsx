@@ -133,8 +133,8 @@ export default function FamilyReunionPlanningPage() {
 
           <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-sage/25 bg-forest shadow-soft">
             <Image
-              src="/images/show_us_how_you_gather-hero.png"
-              alt="A multigenerational gathering illustrating a family reunion planned together"
+              src="/images/harding-family-reunion.webp"
+              alt="The Harding Family Reunion with multiple generations in coordinated reunion shirts at an outdoor family celebration"
               fill
               priority
               className="object-cover"
