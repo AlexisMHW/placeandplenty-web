@@ -1,53 +1,43 @@
 import { NextResponse } from "next/server";
-import { listGelatoCatalogs, searchGelatoProducts } from "@/lib/gelato";
+import { searchGelatoProducts } from "@/lib/gelato";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+async function inspect(catalogUid: string) {
+  const response = await searchGelatoProducts(catalogUid, { limit: 100, offset: 0 });
+  const seen = new Map<string, unknown>();
+  for (const p of response.products || []) {
+    const format = String(p.attributes?.PaperFormat || p.attributes?.Format || "");
+    const orientation = String(p.attributes?.Orientation || "");
+    const width = p.dimensions?.Width?.value ?? null;
+    const height = p.dimensions?.Height?.value ?? null;
+    const unit = p.dimensions?.Width?.measureUnit || p.dimensions?.Height?.measureUnit || null;
+    const key = format + "|" + orientation;
+    if (!seen.has(key)) {
+      seen.set(key, {
+        format,
+        orientation,
+        width,
+        height,
+        unit,
+        productUid: p.productUid,
+        color: p.attributes?.ColorType || null,
+        paper: p.attributes?.PaperType || null,
+      });
+    }
+  }
+  return { catalogUid, count: response.products?.length || 0, formats: Array.from(seen.values()) };
+}
+
 export async function GET() {
   try {
-    const catalogs = await listGelatoCatalogs();
-    const related = catalogs.filter((c) =>
-      /card|post|station|flyer|brochure|invite|greeting|poster/i.test(c.catalogUid + " " + c.title)
-    );
-
-    const inspected = [];
-    for (const catalog of related.slice(0, 20)) {
-      try {
-        const response = await searchGelatoProducts(catalog.catalogUid, { limit: 100, offset: 0 });
-        const seen = new Map<string, unknown>();
-        for (const p of response.products || []) {
-          const format = String(p.attributes?.PaperFormat || p.attributes?.Format || "");
-          const orientation = String(p.attributes?.Orientation || "");
-          const key = format + "|" + orientation;
-          if (!seen.has(key)) {
-            seen.set(key, {
-              format,
-              orientation,
-              dimensions: p.dimensions,
-              productUid: p.productUid,
-            });
-          }
-        }
-        inspected.push({
-          catalogUid: catalog.catalogUid,
-          title: catalog.title,
-          count: response.products?.length || 0,
-          formats: Array.from(seen.values()),
-        });
-      } catch (error) {
-        inspected.push({
-          catalogUid: catalog.catalogUid,
-          title: catalog.title,
-          error: error instanceof Error ? error.message : "failed",
-        });
-      }
-    }
-
     return NextResponse.json({
       ok: true,
-      relatedCatalogs: related,
-      inspected,
+      cardsUs: await inspect("cards-us"),
+      cards: await inspect("cards"),
+      posters: await inspect("posters"),
+      flyers: await inspect("flyers"),
     });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "failed" }, { status: 502 });
