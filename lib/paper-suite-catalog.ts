@@ -26,13 +26,15 @@ export type PaperSize = {
 };
 
 export const PAPER_SIZES: Record<PaperSizeId, PaperSize> = {
+  // Legacy id retained so existing UI/order references remain stable.
+  // Gelato's North American Small card trim is 4.25 × 5.5 in.
   "4x6": {
     id: "4x6",
-    label: "4 × 6",
-    widthInches: 4,
-    heightInches: 6,
-    widthPx: 1200,
-    heightPx: 1800,
+    label: "Small · 4.25 × 5.5",
+    widthInches: 4.25,
+    heightInches: 5.5,
+    widthPx: 1275,
+    heightPx: 1650,
     family: "portrait",
   },
   "5x7": {
@@ -44,22 +46,24 @@ export const PAPER_SIZES: Record<PaperSizeId, PaperSize> = {
     heightPx: 2100,
     family: "portrait",
   },
+  // Legacy id retained; Gelato's DL trim is 99 × 210 mm.
   "4x9": {
     id: "4x9",
-    label: "4 × 9 / DL",
-    widthInches: 4,
-    heightInches: 9,
-    widthPx: 1200,
-    heightPx: 2700,
+    label: "DL · 3.9 × 8.27",
+    widthInches: 3.9,
+    heightInches: 8.27,
+    widthPx: 1170,
+    heightPx: 2480,
     family: "tall",
   },
+  // Legacy id retained; Gelato's North American Square trim is 5.25 in.
   "square-5": {
     id: "square-5",
-    label: "5 × 5 Square",
-    widthInches: 5,
-    heightInches: 5,
-    widthPx: 1500,
-    heightPx: 1500,
+    label: "Square · 5.25 × 5.25",
+    widthInches: 5.25,
+    heightInches: 5.25,
+    widthPx: 1575,
+    heightPx: 1575,
     family: "square",
   },
   a5: {
