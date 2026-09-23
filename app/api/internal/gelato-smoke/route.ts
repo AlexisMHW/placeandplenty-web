@@ -4,6 +4,8 @@ import {
   getGelatoCatalog,
   searchGelatoProducts,
   quoteGelatoOrder,
+  createGelatoOrder,
+  getGelatoOrder,
   GelatoApiError,
   type GelatoProduct,
 } from "@/lib/gelato";
@@ -85,6 +87,28 @@ export async function GET(req: NextRequest) {
     const products = (search.products || []).filter(usableInUS);
     const fiveBySeven = products.filter(looksLikeFiveBySeven);
     const candidates = fiveBySeven.length ? fiveBySeven : products.slice(0, 12);
+    const productionStyleCandidates = candidates
+      .filter((p) => String(p.attributes?.Orientation || "").toLowerCase() === "ver")
+      .filter((p) => {
+        const color = String(p.attributes?.ColorType || "").toLowerCase();
+        return !color || color.includes("4-0") || color.includes("4-4");
+      })
+      .sort((a, b) => {
+        const score = (p: GelatoProduct) => {
+          const paper = String(p.attributes?.PaperType || "").toLowerCase();
+          const coating = String(p.attributes?.CoatingType || "none").toLowerCase();
+          const protection = String(p.attributes?.ProtectionType || "none").toLowerCase();
+          let value = 0;
+          if (paper.includes("uncoated")) value += 40;
+          if (paper.includes("cover")) value += 25;
+          if (paper.includes("silk")) value += 12;
+          if (coating === "none") value += 15;
+          if (protection === "none") value += 10;
+          if (String(p.attributes?.ColorType || "").toLowerCase().includes("4-0")) value += 5;
+          return value;
+        };
+        return score(b) - score(a);
+      });
 
     const payload: PaperPrintPayload = {
       version: 2,
@@ -118,7 +142,7 @@ export async function GET(req: NextRequest) {
     let successfulProduct: GelatoProduct | null = null;
     let normalized: ReturnType<typeof normalizeGelatoQuote> | null = null;
 
-    for (const product of candidates.slice(0, 12)) {
+    for (const product of (productionStyleCandidates.length ? productionStyleCandidates : candidates).slice(0, 12)) {
       try {
         const rawQuote = await quoteGelatoOrder({
           orderReferenceId: "pp-gelato-smoke-" + Date.now(),
@@ -161,6 +185,54 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    let draftOrder: Record<string, unknown> | null = null;
+    let draftOrderReadback: Record<string, unknown> | null = null;
+    if (
+      req.nextUrl.searchParams.get("draft") === "1" &&
+      successfulProduct &&
+      successfulQuote
+    ) {
+      const orderReferenceId = "pp-gelato-draft-" + Date.now();
+      draftOrder = await createGelatoOrder({
+        orderType: "draft",
+        orderReferenceId,
+        customerReferenceId: "place-and-plenty-qa",
+        currency: "USD",
+        items: [
+          {
+            itemReferenceId: orderReferenceId + "-item-1",
+            productUid: successfulProduct.productUid,
+            quantity: 25,
+            files: [{ type: "default", url: printUrl }],
+          },
+        ],
+        shippingAddress: {
+          country: "US",
+          firstName: "Place",
+          lastName: "Plenty",
+          addressLine1: "350 5th Ave",
+          city: "New York",
+          postCode: "10118",
+          state: "NY",
+          email: "qa@example.com",
+        },
+        shipmentMethodUid: normalized?.shipmentMethodUid || undefined,
+        metadata: [
+          { key: "source", value: "place_and_plenty_smoke_test" },
+          { key: "safety", value: "draft_only_do_not_fulfill" },
+        ],
+      });
+      const draftId =
+        typeof draftOrder.id === "string"
+          ? draftOrder.id
+          : typeof draftOrder.orderId === "string"
+            ? draftOrder.orderId
+            : null;
+      if (draftId) {
+        draftOrderReadback = await getGelatoOrder(draftId);
+      }
+    }
+
     return NextResponse.json({
       ok: Boolean(successfulQuote && normalized),
       stage: successfulQuote ? "quote" : "product_quote",
@@ -194,7 +266,14 @@ export async function GET(req: NextRequest) {
           }
         : null,
       quoteAttempts,
-      safety: { createsOrder: false, chargesCard: false, temporary: true },
+      draftOrder,
+      draftOrderReadback,
+      safety: {
+        createsDraftOnly: req.nextUrl.searchParams.get("draft") === "1",
+        sendsToProduction: false,
+        chargesCard: false,
+        temporary: true
+      },
     });
   } catch (error) {
     return NextResponse.json(
