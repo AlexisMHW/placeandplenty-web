@@ -7,10 +7,10 @@ export type PaperPieceKind =
   | "thank-you";
 
 export type PaperSizeId =
-  | "4x6"
+  | "a6"
   | "5x7"
   | "4x9"
-  | "square-5"
+  | "square-525"
   | "a5"
   | "8x10"
   | "a4";
@@ -78,10 +78,10 @@ export const PAPER_SIZES: Record<PaperSizeId, PaperSize> = {
   "8x10": {
     id: "8x10",
     label: "8 × 10",
-    widthInches: 8,
-    heightInches: 10,
-    widthPx: 2400,
-    heightPx: 3000,
+    widthInches: 200 / 25.4,
+    heightInches: 250 / 25.4,
+    widthPx: 2362,
+    heightPx: 2953,
     family: "sign",
   },
   a4: {
@@ -109,7 +109,7 @@ export const PAPER_PIECES: PaperPieceDefinition[] = [
     id: "invitation",
     label: "Invitation",
     description: "Gathering name, date, time and location pulled from the gathering.",
-    sizes: ["4x6", "5x7", "square-5"],
+    sizes: ["a6", "5x7", "square-525"],
     defaultSize: "5x7",
     source: "Gathering details",
   },
@@ -117,7 +117,7 @@ export const PAPER_PIECES: PaperPieceDefinition[] = [
     id: "details",
     label: "Details / Welcome Card",
     description: "A companion card for location, timing and gathering details.",
-    sizes: ["4x6", "5x7", "4x9"],
+    sizes: ["a6", "5x7", "4x9"],
     defaultSize: "4x6",
     source: "Gathering details",
   },
@@ -149,7 +149,7 @@ export const PAPER_PIECES: PaperPieceDefinition[] = [
     id: "thank-you",
     label: "Thank-You Card",
     description: "A coordinated post-gathering card with editable message copy.",
-    sizes: ["4x6", "5x7", "square-5"],
+    sizes: ["a6", "5x7", "square-525"],
     defaultSize: "4x6",
     source: "Gathering identity",
   },
