@@ -54,6 +54,18 @@ async function gelatoFetch<T>(
   return body as T;
 }
 
+function unwrapGelatoData<T>(body: T | { data: T }): T {
+  if (
+    body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    "data" in (body as Record<string, unknown>)
+  ) {
+    return (body as { data: T }).data;
+  }
+  return body as T;
+}
+
 export type GelatoCatalog = {
   catalogUid: string;
   title: string;
@@ -77,13 +89,17 @@ export type GelatoProductSearchResponse = {
 };
 
 export async function listGelatoCatalogs(): Promise<GelatoCatalog[]> {
-  return gelatoFetch<GelatoCatalog[]>(PRODUCT_BASE + "/catalogs");
+  const body = await gelatoFetch<GelatoCatalog[] | { data: GelatoCatalog[] }>(
+    PRODUCT_BASE + "/catalogs"
+  );
+  return unwrapGelatoData(body);
 }
 
 export async function getGelatoCatalog(catalogUid: string) {
-  return gelatoFetch<Record<string, unknown>>(
-    PRODUCT_BASE + "/catalogs/" + encodeURIComponent(catalogUid)
-  );
+  const body = await gelatoFetch<
+    Record<string, unknown> | { data: Record<string, unknown> }
+  >(PRODUCT_BASE + "/catalogs/" + encodeURIComponent(catalogUid));
+  return unwrapGelatoData(body);
 }
 
 export async function searchGelatoProducts(
@@ -94,7 +110,9 @@ export async function searchGelatoProducts(
     offset?: number;
   } = {}
 ): Promise<GelatoProductSearchResponse> {
-  return gelatoFetch<GelatoProductSearchResponse>(
+  const body = await gelatoFetch<
+    GelatoProductSearchResponse | { data: GelatoProductSearchResponse }
+  >(
     PRODUCT_BASE +
       "/catalogs/" +
       encodeURIComponent(catalogUid) +
@@ -108,12 +126,14 @@ export async function searchGelatoProducts(
       }),
     }
   );
+  return unwrapGelatoData(body);
 }
 
 export async function getGelatoProduct(productUid: string) {
-  return gelatoFetch<GelatoProduct>(
+  const body = await gelatoFetch<GelatoProduct | { data: GelatoProduct }>(
     PRODUCT_BASE + "/products/" + encodeURIComponent(productUid)
   );
+  return unwrapGelatoData(body);
 }
 
 export async function getGelatoProductPrices(
@@ -125,22 +145,22 @@ export async function getGelatoProductPrices(
   if (params.currency) query.set("currency", params.currency);
   if (params.pageCount != null) query.set("pageCount", String(params.pageCount));
 
-  return gelatoFetch<
-    Array<{
-      productUid: string;
-      country: string;
-      quantity: number;
-      price: number;
-      currency: string;
-      pageCount: number | null;
-    }>
-  >(
+  type PriceRow = {
+    productUid: string;
+    country: string;
+    quantity: number;
+    price: number;
+    currency: string;
+    pageCount: number | null;
+  };
+  const body = await gelatoFetch<PriceRow[] | { data: PriceRow[] }>(
     PRODUCT_BASE +
       "/products/" +
       encodeURIComponent(productUid) +
       "/prices" +
       (query.size ? "?" + query.toString() : "")
   );
+  return unwrapGelatoData(body);
 }
 
 export type GelatoRecipient = {
@@ -180,10 +200,13 @@ export type GelatoQuoteRequest = {
 };
 
 export async function quoteGelatoOrder(input: GelatoQuoteRequest) {
-  return gelatoFetch<Record<string, unknown>>(ORDER_BASE + "/orders:quote", {
+  const body = await gelatoFetch<
+    Record<string, unknown> | { data: Record<string, unknown> }
+  >(ORDER_BASE + "/orders:quote", {
     method: "POST",
     body: JSON.stringify(input),
   });
+  return unwrapGelatoData(body);
 }
 
 export type GelatoCreateOrderRequest = {
@@ -198,14 +221,18 @@ export type GelatoCreateOrderRequest = {
 };
 
 export async function createGelatoOrder(input: GelatoCreateOrderRequest) {
-  return gelatoFetch<Record<string, unknown>>(ORDER_BASE + "/orders", {
+  const body = await gelatoFetch<
+    Record<string, unknown> | { data: Record<string, unknown> }
+  >(ORDER_BASE + "/orders", {
     method: "POST",
     body: JSON.stringify(input),
   });
+  return unwrapGelatoData(body);
 }
 
 export async function getGelatoOrder(orderId: string) {
-  return gelatoFetch<Record<string, unknown>>(
-    ORDER_BASE + "/orders/" + encodeURIComponent(orderId)
-  );
+  const body = await gelatoFetch<
+    Record<string, unknown> | { data: Record<string, unknown> }
+  >(ORDER_BASE + "/orders/" + encodeURIComponent(orderId));
+  return unwrapGelatoData(body);
 }
