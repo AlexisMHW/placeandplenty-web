@@ -21,22 +21,22 @@ const PIECES = [
   {
     title: "Invitations",
     body: "Create a coordinated invitation from your gathering name, date, time and location — or bring the invitation artwork you already have.",
-    sizes: "4 × 6 · 5 × 7 · square",
+    sizes: "Small · 5 × 7 · square",
   },
   {
     title: "Details & Welcome Cards",
     body: "Turn location, timing and guest-facing notes into a companion card that stays with the invitation suite.",
-    sizes: "4 × 6 · 5 × 7 · 4 × 9",
+    sizes: "Small · 5 × 7 · DL",
   },
   {
     title: "Menu Cards",
     body: "My Table becomes the source. Your dishes, sections and menu structure flow into a print-ready menu without entering them again.",
-    sizes: "4 × 9 · 5 × 7 · A5",
+    sizes: "DL · 5 × 7 · A5",
   },
   {
     title: "Weekend Itineraries",
     body: "Multi-Day gatherings can turn My Schedule into a printed day-by-day plan for bachelorette weekends, reunions, wedding weekends, retreats and more.",
-    sizes: "4 × 9 · 5 × 7 · A5 · 8 × 10 · A4",
+    sizes: "DL · 5 × 7 · A5 · 8 × 10 · A4",
   },
   {
     title: "Welcome Signs",
@@ -46,7 +46,7 @@ const PIECES = [
   {
     title: "Thank-You Cards",
     body: "Carry the same gathering identity into a coordinated post-gathering card with an editable thank-you message.",
-    sizes: "4 × 6 · 5 × 7 · square",
+    sizes: "Small · 5 × 7 · square",
   },
 ];
 
