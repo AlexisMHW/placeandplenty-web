@@ -14,6 +14,7 @@ type ProductCandidate = {
   productUid: string;
   attributes: Record<string, string | number>;
   title?: string;
+  quantities?: number[];
 };
 
 type TemplateId =
@@ -172,7 +173,7 @@ export default function PaperSuiteOrderBuilder({
   const [printUrl, setPrintUrl] = useState<string | null>(null);
   const [products, setProducts] = useState<ProductCandidate[]>([]);
   const [productUid, setProductUid] = useState("");
-  const [quantity, setQuantity] = useState(12);
+  const [quantity, setQuantity] = useState(10);
   const [busy, setBusy] = useState(false);
   const [quoteBusy, setQuoteBusy] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
@@ -187,19 +188,12 @@ export default function PaperSuiteOrderBuilder({
 
   const piece = paperPiece(kind)!;
   const sizeConfig = PAPER_SIZES[size];
-  const posterLike = size === "8x10" || size === "a4";
-  const minimumQuantity = posterLike ? 1 : 10;
-  const maximumQuantity = posterLike ? 100 : 500;
 
   useEffect(() => {
     track("paper_suite_viewed", { gathering_type: multiDay ? "multi_day" : "single_day" });
   }, [multiDay]);
 
   useEffect(() => {
-    const nextPosterLike = size === "8x10" || size === "a4";
-    setQuantity((current) =>
-      Math.max(nextPosterLike ? 1 : 10, Math.min(nextPosterLike ? 100 : 500, current))
-    );
     setProductBusy(true);
     setProducts([]);
     setProductUid("");
@@ -209,13 +203,8 @@ export default function PaperSuiteOrderBuilder({
     setPricing(null);
     setRecipient(null);
 
-    const catalog = size === "8x10" || size === "a4" ? "posters" : "cards";
-
     fetch(
-      "/api/paper-suite/gelato/products?catalog=" +
-        encodeURIComponent(catalog) +
-        "&size=" +
-        encodeURIComponent(size),
+      "/api/paper-suite/gelato/products?size=" + encodeURIComponent(size),
       {
         credentials: "same-origin",
         cache: "no-store",
@@ -229,7 +218,10 @@ export default function PaperSuiteOrderBuilder({
       .then((body) => {
         const next = body.candidates || [];
         setProducts(next);
-        if (next[0]) setProductUid(next[0].productUid);
+        if (next[0]) {
+          setProductUid(next[0].productUid);
+          setQuantity(next[0].quantities?.[0] ?? 1);
+        }
       })
       .catch(() => {
         setMessage("Gelato products for this size are still being matched. You can generate the preview now.");
@@ -590,7 +582,12 @@ export default function PaperSuiteOrderBuilder({
               <select
                 value={productUid}
                 onChange={(event) => {
-                  setProductUid(event.target.value);
+                  const nextUid = event.target.value;
+                  setProductUid(nextUid);
+                  const nextProduct = products.find((product) => product.productUid === nextUid);
+                  if (nextProduct?.quantities?.length) {
+                    setQuantity(nextProduct.quantities[0]);
+                  }
                   resetQuote();
                 }}
                 disabled={productBusy}
@@ -609,20 +606,34 @@ export default function PaperSuiteOrderBuilder({
 
             <label className="mt-4 block max-w-xs">
               <span className="mb-1 block font-body text-sm font-semibold text-forest">Quantity</span>
-              <input
-                type="number"
-                min={minimumQuantity}
-                max={maximumQuantity}
-                value={quantity}
-                onChange={(event) => {
-                  const next = Number(event.target.value) || minimumQuantity;
-                  setQuantity(Math.max(minimumQuantity, Math.min(maximumQuantity, next)));
-                  resetQuote();
-                }}
-                className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
-              />
+              {selectedProduct?.quantities?.length ? (
+                <select
+                  value={quantity}
+                  onChange={(event) => {
+                    setQuantity(Number(event.target.value));
+                    resetQuote();
+                  }}
+                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
+                >
+                  {selectedProduct.quantities.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={quantity}
+                  onChange={(event) => {
+                    setQuantity(Math.max(1, Math.min(500, Number(event.target.value) || 1)));
+                    resetQuote();
+                  }}
+                  className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
+                />
+              )}
               <p className="mt-1 font-body text-[0.68rem] text-forest/50">
-                {posterLike ? "Posters: 1–100" : "Cards: 10–500"}
+                Only quantities supported by the selected Gelato product are offered.
               </p>
             </label>
 
