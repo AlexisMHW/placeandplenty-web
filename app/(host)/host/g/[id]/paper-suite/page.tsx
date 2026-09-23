@@ -164,7 +164,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
             <h2 className="mt-2 font-display text-2xl text-forest">Your live paper-ready content</h2>
           </div>
           <p className="font-body text-xs text-forest/55">
-            Print ordering follows after Gelato product mapping.
+            Choose a piece below to preview it, get a live print quote and continue to secure checkout.
           </p>
         </div>
 
