@@ -26,15 +26,13 @@ export type PaperSize = {
 };
 
 export const PAPER_SIZES: Record<PaperSizeId, PaperSize> = {
-  // Legacy id retained so existing UI/order references remain stable.
-  // Gelato's North American Small card trim is 4.25 × 5.5 in.
-  "4x6": {
-    id: "4x6",
-    label: "Small · 4.25 × 5.5",
-    widthInches: 4.25,
-    heightInches: 5.5,
-    widthPx: 1275,
-    heightPx: 1650,
+  a6: {
+    id: "a6",
+    label: "A6 · 4.1 × 5.8",
+    widthInches: 105 / 25.4,
+    heightInches: 148 / 25.4,
+    widthPx: 1240,
+    heightPx: 1748,
     family: "portrait",
   },
   "5x7": {
@@ -46,20 +44,18 @@ export const PAPER_SIZES: Record<PaperSizeId, PaperSize> = {
     heightPx: 2100,
     family: "portrait",
   },
-  // Legacy id retained; Gelato's DL trim is 99 × 210 mm.
   "4x9": {
     id: "4x9",
-    label: "DL · 3.9 × 8.27",
-    widthInches: 3.9,
-    heightInches: 8.27,
-    widthPx: 1170,
-    heightPx: 2480,
+    label: "4 × 9",
+    widthInches: 4,
+    heightInches: 9,
+    widthPx: 1200,
+    heightPx: 2700,
     family: "tall",
   },
-  // Legacy id retained; Gelato's North American Square trim is 5.25 in.
-  "square-5": {
-    id: "square-5",
-    label: "Square · 5.25 × 5.25",
+  "square-525": {
+    id: "square-525",
+    label: "5.25 × 5.25 Square",
     widthInches: 5.25,
     heightInches: 5.25,
     widthPx: 1575,
@@ -69,8 +65,8 @@ export const PAPER_SIZES: Record<PaperSizeId, PaperSize> = {
   a5: {
     id: "a5",
     label: "A5",
-    widthInches: 5.83,
-    heightInches: 8.27,
+    widthInches: 148 / 25.4,
+    heightInches: 210 / 25.4,
     widthPx: 1748,
     heightPx: 2480,
     family: "tall",
@@ -87,8 +83,8 @@ export const PAPER_SIZES: Record<PaperSizeId, PaperSize> = {
   a4: {
     id: "a4",
     label: "A4",
-    widthInches: 8.27,
-    heightInches: 11.69,
+    widthInches: 210 / 25.4,
+    heightInches: 297 / 25.4,
     widthPx: 2480,
     heightPx: 3508,
     family: "sign",
@@ -118,7 +114,7 @@ export const PAPER_PIECES: PaperPieceDefinition[] = [
     label: "Details / Welcome Card",
     description: "A companion card for location, timing and gathering details.",
     sizes: ["a6", "5x7", "4x9"],
-    defaultSize: "4x6",
+    defaultSize: "a6",
     source: "Gathering details",
   },
   {
@@ -150,7 +146,7 @@ export const PAPER_PIECES: PaperPieceDefinition[] = [
     label: "Thank-You Card",
     description: "A coordinated post-gathering card with editable message copy.",
     sizes: ["a6", "5x7", "square-525"],
-    defaultSize: "4x6",
+    defaultSize: "a6",
     source: "Gathering identity",
   },
 ];
