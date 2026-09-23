@@ -137,6 +137,7 @@ export default function FamilyReunionPlanningPage() {
               alt="The Harding Family Reunion with multiple generations in coordinated reunion shirts at an outdoor family celebration"
               fill
               priority
+              quality={92}
               className="object-cover"
               sizes="(min-width: 1024px) 48vw, 100vw"
             />
