@@ -39,7 +39,7 @@ const faqs = [
   { q: "What do I get for free?", a: FREE_LIMITS_NOTE },
   {
     q: "Can I buy on the website, or do I have to use the app?",
-    a: `${PURCHASE_AVAILABILITY_NOTE} You can create your account and plan entirely in the browser now. When paid purchasing opens, the entitlement will attach to this same account and be recognized across web and mobile.`,
+    a: `${PURCHASE_AVAILABILITY_NOTE} You can create your account, plan and purchase eligible host access in the browser. Store purchases will use that same canonical account and entitlement model.`,
   },
   {
     q: "If I buy on my phone, does it work on the web?",
@@ -248,7 +248,7 @@ export default function PricingPage() {
         </ul>
       </Band>
 
-      <CtaBand headline="Less scrambling." emphasisLine="More gathering." body="Start free in the browser today. Paid purchasing opens with the app release, and that access will follow this same account across web and mobile." showQr />
+      <CtaBand headline="Less scrambling." emphasisLine="More gathering." body="Start free in the browser today. When you unlock paid access, it belongs to this same Place & Plenty account across web and mobile." showQr />
     </>
   );
 }
