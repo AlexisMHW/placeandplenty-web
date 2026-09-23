@@ -140,7 +140,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "gathering_not_found" }, { status: 404 });
   }
 
-  const quantity = Math.max(1, Math.min(Number(body.quantity) || 1, 500));
+  const posterLike = body.size === "8x10" || body.size === "a4";
+  const minQuantity = posterLike ? 1 : 10;
+  const maxQuantity = posterLike ? 100 : 500;
+  const quantity = Math.max(
+    minQuantity,
+    Math.min(Number(body.quantity) || minQuantity, maxQuantity)
+  );
   const orderReferenceId = "paper-" + crypto.randomUUID();
 
   try {
