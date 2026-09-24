@@ -42,13 +42,13 @@ def masthead(c):
     c.drawRightString(568, 750, "HOME HOSTING. MADE SIMPLE.")
     c.setStrokeColor(gold); c.setLineWidth(1); c.line(44, 725, 568, 725)
 
-def footer(c, number):
+def footer(c, number, kit):
     c.setStrokeColor(gold); c.line(44, 108, 568, 108)
     c.setFillColor(forest); c.setFont("Display", 15)
     c.drawString(44, 87, "Give your whole plan a place to live.")
     c.setFont("Body", 10)
     c.drawString(44, 69, "Start free on the website: placeandplenty.com/signup")
-    c.linkURL("https://placeandplenty.com/signup", (44, 64, 410, 82), relative=0)
+    c.linkURL(kit.get("signupUrl", "https://placeandplenty.com/signup"), (44, 64, 410, 82), relative=0)
     c.setFont("Body", 10)
     c.drawString(44, 48, "I built it for you because I needed it too. — Alexis")
     c.setFont("Body", 8); c.drawRightString(568, 28, f"Place & Plenty | {number} / 2")
@@ -78,7 +78,7 @@ for kit in kits:
     c.drawString(44, y, "One thing to delegate: ______________________________________________________")
     y -= 22
     c.drawString(44, y, "Don't forget: ______________________________________________________________")
-    footer(c, 1)
+    footer(c, 1, kit)
     c.showPage()
     masthead(c)
     c.setFont("Body", 9); c.drawString(44, 705, kit['name'].upper() + " EDITION | YOUR PLAN IN P&P")
@@ -98,9 +98,9 @@ for kit in kits:
     c.setFillColor(muted)
     y = wrapped(c, "Try one of these gathering ideas: " + "; ".join(idea['title'].lower() for idea in kit['ideas']) + ".", 44, y)
     y -= 10
-    y = wrapped(c, "Your checklist is free. P&P feature access depends on your plan. Explore Free, Gathering Pass, and Plus at placeandplenty.com/pricing.", 44, y, size=9, leading=13)
+    y = wrapped(c, "Your checklist is free. P&P feature access depends on your plan. Compare plans and Multi-Day access at placeandplenty.com/pricing.", 44, y, size=9, leading=13)
     c.linkURL("https://placeandplenty.com/pricing", (44, y, 568, y+27), relative=0)
     assert y > 119, (kit['slug'], y)
-    footer(c, 2)
+    footer(c, 2, kit)
     c.save()
     print(path.name)

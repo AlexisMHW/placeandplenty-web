@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     NextResponse.redirect(
       isRecovery
         ? `${origin}${RESET_PASSWORD_PATH}?error=${reason}`
-        : `${origin}/login?error=${reason}`
+        : `${origin}/login?error=${reason}&next=${encodeURIComponent(next)}`
     );
 
   if (authError) return failure("link_expired");

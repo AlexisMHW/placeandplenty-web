@@ -13,7 +13,7 @@ function mock(statuses: number[] = []) {
   }) as typeof fetch;
   return { fetcher, calls };
 }
-test("all five editions save the correct source and offer their matching PDF", async () => {
+test("all editions save the correct source and offer their matching PDF", async () => {
   for (const kit of CHECKLISTS) {
     const m = mock(); const response = await deliverChecklist({ ...input, edition: kit.slug }, "192.0.2.1", config, m.fetcher);
     assert.equal(response.status, 200);

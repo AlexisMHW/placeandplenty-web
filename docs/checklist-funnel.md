@@ -8,16 +8,19 @@
 - /gathering-checklists/friendsgiving
 - /gathering-checklists/thanksgiving
 - /gathering-checklists/game-day
+- /gathering-checklists/bachelorette-weekend
+- /gathering-checklists/family-reunion
 
-Five occasion pages share one form and handler. On successful contact capture,
+Seven occasion pages share one form and handler. On successful contact capture,
 the visitor can download the matching two-page PDF and explicitly create a free
 account through the existing /signup flow. No accounts are created by requesting
-a checklist. Existing users can open /host. No changes to entitlements or auth.
+a checklist. Existing users can sign in and continue to the matching gathering setup.
+Entitlements are unchanged; authentication redirects preserve the occasion.
 
 ## Email connection (pending account setup)
 
 Alexis already has MailerLite. Prefer that account for opt-in marketing unless
-its actual plan and cost make a switch worthwhile. MAILERLITE_API_KEY and the five
+its actual plan and cost make a switch worthwhile. MAILERLITE_API_KEY and the edition-specific
 MAILERLITE_*_GROUP_ID variables enable additive opt-in sync to that account.
 This does not send a resource email; configure a MailerLite delivery/welcome
 automation after checking account limits and testing with an owned address.
@@ -34,7 +37,7 @@ connected and verified. No mailboxes or DNS records were created by this change.
 1. Configure BREVO_API_KEY in Vercel as a server-only secret. Authenticate the
    domain in Brevo and verify alexis@placeandplenty.com. Configure
    BREVO_CHECKLIST_SENDER with that address.
-2. Create five Brevo lists, one per edition, and set the five list IDs documented
+2. Create seven Brevo lists, one per edition, and set the edition list IDs documented
    in .env.example. Confirm FIRSTNAME is an available contact attribute.
 3. Verify production public-form-submit accepts the existing guest_list contract
    and returns success:true. This flow reuses that endpoint's persistent rate
@@ -115,8 +118,29 @@ posts, campaigns, or emails were sent by this change.
 
 ## Verification
 
-Tests cover all five resource mappings, rejected requests, persistent-limiter
+Tests cover all seven resource mappings, rejected requests, persistent-limiter
 failures, provider failures, HTML escaping, and opt-in-only provider sync.
 A pre-existing Entitlement fixture omitted provider_customer_id; setting it to
 null restores the full TypeScript check without changing production behavior.
 
+
+
+## Occasion continuation (September 24, 2026)
+
+The bachelorette-weekend and family-reunion landing pages now use the same immediate
+PDF request flow as Friendsgiving. Their PDFs, new checklist pages, hub cards and
+sitemap entries are included. The three PDFs link to occasion-specific account signup.
+
+Checklist signup remains lead capture, not account creation. Account signup and login
+preserve /host/create?checklist=<edition> through confirmation and existing sessions.
+New setup pre-fills a name/type (Friendsgiving also suggests potluck); resumed drafts
+always take precedence. After a successful single-day setup, campaign entrants reach
+My People to review guests and send invitations themselves. No invitations are sent
+automatically. Multi-Day continues to obey all existing access and checkout rules;
+the checklist explicitly explains that downloading it does not unlock that feature.
+
+MailerLite is optional opt-in subscriber sync, not proof of an active email journey.
+Configure the two additional MAILERLITE_* group IDs after verifying the account.
+Do not claim inbox delivery or activated automations from a successful PDF download.
+Live auth-email receipt and guest invitation delivery require an owned test account
+and a controlled recipient; unit and build checks are not substitutes for that test.

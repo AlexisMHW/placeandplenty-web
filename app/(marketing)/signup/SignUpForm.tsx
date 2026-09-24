@@ -256,7 +256,7 @@ export default function SignUpForm({ next }: { next?: string }) {
       <p className="mt-5 border-t border-sage/25 pt-5 font-body text-sm text-forest/75">
         Already have an account?{" "}
         <Link
-          href="/login"
+          href={`/login?next=${encodeURIComponent(destination)}`}
           className="font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4"
         >
           Log in

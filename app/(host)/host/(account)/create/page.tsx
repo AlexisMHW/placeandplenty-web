@@ -1,3 +1,5 @@
+import { getChecklist, checklistPdf } from "@/lib/checklists";
+import { checklistPreset } from "@/lib/checklist-flow";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import Icon from "@/components/Icon";
@@ -126,10 +128,11 @@ async function loadDraft(editId: string): Promise<ResumedDraft> {
 export default async function CreateGatheringPage({
   searchParams,
 }: {
-  searchParams: { editId?: string };
+  searchParams: { editId?: string; checklist?: string };
 }) {
   const editId = searchParams.editId;
   const resume = editId ? await loadDraft(editId) : null;
+  const kit = !resume && typeof searchParams.checklist === "string" ? getChecklist(searchParams.checklist) : undefined;
 
   return (
     <div className="mx-auto max-w-5xl px-1 py-2">
@@ -165,7 +168,8 @@ export default async function CreateGatheringPage({
       </section>
 
       <div className="mt-6 rounded-[1.75rem] border border-sage/25 bg-offwhite p-4 shadow-sm md:p-6">
-        <CreateGatheringWizard resume={resume} />
+        {kit && <aside className="mb-6 rounded-card border border-gold/40 bg-cream p-5"><h2 className="font-display text-xl text-forest">Your {kit.name} plan starts here</h2><p className="mt-2 font-body text-sm text-forest/80">Answer the setup questions, choose your invitation, and add your people. Review everything before sending invitations from My People.</p><Link href={checklistPdf(kit.slug)} download className="mt-3 inline-block font-body text-sm text-forest underline">Download your checklist again</Link>{(kit.slug === "bachelorette-weekend" || kit.slug === "family-reunion") && <p className="mt-3 font-body text-sm text-forest/70">Choose a single-day gathering to start free. Multi-Day planning requires access under your plan and current purchase availability.</p>}</aside>}
+        <CreateGatheringWizard resume={resume} preset={kit ? checklistPreset(kit.slug) : undefined} checklistEdition={kit?.slug} />
       </div>
     </div>
   );

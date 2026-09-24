@@ -202,7 +202,7 @@ export default function LoginForm({ next }: { next?: string }) {
       <p className="mt-6 font-body text-sm leading-relaxed text-forest/70">
         New to Place &amp; Plenty?{" "}
         <Link
-          href="/signup"
+          href={`/signup?next=${encodeURIComponent(destination)}`}
           className="font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4"
         >
           Create a free account

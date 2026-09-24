@@ -1,3 +1,4 @@
+import { safeNext } from "@/lib/auth-redirects";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -55,8 +56,12 @@ export async function middleware(request: NextRequest) {
     // Come back to where they were trying to go. Only a path is carried,
     // never an absolute URL — taking `next` as given would turn the
     // login page into an open redirect.
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    url.search = "";
+    url.searchParams.set("next", safeNext(pathname + request.nextUrl.search));
+    const redirected = NextResponse.redirect(url);
+    for (const cookie of response.cookies.getAll()) redirected.cookies.set(cookie);
+    redirected.headers.set("Cache-Control", "private, no-store");
+    return redirected;
   }
 
   // A signed-in host has no use for the login or sign-up pages. /signup
@@ -65,9 +70,14 @@ export async function middleware(request: NextRequest) {
   // one-account rule exists to prevent.
   if ((pathname === "/login" || pathname === "/signup") && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/host";
-    url.search = "";
-    return NextResponse.redirect(url);
+    const destination = new URL(safeNext(request.nextUrl.searchParams.get("next")), request.url);
+    url.pathname = destination.pathname;
+    url.search = destination.search;
+    url.hash = destination.hash;
+    const redirected = NextResponse.redirect(url);
+    for (const cookie of response.cookies.getAll()) redirected.cookies.set(cookie);
+    redirected.headers.set("Cache-Control", "private, no-store");
+    return redirected;
   }
 
   return response;

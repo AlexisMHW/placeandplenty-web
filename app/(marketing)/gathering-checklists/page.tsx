@@ -3,7 +3,7 @@ import Link from "next/link";
 import ChecklistCover from "@/components/ChecklistCover";
 import { CHECKLISTS } from "@/lib/checklists";
 
-export const metadata: Metadata = { title: "Free Gathering Checklists", description: "Free printable gathering checklists for everyday gatherings, Halloween, Friendsgiving, Thanksgiving, and Game Day. Get your checklist and start planning on Place & Plenty today.", alternates: { canonical: "/gathering-checklists" } };
+export const metadata: Metadata = { title: "Free Gathering Checklists", description: "Free printable gathering checklists for everyday gatherings, Halloween, Friendsgiving, Thanksgiving, Game Day, bachelorette weekends, and family reunions. Get your checklist and start planning on Place & Plenty today.", alternates: { canonical: "/gathering-checklists" } };
 
 export default function ChecklistsPage() {
   const doorbellKit = CHECKLISTS.find(kit => kit.slug === "before-the-doorbell")!;

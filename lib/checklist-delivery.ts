@@ -1,5 +1,7 @@
 import { getChecklist, checklistPdf } from "./checklists.ts";
 
+import { checklistSignupUrl } from "./checklist-flow.ts";
+
 type Config = { supabaseUrl?: string; anonKey?: string; brevoKey?: string; sender?: string; listIds?: Partial<Record<string, string>>; mailerliteKey?: string; mailerliteGroupIds?: Partial<Record<string, string>> };
 const htmlEscape = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -13,6 +15,7 @@ export async function deliverChecklist(body: unknown, ip: string, config: Config
   const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
   if (!kit || !firstName || firstName.length > 120 || email.length > 320 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || typeof data.consent !== "boolean") return reply({ message: "Please add your first name and a valid email address." }, 400);
   const download = checklistPdf(kit.slug);
+  const signupUrl = `https://placeandplenty.com${checklistSignupUrl(kit.slug)}`;
   if (typeof data.website === "string" && data.website.trim()) return reply({ download, emailSent: false });
   if (!config.supabaseUrl || !config.anonKey) return reply({ message: "Checklist signup is temporarily unavailable. Please try again shortly." }, 503);
 
@@ -38,8 +41,8 @@ export async function deliverChecklist(body: unknown, ip: string, config: Config
       const sent = await transport("https://api.brevo.com/v3/smtp/email", {
         method: "POST", signal: AbortSignal.timeout(10000), headers,
         body: JSON.stringify({ sender: { email: config.sender, name: "Alexis | Place & Plenty" }, replyTo: { email: "alexis@placeandplenty.com", name: "Alexis" }, to: [{ email, name: firstName }], subject: `Your ${kit.name} checklist is here`,
-          textContent: `Hi ${firstName},\n\nHere is your Put-Together Get-Together Starter Kit - ${kit.name} Edition:\n${url}\n\n${kit.note}\n\nI built it for you because I needed it too. I hope this gives you a little less to keep in your head.\n\nWhen you're ready, you can organize your gathering on the website: https://placeandplenty.com/signup\n\nWarmly,\nAlexis Hughes-Williams\nPlace & Plenty | Home Hosting. Made Simple.\n\nYou received this email because you requested this free checklist.`,
-          htmlContent: `<div style="font-family:Arial,sans-serif;color:#244438;max-width:580px;margin:auto;line-height:1.7;padding:24px"><p>Hi ${htmlEscape(firstName)},</p><h1 style="font-family:Georgia,serif;font-size:28px">Your ${kit.name} checklist is here.</h1><p>The Put-Together Get-Together Starter Kit is ready for you.</p><p><a style="color:#244438;font-weight:bold" href="${url}">Download your free ${kit.name} checklist</a></p><p>${htmlEscape(kit.note)}</p><p><strong>I built it for you because I needed it too.</strong> I hope this gives you a little less to keep in your head.</p><p>When you're ready, <a href="https://placeandplenty.com/signup">start planning on the website</a>. No app download needed.</p><p>Warmly,<br>Alexis Hughes-Williams<br>Place &amp; Plenty<br>Home Hosting. Made Simple.</p><p style="font-size:12px">You received this email because you requested this free checklist.</p></div>`,
+          textContent: `Hi ${firstName},\n\nHere is your Put-Together Get-Together Starter Kit - ${kit.name} Edition:\n${url}\n\n${kit.note}\n\nI built it for you because I needed it too. I hope this gives you a little less to keep in your head.\n\nWhen you're ready, you can organize your gathering on the website: ${signupUrl}\n\nWarmly,\nAlexis Hughes-Williams\nPlace & Plenty | Home Hosting. Made Simple.\n\nYou received this email because you requested this free checklist.`,
+          htmlContent: `<div style="font-family:Arial,sans-serif;color:#244438;max-width:580px;margin:auto;line-height:1.7;padding:24px"><p>Hi ${htmlEscape(firstName)},</p><h1 style="font-family:Georgia,serif;font-size:28px">Your ${kit.name} checklist is here.</h1><p>The Put-Together Get-Together Starter Kit is ready for you.</p><p><a style="color:#244438;font-weight:bold" href="${url}">Download your free ${kit.name} checklist</a></p><p>${htmlEscape(kit.note)}</p><p><strong>I built it for you because I needed it too.</strong> I hope this gives you a little less to keep in your head.</p><p>When you're ready, <a href="${signupUrl}">start planning on the website</a>. No app download needed.</p><p>Warmly,<br>Alexis Hughes-Williams<br>Place &amp; Plenty<br>Home Hosting. Made Simple.</p><p style="font-size:12px">You received this email because you requested this free checklist.</p></div>`,
           tags: [`checklist_${kit.slug}`],
         }),
       });
