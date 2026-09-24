@@ -70,6 +70,16 @@ function rgbToHex(r: number, g: number, b: number) {
   return "#" + [r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("");
 }
 
+function hexToRgb(hex: string) {
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!match) return null;
+  return {
+    r: Number.parseInt(match[1], 16),
+    g: Number.parseInt(match[2], 16),
+    b: Number.parseInt(match[3], 16),
+  };
+}
+
 function relativeLuminance(r: number, g: number, b: number) {
   const convert = (value: number) => {
     const channel = value / 255;
@@ -153,10 +163,12 @@ export default function PaperSuiteOrderBuilder({
   gatheringId,
   multiDay,
   invitationUrl,
+  invitationMimeType,
 }: {
   gatheringId: string;
   multiDay: boolean;
   invitationUrl?: string | null;
+  invitationMimeType?: string | null;
 }) {
   const availablePieces = useMemo(
     () => PAPER_PIECES.filter((piece) => piece.id !== "itinerary" || multiDay),
@@ -185,7 +197,10 @@ export default function PaperSuiteOrderBuilder({
   const [recipient, setRecipient] = useState<Recipient | null>(null);
   const [matchedPalette, setMatchedPalette] = useState<MatchedPalette | null>(null);
   const [matchingBusy, setMatchingBusy] = useState(false);
+  const [manualBackground, setManualBackground] = useState("#F7F4EC");
+  const [manualAccent, setManualAccent] = useState("#71856F");
 
+  const hasPdfInvitation = invitationMimeType === "application/pdf";
   const piece = paperPiece(kind)!;
   const sizeConfig = PAPER_SIZES[size];
 
@@ -252,9 +267,32 @@ export default function PaperSuiteOrderBuilder({
     setBodyCopy("");
   }
 
+  function applyManualInvitationPalette() {
+    const backgroundRgb = hexToRgb(manualBackground);
+    if (!backgroundRgb) {
+      setMessage("Choose a valid background color first.");
+      return;
+    }
+
+    const luminance = relativeLuminance(backgroundRgb.r, backgroundRgb.g, backgroundRgb.b);
+    setMatchedPalette({
+      background: manualBackground.toUpperCase(),
+      text: luminance > 0.46 ? "#142720" : "#F7F4EC",
+      accent: manualAccent.toUpperCase(),
+      rule: manualAccent.toUpperCase(),
+    });
+    setPrintUrl(null);
+    resetQuote();
+    setMessage("PDF invitation colors applied. The rest of the suite will coordinate with this palette.");
+  }
+
   async function matchInvitation() {
     if (!invitationUrl) {
-      setMessage("Upload a JPG or PNG invitation first, then return here to match the suite.");
+      setMessage(
+        hasPdfInvitation
+          ? "Your PDF invitation is attached. Use the color controls below to carry its palette into the suite."
+          : "Upload a JPG or PNG invitation first, then return here to match the suite."
+      );
       return;
     }
 
@@ -488,7 +526,7 @@ export default function PaperSuiteOrderBuilder({
             <option value="warm-celebration">Warm Celebration</option>
           </select>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {invitationUrl && (
+            {invitationUrl && !hasPdfInvitation && (
               <button
                 type="button"
                 onClick={matchInvitation}
@@ -513,6 +551,40 @@ export default function PaperSuiteOrderBuilder({
               </button>
             )}
           </div>
+          {hasPdfInvitation && (
+            <div className="mt-3 rounded-xl border border-sage/25 bg-offwhite p-3">
+              <p className="font-body text-[0.7rem] leading-relaxed text-forest/65">
+                PDF invitation detected. PDFs stay available as your original artwork, but browsers cannot reliably sample their colors the way they can a JPG or PNG. Choose the two main colors from your invitation and Place & Plenty will coordinate the suite around them.
+              </p>
+              <div className="mt-3 flex flex-wrap items-end gap-3">
+                <label className="font-body text-[0.68rem] font-semibold text-forest">
+                  Background
+                  <input
+                    type="color"
+                    value={manualBackground}
+                    onChange={(event) => setManualBackground(event.target.value)}
+                    className="mt-1 block h-9 w-14 cursor-pointer rounded border border-sage/30 bg-white p-1"
+                  />
+                </label>
+                <label className="font-body text-[0.68rem] font-semibold text-forest">
+                  Accent
+                  <input
+                    type="color"
+                    value={manualAccent}
+                    onChange={(event) => setManualAccent(event.target.value)}
+                    className="mt-1 block h-9 w-14 cursor-pointer rounded border border-sage/30 bg-white p-1"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={applyManualInvitationPalette}
+                  className="rounded-full border border-gold/40 bg-cream px-3 py-2 font-body text-[0.68rem] font-semibold text-forest"
+                >
+                  Match PDF palette
+                </button>
+              </div>
+            </div>
+          )}
           {matchedPalette && (
             <div className="mt-2 flex items-center gap-1.5" aria-label="Matched invitation palette">
               {[matchedPalette.background, matchedPalette.accent, matchedPalette.text].map((color) => (
