@@ -71,9 +71,8 @@ user agent. On other hosts it uses a shared conservative limiter key.
 ## Analytics
 
 Four events use the existing analytics wrapper: request, successful capture,
-download click, and account CTA click, with edition only. The existing wrapper
-is currently a production no-op. A reporting provider is still required before
-these events can be used as conversion measurements. No PII is sent to analytics.
+download click, and account CTA click, with edition only. The shared wrapper sends these events to the configured GA4 and PostHog clients.
+Verify receipt in the production property before using them as conversion measurements. No PII is sent to analytics.
 
 ## Follow-up emails to configure in Brevo
 

@@ -31,6 +31,7 @@ export default function GuestListForm() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!firstName || !email) return;
+    track("guest_list_signup_started", { entry_point: "guest_list", client_platform: "web" });
     setStatus("submitting");
 
     const result = await submitGuestListSignup({
@@ -54,7 +55,7 @@ export default function GuestListForm() {
       return;
     }
 
-    track("guest_list_signup_completed");
+    track("guest_list_signup_completed", { entry_point: "guest_list", client_platform: "web" });
     setStatus("success");
   }
 

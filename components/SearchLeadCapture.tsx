@@ -53,14 +53,14 @@ export default function SearchLeadCapture({
   const source = useMemo(() => compactSource(topic), [topic]);
 
   useEffect(() => {
-    track("search_landing_view", { topic, source });
+    track("search_landing_view", { topic, entry_point: "search_landing", client_platform: "web" });
   }, [topic, source]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!firstName || !email || status === "submitting") return;
 
-    track("guest_list_signup_started", { topic, source });
+    track("guest_list_signup_started", { topic, entry_point: "search_landing", client_platform: "web" });
     setStatus("submitting");
 
     const result = await submitGuestListSignup({
@@ -76,7 +76,7 @@ export default function SearchLeadCapture({
       return;
     }
 
-    track("guest_list_signup_completed", { topic, source });
+    track("guest_list_signup_completed", { topic, entry_point: "search_landing", client_platform: "web" });
     setStatus("success");
   }
 

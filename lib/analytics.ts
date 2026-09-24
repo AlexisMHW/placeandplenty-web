@@ -15,8 +15,6 @@ export type AnalyticsEvent =
   | "guest_list_signup_completed"
   | "founding_host_clicked"
   | "founding_host_application_completed"
-  | "app_store_clicked"
-  | "google_play_clicked"
   | "pricing_viewed"
   | "support_viewed"
   | "signup_started"
