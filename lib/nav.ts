@@ -93,6 +93,8 @@ export const STATIC_SITEMAP_ROUTES: string[] = [
   "/gathering-checklists/friendsgiving",
   "/gathering-checklists/thanksgiving",
   "/gathering-checklists/game-day",
+  "/gathering-checklists/bachelorette-weekend",
+  "/gathering-checklists/family-reunion",
   // /login, /forgot-password, /reset-password, /get and every /host route
   // are deliberately absent: each is noindex, and a sign-in form has
   // nothing to offer search.

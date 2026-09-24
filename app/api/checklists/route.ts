@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     brevoKey: process.env.BREVO_API_KEY, sender: process.env.BREVO_CHECKLIST_SENDER,
     mailerliteKey: process.env.MAILERLITE_API_KEY,
-    mailerliteGroupIds: { "before-the-doorbell": process.env.MAILERLITE_DOORBELL_GROUP_ID, halloween: process.env.MAILERLITE_HALLOWEEN_GROUP_ID, friendsgiving: process.env.MAILERLITE_FRIENDSGIVING_GROUP_ID, thanksgiving: process.env.MAILERLITE_THANKSGIVING_GROUP_ID, "game-day": process.env.MAILERLITE_GAME_DAY_GROUP_ID },
-    listIds: { "before-the-doorbell": process.env.BREVO_DOORBELL_LIST_ID, halloween: process.env.BREVO_HALLOWEEN_LIST_ID, friendsgiving: process.env.BREVO_FRIENDSGIVING_LIST_ID, thanksgiving: process.env.BREVO_THANKSGIVING_LIST_ID, "game-day": process.env.BREVO_GAME_DAY_LIST_ID },
+    mailerliteGroupIds: { "bachelorette-weekend": process.env.MAILERLITE_BACHELORETTE_GROUP_ID, "family-reunion": process.env.MAILERLITE_FAMILY_REUNION_GROUP_ID, "before-the-doorbell": process.env.MAILERLITE_DOORBELL_GROUP_ID, halloween: process.env.MAILERLITE_HALLOWEEN_GROUP_ID, friendsgiving: process.env.MAILERLITE_FRIENDSGIVING_GROUP_ID, thanksgiving: process.env.MAILERLITE_THANKSGIVING_GROUP_ID, "game-day": process.env.MAILERLITE_GAME_DAY_GROUP_ID },
+    listIds: { "bachelorette-weekend": process.env.BREVO_BACHELORETTE_LIST_ID, "family-reunion": process.env.BREVO_FAMILY_REUNION_LIST_ID, "before-the-doorbell": process.env.BREVO_DOORBELL_LIST_ID, halloween: process.env.BREVO_HALLOWEEN_LIST_ID, friendsgiving: process.env.BREVO_FRIENDSGIVING_LIST_ID, thanksgiving: process.env.BREVO_THANKSGIVING_LIST_ID, "game-day": process.env.BREVO_GAME_DAY_LIST_ID },
   });
 }

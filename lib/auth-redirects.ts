@@ -64,6 +64,10 @@ export function callbackUrl(origin: string, next: string): string {
  */
 export function safeNext(next: string | null | undefined): string {
   if (!next) return "/host";
-  if (!next.startsWith("/") || next.startsWith("//")) return "/host";
-  return next;
+  if (!next.startsWith("/") || next.startsWith("//") || /[\\\u0000-\u0020]/.test(next)) return "/host";
+  try {
+    const parsed = new URL(next, "https://placeandplenty.com");
+    if (parsed.origin !== "https://placeandplenty.com" || ["/login", "/signup", "/auth/callback"].includes(parsed.pathname)) return "/host";
+    return parsed.pathname + parsed.search + parsed.hash;
+  } catch { return "/host"; }
 }

@@ -3,7 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Band, Display } from "@/components/Display";
 import Icon, { type IconName } from "@/components/Icon";
-import SearchLeadCapture from "@/components/SearchLeadCapture";
+import ChecklistSignup from "@/components/ChecklistSignup";
+import { checklistSignupUrl } from "@/lib/checklist-flow";
 import { BreadcrumbSchema, FaqSchema } from "@/components/StructuredData";
 
 export const metadata: Metadata = {
@@ -117,16 +118,16 @@ export default function FamilyReunionPlanningPage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                href="/signup?next=%2Fhost"
+                href={checklistSignupUrl("family-reunion")}
                 className="rounded-full bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite"
               >
                 Start My Reunion Free
               </Link>
               <Link
-                href="/multi-day"
+                href="#free-checklist"
                 className="rounded-full border border-forest/25 bg-offwhite/70 px-6 py-3 font-body text-sm font-semibold text-forest"
               >
-                See Multi-Day Planning
+                Get My Free Checklist
               </Link>
             </div>
           </div>
@@ -203,13 +204,7 @@ export default function FamilyReunionPlanningPage() {
 
       <Band tone="cream">
         <div className="mx-auto max-w-4xl px-6 py-14 md:py-16">
-          <SearchLeadCapture
-            topic="family-reunion"
-            gatheringType="Family Reunion"
-            title="Want more family reunion planning help?"
-            body="Join the Place & Plenty Guest List for reunion planning ideas, practical hosting guidance and product updates tied to the kind of gathering you are actually planning."
-            buttonLabel="Send Me Reunion Planning Ideas"
-          />
+          <div id="free-checklist"><ChecklistSignup slug="family-reunion" name="Family Reunion" /></div>
         </div>
       </Band>
 

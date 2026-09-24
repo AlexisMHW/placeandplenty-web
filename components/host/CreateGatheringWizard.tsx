@@ -137,8 +137,12 @@ export interface ResumedDraft {
 
 export default function CreateGatheringWizard({
   resume = null,
+  preset,
+  checklistEdition,
 }: {
   resume?: ResumedDraft | null;
+  preset?: Partial<CreateGatheringInput>;
+  checklistEdition?: string;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(() => clampWizardStep(resume?.step ?? 1));
@@ -154,6 +158,7 @@ export default function CreateGatheringWizard({
         ...EMPTY_GATHERING_INPUT,
         gatheringDate: todayISODate(),
         arrivalTime: DEFAULT_ARRIVAL_TIME,
+        ...preset,
       }
   );
 
@@ -406,7 +411,7 @@ export default function CreateGatheringWizard({
         }
       }
 
-      router.replace(`/host/g/${saved.value}`);
+      router.replace(`/host/g/${saved.value}${checklistEdition ? "/people" : ""}`);
     });
   }
 

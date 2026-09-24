@@ -59,6 +59,98 @@ export const CHECKLISTS = [
       { title: "Be ready for kickoff", items: ["Prep food and set serving times around the game.", "Keep hot and cold foods at safe temperatures.", "Set out napkins, utensils, bathroom supplies, and bins.", "Finish the essentials early enough to claim your own seat."] },
     ],
   },
+  {
+    "slug": "bachelorette-weekend",
+    "name": "Bachelorette Weekend",
+    "image": "/images/bachelorette-weekend.webp",
+    "headline": "One weekend. One plan. Fewer group-chat spirals.",
+    "description": "A free bachelorette weekend planning checklist for the budget, itinerary, guest list, meals, and who is joining each activity.",
+    "note": "Agree on the budget before anyone books the matching robes.",
+    "sections": [
+      {
+        "title": "Agree on the weekend",
+        "items": [
+          "Ask the guest of honor what would make the weekend feel right.",
+          "Confirm dates, destination, guest count, and accessibility needs.",
+          "Agree on a per-person budget and what it does not include.",
+          "Choose one planning lead and a co-host to share the work."
+        ]
+      },
+      {
+        "title": "Make a plan people can say yes to",
+        "items": [
+          "Share the itinerary, costs, payment dates, and cancellation rules.",
+          "Ask who is joining each activity before making reservations.",
+          "Confirm travel, sleeping arrangements, and local transportation.",
+          "Leave breathing room between activities and time to rest."
+        ]
+      },
+      {
+        "title": "Feed and welcome your people",
+        "items": [
+          "Collect dietary needs and plan shared meals and snacks.",
+          "Assign groceries, drinks, decorations, and other contributions.",
+          "Check what the rental provides before buying supplies.",
+          "Share arrival instructions and a contact for late arrivals."
+        ]
+      },
+      {
+        "title": "Bring the weekend together",
+        "items": [
+          "Reconfirm bookings, activity headcounts, and weather plans.",
+          "Give each helper a specific job and a clear handoff time.",
+          "Share the final details and keep changes in one place.",
+          "Put the phone down for a while. You are part of the weekend."
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "family-reunion",
+    "name": "Family Reunion",
+    "image": "/images/harding-family-reunion.webp",
+    "headline": "Bring the family together. Keep the details together, too.",
+    "description": "A free family reunion planning checklist for invitations, household RSVPs, activities, shared meals, and a reunion everyone can enjoy.",
+    "note": "You can be the organizer without being the whole committee.",
+    "sections": [
+      {
+        "title": "Start with the people",
+        "items": [
+          "Choose dates and a place that work for the family.",
+          "Estimate adults and children across the households invited.",
+          "Ask about mobility, dietary, travel, and seating needs.",
+          "Agree on a budget and name a small planning team."
+        ]
+      },
+      {
+        "title": "Give everyone a clear invitation",
+        "items": [
+          "Share dates, location, costs, and an RSVP deadline.",
+          "Collect household replies and confirm who needs help responding.",
+          "Ask which meals and activities each household will attend.",
+          "Keep a contact person for updates and last-minute questions."
+        ]
+      },
+      {
+        "title": "Plan the meals and activities",
+        "items": [
+          "Build a schedule with time for meals, stories, and rest.",
+          "Assign dishes, supplies, and helper jobs to specific people.",
+          "Confirm portions, serving pieces, and reheating needs.",
+          "Include activities for children and a quieter place to sit."
+        ]
+      },
+      {
+        "title": "Make room for being together",
+        "items": [
+          "Confirm activity counts, directions, parking, and weather plans.",
+          "Share setup and cleanup jobs before reunion day.",
+          "Invite people to bring photos or a favorite family story.",
+          "Save reusable contacts and notes for the next reunion."
+        ]
+      }
+    ]
+  },
 ] as const;
 
 export type Checklist = (typeof CHECKLISTS)[number];
@@ -135,5 +227,83 @@ export const CHECKLIST_HELP: Record<string, { searchTitle: string; ideas: { titl
       { task: "Coordinate snacks and drinks", feature: "Who's Bringing What", help: "Organize guest contributions so everyone knows which part of the spread they are covering." },
       { task: "Check supplies and finish the essentials", feature: "My Hosting Closet + HostReady", help: "Check the supplies you already own and review gathering readiness early enough to enjoy the game yourself." },
     ],
+  },
+  "bachelorette-weekend": {
+    "searchTitle": "Bachelorette Weekend Planning Checklist & Itinerary Ideas",
+    "ideas": [
+      {
+        "title": "A cozy rental-house weekend",
+        "description": "Plan a welcome supper, one outing, and an unhurried brunch. Confirm the rental rules, costs, and sleeping arrangements before booking."
+      },
+      {
+        "title": "A local celebration",
+        "description": "Keep travel simple with a dinner, a shared activity, and a relaxed morning together. Let guests choose activities within their budget."
+      },
+      {
+        "title": "A destination weekend with breathing room",
+        "description": "Choose one anchor activity per day and leave time for travel, meals, and rest. Confirm attendance before paying deposits."
+      }
+    ],
+    "steps": [
+      {
+        "task": "Start with your people and dates",
+        "feature": "My People + Invitations",
+        "help": "Create your gathering and choose its duration. Add guests, choose an invitation, and share the details once you are ready."
+      },
+      {
+        "task": "Give each day a place in the plan",
+        "feature": "Multi-Day Planning",
+        "help": "With Multi-Day access, organize activities across your gathering dates and collect the activity responses you need."
+      },
+      {
+        "task": "Share the food and preparation",
+        "feature": "My Table + Who's Bringing What",
+        "help": "Keep shared meals and contributions with the plan. Assign specific supplies so your group knows who is covering what."
+      },
+      {
+        "task": "Keep everyone in the loop",
+        "feature": "My Co-Hosts + Guest Communications",
+        "help": "Bring a co-host into the plan and share updates through your gathering. Preview your invitation before sending it."
+      }
+    ]
+  },
+  "family-reunion": {
+    "searchTitle": "Family Reunion Planning Checklist, Invitations & Activity Ideas",
+    "ideas": [
+      {
+        "title": "A reunion around a shared meal",
+        "description": "Make one welcoming meal the center of the day. Assign contributions and leave space for family stories and photographs."
+      },
+      {
+        "title": "A park day for every generation",
+        "description": "Plan a picnic, games, accessible seating, and an indoor backup. Confirm facilities and permits with the venue."
+      },
+      {
+        "title": "A weekend to reconnect",
+        "description": "Combine a welcome meal, one family activity, and a farewell breakfast. Ask which parts each household can attend."
+      }
+    ],
+    "steps": [
+      {
+        "task": "Bring the households into one plan",
+        "feature": "My People + Invitations",
+        "help": "Create your gathering, add your people, and share a clear invitation. Keep responses connected to the gathering."
+      },
+      {
+        "task": "Organize the reunion across days",
+        "feature": "Multi-Day Planning",
+        "help": "With Multi-Day access, keep activities under one reunion and collect the responses needed for each part of the schedule."
+      },
+      {
+        "task": "Give every contribution an owner",
+        "feature": "Who's Bringing What + My Table",
+        "help": "Assign dishes and supplies, plan your own menu, and review what you need before shopping."
+      },
+      {
+        "task": "Make the next reunion easier",
+        "feature": "My Guest Book + My Co-Hosts",
+        "help": "Keep reusable contacts in My Guest Book and bring a co-host into this gathering to share the preparation."
+      }
+    ]
   },
 };

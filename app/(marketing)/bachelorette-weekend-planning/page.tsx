@@ -3,7 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Band, Display } from "@/components/Display";
 import Icon, { type IconName } from "@/components/Icon";
-import SearchLeadCapture from "@/components/SearchLeadCapture";
+import ChecklistSignup from "@/components/ChecklistSignup";
+import { checklistSignupUrl } from "@/lib/checklist-flow";
 import { BreadcrumbSchema, FaqSchema } from "@/components/StructuredData";
 
 export const metadata: Metadata = {
@@ -112,16 +113,16 @@ export default function BacheloretteWeekendPlanningPage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                href="/signup?next=%2Fhost"
+                href={checklistSignupUrl("bachelorette-weekend")}
                 className="rounded-full bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite"
               >
                 Start My Gathering Free
               </Link>
               <Link
-                href="/multi-day"
+                href="#free-checklist"
                 className="rounded-full border border-forest/25 bg-offwhite/70 px-6 py-3 font-body text-sm font-semibold text-forest"
               >
-                See Multi-Day Planning
+                Get My Free Checklist
               </Link>
             </div>
           </div>
@@ -198,13 +199,7 @@ export default function BacheloretteWeekendPlanningPage() {
 
       <Band tone="cream">
         <div className="mx-auto max-w-4xl px-6 py-14 md:py-16">
-          <SearchLeadCapture
-            topic="bachelorette-weekend"
-            gatheringType="Bachelorette Weekend"
-            title="Want more bachelorette weekend planning help?"
-            body="Join the Place & Plenty Guest List for planning ideas, practical hosting guidance and product updates tied to the kind of gathering you are actually planning."
-            buttonLabel="Send Me Planning Ideas"
-          />
+          <div id="free-checklist"><ChecklistSignup slug="bachelorette-weekend" name="Bachelorette Weekend" /></div>
         </div>
       </Band>
 
