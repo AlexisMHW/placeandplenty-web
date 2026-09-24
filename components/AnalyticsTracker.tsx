@@ -21,29 +21,29 @@ export default function AnalyticsTracker() {
     lastRouteEvent.current = routeKey;
 
     if (pathname === "/pricing") {
-      track("pricing_viewed", { source: "web" });
+      track("pricing_viewed", { client_platform: "web" });
     }
 
     if (pathname === "/host/create") {
-      track("gathering_started", { source: "web" });
+      track("gathering_started", { client_platform: "web" });
       sessionStorage.setItem("pp_gathering_creation_pending", String(Date.now()));
     }
 
     const product = checkoutProduct(pathname);
     if (product) {
-      track("paywall_viewed", { source: "web", product });
+      track("paywall_viewed", { client_platform: "web", product });
     }
 
     if (pathname.startsWith("/host/g/")) {
       const pending = Number(sessionStorage.getItem("pp_gathering_creation_pending") || 0);
       if (pending && Date.now() - pending < 30 * 60 * 1000) {
-        track("gathering_created", { source: "web" });
+        track("gathering_created", { client_platform: "web" });
         sessionStorage.removeItem("pp_gathering_creation_pending");
       }
     }
 
     if (pathname === "/host/account" && searchParams.get("purchase") === "success") {
-      track("purchase_completed", { source: "web" });
+      track("purchase_completed", { client_platform: "web" });
     }
   }, [pathname, searchParams]);
 
@@ -53,14 +53,14 @@ export default function AnalyticsTracker() {
       if (!(form instanceof HTMLFormElement)) return;
 
       if (pathname === "/signup") {
-        track("signup_started", { source: "web" });
+        track("signup_started", { client_platform: "web" });
       }
 
       const action = form.getAttribute("action") || "";
       if (action === "/api/checkout") {
         const data = new FormData(form);
         track("checkout_started", {
-          source: "web",
+          client_platform: "web",
           product: String(data.get("product") || "unknown"),
         });
       }
@@ -80,9 +80,9 @@ export default function AnalyticsTracker() {
       }
 
       if (url.hostname === "apps.apple.com") {
-        track("app_store_click", { source: "web" });
+        track("app_store_click", { client_platform: "web" });
       } else if (url.hostname === "play.google.com") {
-        track("play_store_click", { source: "web" });
+        track("play_store_click", { client_platform: "web" });
       }
     }
 
@@ -104,7 +104,7 @@ export default function AnalyticsTracker() {
       if (text.includes("Check your email.")) {
         captured = true;
         track("account_created", {
-          source: "web",
+          client_platform: "web",
           email_confirmation_required: true,
         });
       }
