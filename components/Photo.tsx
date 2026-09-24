@@ -54,7 +54,8 @@ export default function Photo({
   tone = "forest",
   caption,
   className = "",
-  imageClassName = "",
+  // Keep the founder portrait’s face intact in wide editorial cards.
+  imageClassName = src === "/images/alexis-founder.jpg" ? "object-top" : "",
   sizes = "100vw",
   priority = false,
   compact = false,

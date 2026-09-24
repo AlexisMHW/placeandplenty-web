@@ -34,6 +34,15 @@ export async function generateMetadata({
       description: post.socialDescription || post.metaDescription || post.deck || undefined,
       url: canonical,
       type: "article",
+      publishedTime: post.publishDate || undefined,
+      modifiedTime: post.updatedDate || post.publishDate || undefined,
+      images: [{ url: post.socialShareImage || articleImage(post), alt: post.featuredImageAlt || post.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.seoTitle || post.title,
+      description: post.socialDescription || post.metaDescription || post.deck || undefined,
+      images: [post.socialShareImage || articleImage(post)],
     },
   };
 }
