@@ -64,6 +64,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
   ]);
 
   const invitationUrl = artwork.get(gathering.id) ?? null;
+  const hasInvitationArtwork = Boolean(gathering.invitation_artwork_path);
   const multiDay =
     gathering.duration_type === "multi_day"
       ? await getMultiDayWorkspace(params.id)
@@ -113,8 +114,10 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
             </p>
             <h2 className="mt-2 font-display text-2xl text-forest">Match My Invitation</h2>
             <p className="mt-2 font-body text-sm leading-relaxed text-forest/70">
-              {invitationUrl
-                ? "Use your invitation as the visual starting point, then coordinate the rest of the paper suite around it."
+              {hasInvitationArtwork
+                ? gathering.invitation_artwork_mime_type === "application/pdf"
+                  ? "Your PDF invitation stays as the original artwork. Choose its main colors below and coordinate the rest of the paper suite around it."
+                  : "Use your invitation as the visual starting point, then coordinate the rest of the paper suite around it."
                 : "Upload an invitation in My People & Invitations first, then return here to coordinate the suite."}
             </p>
           </div>
@@ -130,7 +133,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
               href={base + "/people"}
               className="font-body text-sm font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4"
             >
-              {invitationUrl ? "Review invitation artwork" : "Upload invitation artwork"} →
+              {hasInvitationArtwork ? "Review invitation artwork" : "Upload invitation artwork"} →
             </Link>
           </div>
         </div>
@@ -303,7 +306,12 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
         </div>
       </section>
 
-      <PaperSuiteOrderBuilder gatheringId={params.id} multiDay={gathering.duration_type === "multi_day"} invitationUrl={invitationUrl} />
+      <PaperSuiteOrderBuilder
+        gatheringId={params.id}
+        multiDay={gathering.duration_type === "multi_day"}
+        invitationUrl={invitationUrl}
+        invitationMimeType={gathering.invitation_artwork_mime_type}
+      />
 
 
       {paperOrders.length > 0 && (
