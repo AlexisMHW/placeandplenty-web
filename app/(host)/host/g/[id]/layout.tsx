@@ -58,6 +58,11 @@ export default async function GatheringLayout({
           count: guests?.length ?? null,
         },
         {
+          label: "My Invitations",
+          href: `${base}/invitations`,
+          icon: "card",
+        },
+        {
           label: "Guest Experience",
           href: `${base}/guest-experience`,
           icon: "people",
