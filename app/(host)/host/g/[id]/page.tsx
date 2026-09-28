@@ -102,10 +102,10 @@ export default async function GatheringOverviewPage({ params }: { params: { id: 
               Your invitation stays at the front of this gathering while RSVPs, contributions and planning build around it.
             </p>
             <Link
-              href={`${base}/people`}
+              href={`${base}/invitations`}
               className="mt-5 inline-flex items-center gap-1.5 border-b border-gold pb-0.5 font-body text-xs font-semibold uppercase tracking-[0.12em] text-forest"
             >
-              Open My People &amp; Invitations <span aria-hidden>→</span>
+              Open My Invitations <span aria-hidden>→</span>
             </Link>
           </div>
           <GatheringIdentity
@@ -167,7 +167,7 @@ export default async function GatheringOverviewPage({ params }: { params: { id: 
           )}
         </Card>
 
-        <Card title="Invitations" href={`${base}/people`} action="Go to My People">
+        <Card title="Invitations" href={`${base}/invitations`} action="Manage Invitations">
           <p className="font-body text-sm leading-relaxed text-forest/75">
             {usesOwnArtwork(gathering.invitation_mode)
               ? "You’re using your own invitation artwork for this one, and it’s the face of this gathering everywhere in Place & Plenty. Everything else works exactly the same."
