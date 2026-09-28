@@ -19,6 +19,7 @@ const sections: Array<{
     heading: "Your people",
     items: [
       { label: "My People", body: "Guests, RSVPs and the people coming to this gathering.", href: "people", icon: "people" },
+      { label: "My Invitations", body: "Upload your own invitation artwork or manage the invitation identity for this gathering.", href: "invitations", icon: "card" },
       { label: "Who’s Bringing What", body: "Keep contributions clear without chasing people down.", href: "contributions", icon: "gift" },
       { label: "My Co-Hosts", body: "The people helping you plan and host this one.", href: "co-hosts", icon: "cohosts" },
     ],
