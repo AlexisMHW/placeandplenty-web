@@ -8,11 +8,18 @@ export async function GET() {
   const sessionId = "cs_test_a1jFvZwA5V7XP8rJ8PzoMbVaTGOrsyRAmHJsqiWKfGMItki988AWzYR1BU";
   if (!key) return NextResponse.json({ ok:false, error:"stripe_not_configured" }, { status:500 });
 
-  const response = await fetch("https://api.stripe.com/v1/checkout/sessions/" + encodeURIComponent(sessionId), {
+  const [response, accountResponse] = await Promise.all([
+    fetch("https://api.stripe.com/v1/checkout/sessions/" + encodeURIComponent(sessionId), {
     headers: { Authorization: "Bearer " + key },
-    cache: "no-store",
-  });
+      cache: "no-store",
+    }),
+    fetch("https://api.stripe.com/v1/account", {
+      headers: { Authorization: "Bearer " + key },
+      cache: "no-store",
+    }),
+  ]);
   const body = await response.json();
+  const account = await accountResponse.json();
   if (!response.ok) return NextResponse.json({ ok:false, status:response.status, body }, { status:502 });
 
   return NextResponse.json({
@@ -26,5 +33,7 @@ export async function GET() {
     metadata:body.metadata,
     mode:body.mode,
     livemode:body.livemode,
+    stripe_account_id:account.id ?? null,
+    stripe_account_email:account.email ?? null,
   });
 }
