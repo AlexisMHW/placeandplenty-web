@@ -13,17 +13,12 @@ import GelatoConnectionPanel from "@/components/host/GelatoConnectionPanel";
 import PaperSuiteOrderBuilder from "@/components/host/PaperSuiteOrderBuilder";
 import PaperSuitePurchaseStatus from "@/components/host/PaperSuitePurchaseStatus";
 import PaperOrderStatusSyncButton from "@/components/host/PaperOrderStatusSyncButton";
+import PaperHouseDesignPreview from "@/components/PaperHouseDesignPreview";
+import { PAPER_TEMPLATES } from "@/lib/paper-suite-templates";
 import { getPaperOrders } from "@/lib/paper-order-data";
 
 export const metadata = { title: "My Paper Suite" };
 export const dynamic = "force-dynamic";
-
-const TEMPLATES = [
-  ["Classic Editorial", "Cream, forest and restrained type.", "bg-cream border-gold/30"],
-  ["Soft Botanical", "Sage-forward with botanical warmth.", "bg-sage/20 border-sage/40"],
-  ["Modern Clean", "Crisp spacing and a quieter contemporary layout.", "bg-offwhite border-forest/20"],
-  ["Warm Celebration", "Parchment and warm accents for milestone gatherings.", "bg-parchment border-gold/35"],
-] as const;
 
 const CATEGORY_LABEL: Record<string, string> = {
   appetizer: "Appetizers",
@@ -147,12 +142,16 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
           <p className="mt-2 font-body text-sm leading-relaxed text-forest/65">
             Your gathering data fills these controlled print templates automatically.
           </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {TEMPLATES.map(([label, body, classes]) => (
-              <div key={label} className={"min-h-[9rem] rounded-xl border p-4 text-forest " + classes}>
-                <p className="font-display text-lg">{label}</p>
-                <div className="mt-2 h-px w-10 bg-current opacity-30" />
-                <p className="mt-3 font-body text-xs leading-relaxed opacity-75">{body}</p>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {PAPER_TEMPLATES.map((design) => (
+              <div key={design.id} className="rounded-xl border border-sage/25 bg-cream/50 p-3">
+                <PaperHouseDesignPreview
+                  template={design.id}
+                  gatheringName={gathering.name}
+                  compact
+                />
+                <p className="mt-3 font-display text-lg text-forest">{design.name}</p>
+                <p className="mt-1 font-body text-xs leading-relaxed text-forest/65">{design.description}</p>
               </div>
             ))}
           </div>
