@@ -11,9 +11,9 @@ import { MULTI_DAY_PRICING, PRICING_TIERS } from "@/lib/pricing";
 //
 // Two consequences worth spelling out, because both look like omissions:
 //
-//   - Offer carries `availability: PreOrder`, not InStock. Public paid
-//     checkout is not live yet. Marking a price InStock would overstate
-//     the current release state to a shopping crawler.
+//   - Offer availability follows the live web purchase state. Signed-in
+//     hosts can buy eligible paid access on placeandplenty.com, so these
+//     offers are InStock rather than the prelaunch PreOrder value.
 //   - There is no AggregateRating anywhere. There are no reviews. Review
 //     markup without reviews is the single most common cause of a
 //     structured-data penalty.
@@ -205,7 +205,7 @@ export function PricingSchema() {
             price: tier.price.replace("$", ""),
             priceCurrency: "USD",
             description: tier.description,
-            availability: "https://schema.org/PreOrder",
+            availability: "https://schema.org/InStock",
             url: "https://placeandplenty.com/pricing",
           })),
           ...[
@@ -219,7 +219,7 @@ export function PricingSchema() {
             price: price.replace("$", ""),
             priceCurrency: "USD",
             description,
-            availability: "https://schema.org/PreOrder",
+            availability: "https://schema.org/InStock",
             url: "https://placeandplenty.com/multi-day",
           })),
         ],
