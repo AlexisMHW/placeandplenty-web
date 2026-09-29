@@ -131,7 +131,7 @@ export default function PaperSuiteMarketingPage() {
         </div>
       </Band>
 
-      <Band tone="offwhite">
+      <Band tone="plain">
         <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
           <div className="mx-auto max-w-3xl text-center">
             <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
