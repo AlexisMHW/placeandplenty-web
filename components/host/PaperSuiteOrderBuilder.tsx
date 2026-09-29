@@ -9,6 +9,11 @@ import {
   type PaperPieceKind,
   type PaperSizeId,
 } from "@/lib/paper-suite-catalog";
+import PaperHouseDesignPreview from "@/components/PaperHouseDesignPreview";
+import {
+  PAPER_TEMPLATES,
+  type PaperPaperTemplateId,
+} from "@/lib/paper-suite-templates";
 
 type ProductCandidate = {
   productUid: string;
@@ -16,12 +21,6 @@ type ProductCandidate = {
   title?: string;
   quantities?: number[];
 };
-
-type TemplateId =
-  | "classic-editorial"
-  | "soft-botanical"
-  | "modern-clean"
-  | "warm-celebration";
 
 type Recipient = {
   country: string;
@@ -180,7 +179,7 @@ export default function PaperSuiteOrderBuilder({
 
   const [kind, setKind] = useState<PaperPieceKind>(initialKind);
   const [size, setSize] = useState<PaperSizeId>(initialPiece.defaultSize);
-  const [template, setTemplate] = useState<TemplateId>("classic-editorial");
+  const [template, setTemplate] = useState<PaperTemplateId>("classic-editorial");
   const [bodyCopy, setBodyCopy] = useState("");
   const [printUrl, setPrintUrl] = useState<string | null>(null);
   const [products, setProducts] = useState<ProductCandidate[]>([]);
@@ -509,23 +508,51 @@ export default function PaperSuiteOrderBuilder({
           </p>
         </label>
 
-        <label className="block">
-          <span className="mb-1 block font-body text-sm font-semibold text-forest">Design</span>
-          <select
-            value={template}
-            onChange={(event) => {
-              setTemplate(event.target.value as TemplateId);
-              setPrintUrl(null);
-              resetQuote();
-            }}
-            className="w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-forest"
-          >
-            <option value="classic-editorial">Classic Editorial</option>
-            <option value="soft-botanical">Soft Botanical</option>
-            <option value="modern-clean">Modern Clean</option>
-            <option value="warm-celebration">Warm Celebration</option>
-          </select>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="block">
+          <span className="mb-2 block font-body text-sm font-semibold text-forest">Design</span>
+          <div className="grid grid-cols-2 gap-3">
+            {PAPER_TEMPLATES.map((design) => {
+              const selected = template === design.id;
+              return (
+                <button
+                  key={design.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => {
+                    setTemplate(design.id);
+                    setPrintUrl(null);
+                    resetQuote();
+                  }}
+                  className={
+                    "rounded-xl border p-2 text-left transition " +
+                    (selected
+                      ? "border-forest bg-sage/15 shadow-soft"
+                      : "border-sage/25 bg-white hover:border-sage/50")
+                  }
+                >
+                  <PaperHouseDesignPreview template={design.id} compact />
+                  <div className="mt-2 flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-display text-sm leading-tight text-forest">{design.name}</p>
+                      <p className="mt-1 font-body text-[0.62rem] leading-snug text-forest/55">
+                        {design.description}
+                      </p>
+                    </div>
+                    <span
+                      className={
+                        "mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border " +
+                        (selected ? "border-forest bg-forest" : "border-sage/50 bg-white")
+                      }
+                      aria-hidden
+                    >
+                      {selected ? <span className="h-1.5 w-1.5 rounded-full bg-offwhite" /> : null}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+<div className="mt-3 flex flex-wrap items-center gap-2">
             {invitationUrl && !hasPdfInvitation && (
               <button
                 type="button"
@@ -598,7 +625,8 @@ export default function PaperSuiteOrderBuilder({
               <span className="ml-1 font-body text-[0.66rem] text-forest/50">Invitation palette</span>
             </div>
           )}
-        </label>
+
+        </div>
       </div>
 
       {(kind === "thank-you" || kind === "details" || kind === "welcome-sign") && (
