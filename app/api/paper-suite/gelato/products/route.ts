@@ -7,6 +7,7 @@ import {
   gelatoPaperFormat,
   gelatoProductMatchesSize,
   gelatoSupportedQuantities,
+  preferredGelatoProduct,
 } from "@/lib/paper-suite-gelato";
 
 export const runtime = "nodejs";
@@ -87,7 +88,14 @@ export async function GET(req: NextRequest) {
       })
       .slice(0, 3);
 
-    const selected = curated.length > 0 ? curated : ranked.slice(0, 3);
+    const preferredUid = preferredGelatoProduct(requestedSize);
+    const preferred = ranked.find((product) => product.productUid === preferredUid) || null;
+    const fallbackPool = curated.length > 0 ? curated : ranked;
+    const selected = [
+      ...(preferred ? [preferred] : []),
+      ...fallbackPool.filter((product) => product.productUid !== preferredUid),
+    ].slice(0, 3);
+
     const candidates = await Promise.all(
       selected.map(async ({ score: _score, finishLabel: _finishLabel, ...product }) => ({
         ...product,
@@ -102,6 +110,8 @@ export async function GET(req: NextRequest) {
       candidates,
       curated: true,
       validatedMapping: true,
+      preferredProductUid: preferredUid,
+      preferredProductAvailable: Boolean(preferred),
     });
   } catch (error) {
     console.error("Gelato product discovery failed", error);
