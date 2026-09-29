@@ -5,8 +5,27 @@ export type PaperRetailPrice = {
   testModeAtCost: boolean;
 };
 
+export const APPROVED_PAPER_SUITE_PRICING = {
+  markupPercent: 40,
+  minimumMarginCents: 600,
+  roundTo99: true,
+} as const;
+
 function paymentKey() {
   return process.env.PAYMENT_PROCESSOR_SECRET_KEY?.trim() || "";
+}
+
+function configuredNumber(name: string, fallback: number) {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function roundUpTo99(cents: number) {
+  if (cents <= 0) return 99;
+  if (cents % 100 === 99) return cents;
+  return Math.floor(cents / 100) * 100 + 99;
 }
 
 export function paperRetailPrice(gelatoCostCents: number): PaperRetailPrice {
@@ -14,8 +33,8 @@ export function paperRetailPrice(gelatoCostCents: number): PaperRetailPrice {
     throw new Error("invalid_gelato_cost");
   }
 
-  // Sandbox checkout is intentionally allowed at cost so the full payment
-  // plumbing can be verified before the business locks a retail margin.
+  // Sandbox checkout stays at quoted fulfillment cost so commerce plumbing can
+  // be tested without creating artificial margin in Stripe test mode.
   if (paymentKey().startsWith("sk_test_")) {
     return {
       gelatoCostCents,
@@ -25,15 +44,30 @@ export function paperRetailPrice(gelatoCostCents: number): PaperRetailPrice {
     };
   }
 
-  const markup = Number(process.env.PAPER_SUITE_MARKUP_PERCENT);
-  if (!Number.isFinite(markup) || markup < 0) {
-    throw new Error("paper_suite_pricing_not_configured");
-  }
+  // Approved V1 Paper Suite retail model:
+  // - 40% markup over the current Gelato print + shipping quote
+  // - at least $6.00 gross margin per physical order
+  // - customer-facing subtotal rounded up to a .99 ending
+  // Environment variables remain available as an emergency override without
+  // changing the approved defaults in source control.
+  const markup = configuredNumber(
+    "PAPER_SUITE_MARKUP_PERCENT",
+    APPROVED_PAPER_SUITE_PRICING.markupPercent
+  );
+  const minMargin = Math.round(
+    configuredNumber(
+      "PAPER_SUITE_MIN_MARGIN_CENTS",
+      APPROVED_PAPER_SUITE_PRICING.minimumMarginCents
+    )
+  );
 
-  const minMargin = Number(process.env.PAPER_SUITE_MIN_MARGIN_CENTS || "0");
-  const safeMinMargin = Number.isFinite(minMargin) && minMargin >= 0 ? Math.round(minMargin) : 0;
   const byMarkup = Math.ceil(gelatoCostCents * (1 + markup / 100));
-  const retailSubtotalCents = Math.max(byMarkup, gelatoCostCents + safeMinMargin, 50);
+  const marginFloor = gelatoCostCents + minMargin;
+  let retailSubtotalCents = Math.max(byMarkup, marginFloor, 50);
+
+  if (APPROVED_PAPER_SUITE_PRICING.roundTo99) {
+    retailSubtotalCents = roundUpTo99(retailSubtotalCents);
+  }
 
   return {
     gelatoCostCents,
