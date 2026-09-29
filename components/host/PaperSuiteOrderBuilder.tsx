@@ -780,7 +780,7 @@ export default function PaperSuiteOrderBuilder({
               </div>
               {pricing.testModeAtCost && (
                 <p className="mt-2 font-body text-xs leading-relaxed text-forest/55">
-                  Sandbox mode is testing at fulfillment cost. A production retail margin is not locked yet.
+                  Sandbox mode is intentionally testing at fulfillment cost. Production Paper Suite pricing is already locked.
                 </p>
               )}
             </div>
