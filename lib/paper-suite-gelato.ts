@@ -15,6 +15,22 @@ export const GELATO_PAPER_FORMAT_BY_SIZE: Record<PaperSizeId, string> = {
   a4: "A4",
 };
 
+
+
+export const GELATO_PREFERRED_PRODUCT_BY_SIZE: Record<PaperSizeId, string> = {
+  a6: "flyers_pf_a6_pt_100-lb-text-uncoated_cl_4-0_ver",
+  "5x7": "cards_pf_5r_pt_100-lb-cover-uncoated_cl_4-0_ver",
+  "4x9": "cards_pf_4x9-inch_pt_100-lb-cover-uncoated_cl_4-0_ver",
+  "square-525": "cards_pf_sx_pt_110-lb-cover-uncoated_cl_4-0_hor",
+  a5: "cards_pf_a5_pt_100-lb-cover-uncoated_cl_4-0_ver",
+  "8x10": "flat_product_pf_200x250-mm_pt_250-gsm-uncoated-offwhite-archival_cl_4-0_ct_none_prt_none_sft_none_set_none_ver",
+  a4: "cards_pf_a4_pt_100-lb-cover-uncoated_cl_4-0_ver",
+};
+
+export function preferredGelatoProduct(size: PaperSizeId) {
+  return GELATO_PREFERRED_PRODUCT_BY_SIZE[size];
+}
+
 export const GELATO_CATALOG_BY_SIZE: Record<PaperSizeId, "cards" | "posters"> = {
   a6: "cards",
   "5x7": "cards",
