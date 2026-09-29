@@ -12,7 +12,7 @@ import {
 import PaperHouseDesignPreview from "@/components/PaperHouseDesignPreview";
 import {
   PAPER_TEMPLATES,
-  type PaperPaperTemplateId,
+  type PaperTemplateId,
 } from "@/lib/paper-suite-templates";
 
 type ProductCandidate = {
