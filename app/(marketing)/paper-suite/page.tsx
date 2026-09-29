@@ -3,6 +3,8 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import { Band, Display } from "@/components/Display";
 import { FaqSchema } from "@/components/StructuredData";
+import PaperHouseDesignPreview from "@/components/PaperHouseDesignPreview";
+import { PAPER_TEMPLATES } from "@/lib/paper-suite-templates";
 
 export const metadata: Metadata = {
   title: "Paper Suite | Invitations, Menus, Itineraries & Thank-You Cards",
@@ -123,6 +125,34 @@ export default function PaperSuiteMarketingPage() {
                 <p className="mt-5 border-t border-sage/20 pt-4 font-body text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-forest/50">
                   {piece.sizes}
                 </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </Band>
+
+      <Band tone="offwhite">
+        <div className="mx-auto max-w-editorial px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="font-body text-[0.7rem] font-bold uppercase tracking-[0.24em] text-forest/60">
+              Four Place & Plenty house designs
+            </p>
+            <Display className="mt-4 text-3xl leading-tight text-forest md:text-[2.5rem]">
+              Start with a house style, then make it yours.
+            </Display>
+            <p className="mt-4 font-body text-base leading-relaxed text-forest/75">
+              Choose Classic Editorial, Soft Botanical, Modern Clean or Warm Celebration.
+              The same gathering content flows into each design, and Match My Invitation can
+              replace the house palette with colors pulled from your own invitation.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {PAPER_TEMPLATES.map((design) => (
+              <article key={design.id} className="rounded-2xl border border-sage/25 bg-cream p-3 shadow-softer">
+                <PaperHouseDesignPreview template={design.id} />
+                <h2 className="mt-4 font-display text-xl text-forest">{design.name}</h2>
+                <p className="mt-2 font-body text-sm leading-relaxed text-forest/68">{design.description}</p>
               </article>
             ))}
           </div>
