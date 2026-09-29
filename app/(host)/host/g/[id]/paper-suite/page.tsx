@@ -12,6 +12,7 @@ import { WorkspaceHeader } from "@/components/host/Workspace";
 import GelatoConnectionPanel from "@/components/host/GelatoConnectionPanel";
 import PaperSuiteOrderBuilder from "@/components/host/PaperSuiteOrderBuilder";
 import PaperSuitePurchaseStatus from "@/components/host/PaperSuitePurchaseStatus";
+import PaperOrderStatusSyncButton from "@/components/host/PaperOrderStatusSyncButton";
 import { getPaperOrders } from "@/lib/paper-order-data";
 
 export const metadata = { title: "My Paper Suite" };
@@ -336,6 +337,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
                   <th className="px-2 py-3 font-semibold">Qty</th>
                   <th className="px-2 py-3 font-semibold">Subtotal</th>
                   <th className="px-2 py-3 font-semibold">Status</th>
+                  <th className="px-2 py-3 font-semibold">Tracking</th>
                 </tr>
               </thead>
               <tbody>
@@ -353,9 +355,44 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
                       }).format(order.retail_subtotal_cents / 100)}
                     </td>
                     <td className="px-2 py-3 font-body text-sm text-forest/70">
-                      {order.gelato_order_type === "draft" && order.status === "submitted"
-                        ? "Sandbox draft"
-                        : order.status.replace(/_/g, " ")}
+                      <div>
+                        {order.gelato_order_type === "draft" && order.status === "submitted"
+                          ? "Sandbox draft"
+                          : order.status.replace(/_/g, " ")}
+                      </div>
+                      {order.gelato_order_id ? (
+                        <div className="mt-1">
+                          <PaperOrderStatusSyncButton orderId={order.id} />
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="px-2 py-3 font-body text-sm text-forest/70">
+                      {order.tracking_url ? (
+                        <a
+                          href={order.tracking_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4"
+                        >
+                          Track shipment
+                        </a>
+                      ) : order.estimated_delivery_min || order.estimated_delivery_max ? (
+                        <span>
+                          ETA {order.estimated_delivery_min || order.estimated_delivery_max}
+                          {order.estimated_delivery_min &&
+                          order.estimated_delivery_max &&
+                          order.estimated_delivery_min !== order.estimated_delivery_max
+                            ? " – " + order.estimated_delivery_max
+                            : ""}
+                        </span>
+                      ) : (
+                        <span className="text-forest/45">
+                          {order.gelato_order_type === "draft" ? "Not shipped in sandbox" : "Not available yet"}
+                        </span>
+                      )}
+                      {order.tracking_carrier ? (
+                        <div className="mt-1 text-xs text-forest/45">{order.tracking_carrier}</div>
+                      ) : null}
                     </td>
                   </tr>
                 ))}
