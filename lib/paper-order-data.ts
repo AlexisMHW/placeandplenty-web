@@ -13,6 +13,15 @@ export type PaperOrderSummary = {
   created_at: string;
   paid_at: string | null;
   submitted_at: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  gelato_fulfillment_status: string | null;
+  tracking_carrier: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  estimated_delivery_min: string | null;
+  estimated_delivery_max: string | null;
+  fulfillment_synced_at: string | null;
 };
 
 export async function getPaperOrders(gatheringId: string): Promise<PaperOrderSummary[]> {
@@ -20,7 +29,7 @@ export async function getPaperOrders(gatheringId: string): Promise<PaperOrderSum
   const { data, error } = await supabase
     .from("paper_orders")
     .select(
-      "id,status,piece_type,size_id,quantity,currency,retail_subtotal_cents,gelato_order_id,gelato_order_type,created_at,paid_at,submitted_at"
+      "id,status,piece_type,size_id,quantity,currency,retail_subtotal_cents,gelato_order_id,gelato_order_type,created_at,paid_at,submitted_at,shipped_at,delivered_at,gelato_fulfillment_status,tracking_carrier,tracking_number,tracking_url,estimated_delivery_min,estimated_delivery_max,fulfillment_synced_at"
     )
     .eq("gathering_id", gatheringId)
     .order("created_at", { ascending: false })
