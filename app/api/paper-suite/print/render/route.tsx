@@ -54,6 +54,9 @@ export async function GET(req: NextRequest) {
   }
 
   const tokens = payload.palette || paperTemplateTokens(payload.template);
+  const modern = payload.template === "modern-clean";
+  const botanical = payload.template === "soft-botanical";
+  const celebration = payload.template === "warm-celebration";
   const tall = size.family === "tall" || size.family === "sign";
   const square = size.family === "square";
   const scale = size.widthPx / 1500;
@@ -98,15 +101,56 @@ export async function GET(req: NextRequest) {
           background: tokens.background,
           color: tokens.text,
           padding: padY + "px " + padX + "px",
-          fontFamily: "Georgia, serif",
+          fontFamily: modern ? "Arial, sans-serif" : "Georgia, serif",
+          position: "relative",
         }}
       >
+        {celebration ? (
+          <div
+            style={{
+              position: "absolute",
+              inset: Math.round(38 * scale),
+              border: Math.max(2, Math.round(3 * scale)) + "px solid " + tokens.accent,
+              opacity: 0.42,
+            }}
+          />
+        ) : null}
+
+        {botanical ? (
+          <>
+            <div
+              style={{
+                position: "absolute",
+                right: Math.round(24 * scale),
+                top: Math.round(24 * scale),
+                width: Math.round(150 * scale),
+                height: Math.round(150 * scale),
+                borderRadius: 9999,
+                border: Math.max(2, Math.round(3 * scale)) + "px solid " + tokens.accent,
+                opacity: 0.24,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                right: Math.round(84 * scale),
+                top: Math.round(26 * scale),
+                width: Math.max(2, Math.round(3 * scale)),
+                height: Math.round(170 * scale),
+                background: tokens.accent,
+                transform: "rotate(42deg)",
+                opacity: 0.28,
+              }}
+            />
+          </>
+        ) : null}
+
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
+            alignItems: modern ? "flex-start" : "center",
+            textAlign: modern ? "left" : "center",
           }}
         >
           <div
@@ -127,6 +171,8 @@ export async function GET(req: NextRequest) {
               fontSize: titleSize,
               lineHeight: 1.05,
               maxWidth: size.widthPx - padX * 2,
+              fontWeight: modern ? 700 : 400,
+              letterSpacing: modern ? Math.max(1, Math.round(1.5 * scale)) : 0,
             }}
           >
             {payload.gatheringName}
@@ -135,8 +181,9 @@ export async function GET(req: NextRequest) {
             style={{
               marginTop: Math.round(22 * scale),
               height: Math.max(2, Math.round(3 * scale)),
-              width: Math.round(120 * scale),
+              width: modern ? "100%" : Math.round((celebration ? 170 : 120) * scale),
               background: tokens.accent,
+              opacity: modern ? 0.35 : 1,
             }}
           />
           <div
@@ -146,7 +193,7 @@ export async function GET(req: NextRequest) {
               color: tokens.text,
               opacity: 0.72,
               fontFamily: "Arial, sans-serif",
-              textAlign: "center",
+              textAlign: modern ? "left" : "center",
             }}
           >
             {[payload.dateLabel, payload.timeLabel, payload.locationName]
@@ -162,7 +209,7 @@ export async function GET(req: NextRequest) {
               display: "flex",
               flexDirection: "column",
               gap: contentGap,
-              alignItems: "center",
+              alignItems: modern ? "flex-start" : "center",
             }}
           >
             {(payload.menu || []).slice(0, tall ? 7 : 6).map((group) => (
@@ -171,7 +218,7 @@ export async function GET(req: NextRequest) {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
+                  alignItems: modern ? "flex-start" : "center",
                   width: "100%",
                 }}
               >
@@ -192,7 +239,7 @@ export async function GET(req: NextRequest) {
                     marginTop: Math.round(10 * scale),
                     fontSize: Math.round((tall ? 30 : 34) * scale),
                     lineHeight: 1.42,
-                    textAlign: "center",
+                    textAlign: modern ? "left" : "center",
                     maxWidth: size.widthPx - padX * 2,
                   }}
                 >
@@ -292,8 +339,8 @@ export async function GET(req: NextRequest) {
               marginTop: Math.round((square ? 70 : tall ? 90 : 85) * scale),
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
+              alignItems: modern ? "flex-start" : "center",
+              textAlign: modern ? "left" : "center",
             }}
           >
             {isInvitation && (
