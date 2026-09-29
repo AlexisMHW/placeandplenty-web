@@ -118,7 +118,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
                 ? gathering.invitation_artwork_mime_type === "application/pdf"
                   ? "Your PDF invitation stays as the original artwork. Choose its main colors below and coordinate the rest of the paper suite around it."
                   : "Use your invitation as the visual starting point, then coordinate the rest of the paper suite around it."
-                : "Upload an invitation in My People & Invitations first, then return here to coordinate the suite."}
+                : "Upload an invitation in My Invitations first, then return here to coordinate the suite."}
             </p>
           </div>
           <GatheringIdentity
@@ -130,7 +130,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
           />
           <div className="p-5">
             <Link
-              href={base + "/people"}
+              href={base + "/invitations"}
               className="font-body text-sm font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4"
             >
               {hasInvitationArtwork ? "Review invitation artwork" : "Upload invitation artwork"} →
@@ -275,8 +275,8 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
                 Confirmed guests will flow here automatically.
               </p>
             )}
-            <Link href={base + "/people"} className="mt-6 block text-center font-body text-xs font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4">
-              Review My People →
+            <Link href={base + "/invitations"} className="mt-6 block text-center font-body text-xs font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4">
+              Review My Invitations →
             </Link>
           </article>
 
