@@ -163,11 +163,13 @@ export default function PaperSuiteOrderBuilder({
   multiDay,
   invitationUrl,
   invitationMimeType,
+  initialTemplate = "classic-editorial",
 }: {
   gatheringId: string;
   multiDay: boolean;
   invitationUrl?: string | null;
   invitationMimeType?: string | null;
+  initialTemplate?: PaperTemplateId;
 }) {
   const availablePieces = useMemo(
     () => PAPER_PIECES.filter((piece) => piece.id !== "itinerary" || multiDay),
@@ -179,7 +181,7 @@ export default function PaperSuiteOrderBuilder({
 
   const [kind, setKind] = useState<PaperPieceKind>(initialKind);
   const [size, setSize] = useState<PaperSizeId>(initialPiece.defaultSize);
-  const [template, setTemplate] = useState<PaperTemplateId>("classic-editorial");
+  const [template, setTemplate] = useState<PaperTemplateId>(initialTemplate);
   const [bodyCopy, setBodyCopy] = useState("");
   const [printUrl, setPrintUrl] = useState<string | null>(null);
   const [products, setProducts] = useState<ProductCandidate[]>([]);
