@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
           .replace(/uncoated/gi, "")
           .replace(/silk/gi, "")
           .replace(/gsm/gi, "gsm")
-          .replace(/s+/g, " ")
+          .replace(/\\s+/g, " ")
           .trim();
 
         return {
