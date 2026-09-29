@@ -12,6 +12,7 @@ import {
 import PaperHouseDesignPreview from "@/components/PaperHouseDesignPreview";
 import {
   PAPER_TEMPLATES,
+  paperTemplateDefinition,
   type PaperTemplateId,
 } from "@/lib/paper-suite-templates";
 
@@ -89,7 +90,10 @@ function relativeLuminance(r: number, g: number, b: number) {
   return 0.2126 * convert(r) + 0.7152 * convert(g) + 0.0722 * convert(b);
 }
 
-async function extractInvitationPalette(url: string): Promise<MatchedPalette> {
+async function extractInvitationPalette(
+  url: string,
+  template: PaperTemplateId
+): Promise<MatchedPalette> {
   const image = new Image();
   image.crossOrigin = "anonymous";
   image.decoding = "async";
@@ -121,30 +125,38 @@ async function extractInvitationPalette(url: string): Promise<MatchedPalette> {
     else buckets.set(key, { count: 1, r, g, b });
   }
 
-  const colors = [...buckets.values()].sort((a, b) => b.count - a.count).slice(0, 16);
+  const colors = [...buckets.values()].sort((a, b) => b.count - a.count).slice(0, 24);
   if (colors.length === 0) throw new Error("no_palette");
 
-  const background = colors[0];
-  const distance = (a: typeof background, b: typeof background) =>
+  const distance = (a: (typeof colors)[number], b: (typeof colors)[number]) =>
     Math.sqrt(
       Math.pow(a.r - b.r, 2) +
         Math.pow(a.g - b.g, 2) +
         Math.pow(a.b - b.b, 2)
     );
 
-  const accent =
-    colors.find((color) => distance(background, color) > 105) ||
-    colors.find((color) => distance(background, color) > 65) ||
-    { r: 201, g: 162, b: 39, count: 0 };
+  // Coordinate with the invitation rather than repainting the whole
+  // paper suite with its dominant color. The selected house design keeps
+  // its paper/background and readable text treatment; invitation colors
+  // become accents and rules.
+  const base = paperTemplateDefinition(template);
+  const usable = colors.filter((color) => {
+    const lum = relativeLuminance(color.r, color.g, color.b);
+    const spread = Math.max(color.r, color.g, color.b) - Math.min(color.r, color.g, color.b);
+    return lum > 0.025 && lum < 0.92 && spread >= 28;
+  });
 
-  const luminance = relativeLuminance(background.r, background.g, background.b);
-  const text = luminance > 0.46 ? "#142720" : "#F7F4EC";
+  const primary = usable[0] || colors[0];
+  const secondary =
+    usable.find((color) => color !== primary && distance(primary, color) > 85) ||
+    colors.find((color) => color !== primary && distance(primary, color) > 105) ||
+    null;
 
   return {
-    background: rgbToHex(background.r, background.g, background.b),
-    text,
-    accent: rgbToHex(accent.r, accent.g, accent.b),
-    rule: rgbToHex(accent.r, accent.g, accent.b),
+    background: base.background,
+    text: base.text,
+    accent: rgbToHex(primary.r, primary.g, primary.b),
+    rule: secondary ? rgbToHex(secondary.r, secondary.g, secondary.b) : base.rule,
   };
 }
 
@@ -269,29 +281,30 @@ export default function PaperSuiteOrderBuilder({
   }
 
   function applyManualInvitationPalette() {
-    const backgroundRgb = hexToRgb(manualBackground);
-    if (!backgroundRgb) {
-      setMessage("Choose a valid background color first.");
+    const first = hexToRgb(manualBackground);
+    const second = hexToRgb(manualAccent);
+    if (!first || !second) {
+      setMessage("Choose two valid invitation colors first.");
       return;
     }
 
-    const luminance = relativeLuminance(backgroundRgb.r, backgroundRgb.g, backgroundRgb.b);
+    const house = paperTemplateDefinition(template);
     setMatchedPalette({
-      background: manualBackground.toUpperCase(),
-      text: luminance > 0.46 ? "#142720" : "#F7F4EC",
+      background: house.background,
+      text: house.text,
       accent: manualAccent.toUpperCase(),
-      rule: manualAccent.toUpperCase(),
+      rule: manualBackground.toUpperCase(),
     });
     setPrintUrl(null);
     resetQuote();
-    setMessage("PDF invitation colors applied. The rest of the suite will coordinate with this palette.");
+    setMessage("Invitation colors coordinated with the selected Place & Plenty house design.");
   }
 
   async function matchInvitation() {
     if (!invitationUrl) {
       setMessage(
         hasPdfInvitation
-          ? "Your PDF invitation is attached. Use the color controls below to carry its palette into the suite."
+          ? "Your PDF invitation is attached. Choose two colors from it and Place & Plenty will use them as accents while keeping the selected house design light and readable."
           : "Upload a JPG or PNG invitation first, then return here to match the suite."
       );
       return;
@@ -300,11 +313,11 @@ export default function PaperSuiteOrderBuilder({
     setMatchingBusy(true);
     setMessage("");
     try {
-      const palette = await extractInvitationPalette(invitationUrl);
+      const palette = await extractInvitationPalette(invitationUrl, template);
       setMatchedPalette(palette);
       setPrintUrl(null);
       resetQuote();
-      setMessage("Invitation colors matched. Choose any Place & Plenty layout and the suite will use this palette.");
+      setMessage("Invitation colors coordinated with this Place & Plenty house design.");
     } catch {
       setMessage("We could not read that invitation image automatically. You can still use one of the four Place & Plenty designs.");
     } finally {
@@ -583,11 +596,11 @@ export default function PaperSuiteOrderBuilder({
           {hasPdfInvitation && (
             <div className="mt-3 rounded-xl border border-sage/25 bg-offwhite p-3">
               <p className="font-body text-[0.7rem] leading-relaxed text-forest/65">
-                PDF invitation detected. PDFs stay available as your original artwork, but browsers cannot reliably sample their colors the way they can a JPG or PNG. Choose the two main colors from your invitation and Place & Plenty will coordinate the suite around them.
+                PDF invitation detected. PDFs stay available as your original artwork, but browsers cannot reliably sample their colors the way they can a JPG or PNG. Choose two colors from your invitation and Place & Plenty will use them as accents while keeping the selected house design light, readable and print-friendly.
               </p>
               <div className="mt-3 flex flex-wrap items-end gap-3">
                 <label className="font-body text-[0.68rem] font-semibold text-forest">
-                  Background
+                  Main invitation color
                   <input
                     type="color"
                     value={manualBackground}
@@ -596,7 +609,7 @@ export default function PaperSuiteOrderBuilder({
                   />
                 </label>
                 <label className="font-body text-[0.68rem] font-semibold text-forest">
-                  Accent
+                  Second invitation color
                   <input
                     type="color"
                     value={manualAccent}
