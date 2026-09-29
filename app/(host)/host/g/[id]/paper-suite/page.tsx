@@ -14,7 +14,7 @@ import PaperSuiteOrderBuilder from "@/components/host/PaperSuiteOrderBuilder";
 import PaperSuitePurchaseStatus from "@/components/host/PaperSuitePurchaseStatus";
 import PaperOrderStatusSyncButton from "@/components/host/PaperOrderStatusSyncButton";
 import PaperHouseDesignPreview from "@/components/PaperHouseDesignPreview";
-import { PAPER_TEMPLATES } from "@/lib/paper-suite-templates";
+import { PAPER_TEMPLATES, type PaperTemplateId } from "@/lib/paper-suite-templates";
 import { getPaperOrders } from "@/lib/paper-order-data";
 
 export const metadata = { title: "My Paper Suite" };
@@ -48,7 +48,13 @@ function formatTime(value: string | null) {
   }).format(d);
 }
 
-export default async function PaperSuitePage({ params }: { params: { id: string } }) {
+export default async function PaperSuitePage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { template?: string };
+}) {
   const gathering = await getGathering(params.id);
   if (!gathering) notFound();
 
@@ -92,6 +98,10 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
     })) ?? [];
 
   const base = "/host/g/" + params.id;
+  const requestedTemplate = searchParams?.template;
+  const initialTemplate: PaperTemplateId = PAPER_TEMPLATES.some((design) => design.id === requestedTemplate)
+    ? (requestedTemplate as PaperTemplateId)
+    : "classic-editorial";
 
   return (
     <div>
@@ -311,6 +321,7 @@ export default async function PaperSuitePage({ params }: { params: { id: string 
         multiDay={gathering.duration_type === "multi_day"}
         invitationUrl={invitationUrl}
         invitationMimeType={gathering.invitation_artwork_mime_type}
+        initialTemplate={initialTemplate}
       />
 
 
