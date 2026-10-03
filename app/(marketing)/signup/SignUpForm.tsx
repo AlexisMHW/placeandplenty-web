@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 
 // WEB ACCOUNT CREATION. Founder requirement, 28 Aug 2026: a person must
 // be able to create an account on the website and use Place & Plenty
@@ -139,7 +140,11 @@ export default function SignUpForm({ next }: { next?: string }) {
         to run it.
       </p>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6">
+        <SocialAuthButtons next={destination} context="signup" />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label
             htmlFor="signup-first"
