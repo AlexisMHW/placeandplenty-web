@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 
 // Sign-in for the host web app. Same Supabase Auth identity as the
 // native app (§11) — this creates no separate web account model.
@@ -113,6 +114,8 @@ export default function LoginForm({ next }: { next?: string }) {
       onSubmit={handleSubmit}
       className="rounded-card border border-sage/30 bg-offwhite p-8 shadow-soft"
     >
+      <SocialAuthButtons next={destination} context="login" />
+
       <div className="flex gap-1 rounded-full border border-sage/30 p-1">
         {(["password", "magic"] as const).map((m) => (
           <button
