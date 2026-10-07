@@ -26,7 +26,9 @@ const TOPICS: { icon: IconName; title: string; body: string; href: string }[] = 
 
 export default async function CoordinatedHostPage() {
   const posts = await getAllPosts();
-  const [lead, ...rest] = posts;
+  const holiday = posts.filter((post) => post.contentHub === "holiday-less-spending");
+  const lead = holiday.find((post) => post._sys.filename === "budget-friendly-holidays") || posts[0];
+  const rest = posts.filter((post) => post._sys.filename !== lead?._sys.filename && post.contentHub !== "holiday-less-spending");
 
   return (
     <>
@@ -57,6 +59,15 @@ export default async function CoordinatedHostPage() {
           </div>
         </div>
       )}
+
+      {holiday.length > 0 && <section id="holiday-series" className="bg-forest px-6 py-14 text-offwhite">
+        <div className="mx-auto max-w-editorial">
+          <p className="font-body text-xs font-bold uppercase tracking-widest text-gold">The holiday series</p>
+          <h2 className="mt-3 font-display text-3xl md:text-4xl">A Little Less Spending.<br /><span className="italic text-gold">A Lot More Holiday.</span></h2>
+          <p className="mt-4 max-w-2xl font-body leading-relaxed text-offwhite/90">Usable lists, shared meals, décor swaps and gifts of help. Keep the warmth while easing the expense and work.</p>
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2">{holiday.map((post) => <li key={post._sys.filename}><Link href={`/coordinated-host/${post._sys.filename}`} className="block rounded-card border border-offwhite/25 p-5 hover:bg-offwhite/10"><span className="font-display text-xl">{post.title}</span><span className="mt-2 block font-body text-sm leading-relaxed text-offwhite/80">{post.deck}</span></Link></li>)}</ul>
+        </div>
+      </section>}
 
       <Band tone="parchment">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">

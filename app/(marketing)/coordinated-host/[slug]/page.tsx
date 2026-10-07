@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
-import { getAllPosts, getPostBySlug, articleImage } from "@/lib/tina-content";
-import { ArticleSchema } from "@/components/StructuredData";
+import { getAllPosts, getPostBySlug, articleImage, relatedOf } from "@/lib/tina-content";
+import { ArticleSchema, BreadcrumbSchema } from "@/components/StructuredData";
+import { APP_DOWNLOAD_PATH, hasAnyStoreLink } from "@/lib/app-links";
+import { FOUNDER_PHOTO } from "@/lib/founder";
 import Photo from "@/components/Photo";
 
 export async function generateStaticParams() {
@@ -27,6 +29,8 @@ export async function generateMetadata({
   return {
     title: post.seoTitle || post.title,
     description: post.metaDescription || post.deck,
+    keywords: post.tags?.filter((tag): tag is string => Boolean(tag)),
+    authors: [{ name: "Alexis Hughes-Williams", url: "https://placeandplenty.com/about" }],
     robots: post.noindex ? { index: false, follow: false } : undefined,
     alternates: { canonical },
     openGraph: {
@@ -34,6 +38,9 @@ export async function generateMetadata({
       description: post.socialDescription || post.metaDescription || post.deck || undefined,
       url: canonical,
       type: "article",
+      authors: ["https://placeandplenty.com/about"],
+      section: post.category || undefined,
+      tags: post.tags?.filter((tag): tag is string => Boolean(tag)),
       publishedTime: post.publishDate || undefined,
       modifiedTime: post.updatedDate || post.publishDate || undefined,
       images: [{ url: post.socialShareImage || articleImage(post), alt: post.featuredImageAlt || post.title }],
@@ -58,24 +65,35 @@ export default async function ArticlePage({
     notFound();
   }
 
+  const related = relatedOf(post);
+  const isHoliday = post.contentHub === "holiday-less-spending";
+
   return (
     <>
+      <BreadcrumbSchema items={[
+        { name: "Home", url: "https://placeandplenty.com" },
+        { name: "The Coordinated Host", url: "https://placeandplenty.com/coordinated-host" },
+        { name: post.title, url: `https://placeandplenty.com/coordinated-host/${params.slug}` },
+      ]} />
       <ArticleSchema
         headline={post.title}
         description={post.metaDescription || post.deck}
         url={`https://placeandplenty.com/coordinated-host/${params.slug}`}
-        image={post.featuredImage}
+        image={articleImage(post)}
         datePublished={post.publishDate}
         dateModified={post.updatedDate}
       />
       <article className="bg-offwhite py-16 md:py-24">
       <div className="mx-auto max-w-prose px-6">
-        <nav className="font-body text-xs text-forest/60">
+        <nav aria-label="Breadcrumb" className="font-body text-xs text-forest/70">
+          <Link href="/" className="hover:text-forest">Home</Link><span> · </span>
           <Link href="/coordinated-host" className="hover:text-forest">
             The Coordinated Host
           </Link>
           {post.category && <span> · {post.category}</span>}
         </nav>
+
+        {isHoliday && <Link href="/coordinated-host#holiday-series" className="mt-6 block font-body text-sm font-bold text-goldInk underline underline-offset-4">A Little Less Spending. A Lot More Holiday.</Link>}
 
         {post.franchise && post.franchise !== "None" && (
           <p className="mt-6 font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
@@ -123,7 +141,7 @@ export default async function ArticlePage({
           </div>
         )}
 
-        <div className="prose prose-forest mt-10 max-w-none font-body text-forest/90">
+        <div className="article-body mt-10 max-w-none font-body text-forest/90">
           {post.body && <TinaMarkdown content={post.body} />}
         </div>
 
@@ -133,8 +151,22 @@ export default async function ArticlePage({
             <p className="mt-2 font-body text-sm text-offwhite/80">
               {post.relatedProductMessage}
             </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/signup?next=%2Fhost%2Fcreate" className="rounded-lg bg-gold px-5 py-3 font-body text-sm font-bold text-forest">Start a gathering now</Link>
+              {hasAnyStoreLink() && <Link href={APP_DOWNLOAD_PATH} className="rounded-lg border border-offwhite/50 px-5 py-3 font-body text-sm font-bold text-offwhite">Download the app</Link>}
+              <Link href="/gathering-checklists" className="px-2 py-3 font-body text-sm text-offwhite underline underline-offset-4">Get a free hosting checklist</Link>
+            </div>
           </div>
         )}
+        {post.tags?.length ? <ul aria-label="Article topics" className="mt-8 flex flex-wrap gap-2">{post.tags.filter(Boolean).map((tag) => <li key={tag} className="rounded-full border border-sage/30 bg-parchment px-3 py-1 font-body text-xs text-forest">{tag}</li>)}</ul> : null}
+        {isHoliday && <aside className="mt-10 flex items-center gap-5 border-y border-gold/50 py-6" aria-label="About the author">
+          <Photo src={FOUNDER_PHOTO.src} alt={FOUNDER_PHOTO.alt} className="h-24 w-24 shrink-0 rounded-full" sizes="96px" />
+          <div><Link href="/about" className="font-display text-lg text-forest underline underline-offset-4">Alexis Hughes-Williams</Link><p className="mt-2 font-body text-sm leading-relaxed text-forest/80">Founder of Place &amp; Plenty. Practical hosting ideas for real homes, busy families, and the people around your table.</p></div>
+        </aside>}
+        {related.articles.length > 0 && <nav aria-label="Related articles" className="mt-12">
+          <h2 className="font-display text-2xl text-forest">Keep the ideas going</h2>
+          <ul className="mt-5 space-y-4">{related.articles.map((article) => <li key={article._sys.filename}><Link href={`/coordinated-host/${article._sys.filename}`} className="font-body text-forest underline decoration-gold decoration-2 underline-offset-4">{article.title}</Link></li>)}</ul>
+        </nav>}
         </div>
       </article>
     </>
