@@ -60,14 +60,30 @@ export default async function CoordinatedHostPage() {
         </div>
       )}
 
-      {holiday.length > 0 && <section id="holiday-series" className="bg-forest px-6 py-14 text-offwhite">
-        <div className="mx-auto max-w-editorial">
-          <p className="font-body text-xs font-bold uppercase tracking-widest text-gold">The holiday series</p>
-          <h2 className="mt-3 font-display text-3xl md:text-4xl">A Little Less Spending.<br /><span className="italic text-gold">A Lot More Holiday.</span></h2>
-          <p className="mt-4 max-w-2xl font-body leading-relaxed text-offwhite/90">Usable lists, shared meals, décor swaps and gifts of help. Keep the warmth while easing the expense and work.</p>
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2">{holiday.map((post) => <li key={post._sys.filename}><Link href={`/coordinated-host/${post._sys.filename}`} className="block rounded-card border border-offwhite/25 p-5 hover:bg-offwhite/10"><span className="font-display text-xl">{post.title}</span><span className="mt-2 block font-body text-sm leading-relaxed text-offwhite/80">{post.deck}</span></Link></li>)}</ul>
-        </div>
-      </section>}
+      {holiday.length > 0 && (
+        <Band tone="plain" id="holiday-series">
+          <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
+            <h2 className="flex items-center gap-4 font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/65"><span aria-hidden className="h-px w-8 flex-shrink-0 bg-gold" />The holiday series</h2>
+            <Display as="p" emphasis="Holiday." className="mt-4 text-2xl leading-snug text-forest md:text-3xl">A Little Less Spending. A Lot More Holiday.</Display>
+            <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-forest/70">Usable lists, shared meals, décor swaps and gifts of help. Keep the warmth while easing the expense and work.</p>
+            <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {holiday.map((post) => (
+                <li key={post._sys.filename}>
+                  <EditorialCard
+                    href={`/coordinated-host/${post._sys.filename}`}
+                    kicker={post.franchise || post.category}
+                    title={post.title}
+                    deck={post.deck}
+                    image={articleImage(post)}
+                    imageAlt={post.featuredImageAlt || post.title}
+                    photoCaption={post.featuredImageAlt || post.title}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Band>
+      )}
 
       <Band tone="parchment">
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
