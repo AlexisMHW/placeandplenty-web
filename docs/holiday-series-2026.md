@@ -4,12 +4,11 @@ Eight articles in `content/coordinated-host` use `contentHub: holiday-less-spend
 
 ## Image provenance
 
-- `hero-tabletop.jpg`: existing approved website table photograph.
-- `550258255_1385445866920884_6126921811897830854_n.jpg`: existing website dessert photograph.
+- All eight articles now have unique story-specific generated editorial images under `public/images/holiday/`; each card, article and social image uses the same matching asset.
+- New scenes: holiday budgeting, Friendsgiving contributions, soup-and-bread supper, repeating traditions, take-home desserts, and shared seasonal cleanup.
+- Existing series-specific décor-swap and gifts-of-help images retained.
 - Author portrait: existing approved `FOUNDER_PHOTO`; no facial edits.
-- Friendsgiving, menu, cupboards and night-before images: existing website editorial illustrations; captions describe them as illustrations.
-- `holiday/decor-swap.webp`: newly generated editorial illustration of a Black host and diverse adult friends exchanging familiar decorations in a warm home.
-- `holiday/gifts-of-help.webp`: newly generated editorial illustration of a friend delivering meals to a Black family with a teen and infant.
+- The extra featured table-setting block was removed from the journal page.
 
 Generated scenes are fictional, not photographs of Alexis, her family or actual friends. The new images were created with the built-in image-generation tool and encoded as WebP without altering their composition. No verified personal family-and-friends photo set was located for this release; do not relabel these illustrations as actual founder gatherings. Future founder-selected photographs can replace each featured image in Tina.
 

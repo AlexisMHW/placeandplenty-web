@@ -4,7 +4,7 @@ import PageHero from "@/components/PageHero";
 import CtaBand from "@/components/CtaBand";
 import GuestListForm from "@/components/GuestListForm";
 import { Band, Display } from "@/components/Display";
-import { EditorialCard, FeatureLede } from "@/components/Cards";
+import { EditorialCard } from "@/components/Cards";
 import Icon, { type IconName } from "@/components/Icon";
 import { BotanicalDivider } from "@/components/Botanical";
 import { getAllPosts, articleImage } from "@/lib/tina-content";
@@ -27,8 +27,7 @@ const TOPICS: { icon: IconName; title: string; body: string; href: string }[] = 
 export default async function CoordinatedHostPage() {
   const posts = await getAllPosts();
   const holiday = posts.filter((post) => post.contentHub === "holiday-less-spending");
-  const lead = holiday.find((post) => post._sys.filename === "budget-friendly-holidays") || posts[0];
-  const rest = posts.filter((post) => post._sys.filename !== lead?._sys.filename && post.contentHub !== "holiday-less-spending");
+  const rest = posts.filter((post) => post.contentHub !== "holiday-less-spending");
 
   return (
     <>
@@ -43,22 +42,6 @@ export default async function CoordinatedHostPage() {
         body={<p>Ideas, guidance and real-world tools for hosts who care about connection — and the details.</p>}
         action={<Link href="#the-journal" className="inline-flex items-center justify-center rounded-lg bg-forest px-6 py-3 font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90">Explore the Journal</Link>}
       />
-
-      {lead && (
-        <div className="relative z-10 bg-offwhite px-3 sm:px-5">
-          <div className="mx-auto -mt-10 max-w-editorial md:-mt-14">
-            <FeatureLede
-              href={`/coordinated-host/${lead._sys.filename}`}
-              title={lead.title}
-              deck={lead.deck}
-              image={articleImage(lead)}
-              imageAlt={lead.featuredImageAlt || lead.title}
-              photoCaption={lead.featuredImageAlt || `${lead.title} — a real home, warm natural light`}
-              meta={<p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-forest/55">{[lead.category, lead.franchise].filter(Boolean).join(" · ")}</p>}
-            />
-          </div>
-        </div>
-      )}
 
       {holiday.length > 0 && (
         <Band tone="plain" id="holiday-series">
@@ -107,7 +90,7 @@ export default async function CoordinatedHostPage() {
         <div className="mx-auto max-w-editorial px-6 py-14 md:py-16">
           <h2 className="flex items-center gap-4 font-body text-[0.7rem] font-bold uppercase tracking-[0.22em] text-forest/65"><span aria-hidden className="h-px w-8 flex-shrink-0 bg-gold" />Latest from the journal</h2>
           {rest.length === 0 ? (
-            <p className="mt-6 font-body text-base text-forest/70">More pieces are on the way. The lead story is above.</p>
+            <p className="mt-6 font-body text-base text-forest/70">More pieces are on the way.</p>
           ) : (
             <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {rest.map((post, i) => (
