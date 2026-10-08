@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    formats: ["image/avif", "image/webp"],
+    // AVIF is intentionally disabled here. Next 14.2.x is vulnerable in the\n    // AVIF image-optimizer path; WebP preserves modern image delivery without\n    // exposing that decoder path. Re-enable only after Next is on a patched line.\n    formats: ["image/webp"],
 
     // TINA CLOUD SERVES UPLOADED MEDIA FROM ITS OWN CDN, and without
     // this entry next/image refuses to optimise any of it — the
