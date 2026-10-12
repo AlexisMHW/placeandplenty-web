@@ -144,7 +144,7 @@ export default function SiteFooter() {
                 href={APP_STORE_URL}
                 badge={STORE_BADGES.apple}
                 alt="Download on the App Store"
-                eyebrow={APP_STORE_URL ? "Download on the" : "Coming with app release"}
+                eyebrow={APP_STORE_URL ? "Download on the" : "Apple — Coming Soon"}
                 label="App Store"
               />
               <StoreBadge
