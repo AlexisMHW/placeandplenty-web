@@ -474,22 +474,21 @@ export default function CreateGatheringWizard({
                   <Chip key={type} selected={input.gatheringType === type} onClick={() => update("gatheringType", type as GatheringType)}>{gatheringTypeLabel(type)}</Chip>
                 ))}
               </ChipGrid>
+              <p className="mt-6 mb-2 font-body text-sm font-semibold text-forest">Is this a one-day gathering or multiple days?</p>
+              <ChipGrid>
+                <Chip selected={input.durationType === "single_day"} onClick={() => setDurationType("single_day")}>One Day</Chip>
+                <Chip selected={input.durationType === "multi_day"} onClick={() => setDurationType("multi_day")}>Multiple Days</Chip>
+              </ChipGrid>
+              {input.durationType === "multi_day" && (
+                <p className="mt-3 font-body text-sm text-forest/75">Multi-Day planning requires a Multi-Day Pass. Continue setting up your gathering; if an upgrade is needed, we'll show your eligible price and take you to secure checkout before you start using paid features.</p>
+              )}
             </div>
           )}
 
           {step === 2 && (
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <p className="mb-2 font-body text-sm font-semibold text-forest">How long are people gathering?</p>
-                <ChipGrid>
-                  <Chip selected={input.durationType === "single_day"} onClick={() => setDurationType("single_day")}>Single Day</Chip>
-                  <Chip selected={input.durationType === "multi_day"} onClick={() => setDurationType("multi_day")}>Multi-Day</Chip>
-                </ChipGrid>
-                {input.durationType === "multi_day" && (
-                  <p className="mt-3 font-body text-sm leading-relaxed text-forest/65">
-                    A Multi-Day Pass keeps one gathering, one guest list and one plan across 2–4 calendar days. Days 5–7 can be added later with the one-time extension.
-                  </p>
-                )}
+                <p className="mb-2 font-body text-sm font-semibold text-forest">{input.durationType === "multi_day" ? "Plan your dates across multiple days" : "When is your gathering?"}</p>
               </div>
 
               <NativeSelectorField
