@@ -162,6 +162,7 @@ export default function CreateGatheringWizard({
       }
   );
 
+  const [durationConfirmed, setDurationConfirmed] = useState(Boolean(resume?.id || preset?.durationType));
   const [draftId, setDraftId] = useState<string | null>(resume?.id ?? null);
   const [decision, setDecision] = useState<InvitationDecision | null>(resume?.decision ?? null);
   const [mode, setMode] = useState<InvitationMode | null>(resume?.mode ?? null);
@@ -191,6 +192,7 @@ export default function CreateGatheringWizard({
   }
 
   function setDurationType(durationType: "single_day" | "multi_day") {
+    setDurationConfirmed(true);
     setInput((prev) => {
       if (durationType === "single_day") {
         return { ...prev, durationType, gatheringEndDate: null };
@@ -228,7 +230,7 @@ export default function CreateGatheringWizard({
   function canLeave(current: number): boolean {
     switch (current) {
       case 1:
-        return input.name.trim().length > 0 && input.gatheringType !== null;
+        return input.name.trim().length > 0 && input.gatheringType !== null && durationConfirmed;
       case 2: {
         if (!input.gatheringDate || !input.arrivalTime) return false;
         if (input.durationType !== "multi_day") return true;
@@ -476,8 +478,8 @@ export default function CreateGatheringWizard({
               </ChipGrid>
               <p className="mt-6 mb-2 font-body text-sm font-semibold text-forest">Is this a one-day gathering or multiple days?</p>
               <ChipGrid>
-                <Chip selected={input.durationType === "single_day"} onClick={() => setDurationType("single_day")}>One Day</Chip>
-                <Chip selected={input.durationType === "multi_day"} onClick={() => setDurationType("multi_day")}>Multiple Days</Chip>
+                <Chip selected={durationConfirmed && input.durationType === "single_day"} onClick={() => setDurationType("single_day")}>One Day</Chip>
+                <Chip selected={durationConfirmed && input.durationType === "multi_day"} onClick={() => setDurationType("multi_day")}>Multiple Days</Chip>
               </ChipGrid>
               {input.durationType === "multi_day" && (
                 <p className="mt-3 font-body text-sm text-forest/75">Multi-Day planning requires a Multi-Day Pass. Continue setting up your gathering; if an upgrade is needed, we'll show your eligible price and take you to secure checkout before you start using paid features.</p>
