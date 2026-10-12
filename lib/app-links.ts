@@ -33,7 +33,7 @@
 export const APP_STORE_URL: string | null = null;
 
 /** The live Google Play listing. Null until it exists. */
-export const PLAY_STORE_URL: string | null = null;
+export const PLAY_STORE_URL: string | null = "https://play.google.com/store/apps/details?id=com.placeandplenty.app";
 
 /** Platform-aware forwarder on our own domain. What a QR encodes. */
 export const APP_DOWNLOAD_PATH = "/get";
