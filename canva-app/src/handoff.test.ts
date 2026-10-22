@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { canPublishDesign, validateHandoff } from "./handoff";
-import { getHostJourney, getWebAuthUrl } from "./host_journeys";
+import { getHostJourney, getWebAuthUrl, getAuthDestinationForSelection } from "./host_journeys";
 
 describe("Canva gathering handoff", () => {
   it("allows planning without publishing artwork", () => {
@@ -80,5 +80,22 @@ describe("Canva website auth entry", () => {
     expect(getWebAuthUrl("existing_account_existing_gathering")).toBe(
       "https://placeandplenty.com/login?next=%2Fhost",
     );
+  });
+});
+
+describe("Canva UI selection to website auth", () => {
+  it("sends new-account, new-gathering selections to signup", () => {
+    expect(getAuthDestinationForSelection({
+      gatheringChoice: "create_new",
+      duration: "multi_day",
+      invitationSelection: "not_now",
+    }, false)).toBe("https://placeandplenty.com/signup?next=%2Fhost");
+  });
+  it("sends existing-gathering selections to login even for visitors", () => {
+    expect(getAuthDestinationForSelection({
+      gatheringChoice: "select_existing",
+      duration: "single_day",
+      invitationSelection: "use_design",
+    }, false)).toBe("https://placeandplenty.com/login?next=%2Fhost");
   });
 });
