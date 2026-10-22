@@ -41,7 +41,7 @@ const contentPublisher: ContentPublisherIntent = {
             React.createElement("h1", null, "Connect to Place & Plenty"),
             React.createElement("p", null,
               "Sign in to Place & Plenty in your browser. Canva publishing is not yet available."),
-            React.createElement("a", {
+            selection.gatheringChoice === "create_new" && React.createElement("a", {
               href: getAuthDestinationForSelection(selection, false),
               target: "_blank",
               rel: "noopener noreferrer",
