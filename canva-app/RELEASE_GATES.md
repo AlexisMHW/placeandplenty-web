@@ -11,8 +11,8 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
   PKCE mismatch, expiry and single-use code redemption tests in local PGlite.
 - Single JavaScript SDK bundle with inline CSS: approximately 1.31 MB, below 5 MB.
 - Build-only feature-branch CI workflow added. No deployment or submission steps.
-- Full Tina/Next preview build and GitHub CI passed for c4bc648. Current follow-up
-  changes have passed local checks; remote verification must be repeated after push.
+- Full Tina/Next preview build and GitHub CI passed for 417e5d4. Current follow-up
+  documentation and QA harness changes do not alter production configuration.
 
 ## Before staging acceptance
 
@@ -39,7 +39,7 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
   stays behind existing host app guards.
 - Confirm actual Canva media preview/export, 10 MB limits, damaged file rejection,
   storage/save/cleanup failure handling and canonical artwork visible in web/native.
-- Exercise concurrent replacements and retries after ambiguous network failures;
+- Concurrent API replacements passed in live QA. Exercise retries after ambiguous network failures;
   current uploads use unique keys and do not promise cross-request idempotency.
 - Test `Not now` in Canva: no export or upload, and web-only planning works.
 - Review grant expiry/reconnection UX, endpoint abuse limits, expired-code retention,

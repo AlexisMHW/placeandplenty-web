@@ -23,7 +23,9 @@ npm run build
 The local esbuild script generates **one** `dist/app.js`, including UI Kit CSS,
 checks the 5 MB ceiling, and makes no Canva portal calls. This is an official
 SDK application compiled with a local bundler, not a completed `canva apps build`
-or a Canva preview test. The local build defaults to `http://localhost:3000`.
+or a marketplace submission. The corrected bundle has loaded in the existing
+Canva draft; the connected export flow is pending QA. The local build defaults
+to `http://localhost:3000`.
 Set `CANVA_BACKEND_URL` to the approved staging HTTPS origin before preview.
 Do not upload a localhost-configured CI bundle as a release build.
 
@@ -34,7 +36,8 @@ Do not upload a localhost-configured CI bundle as a release build.
   safe relative `next` carry the request back to an explicit consent page.
 - Token URL: `<backend>/api/canva/token`, authorization-code grant only.
 - Exact registered client and callback, S256 PKCE, fixed scopes
-  `gatherings:read invitation:write`, client-secret authentication at exchange.
+  `gatherings:read invitation:write`; confidential client authentication by default,
+  explicit public-client mode with mandatory PKCE for QA.
 - Random codes are stored hashed, expire in 60 seconds and are consumed atomically.
   A review-only SQL proposal is in `docs/integrations/sql/canva_authorization_codes.sql`.
   It has been applied to the isolated, owner-approved QA branch only. Local PGlite tests execute
@@ -80,8 +83,9 @@ Existing storage/RPC permissions remain authoritative. A failed metadata save
 attempts removal of only the new object. Success is returned only after save.
 
 A retry uses a fresh storage key, matching the current native upload convention.
-Cross-request idempotency, concurrent replacement behavior, cleanup failure and
-network loss after a successful save need staging QA. No immediate revocation
+Live QA verified concurrent replacements and preservation of prior artwork.
+Cross-request idempotency, cleanup failure and network loss after a successful
+save still need acceptance review. No immediate revocation
 endpoint is provided; grants expire in at most ten minutes and underlying user
 validation runs on every request. Do not release until the gates below pass.
 

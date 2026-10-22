@@ -28,7 +28,13 @@ rolled back. QA required matching the existing production table grants for
 gatherings, gathering_members and profiles; no production grants were changed.
 See `qa/canva-permissions.sql` (guarded against nonempty databases).
 
-Remaining gates: paid entitlement matrix, real HTTP/storage transfer, public staging
+Real HTTP API mode passed Auth, token exchange, storage bytes, canonical RPC saves,
+access rejection and concurrent replacements. The signed-in consent test is still
+blocked locally by restricted Edge-runtime egress. The full preview build and CI
+passed for 417e5d4. See `CANVA_QA_VERIFICATION.md` for evidence and the exact new
+Bluehost CNAME needed for the prepared feature-only QA domain.
+
+Remaining gates: paid entitlement matrix, public staging
 access compatible with Canva OAuth (current preview is Vercel protected), draft
 OAuth setup, live transfer, retry/concurrency, endpoint rate limits and expired-code
 retention. Production permissions, entitlements and configuration are unchanged.
