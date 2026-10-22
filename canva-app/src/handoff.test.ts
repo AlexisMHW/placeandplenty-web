@@ -25,9 +25,18 @@ describe("Canva gathering handoff", () => {
     expect(canPublishDesign({
       duration: "single_day",
       invitationSelection: "use_design",
-      gatheringId: "gathering-123",
+      gatheringId: "f2f91df4-8c45-4e7e-9a16-313314324889",
       designReference: "design-123",
     })).toBe(true);
+  });
+
+  it("rejects malformed gathering IDs even when design opt-in is enabled", () => {
+    expect(canPublishDesign({
+      duration: "single_day",
+      invitationSelection: "use_design",
+      gatheringId: "gathering-123",
+      designReference: "design-123",
+    })).toBe(false);
   });
 
   it("rejects an invalid gathering duration", () => {
