@@ -26,3 +26,9 @@ or deployed web routes are included in this branch.
 3. Verify existing web host auth, gathering and itinerary endpoints.
 4. Build a secure host handoff and optional invitation import, with RLS.
 5. Test with Canva preview; compile and upload only after validation.
+
+## Confirmed website auth integration contract
+
+The existing website already handles `/signup`, `/login`, `/auth/callback`, and `/host`. Canva must use these existing account routes; it must not implement a second identity provider or create paid entitlements. The callback's `safeNext` accepts same-origin relative destinations only. A Canva return flow therefore requires a separate short-lived, single-use server-side state exchange; never use an external Canva URL as `next`.
+
+The Canva Content Publisher remains disabled until this return flow, authenticated gathering selection, and actual media transfer are implemented and tested. Existing database permissions and product entitlements remain unchanged by founder direction.
