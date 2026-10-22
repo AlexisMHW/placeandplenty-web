@@ -1,0 +1,39 @@
+import { describe, expect, it } from "vitest";
+import { canPublishDesign, validateHandoff } from "./handoff";
+
+describe("Canva gathering handoff", () => {
+  it("allows planning without publishing artwork", () => {
+    const handoff = { duration: "multi_day" as const, invitationSelection: "not_now" as const };
+    expect(validateHandoff(handoff)).toBe(true);
+    expect(canPublishDesign(handoff)).toBe(false);
+  });
+
+  it("rejects unexpected artwork when host declined invitation import", () => {
+    expect(validateHandoff({
+      duration: "single_day",
+      invitationSelection: "not_now",
+      designReference: "design-123",
+    })).toBe(false);
+  });
+
+  it("requires a gathering and a design before publishing", () => {
+    expect(canPublishDesign({
+      duration: "single_day",
+      invitationSelection: "use_design",
+      designReference: "design-123",
+    })).toBe(false);
+    expect(canPublishDesign({
+      duration: "single_day",
+      invitationSelection: "use_design",
+      gatheringId: "gathering-123",
+      designReference: "design-123",
+    })).toBe(true);
+  });
+
+  it("rejects an invalid gathering duration", () => {
+    expect(validateHandoff({
+      duration: "invalid" as "single_day",
+      invitationSelection: "not_now",
+    })).toBe(false);
+  });
+});
