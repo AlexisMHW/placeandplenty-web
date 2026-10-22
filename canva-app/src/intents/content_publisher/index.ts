@@ -1,33 +1,62 @@
 import type { ContentPublisherIntent } from "@canva/intents/content";
+import React from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { PublisherChoices } from "../../PublisherChoices";
+import { getAuthDestinationForSelection } from "../../host_journeys";
 
 /**
- * SDK scaffold only. This is deliberately NOT a deployable publisher:
- * publishing must remain disabled until the signed-in host and authorized
- * gathering are verified and real media transfer is implemented.
+ * Preview-only Canva acquisition UI. The Content Publisher intentionally
+ * fails closed until a verified return-state exchange and durable media
+ * transfer are available. No success response is returned for artwork.
  */
+let viewRoot: Root | undefined;
+function renderView(node: React.ReactNode): void {
+  const element = document.getElementById("root");
+  if (!element) throw new Error("Canva app root element is missing");
+  if (!viewRoot) viewRoot = createRoot(element);
+  viewRoot.render(node);
+}
+
 const contentPublisher: ContentPublisherIntent = {
   getPublishConfiguration: async () => ({
     status: "completed",
-    outputTypes: [
-      {
-        id: "invitation",
-        displayName: "Digital invitation",
-        mediaSlots: [
-          {
-            id: "artwork",
-            displayName: "Invitation artwork",
-            fileCount: { exact: 1 },
-            accepts: { image: { format: "png" } },
-          },
-        ],
-      },
-    ],
+    outputTypes: [{
+      id: "invitation",
+      displayName: "Digital invitation",
+      mediaSlots: [{
+        id: "artwork",
+        displayName: "Invitation artwork",
+        fileCount: { exact: 1 },
+        accepts: { image: { format: "png" } },
+      }],
+    }],
   }),
   renderSettingsUi: () => {
-    throw new Error("Place & Plenty authentication and gathering selection are not implemented.");
+    renderView(
+      React.createElement(PublisherChoices, {
+        onContinue: () => {
+          // The authenticated one-time handoff is not implemented.
+          // Never treat opening the website as a completed Canva connection.
+          renderView(React.createElement("main", null,
+            React.createElement("h1", null, "Connect to Place & Plenty"),
+            React.createElement("p", null,
+              "Sign in to Place & Plenty in your browser. Canva publishing is not yet available."),
+            React.createElement("a", {
+              href: "https://placeandplenty.com/login?next=%2Fhost",
+              target: "_blank",
+              rel: "noopener noreferrer",
+            }, "Open Place & Plenty"),
+          ));
+        },
+      }),
+    );
   },
   renderPreviewUi: () => {
-    throw new Error("Place & Plenty invitation preview is not implemented.");
+    renderView(React.createElement("main", null,
+      React.createElement("h1", null, "Invitation preview"),
+      React.createElement("p", null,
+        "Publishing is disabled until the gathering is authorized and the artwork can be saved."),
+    ));
   },
   publishContent: async () => ({
     status: "app_error",
