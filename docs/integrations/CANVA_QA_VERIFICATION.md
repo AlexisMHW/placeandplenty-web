@@ -41,12 +41,14 @@ canonical private storage bucket and existing artwork RPC.
 
 Vercel now associates **only** `canva-qa.placeandplenty.com` with the feature branch.
 The existing apex and www domains retain their production assignments. Current
-project protection exempts custom domains; production protection settings were
-not changed. The new QA address therefore gives Canva a reachable staging origin
-without embedding a Vercel bypass token in the SDK.
+project protection also covers custom preview domains. An explicit access
+exception was applied only to the QA alias after DNS was added; project-wide
+protection and production settings were not changed. The QA certificate was
+issued, and unauthenticated HTTPS /login returned 200. No Vercel bypass token
+is embedded in the SDK.
 
-Authoritative DNS is at Bluehost. Vercel reports no existing A/CNAME or conflicting
-record for the new QA hostname. Add this single new record there:
+Authoritative DNS is at Bluehost. The owner added the following record, and
+Vercel verified it with no conflicts (`misconfigured: false`):
 
 | Type | Host | Value | TTL |
 | --- | --- | --- | --- |
@@ -70,4 +72,6 @@ After DNS is ready:
 5. Complete paid-plan matrix, expiry/cancellation/reconnection, network-loss retry,
    endpoint abuse limits and authorization-code retention before release review.
 
-The current hosted flag remains false. No production rollout is implied by DNS.
+The feature-branch-only flag has been enabled for the next QA preview rebuild.
+The prior deployment remains unchanged until that rebuild is ready.
+No production rollout is implied by DNS.

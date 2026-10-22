@@ -11,7 +11,7 @@ import { digest, sealGrant } from '../lib/canva-security.ts';
 const qaUrl = 'https://edfqrmkrfqnovzrryrxa.supabase.co';
 assert.equal(process.env.NEXT_PUBLIC_SUPABASE_URL, qaUrl, 'QA project guard');
 const base = process.env.CANVA_QA_BASE_URL || 'http://localhost:3100';
-assert.equal(new URL(base).origin, 'http://localhost:3100', 'Local QA server guard');
+assert.ok(['http://localhost:3100', 'https://canva-qa.placeandplenty.com'].includes(new URL(base).origin), 'Exact QA server guard');
 assert.ok(process.env.CANVA_QA_FIXTURES, 'Private fixtures path required');
 const fixtures = JSON.parse(await readFile(process.env.CANVA_QA_FIXTURES, 'utf8'));
 const origin = 'https://app-aahogo4rp4c.canva-apps.com';
