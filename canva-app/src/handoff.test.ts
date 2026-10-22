@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { canPublishDesign, validateHandoff } from "./handoff";
+import { getHostJourney } from "./host_journeys";
 
 describe("Canva gathering handoff", () => {
   it("allows planning without publishing artwork", () => {
@@ -44,5 +45,18 @@ describe("Canva gathering handoff", () => {
       duration: "invalid" as "single_day",
       invitationSelection: "not_now",
     })).toBe(false);
+  });
+});
+
+describe("Canva host journey selection", () => {
+  it("routes a new host to signup for a new gathering", () => {
+    expect(getHostJourney(false, "create_new")).toBe("new_account_new_gathering");
+  });
+  it("routes a returning host to login for a new gathering", () => {
+    expect(getHostJourney(true, "create_new")).toBe("existing_account_new_gathering");
+  });
+  it("requires existing-account login to select an existing gathering", () => {
+    expect(getHostJourney(false, "select_existing")).toBe("existing_account_existing_gathering");
+    expect(getHostJourney(true, "select_existing")).toBe("existing_account_existing_gathering");
   });
 });
