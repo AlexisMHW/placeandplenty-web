@@ -23,6 +23,16 @@ describe("Canva invitation publishRef", () => {
     expect(parseInvitationPublishRef(JSON.stringify({...valid, duration: "weekend"}))).toBeNull();
     expect(parseInvitationPublishRef("{")).toBeNull();
   });
+  it("rejects malformed or padded gathering identifiers", () => {
+    for (const gatheringId of [
+      "f2f91df4-8c45-4e7e-9a16-313314324889-extra",
+      "f2f91df4-8c45-4e7e-9a16-313314324889 ",
+      "f2f91df4-8c45-4e7e-9a16-31331432488z",
+      "gathering-123",
+    ]) {
+      expect(parseInvitationPublishRef(JSON.stringify({ ...valid, gatheringId }))).toBeNull();
+    }
+  });
   it("rejects oversized publishRef", () => {
     expect(parseInvitationPublishRef("x".repeat(MAX_PUBLISH_REF_BYTES + 1))).toBeNull();
   });
