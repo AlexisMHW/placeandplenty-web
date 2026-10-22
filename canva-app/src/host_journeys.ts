@@ -1,3 +1,5 @@
+import type { GatheringChoice } from "./PublisherChoices";
+
 export type HostJourney =
   | "new_account_new_gathering"
   | "existing_account_new_gathering"
@@ -29,13 +31,17 @@ export const HOST_JOURNEYS: readonly HostJourneyStep[] = [
   },
 ];
 
+/**
+ * A visitor choosing an existing gathering must sign in: creating a
+ * new account cannot grant access to another host's gathering.
+ * The website must still verify membership and permissions.
+ */
 export function getHostJourney(
-  isAuthenticated: boolean,
   hasPlaceAndPlentyAccount: boolean,
-  wantsNewGathering: boolean
+  gatheringChoice: GatheringChoice,
 ): HostJourney {
-  if (!isAuthenticated && !hasPlaceAndPlentyAccount) return "new_account_new_gathering";
-  return wantsNewGathering
+  if (gatheringChoice === "select_existing") return "existing_account_existing_gathering";
+  return hasPlaceAndPlentyAccount
     ? "existing_account_new_gathering"
-    : "existing_account_existing_gathering";
+    : "new_account_new_gathering";
 }
