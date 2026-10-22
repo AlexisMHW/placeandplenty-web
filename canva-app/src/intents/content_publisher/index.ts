@@ -34,7 +34,7 @@ const contentPublisher: ContentPublisherIntent = {
   renderSettingsUi: () => {
     renderView(
       React.createElement(PublisherChoices, {
-        onContinue: () => {
+        onContinue: (selection) => {
           // The authenticated one-time handoff is not implemented.
           // Never treat opening the website as a completed Canva connection.
           renderView(React.createElement("main", null,
@@ -42,10 +42,16 @@ const contentPublisher: ContentPublisherIntent = {
             React.createElement("p", null,
               "Sign in to Place & Plenty in your browser. Canva publishing is not yet available."),
             React.createElement("a", {
-              href: "https://placeandplenty.com/login?next=%2Fhost",
+              href: getAuthDestinationForSelection(selection, false),
               target: "_blank",
               rel: "noopener noreferrer",
-            }, "Open Place & Plenty"),
+            }, "Create an account"),
+            React.createElement("p", null, "Already have an account?"),
+            React.createElement("a", {
+              href: getAuthDestinationForSelection(selection, true),
+              target: "_blank",
+              rel: "noopener noreferrer",
+            }, "Sign in"),
           ));
         },
       }),
