@@ -14,7 +14,7 @@ export function parseInvitationPublishRef(raw?: string): InvitationPublishSettin
     const value = data as Record<string, unknown>;
     if (
       typeof value.gatheringId !== "string" ||
-      !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(value.gatheringId) ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.gatheringId) ||
       !["single_day", "multi_day"].includes(String(value.duration)) ||
       value.invitationOptIn !== true
     ) return null;
