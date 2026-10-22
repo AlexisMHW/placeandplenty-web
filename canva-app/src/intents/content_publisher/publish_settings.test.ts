@@ -1,0 +1,29 @@
+import { describe, expect, it } from "vitest";
+import {
+  MAX_PUBLISH_REF_BYTES,
+  parseInvitationPublishRef,
+  serializeInvitationPublishRef,
+} from "./publish_settings";
+
+const valid = {
+  gatheringId: "f2f91df4-8c45-4e7e-9a16-313314324889",
+  duration: "multi_day" as const,
+  invitationOptIn: true as const,
+};
+
+describe("Canva invitation publishRef", () => {
+  it("round-trips a valid opt-in selection", () => {
+    expect(parseInvitationPublishRef(serializeInvitationPublishRef(valid))).toEqual(valid);
+  });
+  it("rejects non-opt-in and missing gathering", () => {
+    expect(parseInvitationPublishRef(JSON.stringify({...valid, invitationOptIn: false}))).toBeNull();
+    expect(parseInvitationPublishRef(JSON.stringify({...valid, gatheringId: ""}))).toBeNull();
+  });
+  it("rejects invalid duration and malformed JSON", () => {
+    expect(parseInvitationPublishRef(JSON.stringify({...valid, duration: "weekend"}))).toBeNull();
+    expect(parseInvitationPublishRef("{")).toBeNull();
+  });
+  it("rejects oversized publishRef", () => {
+    expect(parseInvitationPublishRef("x".repeat(MAX_PUBLISH_REF_BYTES + 1))).toBeNull();
+  });
+});
