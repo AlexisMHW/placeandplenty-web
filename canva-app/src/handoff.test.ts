@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { canPublishDesign, validateHandoff } from "./handoff";
-import { getHostJourney } from "./host_journeys";
+import { getHostJourney, getWebAuthUrl } from "./host_journeys";
 
 describe("Canva gathering handoff", () => {
   it("allows planning without publishing artwork", () => {
@@ -64,5 +64,21 @@ describe("Canva host journey selection", () => {
   it("requires existing-account login to select an existing gathering", () => {
     expect(getHostJourney(false, "select_existing")).toBe("existing_account_existing_gathering");
     expect(getHostJourney(true, "select_existing")).toBe("existing_account_existing_gathering");
+  });
+});
+
+describe("Canva website auth entry", () => {
+  it("uses the existing signup route for a new host", () => {
+    expect(getWebAuthUrl("new_account_new_gathering")).toBe(
+      "https://placeandplenty.com/signup?next=%2Fhost",
+    );
+  });
+  it("uses the existing login route for returning hosts", () => {
+    expect(getWebAuthUrl("existing_account_new_gathering")).toBe(
+      "https://placeandplenty.com/login?next=%2Fhost",
+    );
+    expect(getWebAuthUrl("existing_account_existing_gathering")).toBe(
+      "https://placeandplenty.com/login?next=%2Fhost",
+    );
   });
 });
