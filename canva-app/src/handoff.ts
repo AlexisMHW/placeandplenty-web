@@ -21,6 +21,6 @@ export function validateHandoff(value: GatheringHandoff): boolean {
 export function canPublishDesign(value: GatheringHandoff): boolean {
   return validateHandoff(value) &&
     value.invitationSelection === "use_design" &&
-    Boolean(value.gatheringId) &&
+    typeof value.gatheringId === "string" &&\n    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.gatheringId) &&
     Boolean(value.designReference);
 }
