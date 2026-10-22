@@ -17,6 +17,12 @@ describe("Canva gathering handoff", () => {
     })).toBe(false);
   });
 
+  it("rejects blank design references and unexpected design values", () => {
+    expect(validateHandoff({ duration: "single_day", invitationSelection: "use_design", designReference: "   " })).toBe(false);
+    expect(validateHandoff({ duration: "single_day", invitationSelection: "not_now", designReference: "" })).toBe(false);
+    expect(validateHandoff({ duration: "single_day", invitationSelection: "use_design", designReference: 123 as unknown as string })).toBe(false);
+  });
+
   it("requires a gathering and a design before publishing", () => {
     expect(canPublishDesign({
       duration: "single_day",
