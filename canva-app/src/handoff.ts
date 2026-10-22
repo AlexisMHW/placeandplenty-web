@@ -9,9 +9,12 @@ export interface GatheringHandoff {
 }
 
 export function validateHandoff(value: GatheringHandoff): boolean {
+  if (!value || typeof value !== "object") return false;
   if (value.duration !== "single_day" && value.duration !== "multi_day") return false;
-  if (value.invitationSelection === "not_now") return !value.designReference;
-  return value.invitationSelection === "use_design" && Boolean(value.designReference);
+  if (value.invitationSelection === "not_now") return value.designReference === undefined;
+  return value.invitationSelection === "use_design" &&
+    typeof value.designReference === "string" &&
+    value.designReference.trim().length > 0;
 }
 
 /** A Canva publish action is permitted only after explicit design opt-in.
