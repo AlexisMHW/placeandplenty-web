@@ -45,3 +45,18 @@ export function getHostJourney(
     ? "existing_account_new_gathering"
     : "new_account_new_gathering";
 }
+
+/**
+ * Send the host to the existing Place & Plenty website to authenticate.
+ * This is a one-way navigation only: returning to the Canva iframe
+ * requires a separate, server-verified one-time handoff.
+ *
+ * No Canva design references, tokens, or arbitrary return URLs belong
+ * in the authentication URL.
+ */
+export function getWebAuthUrl(journey: HostJourney): string {
+  const route = journey === "new_account_new_gathering" ? "/signup" : "/login";
+  const url = new URL(route, "https://placeandplenty.com");
+  url.searchParams.set("next", "/host");
+  return url.toString();
+}
