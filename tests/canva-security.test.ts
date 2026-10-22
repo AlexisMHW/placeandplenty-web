@@ -8,6 +8,7 @@ import {
   sealGrant,
   validateOAuthRequest,
   validVerifier,
+  validOAuthClient,
 } from "../lib/canva-security.ts";
 const key = randomBytes(32).toString("base64");
 test("Canva grant rejects tampering, wrong keys, expiration and malformed data", () => {
@@ -66,4 +67,33 @@ test("OAuth binds exact client, callback, S256 and allowed scopes", () => {
   assert.ok(equalSecret("secret", "secret"));
   assert.ok(!equalSecret("secret", "other"));
   assert.ok(!equalSecret("secret", "short"));
+});
+
+test("OAuth public client mode is explicit and keeps confidential mode fail-closed", () => {
+  const confidential = {
+    clientId: "qa",
+    clientAuth: "secret",
+    clientSecret: "private",
+  };
+  assert.equal(validOAuthClient("qa", "private", confidential), true);
+  assert.equal(validOAuthClient("qa", "", confidential), false);
+  assert.equal(
+    validOAuthClient("qa", "", { ...confidential, clientSecret: undefined }),
+    false,
+  );
+  assert.equal(
+    validOAuthClient("other", "", { clientId: "qa", clientAuth: "public" }),
+    false,
+  );
+  assert.equal(
+    validOAuthClient("qa", "", { clientId: "qa", clientAuth: "public" }),
+    true,
+  );
+  assert.equal(
+    validOAuthClient("qa", "unexpected", {
+      clientId: "qa",
+      clientAuth: "public",
+    }),
+    false,
+  );
 });

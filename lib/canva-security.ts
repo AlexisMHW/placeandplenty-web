@@ -95,3 +95,23 @@ export function validateOAuthRequest(
     throw new Error("Invalid OAuth request");
   return { challenge, state, redirectUri: config.redirectUri };
 }
+
+/** Public OAuth clients require PKCE at authorization AND redemption. The public
+ * client id identifies the sole registered client; it is never a bearer secret. */
+export function validOAuthClient(
+  clientId: string,
+  suppliedSecret: string,
+  config: {
+    clientId: string;
+    clientAuth: string;
+    clientSecret?: string;
+  },
+): boolean {
+  if (!equalSecret(clientId, config.clientId)) return false;
+  if (config.clientAuth === "public") return suppliedSecret === "";
+  return (
+    config.clientAuth === "secret" &&
+    Boolean(config.clientSecret) &&
+    equalSecret(suppliedSecret, config.clientSecret!)
+  );
+}

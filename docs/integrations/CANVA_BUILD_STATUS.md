@@ -2,21 +2,34 @@
 
 Draft app: AAHOGO4RP4c. Branch: feature/canva-hosting-integration. PR: #26.
 
-The official SDK application now compiles locally into one approximately 1.31 MB
-JavaScript bundle with inline UI Kit CSS. Root and Canva TypeScript checks pass;
-103 web tests and 32 Canva tests pass, including an isolated PostgreSQL/PGlite test
-of the proposed OAuth authorization-code SQL. The feature-only workflow performs
-these checks without deploying or contacting the Canva portal.
+The official SDK application compiles into one approximately 1.31 MB JavaScript
+bundle with inline UI Kit CSS. Both TypeScript checks pass. Current local results:
+104 web tests and 33 Canva tests pass, including PostgreSQL/PGlite authorization
+code tests and the real FormatJS message-ID regression test.
 
-Authentication, authorized gathering selection and canonical artwork upload/RPC
-save are implemented behind `CANVA_PUBLISHER_ENABLED`, disabled by default.
-No production database, entitlement policy, native code or deployed app was changed.
+The previous feature commit c4bc648 passed GitHub CI and the full Vercel Tina/Next
+preview build. Existing preview credentials support Tina; no additional Tina
+credentials are required from the owner. The local full build lacks those secrets.
 
-Full web build remains blocked by missing Tina credentials. The proposed code SQL
-has not been applied to shared Supabase. Draft OAuth configuration, staging
-credentials, end-to-end Canva preview, real RLS/entitlement matrix, concurrency and
-retry QA remain blockers. See `canva-app/README.md` and `canva-app/RELEASE_GATES.md`.
+The approved corrected bundle loads in the existing Canva draft. Disconnected
+publishing is disabled and the Not now handoff opens the host route. Live OAuth
+and artwork transfer are not yet verified end to end.
 
-Automatic approval review blocked CLI portal access despite `--offline`. The
-command was not retried. Local bundling uses official SDK packages and a local
-esbuild script; it is not a verified `canva apps build` or marketplace submission.
+The approved isolated Supabase QA branch is edfqrmkrfqnovzrryrxa. Canonical
+migrations and Canva authorization-code SQL are applied there. Its scheduled jobs
+and external push trigger are disabled before fixtures are introduced. No production
+data was copied. Branch-only Vercel preview variables point to QA, with the Canva
+feature flag still false. The draft OAuth provider has not been saved.
+
+Live transaction-only QA passed owner/accepted cohost selection, storage and RPC
+writes; unaccepted invitee/stranger listing, storage and RPC denial; authorization
+code ownership, denied table reads, PKCE mismatch and replay. The fixtures were
+rolled back. QA required matching the existing production table grants for
+gatherings, gathering_members and profiles; no production grants were changed.
+See `qa/canva-permissions.sql` (guarded against nonempty databases).
+
+Remaining gates: paid entitlement matrix, real HTTP/storage transfer, public staging
+access compatible with Canva OAuth (current preview is Vercel protected), draft
+OAuth setup, live transfer, retry/concurrency, endpoint rate limits and expired-code
+retention. Production permissions, entitlements and configuration are unchanged.
+No merge, production deployment or Canva submission is authorized.

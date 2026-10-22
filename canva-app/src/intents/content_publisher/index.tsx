@@ -53,6 +53,7 @@ async function getPublishConfiguration(): Promise<GetPublishConfigurationRespons
       {
         id: "invitation",
         displayName: intl.formatMessage({
+          id: "publisher.output.invitation",
           defaultMessage: "Digital invitation",
           description:
             "Label for publishing format shown in the output type dropdown",
@@ -61,7 +62,8 @@ async function getPublishConfiguration(): Promise<GetPublishConfigurationRespons
           {
             id: "artwork",
             displayName: intl.formatMessage({
-              defaultMessage: "Media",
+              id: "publisher.slot.artwork",
+              defaultMessage: "Invitation artwork",
               description: "Label for the media upload slot",
             }),
             fileCount: { exact: 1 },

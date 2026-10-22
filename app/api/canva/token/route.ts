@@ -1,7 +1,7 @@
 import { anonymousClient, canvaConfig } from "@/lib/canva-server";
 import {
   digest,
-  equalSecret,
+  validOAuthClient,
   openGrant,
   validVerifier,
 } from "@/lib/canva-security";
@@ -32,10 +32,7 @@ export async function POST(request: Request) {
       clientId = decodeURIComponent(credentials.slice(0, split));
       secret = decodeURIComponent(credentials.slice(split + 1));
     }
-    if (
-      !equalSecret(clientId, config.clientId) ||
-      !equalSecret(secret, config.clientSecret)
-    )
+    if (!validOAuthClient(clientId, secret, config))
       return Response.json(
         { error: "invalid_client" },
         { status: 401, headers },

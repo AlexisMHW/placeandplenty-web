@@ -37,7 +37,7 @@ Do not upload a localhost-configured CI bundle as a release build.
   `gatherings:read invitation:write`, client-secret authentication at exchange.
 - Random codes are stored hashed, expire in 60 seconds and are consumed atomically.
   A review-only SQL proposal is in `docs/integrations/sql/canva_authorization_codes.sql`.
-  It has **not** been applied to any shared database. Local PGlite tests execute
+  It has been applied to the isolated, owner-approved QA branch only. Local PGlite tests execute
   this SQL with test auth identities and PostgreSQL roles/RLS.
 - Supabase access tokens are AES-256-GCM encrypted server-side. The opaque OAuth
   token expires within ten minutes or at the underlying session expiry. No
@@ -52,7 +52,8 @@ Staging-only server configuration (not committed):
 | `CANVA_PUBLISHER_ENABLED=true` | Explicit gate; disabled by default |
 | `CANVA_APP_ORIGIN` | Exact app iframe origin copied from the existing draft app |
 | `CANVA_OAUTH_CLIENT_ID` | Registered OAuth client ID |
-| `CANVA_OAUTH_CLIENT_SECRET` | Server-only client secret, configured in Canva OAuth |
+| `CANVA_OAUTH_CLIENT_AUTH` | `secret` by default; explicit `public` mode still requires PKCE S256 |
+| `CANVA_OAUTH_CLIENT_SECRET` | Server-only client secret, required in secret mode |
 | `CANVA_OAUTH_REDIRECT_URI` | Exact OAuth callback copied from Canva; never guessed |
 | `CANVA_TOKEN_ENCRYPTION_KEY` | Server-only random 32-byte key encoded in base64 |
 | Existing public Supabase URL/anon key | Same backend; no service-role secret |

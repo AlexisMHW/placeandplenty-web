@@ -8,14 +8,30 @@ export function canvaConfig() {
   const redirectUri = process.env.CANVA_OAUTH_REDIRECT_URI;
   const encryptionKey = process.env.CANVA_TOKEN_ENCRYPTION_KEY;
   const clientSecret = process.env.CANVA_OAUTH_CLIENT_SECRET;
+  const clientAuth = process.env.CANVA_OAUTH_CLIENT_AUTH || "secret";
+  if (!["secret", "public"].includes(clientAuth))
+    throw new Error("Invalid OAuth client authentication mode");
   const origin = process.env.CANVA_APP_ORIGIN;
-  if (!clientId || !redirectUri || !encryptionKey || !clientSecret || !origin)
+  if (
+    !clientId ||
+    !redirectUri ||
+    !encryptionKey ||
+    (clientAuth === "secret" && !clientSecret) ||
+    !origin
+  )
     throw new Error("Canva configuration incomplete");
   if (new URL(origin).origin !== origin || !origin.startsWith("https://"))
     throw new Error("Invalid Canva origin");
   if (!redirectUri.startsWith("https://"))
     throw new Error("Invalid OAuth callback");
-  return { clientId, redirectUri, encryptionKey, clientSecret, origin };
+  return {
+    clientId,
+    redirectUri,
+    encryptionKey,
+    clientSecret,
+    clientAuth,
+    origin,
+  };
 }
 export function anonymousClient() {
   return createSupabaseClient(

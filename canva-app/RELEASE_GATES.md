@@ -6,30 +6,26 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
 
 - Official Canva SDK/UI Kit dependencies and starter manifest isolated from Next.js.
 - Root and Canva TypeScript checks pass.
-- Web: 103 tests pass, including grant security, permission rejection and save cleanup.
-- Canva: 32 tests pass, including publisher failure/success ordering and SQL role/RLS,
+- Web: 104 tests pass, including grant security, permission rejection and save cleanup.
+- Canva: 33 tests pass, including publisher failure/success ordering and SQL role/RLS,
   PKCE mismatch, expiry and single-use code redemption tests in local PGlite.
 - Single JavaScript SDK bundle with inline CSS: approximately 1.31 MB, below 5 MB.
 - Build-only feature-branch CI workflow added. No deployment or submission steps.
-- Full `npm run build` blocked at Tina CMS: missing `NEXT_PUBLIC_TINA_CLIENT_ID`
-  and `TINA_TOKEN`. This is not a passing website build.
+- Full Tina/Next preview build and GitHub CI passed for c4bc648. Current follow-up
+  changes have passed local checks; remote verification must be repeated after push.
 
 ## Before staging acceptance
 
-1. Choose an isolated staging Supabase project/branch with current canonical
-   gathering/storage/RPC contracts. Review and apply the proposed authorization
-   code SQL there, including retention cleanup and rate limiting. No shared DB
-   has been changed. The SQL deliberately exposes only a random-code/PKCE exchange
-   function to anon; table reads are denied. Security-definer review is required.
-2. Configure server-only encryption/client credentials, exact callback and app
-   iframe origin, plus the disabled-by-default feature flag. Use actual draft
-   Canva OAuth settings; do not guess the callback. Test Basic and/or form client
-   auth as configured, S256 verifier delivery and cancellation/denial handling.
-3. Provide Tina credentials to complete the normal web build. Verify CI result
-   after pushing; a local pass is not a remote CI pass.
-4. With approval, configure the existing Canva draft app for approved staging
-   URLs and preview the compiled bundle. Automatic review blocked the CLI
-   scaffolding command's portal/API access; no retry or portal mutation occurred.
+1. The approved isolated Supabase QA branch has canonical migrations and the Canva
+   authorization-code SQL. Complete live RLS/storage tests, rate limiting and
+   expired-code retention. No production schema was changed.
+2. Branch-only preview variables are configured with the feature flag false.
+   Deploy the follow-up to preview, verify QA configuration, and resolve protected
+   preview access for Canva before enabling the QA feature.
+3. Existing Vercel Tina credentials already support a passing full preview build.
+   Repeat CI and preview verification for the final feature commit.
+4. The approved draft bundle loads in Canva. Save and verify the QA OAuth provider
+   using the observed exact callback/origin and PKCE S256, then test live transfer.
 
 ## End-to-end release acceptance
 

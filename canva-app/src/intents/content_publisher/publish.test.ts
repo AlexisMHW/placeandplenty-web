@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-vi.mock("@canva/app-i18n-kit", () => ({
-  initIntl: () => ({
-    formatMessage: ({ defaultMessage }: { defaultMessage: string }) =>
-      defaultMessage,
-  }),
-  AppI18nProvider: () => null,
-}));
+// Use real FormatJS: a passthrough formatter hid missing IDs in the first preview.
+vi.mock("@canva/app-i18n-kit", async () => {
+  const { createIntl } =
+    await vi.importActual<typeof import("react-intl")>("react-intl");
+  return {
+    initIntl: () => createIntl({ locale: "en", messages: {} }),
+    AppI18nProvider: () => null,
+  };
+});
 vi.mock("@canva/app-ui-kit", () => ({ AppUiProvider: () => null }));
 vi.mock("@canva/app-ui-kit/styles.css", () => ({}));
 vi.mock("./settings_ui", () => ({ SettingsUi: () => null }));
@@ -15,7 +17,7 @@ vi.mock("../../api", () => ({
   backend: "https://preview.example",
 }));
 import { api } from "../../api";
-import { publishContent } from "./index";
+import contentPublisher, { publishContent } from "./index";
 import type { PublishContentRequest } from "@canva/intents/content";
 const id = "f2f91df4-8c45-4e7e-9a16-313314324889";
 function request(optIn = true): PublishContentRequest {
@@ -35,6 +37,19 @@ function request(optIn = true): PublishContentRequest {
   } as PublishContentRequest;
 }
 describe("Content Publisher", () => {
+  it("initializes its output configuration with real FormatJS", async () => {
+    const configuration = await contentPublisher.getPublishConfiguration();
+    expect(configuration).toMatchObject({
+      status: "completed",
+      outputTypes: [
+        {
+          id: "invitation",
+          displayName: "Digital invitation",
+          mediaSlots: [{ id: "artwork", displayName: "Invitation artwork" }],
+        },
+      ],
+    });
+  });
   beforeEach(() => {
     vi.resetAllMocks();
     vi.stubGlobal(
