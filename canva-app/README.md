@@ -1,40 +1,87 @@
-# Place & Plenty Canva app — work in progress
+# Place & Plenty Canva Content Publisher
 
-Canva app ID: `AAHOGO4RP4c`
-Distribution: Public (draft)
-Intent: Content Publisher
-Required permission: Design Read
+Development only, branch `feature/canva-hosting-integration`, draft PR #26.
+Existing Canva draft app: `AAHOGO4RP4c`. No portal registration, upload or
+submission is needed to run the local build or tests below.
 
-## Source files
-- `src/PublisherChoices.tsx`: single-day / multi-day and invitation opt-in UI
-- `src/handoff.ts`: handoff selection contract
+## Local SDK build
 
-## Not yet runnable
-These are initial React/TypeScript source components, not a compiled Canva bundle.
-The Canva SDK starter, compiled bundle, authorization flow, existing gathering
-selection, itinerary persistence, server handoff, and real content export handler
-still need implementation. `prepareContentPublisher` is registered and settings
-and preview screens now render, but the publisher deliberately returns an error
-rather than claiming a successful upload. Do not upload these source files to Canva's
-JavaScript bundle field; it requires a compiled application bundle.
+The Canva CLI 2.15.0 Content Publisher starter files were downloaded locally.
+The scaffold command was then blocked by automatic approval review when it
+contacted Canva's API despite `--offline`. It was not retried. The checked-in
+manifest, SDK/UI dependencies, declarations, styles and license come from
+that downloaded starter. The placeholder implementation has been replaced.
 
-## Safety
-No changes to native code, OTA updates, app store builds, production databases,
-or deployed web routes are included in this branch.
+```sh
+cd canva-app
+npm ci --ignore-scripts
+npm run typecheck
+npm test
+npm run build
+```
 
-## Next implementation order
-1. Scaffold the Canva Apps SDK project using the current Content Publisher starter.
-2. Register the publisher intent and integrate PublisherChoices in the supported UI.
-3. Verify existing web host auth, gathering and itinerary endpoints.
-4. Build a secure host handoff and optional invitation import, with RLS.
-5. Test with Canva preview; compile and upload only after validation.
+The local esbuild script generates **one** `dist/app.js`, including UI Kit CSS,
+checks the 5 MB ceiling, and makes no Canva portal calls. This is an official
+SDK application compiled with a local bundler, not a completed `canva apps build`
+or a Canva preview test. The local build defaults to `http://localhost:3000`.
+Set `CANVA_BACKEND_URL` to the approved staging HTTPS origin before preview.
+Do not upload a localhost-configured CI bundle as a release build.
 
-## Confirmed website auth integration contract
+## Authentication and backend
 
-The existing website already handles `/signup`, `/login`, `/auth/callback`, and `/host`. Canva must use these existing account routes; it must not implement a second identity provider or create paid entitlements. The callback's `safeNext` accepts same-origin relative destinations only. A Canva return flow therefore requires a separate short-lived, single-use server-side state exchange; never use an external Canva URL as `next`.
+- Deferred OAuth through `auth.initOauth()`; no embedded credential collection.
+- Authorization URL: `<backend>/host/canva/authorize`. Existing login/signup and
+  safe relative `next` carry the request back to an explicit consent page.
+- Token URL: `<backend>/api/canva/token`, authorization-code grant only.
+- Exact registered client and callback, S256 PKCE, fixed scopes
+  `gatherings:read invitation:write`, client-secret authentication at exchange.
+- Random codes are stored hashed, expire in 60 seconds and are consumed atomically.
+  A review-only SQL proposal is in `docs/integrations/sql/canva_authorization_codes.sql`.
+  It has **not** been applied to any shared database. Local PGlite tests execute
+  this SQL with test auth identities and PostgreSQL roles/RLS.
+- Supabase access tokens are AES-256-GCM encrypted server-side. The opaque OAuth
+  token expires within ten minutes or at the underlying session expiry. No
+  refresh token is stored or issued; reconnect when expired.
+- API calls revalidate the underlying user and execute as that user, using the
+  existing anon key and RLS. There is no service-role client.
 
-The Canva Content Publisher remains disabled until this return flow, authenticated gathering selection, and actual media transfer are implemented and tested. Existing database permissions and product entitlements remain unchanged by founder direction.
+Staging-only server configuration (not committed):
 
-## Verified October 22 integration status
+| Variable | Purpose |
+| --- | --- |
+| `CANVA_PUBLISHER_ENABLED=true` | Explicit gate; disabled by default |
+| `CANVA_APP_ORIGIN` | Exact app iframe origin copied from the existing draft app |
+| `CANVA_OAUTH_CLIENT_ID` | Registered OAuth client ID |
+| `CANVA_OAUTH_CLIENT_SECRET` | Server-only client secret, configured in Canva OAuth |
+| `CANVA_OAUTH_REDIRECT_URI` | Exact OAuth callback copied from Canva; never guessed |
+| `CANVA_TOKEN_ENCRYPTION_KEY` | Server-only random 32-byte key encoded in base64 |
+| Existing public Supabase URL/anon key | Same backend; no service-role secret |
 
-The source now renders initial settings and preview views and offers links to the existing Place & Plenty website. This does **not** establish an authenticated Canva session or complete a publishing operation. The production web app, database, and native apps remain unchanged. The Canva CLI project, compatible dependencies, compilation, test execution, one-time return state, authorized gathering selection, and durable artwork transfer remain release blockers. Never interpret a successful Next.js preview build as a compiled Canva Apps SDK bundle.
+Canva OAuth must be configured for PKCE S256, these exact scopes and endpoints.
+These portal settings have not been changed. Verify Canva's client authentication
+mode against the staging token endpoint before calling the connection complete.
+
+## Gatherings and invitations
+
+The gathering list uses `list_my_gatherings_with_lifecycle` under the host's RLS.
+Only draft/active rows are offered; authorization/lifecycle are rechecked before
+upload. Existing creation opens `/host/create`; after planning, return and refresh.
+Single-day and multi-day creation, itineraries and upgrades stay in the existing
+host app. This integration does not create gatherings or grant subscriptions.
+
+Invitation opt-in starts unchecked. `Not now` only opens planning. An explicit
+opt-in enables Canva publishing; the preview uses actual SDK preview media. The
+publisher accepts one PNG, streams and bounds it to 10 MB, then posts bytes to the
+backend (the server never fetches an arbitrary media URL). The backend checks PNG
+signature/header and dimensions, uploads a new key in the private
+`invitation-artwork` bucket and calls the existing `save_invitation_artwork` RPC.
+Existing storage/RPC permissions remain authoritative. A failed metadata save
+attempts removal of only the new object. Success is returned only after save.
+
+A retry uses a fresh storage key, matching the current native upload convention.
+Cross-request idempotency, concurrent replacement behavior, cleanup failure and
+network loss after a successful save need staging QA. No immediate revocation
+endpoint is provided; grants expire in at most ten minutes and underlying user
+validation runs on every request. Do not release until the gates below pass.
+
+See `RELEASE_GATES.md` for remaining validation and approvals.
