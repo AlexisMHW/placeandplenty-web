@@ -1,4 +1,4 @@
-import type { GatheringChoice } from "./PublisherChoices";
+import type { GatheringChoice, PublisherSelection } from "./PublisherChoices";
 
 export type HostJourney =
   | "new_account_new_gathering"
@@ -59,4 +59,16 @@ export function getWebAuthUrl(journey: HostJourney): string {
   const url = new URL(route, "https://placeandplenty.com");
   url.searchParams.set("next", "/host");
   return url.toString();
+}
+
+/**
+ * Converts the UI selection to the next web-auth destination.
+ * This only chooses a destination; it does not create a gathering,
+ * grant access, or complete the Canva authorization callback.
+ */
+export function getAuthDestinationForSelection(
+  selection: PublisherSelection,
+  hasPlaceAndPlentyAccount: boolean,
+): string {
+  return getWebAuthUrl(getHostJourney(hasPlaceAndPlentyAccount, selection.gatheringChoice));
 }
