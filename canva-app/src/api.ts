@@ -35,9 +35,13 @@ export async function api(path: string, init: RequestInit = {}) {
   }
   if (!response.ok)
     throw new PublisherError(
-      response.status === 401
-        ? intl.formatMessage(messages.reconnectRequired)
-        : intl.formatMessage(messages.requestFailed),
+      response.status === 429
+        ? intl.formatMessage(messages.rateLimited)
+        : response.status === 409
+          ? intl.formatMessage(messages.publishPending)
+          : response.status === 401
+            ? intl.formatMessage(messages.reconnectRequired)
+            : intl.formatMessage(messages.requestFailed),
     );
   try {
     return await response.json();

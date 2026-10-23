@@ -64,6 +64,7 @@ export function canvaResponse(request: Request, body: unknown, status = 200) {
   const headers: Record<string, string> = {
     "Cache-Control": "no-store",
     Vary: "Origin",
+    "Access-Control-Expose-Headers": "Retry-After",
     "Referrer-Policy": "no-referrer",
   };
   try {
@@ -78,7 +79,7 @@ export function canvaOptions(request: Request) {
   response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   response.headers.set(
     "Access-Control-Allow-Headers",
-    "Authorization, Content-Type, X-Invitation-Opt-In",
+    "Authorization, Content-Type, X-Invitation-Opt-In, X-Publish-Request-Id",
   );
   return response;
 }

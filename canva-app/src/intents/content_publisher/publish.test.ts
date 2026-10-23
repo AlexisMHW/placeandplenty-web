@@ -23,6 +23,7 @@ const id = "f2f91df4-8c45-4e7e-9a16-313314324889";
 function request(optIn = true): PublishContentRequest {
   return {
     publishRef: JSON.stringify({
+      requestId: "44444444-4444-4444-8444-444444444444",
       gatheringId: id,
       duration: "single_day",
       invitationOptIn: optIn,
@@ -93,7 +94,11 @@ describe("Content Publisher", () => {
       `publish?gatheringId=${id}`,
       expect.objectContaining({
         method: "POST",
-        headers: { "Content-Type": "image/png", "X-Invitation-Opt-In": "true" },
+        headers: {
+          "Content-Type": "image/png",
+          "X-Invitation-Opt-In": "true",
+          "X-Publish-Request-Id": "44444444-4444-4444-8444-444444444444",
+        },
       }),
     );
   });

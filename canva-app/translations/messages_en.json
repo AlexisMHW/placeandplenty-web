@@ -103,6 +103,14 @@
     "defaultMessage": "Invitation could not be published",
     "description": "Fallback publishing error for unexpected failures."
   },
+  "publisher.publishPending": {
+    "defaultMessage": "Check your gathering before trying again. If you changed the artwork, select the gathering and confirm the invitation again.",
+    "description": "A duplicate publish is in progress, or the request ID belongs to different artwork."
+  },
+  "publisher.rateLimited": {
+    "defaultMessage": "Too many attempts. Please wait a few minutes before trying again.",
+    "description": "The account exceeded its temporary request rate limit."
+  },
   "publisher.reconnect": {
     "defaultMessage": "Reconnect account",
     "description": "Button to authorize a Place & Plenty account again."

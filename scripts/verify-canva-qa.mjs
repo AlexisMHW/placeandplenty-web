@@ -3,7 +3,7 @@
 // credentials outside the repository. Retains synthetic QA artwork for review.
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { digest, sealGrant } from '../lib/canva-security.ts';
@@ -96,10 +96,11 @@ assert.ok(code);
   // Default API mode exercises real Auth, PostgREST and Storage but does not claim
   // that the browser consent boundary was verified.
   code = randomBytes(32).toString('base64url');
-  const insert = await clients.owner.from('canva_authorization_codes').insert({
-    code_hash: digest(code), user_id: fixtures.users.owner.id, code_challenge: digest(verifier),
-    encrypted_grant: grantFor('owner'), expires_at: new Date(Date.now() + 60000).toISOString(),
+  const insert = await clients.owner.rpc('issue_canva_authorization_code', {
+    p_code_hash: digest(code), p_code_challenge: digest(verifier),
+    p_encrypted_grant: grantFor('owner'),
   });
+  assert.equal(insert.data?.status, 'issued');
   assert.equal(insert.error, null, 'User-bound authorization code insertion failed');
   console.log('NOT VERIFIED: signed-in browser consent; use CANVA_QA_VERIFY_CONSENT=true in an unrestricted QA runtime.');
 }
@@ -122,7 +123,7 @@ result = await request('/api/canva/gatherings', wrongIdentity);
 check('grant identity must match validated Supabase user', () => assert.equal(result.response.status, 401));
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
 const path = `/api/canva/publish?gatheringId=${gatheringId}`;
-const publishOptions = { method: 'POST', body: png, headers: { 'Content-Type': 'image/png', 'X-Invitation-Opt-In': 'true' } };
+const publishOptions = { method: 'POST', body: png, headers: { 'Content-Type': 'image/png', 'X-Invitation-Opt-In': 'true', 'X-Publish-Request-Id': randomUUID() } };
 result = await request(path, ownerGrant, { ...publishOptions, headers: { 'Content-Type': 'image/png' } });
 check('explicit invitation opt-in required', () => assert.equal(result.response.status, 400));
 result = await request(path, ownerGrant, { ...publishOptions, body: Buffer.from('invalid') });
@@ -145,6 +146,9 @@ async function savedArtwork() {
   assert.equal(error, null); assert.ok(data.invitation_artwork_path?.startsWith(gatheringId + '/')); return data.invitation_artwork_path;
 }
 const firstPath = await savedArtwork();
+result = await request(path, ownerGrant, publishOptions);
+check('same request replay completes without replacing canonical artwork', () => assert.equal(result.response.status, 200));
+assert.equal(await savedArtwork(), firstPath);
 const firstDownload = await clients.owner.storage.from('invitation-artwork').download(firstPath);
 check('canonical artwork is readable and byte-identical', () => { assert.equal(firstDownload.error, null); });
 assert.deepEqual(Buffer.from(await firstDownload.data.arrayBuffer()), png);
@@ -156,7 +160,20 @@ const preserved = await clients.owner.storage.from('invitation-artwork').downloa
 check('replacement preserves prior artwork object', () => assert.equal(preserved.error, null));
 const strangerDownload = await clients.stranger.storage.from('invitation-artwork').download(secondPath);
 check('private artwork cannot be downloaded by stranger', () => assert.ok(strangerDownload.error));
-const simultaneous = await Promise.all([request(path, ownerGrant, publishOptions), request(path, grantFor('cohost'), publishOptions)]);
+const simultaneous = await Promise.all([request(path, ownerGrant, {...publishOptions, headers: {...publishOptions.headers, 'X-Publish-Request-Id': randomUUID()}}), request(path, grantFor('cohost'), {...publishOptions, headers: {...publishOptions.headers, 'X-Publish-Request-Id': randomUUID()}})]);
 check('concurrent replacements complete without deleting prior artwork', () => assert.ok(simultaneous.every(r => r.response.status === 200)));
 await savedArtwork();
+const concurrentId = randomUUID();
+const concurrentOptions = {...publishOptions, headers: {...publishOptions.headers, 'X-Publish-Request-Id': concurrentId}};
+const duplicate = await Promise.all([request(path, ownerGrant, concurrentOptions), request(path, ownerGrant, concurrentOptions)]);
+check('concurrent identical requests produce one save or a safe in-progress response', () => {
+  assert.ok(duplicate.some(r => r.response.status === 200));
+  assert.ok(duplicate.every(r => [200,409].includes(r.response.status)));
+});
+const duplicatePath = await savedArtwork();
+result = await request(path, ownerGrant, concurrentOptions);
+check('completed concurrent request replay preserves its artwork path', () => assert.equal(result.response.status, 200));
+assert.equal(await savedArtwork(), duplicatePath);
+const conflict = await clients.owner.rpc('begin_canva_publish', {p_request_id: concurrentId, p_gathering_id: gatheringId, p_content_hash: '0'.repeat(64)});
+check('changed content cannot reuse a completed request ID', () => {assert.equal(conflict.error,null); assert.equal(conflict.data?.status,'conflict');});
 console.log(`Verified ${passed} QA checks. Synthetic fixtures and artwork retained in QA only. No production requests.`);

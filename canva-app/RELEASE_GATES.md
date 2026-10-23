@@ -6,10 +6,10 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
 
 - Official Canva SDK/UI Kit dependencies and starter manifest isolated from Next.js.
 - Root and Canva TypeScript checks pass.
-- Web: 108 tests pass, including grant security, permission rejection and save cleanup.
-- Canva: 50 tests pass, including publisher failure/success ordering and SQL role/RLS,
+- Web: 111 tests pass, including grant security, permission rejection and save cleanup.
+- Canva: 60 tests pass, including publisher failure/success ordering and SQL role/RLS,
   PKCE mismatch, expiry and single-use code redemption tests in local PGlite.
-- Single JavaScript SDK bundle with inline CSS: 1,312,658 bytes, below 5 MB.
+- Single JavaScript SDK bundle with inline CSS: 1,313,486 bytes, below 5 MB.
 - Build-only feature-branch CI workflow added. No deployment or submission steps.
 - Full Tina/Next preview build and GitHub CI passed for 417e5d4. Current follow-up
   SDK follow-up adds a 30-second fetch timeout and account/retry behavior tests;
@@ -27,8 +27,8 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
   oversized token-body rejection. Hosted consent adds two checks when rerun.
 - Seven live QA plan states preserve canonical access decisions and entitlement
   records after artwork save; transaction-only fixtures were rolled back.
-- QA SMTP credential repair, browser sign-in and actual design export remain pending. Complete endpoint abuse
-  limits and expired-code retention before release. See the QA verification report.
+- QA SMTP credential repair, browser sign-in and actual design export remain pending. Rate limits, duplicate protection and temporary-record retention are now implemented
+  and applied to QA only; hosted preview verification of this change is pending. See the QA verification report.
 
 ## End-to-end release acceptance
 
@@ -62,3 +62,32 @@ PostgREST/storage environment or genuine simultaneous server connections.
 - The source catalog is prepared for approval; it has not been submitted for
   translation or marketplace review. Disconnected LTR/RTL pseudolocales render in Canva; connected flows, actual
   translated locales, mobile and assistive-technology acceptance still need QA.
+
+## Safeguards follow-up — 23 October 2026
+
+QA migration `canva_publisher_rate_limits_and_idempotency` is applied. The earlier
+interrupted attempt had not changed the database. Limits are per authenticated
+account: 60 gathering reads/minute, 5 publish attempts/minute and 30/hour, and
+10 authorization-code issuances/10 minutes. Rejected attempts return a bounded
+Retry-After; the SDK displays localized guidance and never retries automatically.
+Direct authenticated code INSERT is replaced with a user-bound issuance RPC.
+
+Each opt-in creates a stable request UUID. An account/request/content ledger
+serializes concurrent attempts; canonical artwork save and ledger completion
+share one transaction. Replays return the completed result without uploading or
+reapplying older artwork. Changed content requires a fresh opt-in. Unknown save
+responses retain the new object because commit may already have occurred; only
+a confirmed PostgreSQL rejection permits removing that attempt's object.
+
+QA-only cleanup runs every 15 minutes: consumed/expired authorization codes,
+quota events older than one hour, and completed or abandoned request records
+older than 24 hours. It never deletes accounts, gatherings, entitlements or
+artwork. The idempotency guarantee lasts through this retention window.
+
+Current local verification: 111 web + 60 SDK tests, both typechecks and QA-targeted
+SDK build pass. The real QA API harness passes 26 checks, including concurrent
+identical requests, completed replay and changed-content conflict. Live SQL tests
+verify quota boundaries/account isolation/private grants and rerun all seven
+entitlement cases with rollback. Hosted consent on this revision and the updated
+Canva draft bundle still need verification. Existing short-lived grants remain
+unchanged; renewable/revocable connections are a separate release gate.

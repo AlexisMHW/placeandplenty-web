@@ -127,7 +127,11 @@ export async function publishContent(
     }
     const result = await api(`publish?gatheringId=${settings.gatheringId}`, {
       method: "POST",
-      headers: { "Content-Type": "image/png", "X-Invitation-Opt-In": "true" },
+      headers: {
+        "Content-Type": "image/png",
+        "X-Invitation-Opt-In": "true",
+        "X-Publish-Request-Id": settings.requestId,
+      },
       body: bytes,
     });
     if (

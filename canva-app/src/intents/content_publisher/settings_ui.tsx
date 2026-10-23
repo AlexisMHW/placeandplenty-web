@@ -25,6 +25,7 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
   const [gatherings, setGatherings] = useState<Gathering[]>([]);
   const [connected, setConnected] = useState(false);
   const [selected, setSelected] = useState("");
+  const [requestId, setRequestId] = useState("");
   const [optIn, setOptIn] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,20 +33,21 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
   useEffect(() => {
     updatePublishSettings({
       publishRef:
-        current && optIn
+        current && optIn && requestId
           ? serializeInvitationPublishRef({
               gatheringId: current.id,
+              requestId,
               duration: current.duration,
               invitationOptIn: true,
             })
           : "",
       validityState: !connected
         ? "invalid_authentication_required"
-        : current && optIn
+        : current && optIn && requestId
           ? "valid"
           : "invalid_missing_required_fields",
     });
-  }, [current, optIn, connected, updatePublishSettings]);
+  }, [current, optIn, requestId, connected, updatePublishSettings]);
   const load = useCallback(async () => {
     setBusy(true);
     setError("");
@@ -153,7 +155,10 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
           label={intl.formatMessage(messages.optIn)}
           checked={optIn}
           disabled={!current}
-          onChange={(_, checked) => setOptIn(checked)}
+          onChange={(_, checked) => {
+            setRequestId(checked ? crypto.randomUUID() : "");
+            setOptIn(checked);
+          }}
         />
         <Text>{intl.formatMessage(messages.replaceNotice)}</Text>
         <Button

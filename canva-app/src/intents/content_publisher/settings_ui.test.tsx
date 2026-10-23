@@ -300,4 +300,21 @@ describe("Localized preview rendering", () => {
       screen.getByRole("img", { name: "Votre invitation" }).getAttribute("src"),
     ).toBe("https://example.test/invitation.png");
   });
+  it("keeps one request ID per opt-in and renews it after re-confirmation", async () => {
+    vi.mocked(oauth.getAccessToken).mockResolvedValue({
+      token: "test",
+    } as never);
+    const update = mount();
+    await chooseAndOptIn();
+    await waitFor(() =>
+      expect(update.mock.lastCall?.[0].validityState).toBe("valid"),
+    );
+    const first = JSON.parse(update.mock.lastCall![0].publishRef).requestId;
+    expect(first).toMatch(/^[0-9a-f-]{36}$/);
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(update.mock.lastCall?.[0].publishRef).toBe("");
+    fireEvent.click(screen.getByRole("checkbox"));
+    const next = JSON.parse(update.mock.lastCall![0].publishRef).requestId;
+    expect(next).not.toBe(first);
+  });
 });

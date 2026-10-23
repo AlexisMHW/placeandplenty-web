@@ -83,4 +83,17 @@ describe("Publisher API connection and retry boundaries", () => {
     );
     expect(fetch).toHaveBeenCalledTimes(1);
   });
+  it("rate limits and duplicate conflicts show safe guidance without retrying", async () => {
+    for (const [status, message] of [
+      [429, "Too many attempts"],
+      [409, "Check your gathering"],
+    ] as const) {
+      vi.mocked(fetch).mockClear();
+      vi.mocked(fetch).mockResolvedValue(
+        new Response("private details", { status }),
+      );
+      await expect(api("publish")).rejects.toThrow(message);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    }
+  });
 });

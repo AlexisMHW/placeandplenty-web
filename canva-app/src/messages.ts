@@ -188,6 +188,19 @@ export const messages = defineMessages({
     description:
       "Publishing error when the backend did not confirm the expected gathering save.",
   },
+  rateLimited: {
+    id: "publisher.rateLimited",
+    defaultMessage:
+      "Too many attempts. Please wait a few minutes before trying again.",
+    description: "The account exceeded its temporary request rate limit.",
+  },
+  publishPending: {
+    id: "publisher.publishPending",
+    defaultMessage:
+      "Check your gathering before trying again. If you changed the artwork, select the gathering and confirm the invitation again.",
+    description:
+      "A duplicate publish is in progress, or the request ID belongs to different artwork.",
+  },
   publishFailed: {
     id: "publisher.publishFailed",
     defaultMessage: "Invitation could not be published",

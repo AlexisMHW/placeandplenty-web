@@ -1,11 +1,8 @@
 // Injected dependencies let tests exercise authorization and failure ordering.
-import {
-  artworkObjectPath,
-  INVITATION_ARTWORK_BUCKET,
-  MAX_ARTWORK_BYTES,
-} from "./invitations.ts";
+import { INVITATION_ARTWORK_BUCKET, MAX_ARTWORK_BYTES } from "./invitations.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
+import { CanvaControlError, requireCanvaQuota } from "./canva-controls.ts";
 export function isGatheringId(id: unknown): id is string {
   return (
     typeof id === "string" &&
@@ -113,8 +110,10 @@ export async function persistCanvaArtwork(
   client: SupabaseClient,
   gatheringId: string,
   bytes: Uint8Array,
+  requestId: string,
 ) {
-  if (!isGatheringId(gatheringId)) throw new Error("Invalid gathering");
+  if (!isGatheringId(gatheringId) || !isGatheringId(requestId))
+    throw new Error("Invalid gathering");
   // Read the existing lifecycle RPC as the host. Never use a service role.
   const { data: row, error: readError } = await client
     .rpc("list_my_gatherings_with_lifecycle")
@@ -123,29 +122,64 @@ export async function persistCanvaArtwork(
   if (readError || !row || !eligibleGathering(row as Record<string, unknown>))
     throw new Error("Gathering unavailable");
   validatePng(bytes);
-  const path = artworkObjectPath(
-    gatheringId,
-    "canva-invitation.png",
-    randomUUID(),
+  const { data: claim, error: claimError } = await client.rpc(
+    "begin_canva_publish",
+    {
+      p_request_id: requestId,
+      p_gathering_id: gatheringId,
+      p_content_hash: createHash("sha256").update(bytes).digest("hex"),
+    },
   );
+  if (claimError || !claim)
+    throw new CanvaControlError(503, "Artwork save unavailable");
+  requireCanvaQuota(claim);
+  if (claim.status === "conflict")
+    throw new CanvaControlError(
+      409,
+      "Select the gathering and confirm the invitation again",
+    );
+  if (claim.status === "in_progress")
+    throw new CanvaControlError(
+      409,
+      "This invitation is still being saved. Check your gathering before retrying.",
+      claim.retry_after,
+    );
+  const path = claim.path;
+  if (
+    typeof path !== "string" ||
+    !path.startsWith(`${gatheringId}/`) ||
+    !isGatheringId(path.slice(gatheringId.length + 1, -4)) ||
+    !path.endsWith(".png")
+  )
+    throw new CanvaControlError(503, "Artwork save unavailable");
+  if (claim.status === "completed") return { gatheringId, path };
+  if (claim.status !== "claimed" || !isGatheringId(claim.lease_id))
+    throw new CanvaControlError(503, "Artwork save unavailable");
+  const lease = { p_request_id: requestId, p_lease_id: claim.lease_id };
   const bucket = client.storage.from(INVITATION_ARTWORK_BUCKET);
   const { error: uploadError } = await bucket.upload(path, bytes, {
     contentType: "image/png",
     upsert: false,
   });
-  if (uploadError) throw new Error("Artwork upload failed");
-  const { error: saveError } = await client.rpc("save_invitation_artwork", {
-    p_gathering_id: gatheringId,
-    p_storage_path: path,
-    p_mime_type: "image/png",
-    p_original_filename: "canva-invitation.png",
-  });
-  if (saveError) {
-    // Only the uncommitted new object is removed. Never delete existing artwork.
-    await bucket.remove([path]);
-    throw new Error("Artwork save failed");
+  if (uploadError) {
+    await client.rpc("abandon_canva_publish", lease);
+    throw new Error("Artwork upload failed");
   }
-  // A retry can replace with a fresh key, as the existing native uploader does.
-  // Do not claim cross-request idempotency; this needs staging concurrency QA.
+  const { data: saved, error: saveError } = await client.rpc(
+    "complete_canva_publish",
+    lease,
+  );
+  if (saveError || saved?.status !== "completed" || saved.path !== path) {
+    // Only a PostgreSQL rejection confirms rollback. Retain the object after an
+    // ambiguous response: the canonical save may already have committed.
+    if (saveError && /^[0-9A-Z]{5}$/.test(saveError.code || "")) {
+      await bucket.remove([path]);
+      await client.rpc("abandon_canva_publish", lease);
+    }
+    throw new CanvaControlError(
+      503,
+      "Save unconfirmed. Check your gathering before retrying.",
+    );
+  }
   return { gatheringId, path };
 }

@@ -39,6 +39,13 @@ export default async function Authorize({
         Your current plan and gathering permissions still apply. This connection
         expires within ten minutes.
       </p>
+      {searchParams.retry_after && (
+        <p role="alert">
+          Too many connection attempts. Wait{" "}
+          {Math.max(1, Math.min(600, Number(searchParams.retry_after) || 60))}{" "}
+          seconds before trying again.
+        </p>
+      )}
       <form action={action}>
         <button type="submit">Allow connection</button>
       </form>

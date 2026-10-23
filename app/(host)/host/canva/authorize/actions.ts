@@ -31,19 +31,28 @@ export async function authorizeCanva(raw: string) {
   if (expiresAt <= Date.now() + 30000)
     throw new Error("Please refresh your session");
   const code = randomBytes(32).toString("base64url");
-  const { error: insertError } = await client
-    .from("canva_authorization_codes")
-    .insert({
-      code_hash: digest(code),
-      user_id: user.id,
-      code_challenge: request.challenge,
-      encrypted_grant: sealGrant(
+  const { data: issued, error: insertError } = await client.rpc(
+    "issue_canva_authorization_code",
+    {
+      p_code_hash: digest(code),
+      p_code_challenge: request.challenge,
+      p_encrypted_grant: sealGrant(
         { userId: user.id, accessToken: session.access_token, expiresAt },
         config.encryptionKey,
       ),
-      expires_at: new Date(Date.now() + 60000).toISOString(),
-    });
-  if (insertError)
+    },
+  );
+  if (!insertError && issued?.status === "rate_limited") {
+    const params = new URLSearchParams(raw);
+    params.set(
+      "retry_after",
+      String(
+        Math.max(1, Math.min(600, Math.ceil(Number(issued.retry_after) || 60))),
+      ),
+    );
+    redirect(`/host/canva/authorize?${params.toString()}`);
+  }
+  if (insertError || issued?.status !== "issued")
     throw new Error("Canva connection is unavailable. Please try again later.");
   const target = new URL(request.redirectUri);
   target.searchParams.set("code", code);

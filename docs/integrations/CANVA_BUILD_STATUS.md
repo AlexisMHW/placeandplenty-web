@@ -2,8 +2,8 @@
 
 Draft app: AAHOGO4RP4c. Branch: feature/canva-hosting-integration. Draft PR: #26.
 
-The official Canva SDK/UI Kit publisher compiles to one 1,312,658-byte JavaScript
-bundle with inline CSS. Both TypeScript checks pass; 108 web tests and 50 Canva
+The official Canva SDK/UI Kit publisher compiles to one 1,313,486-byte JavaScript
+bundle with inline CSS. Both TypeScript checks pass; 111 web tests and 60 Canva
 tests pass. The named single-account OAuth provider is explicit in SDK code.
 
 Feature CI and full Tina/Next preview builds passed. Existing Vercel Tina
@@ -29,8 +29,8 @@ return path, rendered signed-in consent, callback code/state, token exchange,
 private byte-identical PNG transfer, canonical artwork save, prior-artwork
 preservation, and concurrent replacements. No production requests were made by
 these tests. Fifteen canonical entitlement/subscription/lifecycle/artwork function
-definitions match production exactly. QA scheduled jobs and external push remain
-disabled. Synthetic test accounts/artwork are retained in QA; credentials are not
+definitions match production exactly. Copied QA notification jobs and external push remain disabled. A separate QA-only
+15-minute cleanup job removes only temporary Canva records. Synthetic test accounts/artwork are retained in QA; credentials are not
 in git.
 
 A transaction-only live QA matrix also passed Free, Gathering Pass, Plus,
@@ -47,8 +47,8 @@ limits, stream failures and damaged/truncated PNGs.
 
 Remaining gates: QA SMTP credential repair and human signup delivery; secure
 browser sign-in and actual Canva editor export; broader lifecycle/expiry/
-cancellation/reconnection; ambiguous network-loss retry;
-endpoint abuse limits and authorization-code retention; accessibility/localization
+cancellation/reconnection; secure connection renewal/revocation;
+accessibility/localization
 and release review. No merge, production deployment or submission is authorized.
 
 See CANVA_QA_VERIFICATION.md and canva-app/RELEASE_GATES.md for evidence and limits.
@@ -81,3 +81,32 @@ short-label follow-up is locally tested. The QA bundle renders after upload.
 Canva pseudolocales exercised both text directions on the disconnected screen;
 long buttons were shortened after visual clipping was observed. Actual translated
 locales, authenticated layouts and mobile/device checks remain release gates.
+
+## Safeguards follow-up — 23 October 2026
+
+QA migration `canva_publisher_rate_limits_and_idempotency` is applied. The earlier
+interrupted attempt had not changed the database. Limits are per authenticated
+account: 60 gathering reads/minute, 5 publish attempts/minute and 30/hour, and
+10 authorization-code issuances/10 minutes. Rejected attempts return a bounded
+Retry-After; the SDK displays localized guidance and never retries automatically.
+Direct authenticated code INSERT is replaced with a user-bound issuance RPC.
+
+Each opt-in creates a stable request UUID. An account/request/content ledger
+serializes concurrent attempts; canonical artwork save and ledger completion
+share one transaction. Replays return the completed result without uploading or
+reapplying older artwork. Changed content requires a fresh opt-in. Unknown save
+responses retain the new object because commit may already have occurred; only
+a confirmed PostgreSQL rejection permits removing that attempt's object.
+
+QA-only cleanup runs every 15 minutes: consumed/expired authorization codes,
+quota events older than one hour, and completed or abandoned request records
+older than 24 hours. It never deletes accounts, gatherings, entitlements or
+artwork. The idempotency guarantee lasts through this retention window.
+
+Current local verification: 111 web + 60 SDK tests, both typechecks and QA-targeted
+SDK build pass. The real QA API harness passes 26 checks, including concurrent
+identical requests, completed replay and changed-content conflict. Live SQL tests
+verify quota boundaries/account isolation/private grants and rerun all seven
+entitlement cases with rollback. Hosted consent on this revision and the updated
+Canva draft bundle still need verification. Existing short-lived grants remain
+unchanged; renewable/revocable connections are a separate release gate.

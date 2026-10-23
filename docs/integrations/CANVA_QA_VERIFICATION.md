@@ -147,3 +147,20 @@ initial long button labels clipped under expansion and were shortened. The
 final English preview is saved as canva-qa-localized-sdk.jpg. No translation file
 or marketplace review was submitted. Commit 41505f6 passed both GitHub CI runs
 and Vercel preview build; the final short-label follow-up is locally tested.
+
+## Safeguards regression — 23 October 2026
+
+- QA-only rate-limit/idempotency migration and temporary cleanup schedule applied.
+- 26 real API checks pass locally against isolated QA Auth/PostgREST/Storage;
+  signed-in browser consent is not claimed by local API mode.
+- Concurrent identical publishes complete once or return safe in-progress;
+  completed replay retains the exact canonical path; changed-content reuse fails.
+- 111 web and 60 SDK tests pass; both typechecks and QA SDK build pass.
+- Live transaction-only quota/account/grant checks and seven-state entitlement
+  matrix pass, with synthetic SQL fixtures rolled back.
+- Admin-only private tables intentionally have RLS and no client policies/grants;
+  the security advisor's informational no-policy findings are expected for them.
+- Cleanup affects temporary Canva records only. No canonical artwork is deleted.
+- Remaining: hosted regression of this revision, refreshed Canva draft upload,
+  human email delivery/sign-in, actual editor export, renewal/revocation and
+  wider device/accessibility/review acceptance. No production release approved.
