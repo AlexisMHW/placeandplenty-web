@@ -4,7 +4,7 @@
     "description": "Label for the authorized gathering selection field."
   },
   "publisher.connect": {
-    "defaultMessage": "Connect or create an account",
+    "defaultMessage": "Connect account",
     "description": "Button to start connecting a Place & Plenty account; signup is offered on the website."
   },
   "publisher.connectRequired": {
@@ -52,11 +52,11 @@
     "description": "Publishing error when required settings are missing."
   },
   "publisher.manageGathering": {
-    "defaultMessage": "Create or manage a gathering",
+    "defaultMessage": "Create a gathering",
     "description": "Button that opens the external Place & Plenty gathering workflow."
   },
   "publisher.notNow": {
-    "defaultMessage": "Not now — continue planning",
+    "defaultMessage": "Not now",
     "description": "Button to open external planning without publishing invitation artwork."
   },
   "publisher.onePng": {

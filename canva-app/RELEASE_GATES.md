@@ -9,7 +9,7 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
 - Web: 108 tests pass, including grant security, permission rejection and save cleanup.
 - Canva: 50 tests pass, including publisher failure/success ordering and SQL role/RLS,
   PKCE mismatch, expiry and single-use code redemption tests in local PGlite.
-- Single JavaScript SDK bundle with inline CSS: 1,312,706 bytes, below 5 MB.
+- Single JavaScript SDK bundle with inline CSS: 1,312,658 bytes, below 5 MB.
 - Build-only feature-branch CI workflow added. No deployment or submission steps.
 - Full Tina/Next preview build and GitHub CI passed for 417e5d4. Current follow-up
   SDK follow-up adds a 30-second fetch timeout and account/retry behavior tests;
@@ -60,5 +60,5 @@ PostgREST/storage environment or genuine simultaneous server connections.
 - Visible settings, preview/alternative text and publisher/API errors are localized.
 - Preview error state is recoverable; error alerts and busy state are exposed.
 - The source catalog is prepared for approval; it has not been submitted for
-  translation or marketplace review. Actual translated locales, pseudolocalization,
-  mobile and assistive-technology acceptance still require QA.
+  translation or marketplace review. Disconnected LTR/RTL pseudolocales render in Canva; connected flows, actual
+  translated locales, mobile and assistive-technology acceptance still need QA.

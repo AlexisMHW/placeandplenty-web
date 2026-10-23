@@ -20,7 +20,7 @@ export const messages = defineMessages({
   },
   connect: {
     id: "publisher.connect",
-    defaultMessage: "Connect or create an account",
+    defaultMessage: "Connect account",
     description:
       "Button to start connecting a Place & Plenty account; signup is offered on the website.",
   },
@@ -47,7 +47,7 @@ export const messages = defineMessages({
   },
   manageGathering: {
     id: "publisher.manageGathering",
-    defaultMessage: "Create or manage a gathering",
+    defaultMessage: "Create a gathering",
     description:
       "Button that opens the external Place & Plenty gathering workflow.",
   },
@@ -72,7 +72,7 @@ export const messages = defineMessages({
   },
   notNow: {
     id: "publisher.notNow",
-    defaultMessage: "Not now — continue planning",
+    defaultMessage: "Not now",
     description:
       "Button to open external planning without publishing invitation artwork.",
   },

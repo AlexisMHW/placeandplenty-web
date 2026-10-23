@@ -2,7 +2,7 @@
 
 Draft app: AAHOGO4RP4c. Branch: feature/canva-hosting-integration. Draft PR: #26.
 
-The official Canva SDK/UI Kit publisher compiles to one 1,312,706-byte JavaScript
+The official Canva SDK/UI Kit publisher compiles to one 1,312,658-byte JavaScript
 bundle with inline CSS. Both TypeScript checks pass; 108 web tests and 50 Canva
 tests pass. The named single-account OAuth provider is explicit in SDK code.
 
@@ -75,3 +75,9 @@ locale acceptance are still pending. These changes do not translate or alter the
 canonical website, shared account system or entitlements. Preview failures now
 show a recoverable localized error; error alerts and busy state are exposed to
 assistive technology. Real screen-reader/mobile acceptance remains pending.
+
+Commit 41505f6 passed both GitHub CI runs and Vercel preview build. The final
+short-label follow-up is locally tested. The QA bundle renders after upload.
+Canva pseudolocales exercised both text directions on the disconnected screen;
+long buttons were shortened after visual clipping was observed. Actual translated
+locales, authenticated layouts and mobile/device checks remain release gates.

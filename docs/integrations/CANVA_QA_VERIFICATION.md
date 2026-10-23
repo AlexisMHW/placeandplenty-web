@@ -135,6 +135,15 @@ Localization preparation: 34 centralized react-intl messages include English
 source and translator notes. The official FormatJS CLI generates the catalog
 at build time. Catalog tests enforce the required schema/limits and validate
 all source messages with real FormatJS. Localized image alternative text and
-failed-preview recovery are component-tested. The QA SDK is 1,312,706 bytes.
+failed-preview recovery are component-tested. The QA SDK is 1,312,658 bytes.
 The translation catalog is prepared locally; translation submission/approval and
 actual translated-language acceptance remain pending.
+
+Actual draft localization check: the 1,312,658-byte bundle is uploaded and renders
+with the shorter Connect account / Create a gathering / Not now labels. Both
+left-to-right and right-to-left pseudolocales rendered in Canva; this exercises
+the disconnected screen, not authenticated selection or a mobile device. The
+initial long button labels clipped under expansion and were shortened. The
+final English preview is saved as canva-qa-localized-sdk.jpg. No translation file
+or marketplace review was submitted. Commit 41505f6 passed both GitHub CI runs
+and Vercel preview build; the final short-label follow-up is locally tested.

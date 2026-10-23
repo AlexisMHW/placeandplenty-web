@@ -226,9 +226,7 @@ describe("Publisher account and invitation consent", () => {
     } as never);
     const update = mount();
     await chooseAndOptIn();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Not now — continue planning" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     expect(requestOpenExternalUrl).toHaveBeenCalledWith({
       url: "https://qa.example/host",
     });
