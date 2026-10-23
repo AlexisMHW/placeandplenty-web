@@ -1,3 +1,5 @@
+import { messages } from "../../messages";
+import { PublisherError } from "../../publisher_error";
 import { AppI18nProvider, initIntl } from "@canva/app-i18n-kit";
 import { AppUiProvider } from "@canva/app-ui-kit";
 import type {
@@ -52,20 +54,11 @@ async function getPublishConfiguration(): Promise<GetPublishConfigurationRespons
     outputTypes: [
       {
         id: "invitation",
-        displayName: intl.formatMessage({
-          id: "publisher.output.invitation",
-          defaultMessage: "Digital invitation",
-          description:
-            "Label for publishing format shown in the output type dropdown",
-        }),
+        displayName: intl.formatMessage(messages.invitation),
         mediaSlots: [
           {
             id: "artwork",
-            displayName: intl.formatMessage({
-              id: "publisher.slot.artwork",
-              defaultMessage: "Invitation artwork",
-              description: "Label for the media upload slot",
-            }),
+            displayName: intl.formatMessage(messages.artwork),
             fileCount: { exact: 1 },
             accepts: {
               image: {
@@ -91,7 +84,7 @@ export async function publishContent(
       request.outputType.id !== "invitation" ||
       request.outputMedia.length !== 1
     )
-      throw new Error("Select a gathering and opt in to invitation artwork");
+      throw new PublisherError(intl.formatMessage(messages.invalidSettings));
     const media = request.outputMedia[0];
     const file = media?.files[0];
     if (
@@ -101,16 +94,19 @@ export async function publishContent(
       !file ||
       file.format !== "png"
     )
-      throw new Error("Choose one PNG invitation");
+      throw new PublisherError(intl.formatMessage(messages.onePng));
     const url = new URL(file.url);
-    if (url.protocol !== "https:") throw new Error("Invalid export URL");
+    if (url.protocol !== "https:")
+      throw new PublisherError(intl.formatMessage(messages.invalidExport));
     const downloaded = await fetch(url, {
       credentials: "omit",
       signal: AbortSignal.timeout(30000),
     });
-    if (!downloaded.ok) throw new Error("Could not read Canva export");
+    if (!downloaded.ok)
+      throw new PublisherError(intl.formatMessage(messages.exportFailed));
     const reader = downloaded.body?.getReader();
-    if (!reader) throw new Error("Empty export");
+    if (!reader)
+      throw new PublisherError(intl.formatMessage(messages.emptyExport));
     const chunks: Uint8Array[] = [];
     let size = 0;
     while (true) {
@@ -119,7 +115,7 @@ export async function publishContent(
       size += value.byteLength;
       if (size > 10 * 1024 * 1024) {
         await reader.cancel();
-        throw new Error("Invitation exceeds 10 MB");
+        throw new PublisherError(intl.formatMessage(messages.exportTooLarge));
       }
       chunks.push(value);
     }
@@ -138,7 +134,7 @@ export async function publishContent(
       result.status !== "completed" ||
       result.gatheringId !== settings.gatheringId
     )
-      throw new Error("Artwork was not confirmed");
+      throw new PublisherError(intl.formatMessage(messages.saveUnconfirmed));
     return {
       status: "completed",
       externalId: settings.gatheringId,
@@ -148,9 +144,9 @@ export async function publishContent(
     return {
       status: "app_error",
       message:
-        error instanceof Error
+        error instanceof PublisherError
           ? error.message
-          : "Invitation could not be published",
+          : intl.formatMessage(messages.publishFailed),
     };
   }
 }

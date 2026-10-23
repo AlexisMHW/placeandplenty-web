@@ -1,3 +1,6 @@
+import { PublisherError } from "../../publisher_error";
+import { useIntl } from "react-intl";
+import { messages } from "../../messages";
 import {
   Button,
   Checkbox,
@@ -18,6 +21,7 @@ type Gathering = {
   duration: "single_day" | "multi_day";
 };
 export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
+  const intl = useIntl();
   const [gatherings, setGatherings] = useState<Gathering[]>([]);
   const [connected, setConnected] = useState(false);
   const [selected, setSelected] = useState("");
@@ -54,20 +58,24 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
     } catch (e) {
       setConnected(false);
       setGatherings([]);
-      setError(e instanceof Error ? e.message : "Connection unavailable");
+      setError(
+        e instanceof PublisherError
+          ? e.message
+          : intl.formatMessage(messages.connectionUnavailable),
+      );
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [intl]);
   useEffect(() => {
     void (async () => {
       try {
         if (await oauth.getAccessToken({ scope })) await load();
       } catch {
-        setError("Please connect your account");
+        setError(intl.formatMessage(messages.connectRequired));
       }
     })();
-  }, [load]);
+  }, [load, intl]);
   async function connect() {
     setBusy(true);
     setError("");
@@ -77,35 +85,36 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
     try {
       const result = await oauth.requestAuthorization({ scope });
       if (result.status === "completed") await load();
-      else setError("Connection canceled. You can try again.");
+      else setError(intl.formatMessage(messages.connectionCanceled));
     } catch {
-      setError("Connection unavailable. Try again from Canva.");
+      setError(intl.formatMessage(messages.connectionUnavailable));
     } finally {
       setBusy(false);
     }
   }
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: 16 }} aria-busy={busy}>
       <Rows spacing="2u">
-        <Title size="small">
-          Design in Canva. Gather with Place &amp; Plenty.
-        </Title>
-        <Text>
-          Less scrambling. More gathering. Coordinate guests, menus, shopping,
-          and who’s bringing what.
-        </Text>
+        <Title size="small">{intl.formatMessage(messages.headline)}</Title>
+        <Text>{intl.formatMessage(messages.intro)}</Text>
         <Button
           variant="primary"
           disabled={busy}
           onClick={() => void connect()}
         >
-          {connected ? "Reconnect account" : "Connect or create an account"}
+          {intl.formatMessage(
+            connected ? messages.reconnect : messages.connect,
+          )}
         </Button>
-        {error && <Text>{error}</Text>}
+        {error && (
+          <div role="alert">
+            <Text>{error}</Text>
+          </div>
+        )}
         {connected && (
           <>
             <FormField
-              label="Choose a gathering"
+              label={intl.formatMessage(messages.chooseGathering)}
               control={(props) => (
                 <Select
                   {...props}
@@ -114,7 +123,7 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
                     value: g.id,
                     label: g.name,
                   }))}
-                  placeholder="Select a gathering"
+                  placeholder={intl.formatMessage(messages.selectGathering)}
                   onChange={(value) => {
                     setSelected(value);
                     setOptIn(false);
@@ -127,7 +136,7 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
               disabled={busy}
               onClick={() => void load()}
             >
-              Refresh gatherings
+              {intl.formatMessage(messages.refreshGatherings)}
             </Button>
           </>
         )}
@@ -137,22 +146,16 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
             void requestOpenExternalUrl({ url: `${backend}/host/create` })
           }
         >
-          Create or manage a gathering
+          {intl.formatMessage(messages.manageGathering)}
         </Button>
-        <Text>
-          Single-day and multi-day planning use your existing Place &amp; Plenty
-          account and plan. After creating a gathering, return here and refresh.
-        </Text>
+        <Text>{intl.formatMessage(messages.planNotice)}</Text>
         <Checkbox
-          label="Yes, use this design as my digital invitation"
+          label={intl.formatMessage(messages.optIn)}
           checked={optIn}
           disabled={!current}
           onChange={(_, checked) => setOptIn(checked)}
         />
-        <Text>
-          Review the preview, then choose Publish to save the artwork. Your
-          existing invitation will be replaced.
-        </Text>
+        <Text>{intl.formatMessage(messages.replaceNotice)}</Text>
         <Button
           variant="tertiary"
           onClick={() => {
@@ -160,7 +163,7 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
             void requestOpenExternalUrl({ url: `${backend}/host` });
           }}
         >
-          Not now — continue planning
+          {intl.formatMessage(messages.notNow)}
         </Button>
       </Rows>
     </div>

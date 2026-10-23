@@ -113,3 +113,28 @@ requests over 8 KiB. The tiny PNG fixture was corrected to have a valid IDAT CRC
 previous byte-equality checks alone did not establish chunk integrity.
 SMTP was deliberately deferred at the owner's request. Confirmed synthetic
 accounts permit API testing; human signup and actual editor transfer remain gates.
+
+## SDK account and retry follow-up
+
+Commit e710f7d passed both GitHub CI runs and the full Tina/Next preview build;
+its hosted consent/API regression passed 24 checks. The updated SDK adds bounded
+30-second API fetches without automatic retries. A lost save response asks the
+host to check their gathering; manual retries are not cross-request idempotent.
+Six component behavior tests cover opt-in reset, disconnected/expired/canceled/
+reconnected account paths and Not now. Seven API tests cover grants, cookies,
+timeout signals, errors and no retries. These tests mock UI Kit rendering and
+do not certify real keyboard, screen-reader, mobile or localization behavior.
+
+Live Canva preview renders with JavaScript bundle selected in Preview options.
+The fresh browser default used the development URL localhost:8080 instead.
+Connect opened the QA login. Closing that popup alone left Canva connecting;
+Canva's explicit Cancel returned to the safe disconnected state. Not now opened
+QA login with next=/host. Actual editor export remains unverified.
+
+Localization preparation: 34 centralized react-intl messages include English
+source and translator notes. The official FormatJS CLI generates the catalog
+at build time. Catalog tests enforce the required schema/limits and validate
+all source messages with real FormatJS. Localized image alternative text and
+failed-preview recovery are component-tested. The QA SDK is 1,312,706 bytes.
+The translation catalog is prepared locally; translation submission/approval and
+actual translated-language acceptance remain pending.

@@ -90,3 +90,20 @@ endpoint is provided; grants expire in at most ten minutes and underlying user
 validation runs on every request. Do not release until the gates below pass.
 
 See `RELEASE_GATES.md` for remaining validation and approvals.
+
+## Localization source catalog
+
+All SDK UI and error messages are centralized in src/messages.ts. Each has a
+stable ID, English (US) source and translator context. `npm run extract` uses
+the official FormatJS CLI to write translations/messages_en.json; the build
+runs this step automatically. The committed catalog is tested against runtime
+descriptors and Canva's documented field/length/count limits.
+
+The catalog is prepared for owner review, not a completed Canva translation
+submission. Actual translations arrive through Canva's review workflow; do not
+claim supported translated locales before testing the provided translations.
+Reference: https://www.canva.dev/docs/apps/localization/recommended-workflow/
+
+API fetches have a 30-second timeout. An interrupted save is not retried
+automatically because it may already have succeeded; the host is asked to
+check their gathering before manually retrying.

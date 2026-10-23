@@ -7,12 +7,13 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
 - Official Canva SDK/UI Kit dependencies and starter manifest isolated from Next.js.
 - Root and Canva TypeScript checks pass.
 - Web: 108 tests pass, including grant security, permission rejection and save cleanup.
-- Canva: 33 tests pass, including publisher failure/success ordering and SQL role/RLS,
+- Canva: 50 tests pass, including publisher failure/success ordering and SQL role/RLS,
   PKCE mismatch, expiry and single-use code redemption tests in local PGlite.
-- Single JavaScript SDK bundle with inline CSS: approximately 1.31 MB, below 5 MB.
+- Single JavaScript SDK bundle with inline CSS: 1,312,706 bytes, below 5 MB.
 - Build-only feature-branch CI workflow added. No deployment or submission steps.
 - Full Tina/Next preview build and GitHub CI passed for 417e5d4. Current follow-up
-  documentation and QA harness changes do not alter production configuration.
+  SDK follow-up adds a 30-second fetch timeout and account/retry behavior tests;
+  production configuration is unchanged.
 
 ## Staging status
 
@@ -20,7 +21,7 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
 - QA-only DNS, HTTPS and alias access exception verified; hosted feature flag enabled.
 - Named public OAuth provider saved to the existing Canva draft; S256 PKCE required.
 - Updated QA SDK bundle uploaded and rendered in Canva. Connect opens QA login.
-- 21 hosted HTTP checks passed, including signed-in consent, exact callback,
+- 24 hosted HTTP checks passed, including signed-in consent, exact callback,
   token exchange, selection, private artwork transfer and canonical save.
 - Local API regression now passes 22 checks, adding damaged/truncated PNG and
   oversized token-body rejection. Hosted consent adds two checks when rerun.
@@ -50,3 +51,14 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
 
 Local database tests exercise PostgreSQL semantics in PGlite, not the live Supabase
 PostgREST/storage environment or genuine simultaneous server connections.
+
+## Localization preparation
+
+- 34 messages have stable IDs, English text and translator descriptions.
+- Official FormatJS extraction runs during the build and writes
+  translations/messages_en.json; catalog shape/limits and ICU formatting pass.
+- Visible settings, preview/alternative text and publisher/API errors are localized.
+- Preview error state is recoverable; error alerts and busy state are exposed.
+- The source catalog is prepared for approval; it has not been submitted for
+  translation or marketplace review. Actual translated locales, pseudolocalization,
+  mobile and assistive-technology acceptance still require QA.
