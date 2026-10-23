@@ -15,10 +15,10 @@ canonical private storage bucket and existing artwork RPC.
 | Automated checks | 104 web tests, 33 SDK tests, both TypeScript checks | Passed |
 | Feature CI and full Tina/Next preview | Commit `417e5d433ca7d7710869855d67efad144fb9df6e`; preview deployment `dpl_BBUGiqfaCss4Kq7fQK3qRf4Jo56o` | Passed |
 | Real database roles/RLS | Transaction-only `qa/canva-permissions.sql`: owner/cohost allow; invitee/stranger denial; code ownership/read denial/PKCE/replay | Passed |
-| HTTP → Auth → private Storage → canonical RPC | `scripts/verify-canva-qa.mjs`: real synthetic QA sign-ins, token exchange, gather selection, opt-in, invalid PNG/access denial, byte-identical download, replacement preservation, concurrent requests | Passed 19 API checks |
+| HTTP → Auth → private Storage → canonical RPC | `scripts/verify-canva-qa.mjs`: real synthetic QA sign-ins, token exchange, gather selection, opt-in, invalid PNG/access denial, byte-identical download, replacement preservation, concurrent requests | Passed 21 hosted checks |
 | Login return path | Unauthenticated host route redirects to login with exact relative OAuth request in `next` | Passed |
-| Signed-in login → consent → Canva | Test client session validates; local Edge middleware reports `AuthRetryableFetchError: fetch failed` in restricted runtime | Requires unrestricted staging test |
-| Canva OAuth provider and export | Draft provider not yet configured; QA feature flag false on hosted preview | Pending |
+| Signed-in login → consent → Canva callback | Hosted test with real QA session cookies rendered consent and returned 303 to the exact callback with code/state; token exchange and replay denial passed | Passed hosted HTTP |
+| Canva OAuth provider and export | Named QA provider saved in draft; PKCE required; 1,306,648-byte bundle uploaded and loaded; Canva popup opens correct QA login | Browser sign-in/export pending |
 
 ## Isolation and parity
 
@@ -72,6 +72,9 @@ After DNS is ready:
 5. Complete paid-plan matrix, expiry/cancellation/reconnection, network-loss retry,
    endpoint abuse limits and authorization-code retention before release review.
 
-The feature-branch-only flag has been enabled for the next QA preview rebuild.
-The prior deployment remains unchanged until that rebuild is ready.
+The feature-branch-only flag is enabled on QA preview cf885b7. The full Tina/Next
+build is ready. Hosted consent/API verification passed 21 checks. SDK now names
+the configured provider explicitly (`placeandplenty`, single account).
+The actual Canva editor connection reaches QA login and is awaiting secure
+browser sign-in. No production account was copied to QA.
 No production rollout is implied by DNS.

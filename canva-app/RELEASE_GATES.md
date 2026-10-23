@@ -14,18 +14,16 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
 - Full Tina/Next preview build and GitHub CI passed for 417e5d4. Current follow-up
   documentation and QA harness changes do not alter production configuration.
 
-## Before staging acceptance
+## Staging status
 
-1. The approved isolated Supabase QA branch has canonical migrations and the Canva
-   authorization-code SQL. Complete live RLS/storage tests, rate limiting and
-   expired-code retention. No production schema was changed.
-2. Branch-only preview variables are configured with the feature flag false.
-   Deploy the follow-up to preview, verify QA configuration, and resolve protected
-   preview access for Canva before enabling the QA feature.
-3. Existing Vercel Tina credentials already support a passing full preview build.
-   Repeat CI and preview verification for the final feature commit.
-4. The approved draft bundle loads in Canva. Save and verify the QA OAuth provider
-   using the observed exact callback/origin and PKCE S256, then test live transfer.
+- Isolated QA schema, canonical private bucket and authorization-code SQL are ready.
+- QA-only DNS, HTTPS and alias access exception verified; hosted feature flag enabled.
+- Named public OAuth provider saved to the existing Canva draft; S256 PKCE required.
+- Updated QA SDK bundle uploaded and rendered in Canva. Connect opens QA login.
+- 21 hosted HTTP checks passed, including signed-in consent, exact callback,
+  token exchange, selection, private artwork transfer and canonical save.
+- Browser sign-in and actual design export remain pending. Complete endpoint abuse
+  limits and expired-code retention before release. See the QA verification report.
 
 ## End-to-end release acceptance
 

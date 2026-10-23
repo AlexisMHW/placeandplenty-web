@@ -1,41 +1,41 @@
 # Canva integration build status
 
-Draft app: AAHOGO4RP4c. Branch: feature/canva-hosting-integration. PR: #26.
+Draft app: AAHOGO4RP4c. Branch: feature/canva-hosting-integration. Draft PR: #26.
 
-The official SDK application compiles into one approximately 1.31 MB JavaScript
-bundle with inline UI Kit CSS. Both TypeScript checks pass. Current local results:
-104 web tests and 33 Canva tests pass, including PostgreSQL/PGlite authorization
-code tests and the real FormatJS message-ID regression test.
+The official Canva SDK/UI Kit publisher compiles to one 1,306,648-byte JavaScript
+bundle with inline CSS. Both TypeScript checks pass; 104 web tests and 33 Canva
+tests pass. The named single-account OAuth provider is explicit in SDK code.
 
-The previous feature commit c4bc648 passed GitHub CI and the full Vercel Tina/Next
-preview build. Existing preview credentials support Tina; no additional Tina
-credentials are required from the owner. The local full build lacks those secrets.
+Feature CI and full Tina/Next preview builds passed. Existing Vercel Tina
+credentials are sufficient; no additional Tina credentials are needed from the
+owner. QA preview cf885b7 is ready and uses isolated Supabase edfqrmkrfqnovzrryrxa.
 
-The approved corrected bundle loads in the existing Canva draft. Disconnected
-publishing is disabled and the Not now handoff opens the host route. Live OAuth
-and artwork transfer are not yet verified end to end.
+The owner added the new Bluehost CNAME. DNS, branch routing and HTTPS are verified
+for canva-qa.placeandplenty.com. An access exception applies only to that QA alias;
+project-wide protection and production domains were not changed. The feature flag
+is enabled only on the feature-branch preview. The QA hostname receives noindex
+headers in the next feature build.
 
-The approved isolated Supabase QA branch is edfqrmkrfqnovzrryrxa. Canonical
-migrations and Canva authorization-code SQL are applied there. Its scheduled jobs
-and external push trigger are disabled before fixtures are introduced. No production
-data was copied. Branch-only Vercel preview variables point to QA, with the Canva
-feature flag still false. The draft OAuth provider has not been saved.
+The existing Canva draft has the saved public OAuth provider placeandplenty,
+client ID place-and-plenty-canva-qa, mandatory S256 PKCE, exact QA endpoints and
+Canva callback. The updated bundle was uploaded and loads in the draft. The
+actual editor Connect flow opens QA login with the expected authorization request.
+No Canva release or marketplace submission has been made.
 
-Live transaction-only QA passed owner/accepted cohost selection, storage and RPC
-writes; unaccepted invitee/stranger listing, storage and RPC denial; authorization
-code ownership, denied table reads, PKCE mismatch and replay. The fixtures were
-rolled back. QA required matching the existing production table grants for
-gatherings, gathering_members and profiles; no production grants were changed.
-See `qa/canva-permissions.sql` (guarded against nonempty databases).
+Live database role tests passed owner/cohost selection/storage/RPC allow,
+unaccepted-invitee/stranger denial, code ownership/read denial, PKCE and replay.
+Hosted HTTP verification passed 21 checks including real QA sign-in, exact login
+return path, rendered signed-in consent, callback code/state, token exchange,
+private byte-identical PNG transfer, canonical artwork save, prior-artwork
+preservation, and concurrent replacements. No production requests were made by
+these tests. Fifteen canonical entitlement/subscription/lifecycle/artwork function
+definitions match production exactly. QA scheduled jobs and external push remain
+disabled. Synthetic test accounts/artwork are retained in QA; credentials are not
+in git.
 
-Real HTTP API mode passed Auth, token exchange, storage bytes, canonical RPC saves,
-access rejection and concurrent replacements. The signed-in consent test is still
-blocked locally by restricted Edge-runtime egress. The full preview build and CI
-passed for 417e5d4. See `CANVA_QA_VERIFICATION.md` for evidence and the exact new
-Bluehost CNAME needed for the prepared feature-only QA domain.
+Remaining gates: secure browser sign-in and actual Canva editor export; paid-plan
+matrix and lifecycle/expiry/cancellation/reconnection; ambiguous network-loss retry;
+endpoint abuse limits and authorization-code retention; accessibility/localization
+and release review. No merge, production deployment or submission is authorized.
 
-Remaining gates: paid entitlement matrix, public staging
-access compatible with Canva OAuth (current preview is Vercel protected), draft
-OAuth setup, live transfer, retry/concurrency, endpoint rate limits and expired-code
-retention. Production permissions, entitlements and configuration are unchanged.
-No merge, production deployment or Canva submission is authorized.
+See CANVA_QA_VERIFICATION.md and canva-app/RELEASE_GATES.md for evidence and limits.
