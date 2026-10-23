@@ -78,3 +78,23 @@ the configured provider explicitly (`placeandplenty`, single account).
 The actual Canva editor connection reaches QA login and is awaiting secure
 browser sign-in. No production account was copied to QA.
 No production rollout is implied by DNS.
+
+## QA signup email repair
+
+Live QA signup attempts returned HTTP 500 with SMTP error
+`535 Authentication credentials invalid`. This is separate from the earlier
+password-login error. Dashboard inspection confirmed custom Resend SMTP is
+enabled on the QA branch at smtp.resend.com:465, with a stored hidden credential.
+The failing credential has not been replaced or exposed.
+
+The QA Auth Site URL was also still pointing to production. It is now saved as
+https://canva-qa.placeandplenty.com, and the exact QA /auth/callback entry has been
+added to the redirect allowlist. Existing entries were retained. Screenshot:
+canva-qa-auth-urls.jpg. No production Auth settings were changed.
+
+Remaining blocker: the owner must enter a valid Resend API key as the QA SMTP
+password (SMTP username resend), then save it. Browser security requires manual
+entry/submission when replacing authentication credentials. Do not put the key
+in chat, git, screenshots or client code. Keep email confirmation enabled.
+Afterward verify actual signup email delivery and the return to QA before
+continuing the Canva editor connection.
