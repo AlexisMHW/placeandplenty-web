@@ -107,6 +107,14 @@ Current local verification: 111 web + 60 SDK tests, both typechecks and QA-targe
 SDK build pass. The real QA API harness passes 26 checks, including concurrent
 identical requests, completed replay and changed-content conflict. Live SQL tests
 verify quota boundaries/account isolation/private grants and rerun all seven
-entitlement cases with rollback. Hosted consent on this revision and the updated
-Canva draft bundle still need verification. Existing short-lived grants remain
+entitlement cases with rollback. Hosted consent and transfer passed 28 checks on 50c0510a; both CI runs and the
+full Tina/Next preview build passed. The updated QA-targeted bundle was uploaded
+and renders in the actual Canva editor (see canva-qa-safeguards-preview.jpg). Existing short-lived grants remain
 unchanged; renewable/revocable connections are a separate release gate.
+
+Verified hosted revision: `50c0510a2d8a49e99f6c30d611936f4e4691ba7f`.
+Both GitHub CI runs succeeded. Vercel preview `dpl_DW12jkxqqzXEM3qB9x7iy9mnnPxB`
+is READY on the feature branch and QA alias. Hosted verification passed 28 checks,
+including signed-in consent plus the new duplicate/concurrency controls. The
+1,313,486-byte QA bundle is saved in the existing Canva draft and renders.
+No translation submission, marketplace review, merge or production deploy occurred.

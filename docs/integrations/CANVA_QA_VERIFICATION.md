@@ -161,6 +161,12 @@ and Vercel preview build; the final short-label follow-up is locally tested.
 - Admin-only private tables intentionally have RLS and no client policies/grants;
   the security advisor's informational no-policy findings are expected for them.
 - Cleanup affects temporary Canva records only. No canonical artwork is deleted.
-- Remaining: hosted regression of this revision, refreshed Canva draft upload,
-  human email delivery/sign-in, actual editor export, renewal/revocation and
+- Remaining: human email delivery/sign-in, actual editor export, renewal/revocation and
   wider device/accessibility/review acceptance. No production release approved.
+
+Verified hosted revision: `50c0510a2d8a49e99f6c30d611936f4e4691ba7f`.
+Both GitHub CI runs succeeded. Vercel preview `dpl_DW12jkxqqzXEM3qB9x7iy9mnnPxB`
+is READY on the feature branch and QA alias. Hosted verification passed 28 checks,
+including signed-in consent plus the new duplicate/concurrency controls. The
+1,313,486-byte QA bundle is saved in the existing Canva draft and renders.
+No translation submission, marketplace review, merge or production deploy occurred.
