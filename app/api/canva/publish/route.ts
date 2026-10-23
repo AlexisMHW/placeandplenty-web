@@ -1,6 +1,7 @@
 import { canvaClient, canvaOptions, canvaResponse } from "@/lib/canva-server";
 import { isGatheringId, persistCanvaArtwork } from "@/lib/canva-publisher";
 import { MAX_ARTWORK_BYTES } from "@/lib/invitations";
+import { CanvaBodyTooLarge, readCanvaBody } from "@/lib/canva-request";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const OPTIONS = canvaOptions;
@@ -19,27 +20,21 @@ export async function POST(request: Request) {
   )
     return canvaResponse(request, { error: "Invalid invitation request" }, 400);
   // No remote URL fetch: Canva media is read by the SDK client, avoiding SSRF.
-  const reader = request.body?.getReader();
-  if (!reader) return canvaResponse(request, { error: "Missing artwork" }, 400);
-  const chunks: Uint8Array[] = [];
-  let size = 0;
+  if (!request.body)
+    return canvaResponse(request, { error: "Missing artwork" }, 400);
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > MAX_ARTWORK_BYTES) {
-        await reader.cancel();
-        return canvaResponse(request, { error: "Artwork exceeds 10 MB" }, 413);
-      }
-      chunks.push(value);
-    }
-    const result = await persistCanvaArtwork(client, id, Buffer.concat(chunks));
+    const result = await persistCanvaArtwork(
+      client,
+      id,
+      await readCanvaBody(request, MAX_ARTWORK_BYTES),
+    );
     return canvaResponse(request, {
       status: "completed",
       gatheringId: result.gatheringId,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof CanvaBodyTooLarge)
+      return canvaResponse(request, { error: "Artwork exceeds 10 MB" }, 413);
     return canvaResponse(
       request,
       {

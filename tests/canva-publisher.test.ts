@@ -7,11 +7,10 @@ import {
   validatePng,
 } from "../lib/canva-publisher.ts";
 const id = "f2f91df4-8c45-4e7e-9a16-313314324889";
-const png = Buffer.alloc(33);
-Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(png);
-png.write("IHDR", 12);
-png.writeUInt32BE(100, 16);
-png.writeUInt32BE(100, 20);
+const png = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=",
+  "base64",
+);
 function fake({
   authorized = true,
   uploadFails = false,
@@ -115,9 +114,11 @@ test("Invalid IDs and artwork cannot upload; PNG limits reject spoofed and overs
   assert.equal(calls.length, 0);
   assert.throws(() => validatePng(Buffer.from("not a PNG")));
   assert.throws(() => validatePng(Buffer.alloc(11 * 1024 * 1024)));
-  const huge = Buffer.from(png);
-  huge.writeUInt32BE(20000, 16);
-  assert.throws(() => validatePng(huge));
+  const huge = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAATiAAAAABCAQAAACRvVYFAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=",
+    "base64",
+  );
+  assert.throws(() => validatePng(huge), /dimensions too large/);
   await assert.rejects(persistCanvaArtwork(client, id, Buffer.from("bad")));
   assert.deepEqual(calls, ["list_my_gatherings_with_lifecycle"]);
   assert.equal(
@@ -128,4 +129,18 @@ test("Invalid IDs and artwork cannot upload; PNG limits reject spoofed and overs
     }),
     false,
   );
+});
+
+test("PNG requires intact chunks, image data and a final IEND", () => {
+  assert.doesNotThrow(() => validatePng(png));
+  const corrupt = Buffer.from(png);
+  corrupt[45] ^= 1;
+  for (const invalid of [
+    corrupt,
+    png.subarray(0, 33),
+    png.subarray(0, -12),
+    png.subarray(0, -1),
+    Buffer.concat([png, Buffer.from([0])]),
+  ])
+    assert.throws(() => validatePng(invalid));
 });

@@ -98,3 +98,18 @@ entry/submission when replacing authentication credentials. Do not put the key
 in chat, git, screenshots or client code. Keep email confirmation enabled.
 Afterward verify actual signup email delivery and the return to QA before
 continuing the Canva editor connection.
+
+## Additional plan and upload validation
+
+`qa/canva-entitlements.sql` passed against the isolated QA database as one
+transaction and rolled back its fixtures. Seven cases cover Free, Gathering
+Pass, Plus, Multi-Day, expired Plus, refunded Plus and revoked Multi-Day.
+It verifies the canonical Plus/Smart Closet/Multi-Day predicates before and
+after artwork save, unchanged entitlement rows, and denial for a paid stranger.
+It does not claim a full billing or all-feature plan audit.
+
+The API harness now also tests damaged PNG CRCs, missing final chunks and token
+requests over 8 KiB. The tiny PNG fixture was corrected to have a valid IDAT CRC;
+previous byte-equality checks alone did not establish chunk integrity.
+SMTP was deliberately deferred at the owner's request. Confirmed synthetic
+accounts permit API testing; human signup and actual editor transfer remain gates.

@@ -120,13 +120,22 @@ check('unrelated origin receives no CORS authorization', () => assert.equal(resu
 const wrongIdentity = sealGrant({ userId: fixtures.users.stranger.id, accessToken: sessions.owner.access_token, expiresAt: Date.now() + 60000 }, process.env.CANVA_TOKEN_ENCRYPTION_KEY);
 result = await request('/api/canva/gatherings', wrongIdentity);
 check('grant identity must match validated Supabase user', () => assert.equal(result.response.status, 401));
-const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aB1cAAAAASUVORK5CYII=', 'base64');
+const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
 const path = `/api/canva/publish?gatheringId=${gatheringId}`;
 const publishOptions = { method: 'POST', body: png, headers: { 'Content-Type': 'image/png', 'X-Invitation-Opt-In': 'true' } };
 result = await request(path, ownerGrant, { ...publishOptions, headers: { 'Content-Type': 'image/png' } });
 check('explicit invitation opt-in required', () => assert.equal(result.response.status, 400));
 result = await request(path, ownerGrant, { ...publishOptions, body: Buffer.from('invalid') });
 check('invalid PNG rejected', () => assert.equal(result.response.status, 400));
+const damagedPng = Buffer.from(png);
+damagedPng[45] ^= 1;
+result = await request(path, ownerGrant, { ...publishOptions, body: damagedPng });
+check('damaged PNG checksum rejected', () => assert.equal(result.response.status, 400));
+result = await request(path, ownerGrant, { ...publishOptions, body: png.subarray(0, -12) });
+check('PNG without final chunk rejected', () => assert.equal(result.response.status, 400));
+const oversizedToken = await fetch(base + '/api/canva/token', { method: 'POST', body: 'x'.repeat(8193), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+check('oversized token body rejected', () => assert.equal(oversizedToken.status, 400));
+
 result = await request(path, grantFor('stranger'), publishOptions);
 check('stranger artwork transfer denied', () => assert.equal(result.response.status, 400));
 result = await request(path, ownerGrant, publishOptions);

@@ -1,4 +1,5 @@
 import { anonymousClient, canvaConfig } from "@/lib/canva-server";
+import { CanvaBodyTooLarge, readCanvaBody } from "@/lib/canva-request";
 import {
   digest,
   validOAuthClient,
@@ -16,12 +17,9 @@ export async function POST(request: Request) {
         { error: "invalid_request" },
         { status: 400, headers },
       );
-    const text = await request.text();
-    if (text.length > 8192)
-      return Response.json(
-        { error: "invalid_request" },
-        { status: 400, headers },
-      );
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(
+      await readCanvaBody(request, 8192),
+    );
     const body = new URLSearchParams(text);
     let clientId = body.get("client_id") || "",
       secret = body.get("client_secret") || "";
@@ -68,7 +66,12 @@ export async function POST(request: Request) {
       },
       { headers },
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof CanvaBodyTooLarge || error instanceof TypeError)
+      return Response.json(
+        { error: "invalid_request" },
+        { status: 400, headers },
+      );
     return Response.json(
       { error: "temporarily_unavailable" },
       { status: 503, headers },

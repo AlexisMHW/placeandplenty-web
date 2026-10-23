@@ -6,7 +6,7 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
 
 - Official Canva SDK/UI Kit dependencies and starter manifest isolated from Next.js.
 - Root and Canva TypeScript checks pass.
-- Web: 104 tests pass, including grant security, permission rejection and save cleanup.
+- Web: 108 tests pass, including grant security, permission rejection and save cleanup.
 - Canva: 33 tests pass, including publisher failure/success ordering and SQL role/RLS,
   PKCE mismatch, expiry and single-use code redemption tests in local PGlite.
 - Single JavaScript SDK bundle with inline CSS: approximately 1.31 MB, below 5 MB.
@@ -22,7 +22,11 @@ Status: implemented and locally tested; NOT APPROVED FOR RELEASE.
 - Updated QA SDK bundle uploaded and rendered in Canva. Connect opens QA login.
 - 21 hosted HTTP checks passed, including signed-in consent, exact callback,
   token exchange, selection, private artwork transfer and canonical save.
-- Browser sign-in and actual design export remain pending. Complete endpoint abuse
+- Local API regression now passes 22 checks, adding damaged/truncated PNG and
+  oversized token-body rejection. Hosted consent adds two checks when rerun.
+- Seven live QA plan states preserve canonical access decisions and entitlement
+  records after artwork save; transaction-only fixtures were rolled back.
+- QA SMTP credential repair, browser sign-in and actual design export remain pending. Complete endpoint abuse
   limits and expired-code retention before release. See the QA verification report.
 
 ## End-to-end release acceptance

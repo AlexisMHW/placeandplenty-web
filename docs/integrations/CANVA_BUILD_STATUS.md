@@ -3,7 +3,7 @@
 Draft app: AAHOGO4RP4c. Branch: feature/canva-hosting-integration. Draft PR: #26.
 
 The official Canva SDK/UI Kit publisher compiles to one 1,306,648-byte JavaScript
-bundle with inline CSS. Both TypeScript checks pass; 104 web tests and 33 Canva
+bundle with inline CSS. Both TypeScript checks pass; 108 web tests and 33 Canva
 tests pass. The named single-account OAuth provider is explicit in SDK code.
 
 Feature CI and full Tina/Next preview builds passed. Existing Vercel Tina
@@ -33,8 +33,21 @@ definitions match production exactly. QA scheduled jobs and external push remain
 disabled. Synthetic test accounts/artwork are retained in QA; credentials are not
 in git.
 
-Remaining gates: secure browser sign-in and actual Canva editor export; paid-plan
-matrix and lifecycle/expiry/cancellation/reconnection; ambiguous network-loss retry;
+A transaction-only live QA matrix also passed Free, Gathering Pass, Plus,
+Multi-Day, expired/refunded Plus and revoked Multi-Day cases. Canonical
+Plus/Smart Closet/Multi-Day decisions and entitlement rows remained unchanged
+after artwork saves; a paid stranger still could not access another gathering.
+All matrix fixtures rolled back. See qa/canva-entitlements.sql.
+
+PNG validation now checks chunk boundaries, CRCs, IHDR fields, ordering and final
+IEND without inflating untrusted data. This is structural validation, not a full
+image decode. Token and artwork bodies are bounded during streaming, independent
+of Content-Length. Unit tests cover missing/false lengths, cancellation, exact
+limits, stream failures and damaged/truncated PNGs.
+
+Remaining gates: QA SMTP credential repair and human signup delivery; secure
+browser sign-in and actual Canva editor export; broader lifecycle/expiry/
+cancellation/reconnection; ambiguous network-loss retry;
 endpoint abuse limits and authorization-code retention; accessibility/localization
 and release review. No merge, production deployment or submission is authorized.
 

@@ -19,26 +19,95 @@ export function eligibleGathering(row: Record<string, unknown>): boolean {
     ["single_day", "multi_day"].includes(String(row.duration_type))
   );
 }
+// Check chunk integrity without inflating untrusted compressed image data.
+const crcTable = Uint32Array.from({ length: 256 }, (_, index) => {
+  let crc = index;
+  for (let bit = 0; bit < 8; bit++)
+    crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+  return crc >>> 0;
+});
 export function validatePng(bytes: Uint8Array) {
+  const invalid = () => {
+    throw new Error("Invalid invitation PNG");
+  };
   const signature = [137, 80, 78, 71, 13, 10, 26, 10];
   if (
-    bytes.length < 33 ||
+    bytes.length < 57 ||
     bytes.length > MAX_ARTWORK_BYTES ||
-    !signature.every((b, i) => bytes[i] === b) ||
-    Buffer.from(bytes.subarray(12, 16)).toString() !== "IHDR"
+    !signature.every((b, i) => bytes[i] === b)
   )
-    throw new Error("Invalid invitation PNG");
+    invalid();
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const width = view.getUint32(16),
-    height = view.getUint32(20);
-  if (
-    !width ||
-    !height ||
-    width > 16384 ||
-    height > 16384 ||
-    width * height > 40000000
-  )
-    throw new Error("Invitation dimensions too large");
+  let offset = 8,
+    hasData = false,
+    dataEnded = false,
+    hasPalette = false;
+  let color = -1;
+  while (offset < bytes.length) {
+    if (bytes.length - offset < 12) invalid();
+    const length = view.getUint32(offset);
+    if (length > bytes.length - offset - 12) invalid();
+    const type = Buffer.from(bytes.subarray(offset + 4, offset + 8)).toString(
+      "latin1",
+    );
+    if (!/^[A-Za-z]{4}$/.test(type) || bytes[offset + 6] & 32) invalid();
+    const end = offset + 8 + length;
+    let crc = 0xffffffff;
+    for (let i = offset + 4; i < end; i++)
+      crc = crcTable[(crc ^ bytes[i]) & 255] ^ (crc >>> 8);
+    if ((crc ^ 0xffffffff) >>> 0 !== view.getUint32(end)) invalid();
+    if (offset === 8) {
+      if (type !== "IHDR" || length !== 13) invalid();
+      const width = view.getUint32(16),
+        height = view.getUint32(20);
+      if (
+        !width ||
+        !height ||
+        width > 16384 ||
+        height > 16384 ||
+        width * height > 40000000
+      )
+        throw new Error("Invitation dimensions too large");
+      color = bytes[25];
+      const depths: Record<number, number[]> = {
+        0: [1, 2, 4, 8, 16],
+        2: [8, 16],
+        3: [1, 2, 4, 8],
+        4: [8, 16],
+        6: [8, 16],
+      };
+      if (
+        !depths[color]?.includes(bytes[24]) ||
+        bytes[26] !== 0 ||
+        bytes[27] !== 0 ||
+        bytes[28] > 1
+      )
+        invalid();
+    } else if (type === "IHDR") invalid();
+    else if (type === "PLTE") {
+      if (
+        hasPalette ||
+        hasData ||
+        color === 0 ||
+        color === 4 ||
+        !length ||
+        length % 3 ||
+        length > 768 ||
+        (color === 3 && length / 3 > 2 ** bytes[24])
+      )
+        invalid();
+      hasPalette = true;
+    } else if (type === "IDAT") {
+      if (dataEnded || (color === 3 && !hasPalette)) invalid();
+      if (length) hasData = true;
+    } else if (type === "IEND") {
+      if (length || !hasData || end + 4 !== bytes.length) invalid();
+      return;
+    } else if (!(bytes[offset + 4] & 32)) invalid();
+    if (hasData && type !== "IDAT") dataEnded = true;
+    offset = end + 4;
+  }
+  invalid();
 }
 export async function persistCanvaArtwork(
   client: SupabaseClient,
