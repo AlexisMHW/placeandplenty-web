@@ -2,8 +2,9 @@
 
 The actual browser sign-in, consent, selected-gathering publish, canonical private
 PNG persistence, Canva success dialog and Check it out gathering page now pass.
-A confirmed synthetic QA account skipped email delivery; normal signup email is
-still a gate. Latest local totals: 111 web + 63 SDK/database tests; both typechecks
+A confirmed synthetic QA account initially skipped email delivery. On 25 October,
+the owner completed normal QA signup, received its confirmation email and
+confirmed it; backend confirmation and subsequent sign-in are verified. Latest local totals: 111 web + 63 SDK/database tests; both typechecks
 and QA bundle build pass. Bundle: 1,313,948 bytes. Hosted QA regression: 28 checks.
 
 The private guard must include `canva_selected_gathering_guard.sql` after
@@ -11,7 +12,7 @@ The private guard must include `canva_selected_gathering_guard.sql` after
 privileged wrapper. The regression includes unrelated hosts and real RLS behavior.
 QA-only Host Hub SELECT grants match observed production rights and policies.
 
-Remaining: signup email delivery, connection renewal/revocation, broader device,
+Remaining: connection renewal/revocation, broader device,
 accessibility/localization/recovery testing, listing/security review and owner
 approval. No production deployment, merge or Canva submission is approved.
 

@@ -198,3 +198,17 @@ Latest verification: 63 SDK/database tests, both typechecks, 28 hosted checks
 with multiple unrelated hosts, and rolled-back live quota/entitlement matrices.
 Evidence: `canva-qa-real-publish-success.jpg`, `canva-qa-published-gathering.jpg`.
 Normal signup email delivery and finished invitation visual QA are not claimed.
+
+## QA signup email repair completed — 25 October 2026
+
+Owner reported saving the replacement Resend credential in QA, then completing
+normal signup and clicking the received confirmation link in their own browser.
+Read-only Auth verification in project edfqrmkrfqnovzrryrxa confirms a newly
+created non-synthetic account: created 04:05:42 UTC, email confirmed 04:06:13 UTC,
+and last signed in 04:08:25 UTC. The receipt report and persisted confirmation/
+sign-in clear the earlier SMTP 535 signup-email blocker. No credential was read,
+logged or added to git. Production SMTP was not changed or tested.
+
+This normal email signup and the earlier real Canva editor publication are
+separately verified; a continuous new-user signup-to-Canva-return browser journey
+still belongs to broader flow/recovery acceptance.

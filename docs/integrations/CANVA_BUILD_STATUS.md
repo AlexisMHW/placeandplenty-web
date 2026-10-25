@@ -22,8 +22,9 @@ persistence flow; it is not a visual-quality test of a finished invitation.
 A new synthetic, already-confirmed Free QA account and one test gathering were
 prepared for the owner. No subscriptions/paid entitlements were added. Its
 credentials remain outside the repository. This deliberately bypassed email
-delivery for this one QA account; normal signup/confirmation delivery remains
-unverified and QA SMTP still needs repair.
+delivery for this one QA account. A subsequent normal QA email signup,
+confirmation and sign-in passed after the owner repaired the SMTP credential;
+see the 25 October update below.
 
 ## Permission regression repaired
 
@@ -75,7 +76,19 @@ QA uses Supabase `edfqrmkrfqnovzrryrxa` and
 notification jobs and external push remain disabled. Production is unchanged.
 Existing Vercel Tina credentials work; no Tina credentials are needed from the owner.
 
-Remaining: normal signup and confirmation-email delivery, renewable/revocable
-connections (current grants expire within ten minutes), broader device,
+Remaining: renewable/revocable connections (current grants expire within ten minutes), broader device,
 accessibility/localization and recovery testing, listing/security review and
 owner release approval. No translation upload/review submission has occurred.
+
+## QA email signup verified — 25 October 2026
+
+The owner saved a replacement Resend SMTP credential in the isolated QA project,
+completed normal email/password signup in their own browser, received the email
+and confirmed it. Read-only QA backend verification found the new account created
+at 04:05:42 UTC, confirmed at 04:06:13 UTC and signed in at 04:08:25 UTC. No email
+address, password, API key or confirmation token is recorded here.
+
+This clears the QA SMTP/signup-confirmation delivery blocker. The prior real
+Canva export test also remains complete. These were separate flows: a brand-new
+user's entire signup-to-Canva-return journey is not claimed as one continuous
+browser test. Production email configuration was not changed or verified.
