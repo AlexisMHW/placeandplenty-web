@@ -20,7 +20,10 @@ type Gathering = {
   name: string;
   duration: "single_day" | "multi_day";
 };
-export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
+export function SettingsUi({
+  updatePublishSettings,
+  registerOnContextChange,
+}: RenderSettingsUiRequest) {
   const intl = useIntl();
   const [gatherings, setGatherings] = useState<Gathering[]>([]);
   const [connected, setConnected] = useState(false);
@@ -30,6 +33,32 @@ export function SettingsUi({ updatePublishSettings }: RenderSettingsUiRequest) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const current = gatherings.find((g) => g.id === selected);
+  useEffect(
+    () =>
+      registerOnContextChange?.({
+        onContextChange: (context) => {
+          if (context.reason === "publish_error_cleared") setError("");
+          if (context.reason !== "publish_error") return;
+          try {
+            const payload = JSON.parse(context.error.appDefinedPayload || "{}");
+            setError(
+              typeof payload.message === "string" &&
+                payload.message.length <= 500 &&
+                Object.values(messages).some(
+                  (descriptor) =>
+                    intl.formatMessage(descriptor) === payload.message,
+                )
+                ? payload.message
+                : intl.formatMessage(messages.publishFailed),
+            );
+          } catch {
+            setError(intl.formatMessage(messages.publishFailed));
+          }
+        },
+      }),
+    [registerOnContextChange, intl],
+  );
+
   useEffect(() => {
     updatePublishSettings({
       publishRef:

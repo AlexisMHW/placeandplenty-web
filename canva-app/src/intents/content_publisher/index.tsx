@@ -145,12 +145,16 @@ export async function publishContent(
       externalUrl: `${backend}/host/g/${settings.gatheringId}`,
     };
   } catch (error) {
+    const message =
+      error instanceof PublisherError
+        ? error.message
+        : intl.formatMessage(messages.publishFailed);
     return {
       status: "app_error",
-      message:
-        error instanceof PublisherError
-          ? error.message
-          : intl.formatMessage(messages.publishFailed),
+      message,
+      // Canva's default error banner hides message. Forward only our own
+      // sanitized/localized text to the settings panel, never raw exceptions.
+      appDefinedPayload: JSON.stringify({ message }),
     };
   }
 }

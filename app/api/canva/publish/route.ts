@@ -20,8 +20,15 @@ export async function POST(request: Request) {
     !isGatheringId(id) ||
     request.headers.get("x-invitation-opt-in") !== "true" ||
     request.headers.get("content-type") !== "image/png"
-  )
+  ) {
+    console.warn("Canva publish rejected: invalid request fields", {
+      gatheringIdValid: isGatheringId(id),
+      requestIdValid: isGatheringId(requestId),
+      optedIn: request.headers.get("x-invitation-opt-in") === "true",
+      pngContentType: request.headers.get("content-type") === "image/png",
+    });
     return canvaResponse(request, { error: "Invalid invitation request" }, 400);
+  }
   // No remote URL fetch: Canva media is read by the SDK client, avoiding SSRF.
   if (!request.body)
     return canvaResponse(request, { error: "Missing artwork" }, 400);
@@ -37,6 +44,20 @@ export async function POST(request: Request) {
       gatheringId: result.gatheringId,
     });
   } catch (error) {
+    const safeReasons = [
+      "Invalid invitation PNG",
+      "Invitation dimensions too large",
+      "Gathering unavailable",
+      "Artwork upload failed",
+      "Artwork save unavailable",
+      "Save unconfirmed. Check your gathering before retrying.",
+    ];
+    console.warn(
+      "Canva publish failed:",
+      error instanceof Error && safeReasons.includes(error.message)
+        ? error.message
+        : "Unclassified publication failure",
+    );
     if (error instanceof CanvaControlError) {
       const response = canvaResponse(
         request,

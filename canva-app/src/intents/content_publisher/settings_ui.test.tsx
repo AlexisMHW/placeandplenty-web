@@ -5,6 +5,7 @@ import { IntlProvider } from "react-intl";
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -92,13 +93,18 @@ const gathering = {
   name: "QA dinner",
   duration: "single_day",
 };
-function mount() {
+function mount(
+  registerOnContextChange: RenderSettingsUiRequest["registerOnContextChange"] = vi.fn(
+    () => () => {},
+  ),
+) {
   const update = vi.fn();
   render(
     <IntlProvider locale="en" messages={{}}>
       <SettingsUi
         {...({
           updatePublishSettings: update,
+          registerOnContextChange,
         } as unknown as RenderSettingsUiRequest)}
       />
     </IntlProvider>,
@@ -316,5 +322,57 @@ describe("Localized preview rendering", () => {
     fireEvent.click(screen.getByRole("checkbox"));
     const next = JSON.parse(update.mock.lastCall![0].publishRef).requestId;
     expect(next).not.toBe(first);
+  });
+  it("renders safe publish error details and clears them without changing opt-in", async () => {
+    let receive: ((context: any) => void) | undefined;
+    const dispose = vi.fn();
+    const register = vi.fn(({ onContextChange }: any) => {
+      receive = onContextChange;
+      return dispose;
+    });
+    vi.mocked(oauth.getAccessToken).mockResolvedValue({
+      token: "test",
+    } as never);
+    const update = mount(register);
+    await chooseAndOptIn();
+    const ref = update.mock.lastCall![0].publishRef;
+    act(() =>
+      receive!({
+        reason: "publish_error",
+        error: {
+          appDefinedPayload: JSON.stringify({ message: "Invalid export URL" }),
+        },
+      }),
+    );
+    expect(screen.getByRole("alert").textContent).toBe("Invalid export URL");
+    expect(update.mock.lastCall![0].publishRef).toBe(ref);
+    act(() => receive!({ reason: "publish_error_cleared" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    cleanup();
+    expect(dispose).toHaveBeenCalled();
+  });
+  it("malformed or unknown error payloads cannot expose raw private error text", async () => {
+    let receive: ((context: any) => void) | undefined;
+    mount(
+      vi.fn(({ onContextChange }: any) => {
+        receive = onContextChange;
+        return () => {};
+      }),
+    );
+    for (const payload of [
+      "{",
+      JSON.stringify({ message: "private server token" }),
+      JSON.stringify({ message: { secret: "token" } }),
+    ]) {
+      act(() =>
+        receive!({
+          reason: "publish_error",
+          error: { appDefinedPayload: payload },
+        }),
+      );
+      expect(screen.getByRole("alert").textContent).toBe(
+        "Invitation could not be published",
+      );
+    }
   });
 });
