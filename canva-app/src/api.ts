@@ -1,6 +1,9 @@
 import { initIntl } from "@canva/app-i18n-kit";
 import { messages } from "./messages";
-import { PublisherError } from "./publisher_error";
+import {
+  PublisherError,
+  PublisherAuthenticationError,
+} from "./publisher_error";
 import { auth } from "@canva/user";
 declare const BACKEND_URL: string;
 export const backend = BACKEND_URL;
@@ -15,10 +18,14 @@ export async function api(path: string, init: RequestInit = {}) {
   try {
     access = await oauth.getAccessToken({ scope });
   } catch {
-    throw new PublisherError(intl.formatMessage(messages.reconnectRequired));
+    throw new PublisherAuthenticationError(
+      intl.formatMessage(messages.reconnectRequired),
+    );
   }
   if (!access)
-    throw new PublisherError(intl.formatMessage(messages.connectRequired));
+    throw new PublisherAuthenticationError(
+      intl.formatMessage(messages.connectRequired),
+    );
   let response: Response;
   try {
     response = await fetch(`${backend}/api/canva/${path}`, {
@@ -33,6 +40,10 @@ export async function api(path: string, init: RequestInit = {}) {
       intl.formatMessage(messages.connectionInterrupted),
     );
   }
+  if (response.status === 401)
+    throw new PublisherAuthenticationError(
+      intl.formatMessage(messages.reconnectRequired),
+    );
   if (!response.ok)
     throw new PublisherError(
       response.status === 429

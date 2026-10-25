@@ -113,7 +113,7 @@ const ownerGrant = result.body.access_token;
 result = await request('/api/canva/token', null, { method: 'POST', body: exchangeBody(verifier) });
 check('authorization code replay denied over HTTP', () => assert.equal(result.response.status, 400));
 result = await request('/api/canva/gatherings', ownerGrant);
-check('owner sees authorized gathering and exact-origin CORS', () => { assert.equal(result.response.status, 200); assert.ok(result.body.gatherings.some(g => g.id === gatheringId)); assert.equal(result.response.headers.get('access-control-allow-origin'), origin); });
+check('owner sees authorized gathering and exact-origin CORS', () => { assert.equal(result.response.status, 200); assert.ok(Number.isFinite(result.body.connectionExpiresAt) && result.body.connectionExpiresAt>Date.now() && result.body.connectionExpiresAt<=Date.now()+605000); assert.ok(result.body.gatherings.some(g => g.id === gatheringId)); assert.equal(result.response.headers.get('access-control-allow-origin'), origin); });
 result = await request('/api/canva/gatherings', grantFor('stranger'));
 check('stranger cannot select owner gathering', () => { assert.equal(result.response.status, 200); assert.ok(!result.body.gatherings.some(g => g.id === gatheringId)); });
 result = await request('/api/canva/gatherings', ownerGrant, { headers: { Origin: 'https://unrelated.example' } });
@@ -176,4 +176,30 @@ check('completed concurrent request replay preserves its artwork path', () => as
 assert.equal(await savedArtwork(), duplicatePath);
 const conflict = await clients.owner.rpc('begin_canva_publish', {p_request_id: concurrentId, p_gathering_id: gatheringId, p_content_hash: '0'.repeat(64)});
 check('changed content cannot reuse a completed request ID', () => {assert.equal(conflict.error,null); assert.equal(conflict.data?.status,'conflict');});
+
+const revocationToken=grantFor('owner');
+async function revoke(token,clientId='place-and-plenty-canva-qa') {
+  return fetch(base+'/api/canva/revoke',{method:'POST',body:new URLSearchParams({client_id:clientId,token,token_type_hint:'access_token'})});
+}
+let revoked=await revoke(revocationToken,'wrong-client');
+check('revocation rejects the wrong OAuth client',()=>assert.equal(revoked.status,401));
+revoked=await revoke('unknown-token');
+check('unknown token revocation is non-enumerating success',()=>assert.equal(revoked.status,200));
+revoked=await revoke(revocationToken);
+check('valid grant revocation confirms without caching',()=>{assert.equal(revoked.status,200);assert.equal(revoked.headers.get('cache-control'),'no-store');});
+revoked=await revoke(revocationToken);
+check('repeated revocation remains idempotent',()=>assert.equal(revoked.status,200));
+result=await request('/api/canva/gatherings',revocationToken);
+check('revoked grants cannot read authorized gatherings',()=>assert.equal(result.response.status,401));
+result=await request('/api/canva/gatherings',grantFor('owner'));
+check('fresh authorization is independent of the disconnected grant',()=>assert.equal(result.response.status,200));
+const disconnectToken=grantFor('cohost');
+result=await request('/api/canva/disconnect',disconnectToken,{method:'POST'});
+check('browser disconnect acknowledges backend revocation',()=>{assert.equal(result.response.status,200);assert.equal(result.body.status,'disconnected');assert.equal(result.response.headers.get('access-control-allow-origin'),origin);});
+result=await request('/api/canva/gatherings',disconnectToken);
+check('a disconnected grant cannot read or resume publishing',()=>assert.equal(result.response.status,401));
+result=await request(path,disconnectToken,publishOptions);
+check('a disconnected grant cannot transfer invitation artwork',()=>assert.equal(result.response.status,401));
+const nativeAccount=await clients.owner.auth.getUser();
+check('Canva disconnect preserves the normal Place & Plenty session',()=>{assert.equal(nativeAccount.error,null);assert.equal(nativeAccount.data.user.id,fixtures.users.owner.id);});
 console.log(`Verified ${passed} QA checks. Synthetic fixtures and artwork retained in QA only. No production requests.`);

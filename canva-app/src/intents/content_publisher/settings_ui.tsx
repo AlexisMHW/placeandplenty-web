@@ -1,4 +1,7 @@
-import { PublisherError } from "../../publisher_error";
+import {
+  PublisherError,
+  PublisherAuthenticationError,
+} from "../../publisher_error";
 import { useIntl } from "react-intl";
 import { messages } from "../../messages";
 import {
@@ -27,12 +30,34 @@ export function SettingsUi({
   const intl = useIntl();
   const [gatherings, setGatherings] = useState<Gathering[]>([]);
   const [connected, setConnected] = useState(false);
+  const [connectionExpiresAt, setConnectionExpiresAt] = useState(0);
   const [selected, setSelected] = useState("");
   const [requestId, setRequestId] = useState("");
   const [optIn, setOptIn] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const current = gatherings.find((g) => g.id === selected);
+  const clearSelection = useCallback(() => {
+    setSelected("");
+    setOptIn(false);
+    setRequestId("");
+  }, []);
+  const expireConnection = useCallback(() => {
+    clearSelection();
+    setGatherings([]);
+    setConnected(false);
+    setConnectionExpiresAt(0);
+    setError(intl.formatMessage(messages.reconnectRequired));
+  }, [clearSelection, intl]);
+  useEffect(() => {
+    if (!connected || !connectionExpiresAt) return;
+    const timeout = setTimeout(
+      expireConnection,
+      Math.max(0, connectionExpiresAt - Date.now()),
+    );
+    return () => clearTimeout(timeout);
+  }, [connected, connectionExpiresAt, expireConnection]);
+
   useEffect(
     () =>
       registerOnContextChange?.({
@@ -41,6 +66,7 @@ export function SettingsUi({
           if (context.reason !== "publish_error") return;
           try {
             const payload = JSON.parse(context.error.appDefinedPayload || "{}");
+            if (payload.authenticationRequired === true) expireConnection();
             setError(
               typeof payload.message === "string" &&
                 payload.message.length <= 500 &&
@@ -56,7 +82,7 @@ export function SettingsUi({
           }
         },
       }),
-    [registerOnContextChange, intl],
+    [registerOnContextChange, intl, expireConnection],
   );
 
   useEffect(() => {
@@ -84,6 +110,16 @@ export function SettingsUi({
     setOptIn(false);
     try {
       const result = await api("gatherings");
+      const expiresAt = Number(result.connectionExpiresAt);
+      if (
+        !Number.isFinite(expiresAt) ||
+        expiresAt <= Date.now() ||
+        expiresAt > Date.now() + 605000
+      )
+        throw new PublisherError(
+          intl.formatMessage(messages.reconnectRequired),
+        );
+      setConnectionExpiresAt(expiresAt);
       setGatherings(result.gatherings);
       setConnected(true);
     } catch (e) {
@@ -107,6 +143,32 @@ export function SettingsUi({
       }
     })();
   }, [load, intl]);
+  async function disconnect() {
+    setBusy(true);
+    setError("");
+    clearSelection();
+    setGatherings([]);
+    setConnectionExpiresAt(0);
+    try {
+      try {
+        const result = await api("disconnect", { method: "POST" });
+        if (result.status !== "disconnected")
+          throw new PublisherError(
+            intl.formatMessage(messages.disconnectFailed),
+          );
+      } catch (failure) {
+        // An expired or already-revoked grant has no remaining backend access.
+        if (!(failure instanceof PublisherAuthenticationError)) throw failure;
+      }
+      await oauth.deauthorize();
+      setConnected(false);
+    } catch {
+      // Keep Disconnect available for retry, but never retain a publishRef.
+      setError(intl.formatMessage(messages.disconnectFailed));
+    } finally {
+      setBusy(false);
+    }
+  }
   async function connect() {
     setBusy(true);
     setError("");
@@ -144,6 +206,13 @@ export function SettingsUi({
         )}
         {connected && (
           <>
+            <Button
+              variant="tertiary"
+              disabled={busy}
+              onClick={() => void disconnect()}
+            >
+              {intl.formatMessage(messages.disconnect)}
+            </Button>
             <FormField
               label={intl.formatMessage(messages.chooseGathering)}
               control={(props) => (

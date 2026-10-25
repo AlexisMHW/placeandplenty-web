@@ -92,3 +92,44 @@ This clears the QA SMTP/signup-confirmation delivery blocker. The prior real
 Canva export test also remains complete. These were separate flows: a brand-new
 user's entire signup-to-Canva-return journey is not claimed as one continuous
 browser test. Production email configuration was not changed or verified.
+
+## Local connection completion — 25 October 2026
+
+The next change implements explicit reconnect after expiry, selection/consent
+reset, a Disconnect action, backend revocation checks and an OAuth revocation
+endpoint. Grants remain bounded to ten minutes; silent refresh is not implemented.
+Disconnect revokes only the Canva grant, not the normal Supabase session.
+
+This implementation is local and has not replaced the working hosted QA version.
+It requires `sql/canva_grant_revocation.sql` before the new backend is enabled.
+Two Supabase migration attempts returned `Invalid or expired requestState`;
+subsequent read-only checks confirmed the new table was absent. Do not publish
+the mandatory revocation checks against a backend without this migration.
+Read-only connector access still works. No production changes were attempted.
+
+Local verification: 114 web tests, 70 SDK/database tests, both TypeScript checks,
+and a QA-targeted SDK build (1,315,316 bytes). Updated HTTP regression checks
+cover revocation, disconnect, fresh independent grants and preserving the normal
+application session; they still need to run against the migrated live QA backend.
+The full Next/Tina build has not been repeated for these local changes.
+
+`CANVA_REVIEW_PACKAGE.md` contains draft listing copy, security/retention facts,
+reviewer steps, media requirements and the remaining release checklist. Listing
+media, continuous new-user browser testing, actual mobile/accessibility testing
+and owner-approved translation/review submission remain open.
+
+## QA revocation verified — 25 October 2026
+
+After owner approval of the dashboard fallback, GitHub sign-in reached the
+`canva-publisher-qa` preview SQL editor. The revocation SQL completed in one
+transaction, with a visible success result. Production was not opened or changed.
+The earlier connector error no longer blocks the QA schema. Evidence:
+`canva-qa-revocation-applied.jpg`.
+
+The current local Next backend against the live isolated QA database passed all
+36 HTTP checks, including ten new revocation/disconnect checks. Revoked grants
+cannot list or publish, fresh grants remain independent, repeated revocation is
+idempotent, unknown tokens are non-enumerating, and the ordinary Place & Plenty
+session remains valid. Existing owner/cohost/stranger, private PNG, concurrency
+and retry checks also passed. This local run does not claim signed-in browser
+consent or the hosted preview update; those are the next verification steps.

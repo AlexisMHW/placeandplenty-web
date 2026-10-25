@@ -5,6 +5,18 @@ export const messages = defineMessages({
     defaultMessage: "Preview unavailable. Return to your design and try again.",
     description: "Preview error when Canva cannot prepare the selected image.",
   },
+  disconnect: {
+    id: "publisher.disconnect",
+    defaultMessage: "Disconnect account",
+    description:
+      "Button revoking the current Place & Plenty connection in Canva.",
+  },
+  disconnectFailed: {
+    id: "publisher.disconnectFailed",
+    defaultMessage: "Disconnect was not confirmed. Please try again.",
+    description:
+      "The disconnect request failed; publishing selection has been cleared.",
+  },
   headline: {
     id: "publisher.headline",
     defaultMessage: "Design in Canva. Gather with Place & Plenty.",

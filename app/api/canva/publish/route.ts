@@ -3,6 +3,7 @@ import { isGatheringId, persistCanvaArtwork } from "@/lib/canva-publisher";
 import { MAX_ARTWORK_BYTES } from "@/lib/invitations";
 import { CanvaBodyTooLarge, readCanvaBody } from "@/lib/canva-request";
 import { CanvaControlError } from "@/lib/canva-controls";
+import { CanvaRevocationUnavailable } from "@/lib/canva-revocation";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const OPTIONS = canvaOptions;
@@ -10,7 +11,13 @@ export async function POST(request: Request) {
   let client;
   try {
     ({ client } = await canvaClient(request));
-  } catch {
+  } catch (error) {
+    if (error instanceof CanvaRevocationUnavailable)
+      return canvaResponse(
+        request,
+        { error: "Connection verification unavailable" },
+        503,
+      );
     return canvaResponse(request, { error: "Connect your account again" }, 401);
   }
   const id = new URL(request.url).searchParams.get("gatheringId");

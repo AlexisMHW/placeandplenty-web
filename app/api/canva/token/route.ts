@@ -1,11 +1,7 @@
 import { anonymousClient, canvaConfig } from "@/lib/canva-server";
 import { CanvaBodyTooLarge, readCanvaBody } from "@/lib/canva-request";
-import {
-  digest,
-  validOAuthClient,
-  openGrant,
-  validVerifier,
-} from "@/lib/canva-security";
+import { digest, openGrant, validVerifier } from "@/lib/canva-security";
+import { oauthClientAuthorized } from "@/lib/canva-oauth-client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
@@ -21,16 +17,7 @@ export async function POST(request: Request) {
       await readCanvaBody(request, 8192),
     );
     const body = new URLSearchParams(text);
-    let clientId = body.get("client_id") || "",
-      secret = body.get("client_secret") || "";
-    const basic = request.headers.get("authorization");
-    if (basic?.startsWith("Basic ")) {
-      const credentials = Buffer.from(basic.slice(6), "base64").toString();
-      const split = credentials.indexOf(":");
-      clientId = decodeURIComponent(credentials.slice(0, split));
-      secret = decodeURIComponent(credentials.slice(split + 1));
-    }
-    if (!validOAuthClient(clientId, secret, config))
+    if (!oauthClientAuthorized(request.headers, body, config))
       return Response.json(
         { error: "invalid_client" },
         { status: 401, headers },

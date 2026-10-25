@@ -23,6 +23,14 @@
     "defaultMessage": "Connection unavailable. Try again from Canva.",
     "description": "Error when account authorization cannot be completed."
   },
+  "publisher.disconnect": {
+    "defaultMessage": "Disconnect account",
+    "description": "Button revoking the current Place & Plenty connection in Canva."
+  },
+  "publisher.disconnectFailed": {
+    "defaultMessage": "Disconnect was not confirmed. Please try again.",
+    "description": "The disconnect request failed; publishing selection has been cleared."
+  },
   "publisher.emptyExport": {
     "defaultMessage": "Empty export",
     "description": "Publishing error when the exported design has no readable body."

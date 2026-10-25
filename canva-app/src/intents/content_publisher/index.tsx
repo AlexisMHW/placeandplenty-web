@@ -1,5 +1,8 @@
 import { messages } from "../../messages";
-import { PublisherError } from "../../publisher_error";
+import {
+  PublisherError,
+  PublisherAuthenticationError,
+} from "../../publisher_error";
 import { AppI18nProvider, initIntl } from "@canva/app-i18n-kit";
 import { AppUiProvider } from "@canva/app-ui-kit";
 import type {
@@ -154,7 +157,10 @@ export async function publishContent(
       message,
       // Canva's default error banner hides message. Forward only our own
       // sanitized/localized text to the settings panel, never raw exceptions.
-      appDefinedPayload: JSON.stringify({ message }),
+      appDefinedPayload: JSON.stringify({
+        message,
+        authenticationRequired: error instanceof PublisherAuthenticationError,
+      }),
     };
   }
 }

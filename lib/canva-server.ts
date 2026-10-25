@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { assertCanvaGrantActive } from "./canva-revocation";
 import { openGrant } from "./canva-security";
 
 export function canvaConfig() {
@@ -58,7 +59,8 @@ export async function canvaClient(request: Request) {
   const { data, error } = await client.auth.getUser(grant.accessToken);
   if (error || data.user?.id !== grant.userId)
     throw new Error("Authentication required");
-  return { client, userId: grant.userId };
+  await assertCanvaGrantActive(client, token);
+  return { client, userId: grant.userId, expiresAt: grant.expiresAt, token };
 }
 export function canvaResponse(request: Request, body: unknown, status = 200) {
   const headers: Record<string, string> = {

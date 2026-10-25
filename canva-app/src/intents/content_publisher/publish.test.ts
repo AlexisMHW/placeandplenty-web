@@ -17,6 +17,7 @@ vi.mock("../../api", () => ({
   backend: "https://preview.example",
 }));
 import { api } from "../../api";
+import { PublisherAuthenticationError } from "../../publisher_error";
 import contentPublisher, { publishContent } from "./index";
 import type { PublishContentRequest } from "@canva/intents/content";
 const id = "f2f91df4-8c45-4e7e-9a16-313314324889";
@@ -108,5 +109,17 @@ describe("Content Publisher", () => {
     );
     expect((await publishContent(request())).status).toBe("app_error");
     expect(api).not.toHaveBeenCalled();
+  });
+  it("expired backend authorization signals that saved publishing consent must be cleared", async () => {
+    vi.mocked(api).mockRejectedValue(
+      new PublisherAuthenticationError("Reconnect your Place & Plenty account"),
+    );
+    const result = await publishContent(request());
+    expect(result.status).toBe("app_error");
+    if (result.status === "app_error")
+      expect(JSON.parse(result.appDefinedPayload!)).toEqual({
+        message: "Reconnect your Place & Plenty account",
+        authenticationRequired: true,
+      });
   });
 });

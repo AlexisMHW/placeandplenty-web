@@ -83,7 +83,11 @@ vi.mock("../../api", () => ({
   api: vi.fn(),
   backend: "https://qa.example",
   scope: new Set(),
-  oauth: { getAccessToken: vi.fn(), requestAuthorization: vi.fn() },
+  oauth: {
+    getAccessToken: vi.fn(),
+    requestAuthorization: vi.fn(),
+    deauthorize: vi.fn(),
+  },
 }));
 import { api, oauth } from "../../api";
 import { requestOpenExternalUrl } from "@canva/platform";
@@ -121,9 +125,19 @@ describe("Publisher account and invitation consent", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(oauth.getAccessToken).mockResolvedValue(null);
-    vi.mocked(api).mockResolvedValue({ gatherings: [gathering] });
+    vi.mocked(api).mockImplementation(async (path) =>
+      path === "disconnect"
+        ? { status: "disconnected" }
+        : {
+            gatherings: [gathering],
+            connectionExpiresAt: Date.now() + 600000,
+          },
+    );
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
   it("starts disconnected with no usable publish reference or invitation opt-in", async () => {
     const update = mount();
     await waitFor(() => expect(oauth.getAccessToken).toHaveBeenCalled());
@@ -208,8 +222,14 @@ describe("Publisher account and invitation consent", () => {
       name: "Other account dinner",
     };
     vi.mocked(api)
-      .mockResolvedValueOnce({ gatherings: [gathering] })
-      .mockResolvedValueOnce({ gatherings: [other] });
+      .mockResolvedValueOnce({
+        gatherings: [gathering],
+        connectionExpiresAt: Date.now() + 600000,
+      })
+      .mockResolvedValueOnce({
+        gatherings: [other],
+        connectionExpiresAt: Date.now() + 600000,
+      });
     const update = mount();
     await chooseAndOptIn();
     fireEvent.click(screen.getByRole("button", { name: "Reconnect account" }));
@@ -247,7 +267,22 @@ describe("Publisher account and invitation consent", () => {
 });
 
 describe("Localized preview rendering", () => {
-  afterEach(cleanup);
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(oauth.getAccessToken).mockResolvedValue(null);
+    vi.mocked(api).mockImplementation(async (path) =>
+      path === "disconnect"
+        ? { status: "disconnected" }
+        : {
+            gatherings: [gathering],
+            connectionExpiresAt: Date.now() + 600000,
+          },
+    );
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
   it("shows a recoverable error instead of an endless preparing state", () => {
     render(
       <IntlProvider locale="en" messages={{}}>
@@ -374,5 +409,74 @@ describe("Localized preview rendering", () => {
         "Invitation could not be published",
       );
     }
+  });
+  it("disconnect clears publishing data before revocation resolves", async () => {
+    vi.mocked(oauth.getAccessToken).mockResolvedValue({
+      token: "test",
+    } as never);
+    let finish: (() => void) | undefined;
+    vi.mocked(oauth.deauthorize).mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const update = mount();
+    await chooseAndOptIn();
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect account" }));
+    expect(update.mock.lastCall![0].publishRef).toBe("");
+    expect(
+      screen.getByRole("button", { name: "Disconnect account" }),
+    ).toHaveProperty("disabled", true);
+    await waitFor(() => expect(oauth.deauthorize).toHaveBeenCalledTimes(1));
+    await act(async () => finish!());
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(update.mock.lastCall![0].validityState).toBe(
+      "invalid_authentication_required",
+    );
+  });
+  it("a failed disconnect preserves a retry button but never preserves publishing consent", async () => {
+    vi.mocked(oauth.getAccessToken).mockResolvedValue({
+      token: "test",
+    } as never);
+    vi.mocked(oauth.deauthorize).mockRejectedValue(
+      new Error("private revocation error"),
+    );
+    const update = mount();
+    await chooseAndOptIn();
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect account" }));
+    await screen.findByText("Disconnect was not confirmed. Please try again.");
+    expect(update.mock.lastCall![0].publishRef).toBe("");
+    expect(
+      screen.getByRole("button", { name: "Disconnect account" }),
+    ).toHaveProperty("disabled", false);
+  });
+  it("connection expiry clears consent and gathering data without an implicit API retry", async () => {
+    vi.useFakeTimers();
+    vi.mocked(oauth.getAccessToken).mockResolvedValue({
+      token: "test",
+    } as never);
+    vi.mocked(api).mockResolvedValue({
+      gatherings: [gathering],
+      connectionExpiresAt: Date.now() + 1000,
+    });
+    let update: ReturnType<typeof mount>;
+    await act(async () => {
+      update = mount();
+    });
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: gathering.id },
+    });
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(update!.mock.lastCall![0].validityState).toBe("valid");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1001);
+    });
+    expect(update!.mock.lastCall![0].publishRef).toBe("");
+    expect(update!.mock.lastCall![0].validityState).toBe(
+      "invalid_authentication_required",
+    );
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(api).toHaveBeenCalledTimes(1);
   });
 });

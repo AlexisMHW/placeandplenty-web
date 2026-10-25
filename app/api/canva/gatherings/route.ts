@@ -4,18 +4,26 @@ import {
   CanvaControlError,
   checkCanvaGatheringQuota,
 } from "@/lib/canva-controls";
+import { CanvaRevocationUnavailable } from "@/lib/canva-revocation";
 export const dynamic = "force-dynamic";
 export const OPTIONS = canvaOptions;
 export async function GET(request: Request) {
   try {
-    const { client } = await canvaClient(request);
+    const { client, expiresAt } = await canvaClient(request);
     await checkCanvaGatheringQuota(client);
     const { data, error } = await client.rpc(
       "list_my_gatherings_with_lifecycle",
     );
     if (error)
-      return canvaResponse(request, { error: "Gatherings unavailable" }, 503);
+      return canvaResponse(
+        request,
+        {
+          error: "Gatherings unavailable",
+        },
+        503,
+      );
     return canvaResponse(request, {
+      connectionExpiresAt: expiresAt,
       gatherings: (data || [])
         .filter(eligibleGathering)
         .map((row: Record<string, unknown>) => ({
@@ -25,6 +33,12 @@ export async function GET(request: Request) {
         })),
     });
   } catch (error) {
+    if (error instanceof CanvaRevocationUnavailable)
+      return canvaResponse(
+        request,
+        { error: "Connection verification unavailable" },
+        503,
+      );
     if (error instanceof CanvaControlError) {
       const response = canvaResponse(
         request,

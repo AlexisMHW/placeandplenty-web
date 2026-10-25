@@ -36,6 +36,7 @@ beforeAll(async () => {
     "canva_authorization_codes.sql",
     "canva_publisher_safeguards.sql",
     "canva_selected_gathering_guard.sql",
+    "canva_grant_revocation.sql",
   ])
     await db.exec(
       await readFile(
@@ -46,6 +47,7 @@ beforeAll(async () => {
 }, 30000);
 beforeEach(async () => {
   await db.exec(`reset role; reset request.jwt.claim.sub;
+    delete from canva_private.revoked_grants;
     delete from canva_private.rate_events; delete from canva_private.publish_requests;
     delete from public.canva_authorization_codes; delete from storage.objects;
     update public.gatherings set effective_status='active',path=null,saves=0;`);
@@ -246,4 +248,117 @@ it("an unrelated host's gathering cannot block the selected authorized gathering
   expect((await begin()).status).toBe("claimed");
   await asUser(other);
   await expect(begin()).rejects.toThrow(/Gathering unavailable/);
+});
+
+it("revocation is private, idempotent, account-bound and expires safely", async () => {
+  const tokenHash = "r".repeat(43);
+  await db.exec("set role anon");
+  await expect(
+    db.query("select public.is_canva_grant_revoked($1)", [tokenHash]),
+  ).rejects.toThrow(/permission denied/);
+  await expect(
+    db.query(
+      "select public.revoke_canva_grant($1,now()+interval '5 minutes')",
+      [tokenHash],
+    ),
+  ).rejects.toThrow(/permission denied/);
+  await asUser();
+  await expect(
+    db.query("select * from canva_private.revoked_grants"),
+  ).rejects.toThrow(/permission denied/);
+  expect(
+    (
+      await db.query<{ v: boolean }>(
+        "select public.is_canva_grant_revoked($1) v",
+        [tokenHash],
+      )
+    ).rows[0]!.v,
+  ).toBe(false);
+  for (let i = 0; i < 2; i++)
+    await db.query(
+      "select public.revoke_canva_grant($1,now()+interval '5 minutes')",
+      [tokenHash],
+    );
+  expect(
+    (
+      await db.query<{ v: boolean }>(
+        "select public.is_canva_grant_revoked($1) v",
+        [tokenHash],
+      )
+    ).rows[0]!.v,
+  ).toBe(true);
+  await asUser(other);
+  expect(
+    (
+      await db.query<{ v: boolean }>(
+        "select public.is_canva_grant_revoked($1) v",
+        [tokenHash],
+      )
+    ).rows[0]!.v,
+  ).toBe(false);
+  await db.exec("reset role");
+  expect(
+    (await db.query("select * from canva_private.revoked_grants")).rows,
+  ).toHaveLength(1);
+  await db.exec(
+    "update canva_private.revoked_grants set expires_at=now()-interval '1 second'; select canva_private.cleanup_temporary_records();",
+  );
+  expect(
+    (await db.query("select * from canva_private.revoked_grants")).rows,
+  ).toHaveLength(0);
+});
+it("revocation validates lifetime/hash and bounds active per-account storage", async () => {
+  await asUser();
+  await expect(
+    db.query("select public.revoke_canva_grant($1,now()+interval '1 hour')", [
+      "r".repeat(43),
+    ]),
+  ).rejects.toThrow(/invalid revocation/);
+  await expect(
+    db.query(
+      "select public.revoke_canva_grant('bad',now()+interval '1 minute')",
+    ),
+  ).rejects.toThrow(/invalid revocation/);
+  for (let i = 0; i < 60; i++)
+    await db.query(
+      "select public.revoke_canva_grant($1,now()+interval '5 minutes')",
+      [String(i).padStart(43, "r")],
+    );
+  await expect(
+    db.query(
+      "select public.revoke_canva_grant($1,now()+interval '5 minutes')",
+      ["s".repeat(43)],
+    ),
+  ).rejects.toThrow(/revocation limit/);
+  await asUser(other);
+  await db.query(
+    "select public.revoke_canva_grant($1,now()+interval '5 minutes')",
+    ["s".repeat(43)],
+  );
+});
+
+it("repeated revocation cannot shorten a deny entry or bypass a previously short expiry", async () => {
+  const tokenHash = "m".repeat(43);
+  await asUser();
+  await db.query(
+    "select public.revoke_canva_grant($1,now()+interval '1 second')",
+    [tokenHash],
+  );
+  await db.query(
+    "select public.revoke_canva_grant($1,now()+interval '5 minutes')",
+    [tokenHash],
+  );
+  await db.query(
+    "select public.revoke_canva_grant($1,now()+interval '1 second')",
+    [tokenHash],
+  );
+  await db.exec("reset role");
+  expect(
+    (
+      await db.query<{ v: boolean }>(
+        "select expires_at>now()+interval '4 minutes' v from canva_private.revoked_grants where token_hash=$1",
+        [tokenHash],
+      )
+    ).rows[0]!.v,
+  ).toBe(true);
 });
