@@ -1,120 +1,81 @@
 # Canva integration build status
 
-Draft app: AAHOGO4RP4c. Branch: feature/canva-hosting-integration. Draft PR: #26.
+Branch: `feature/canva-hosting-integration`. Draft PR: #26.
+Canva draft: `AAHOGO4RP4c`. No merge, production deployment or marketplace
+submission is authorized or performed.
 
-The official Canva SDK/UI Kit publisher compiles to one 1,313,486-byte JavaScript
-bundle with inline CSS. Both TypeScript checks pass; 111 web tests and 60 Canva
-tests pass. The named single-account OAuth provider is explicit in SDK code.
+## Verified current behavior — 24 October 2026 (Nashville)
 
-Feature CI and full Tina/Next preview builds passed. Existing Vercel Tina
-credentials are sufficient; no additional Tina credentials are needed from the
-owner. QA preview e710f7d passed both CI runs, the full build and 24 hosted checks; it is ready and uses isolated Supabase edfqrmkrfqnovzrryrxa.
+The real Canva browser flow now passes: confirmed QA account sign-in, explicit
+OAuth consent, authorized gathering selection, invitation opt-in, Publish now,
+Canva's publication-success dialog, and Check it out into the QA gathering.
+The original empty 800×600 Canva test design exported a 4,322-byte PNG. The
+canonical private object was downloaded as the same authenticated QA host,
+passed structural PNG validation, and has the expected 800×600 dimensions.
+Canonical invitation mode is `uploaded`; the request ledger is completed and
+its object path matches the gathering's artwork path.
 
-The owner added the new Bluehost CNAME. DNS, branch routing and HTTPS are verified
-for canva-qa.placeandplenty.com. An access exception applies only to that QA alias;
-project-wide protection and production domains were not changed. The feature flag
-is enabled only on the feature-branch preview. The QA hostname receives noindex
-headers, verified on the hosted feature build.
+Evidence: `canva-qa-real-publish-success.jpg` and
+`canva-qa-published-gathering.jpg`. This proves the actual editor transport and
+persistence flow; it is not a visual-quality test of a finished invitation.
 
-The existing Canva draft has the saved public OAuth provider placeandplenty,
-client ID place-and-plenty-canva-qa, mandatory S256 PKCE, exact QA endpoints and
-Canva callback. The updated bundle was uploaded and loads in the draft. The
-actual editor Connect flow opens QA login with the expected authorization request.
-No Canva release or marketplace submission has been made.
+A new synthetic, already-confirmed Free QA account and one test gathering were
+prepared for the owner. No subscriptions/paid entitlements were added. Its
+credentials remain outside the repository. This deliberately bypassed email
+delivery for this one QA account; normal signup/confirmation delivery remains
+unverified and QA SMTP still needs repair.
 
-Live database role tests passed owner/cohost selection/storage/RPC allow,
-unaccepted-invitee/stranger denial, code ownership/read denial, PKCE and replay.
-Hosted HTTP verification passed 21 checks including real QA sign-in, exact login
-return path, rendered signed-in consent, callback code/state, token exchange,
-private byte-identical PNG transfer, canonical artwork save, prior-artwork
-preservation, and concurrent replacements. No production requests were made by
-these tests. Fifteen canonical entitlement/subscription/lifecycle/artwork function
-definitions match production exactly. Copied QA notification jobs and external push remain disabled. A separate QA-only
-15-minute cleanup job removes only temporary Canva records. Synthetic test accounts/artwork are retained in QA; credentials are not
-in git.
+## Permission regression repaired
 
-A transaction-only live QA matrix also passed Free, Gathering Pass, Plus,
-Multi-Day, expired/refunded Plus and revoked Multi-Day cases. Canonical
-Plus/Smart Closet/Multi-Day decisions and entitlement rows remained unchanged
-after artwork saves; a paid stranger still could not access another gathering.
-All matrix fixtures rolled back. See qa/canva-entitlements.sql.
+The first real export exposed a bug in our private publishing guard: calling
+the canonical invoker/RLS gathering list from a SECURITY DEFINER bypassed its
+row filter, causing lifecycle checks on unrelated hosts' gatherings. The
+canonical lifecycle function correctly denied that access, blocking publishing.
 
-PNG validation now checks chunk boundaries, CRCs, IHDR fields, ordering and final
-IEND without inflating untrusted data. This is structural validation, not a full
-image decode. Token and artwork bodies are bounded during streaming, independent
-of Content-Length. Unit tests cover missing/false lengths, cancellation, exact
-limits, stream failures and damaged/truncated PNGs.
+`canva_selected_gathering_guard.sql` replaces only the integration's private
+guard. It checks canonical accepted membership first, then the selected
+identifier's canonical lifecycle and duration. Canonical membership, lifecycle,
+artwork-save functions and all RLS policies remain unchanged. Apply this patch
+immediately after `canva_publisher_safeguards.sql`, before enabling publishing.
+The regression fixture now includes two unrelated owners and models the real
+invoker/RLS list plus guarded lifecycle function.
 
-Remaining gates: QA SMTP credential repair and human signup delivery; secure
-browser sign-in and actual Canva editor export; broader lifecycle/expiry/
-cancellation/reconnection; secure connection renewal/revocation;
-accessibility/localization
-and release review. No merge, production deployment or submission is authorized.
+The QA Host Hub also lacked SELECT grants from the production bootstrap.
+Authenticated SELECT on seven required tables was observed in production;
+their QA RLS policies were hash-matched before granting the same SELECT rights
+in QA only. No policies, production grants or write rights changed. The
+post-publication gathering page now loads normally and displays Free access.
 
-See CANVA_QA_VERIFICATION.md and canva-app/RELEASE_GATES.md for evidence and limits.
+## Implementation and testing
 
-SDK follow-up: API requests now time out after 30 seconds, with no automatic
-retry after an ambiguous network failure. The error asks the host to check the
-gathering before retrying. Six UI behavior tests cover disconnected startup,
-opt-in reset, expired sessions, canceled reconnect, account change and Not now.
-Seven API tests cover scoped grants, omitted cookies, timeout signals, reconnection
-and failure/no-retry behavior. UI tests mock UI Kit controls and do not replace
-actual mobile, keyboard, screen-reader or localization QA.
+- Official SDK/UI Kit isolated from the Next.js app; one QA-targeted bundle,
+  1,313,948 bytes, with inline CSS. Latest tested bundle saved to the Canva draft.
+- 111 web tests and 63 SDK/database tests pass; both TypeScript checks pass.
+- 28 hosted QA HTTP checks pass with the additional unrelated host present,
+  including consent, PKCE/replay, owner/cohost/stranger authorization, private
+  PNG transfer, concurrent duplicate requests and completed-request replay.
+- Live transaction-only quota/private-grant checks and seven entitlement states
+  pass and roll back their fixtures. No paid capability was granted.
+- Recoverable publish errors now reach an accessible settings alert through
+  Canva's documented context callback. Only known localized error text is
+  displayed; raw exceptions and unknown payloads are excluded. Safe server
+  diagnostics contain bounded reason categories and validity booleans only.
 
-The actual Canva uploaded-bundle preview rendered. Connect reached QA login;
-Canva's Cancel returned with opt-in disabled. Not now opened QA /login?next=%2Fhost.
-The complete editor export still needs secure browser sign-in. Automated fixture
-credentials have not been injected into browser sessions.
+Per-account limits: 60 gathering reads/minute, 5 publishing attempts/minute and
+30/hour, 10 authorization-code issuances/10 minutes. Stable request IDs serialize
+retries; canonical save and ledger completion share a transaction. Ambiguous
+save responses preserve artwork. Completed request records remain for 24 hours.
+QA-only cleanup every 15 minutes removes temporary codes, quota events and aged
+request records, never accounts, gatherings, entitlements or artwork.
 
-Localization preparation now uses react-intl descriptors and the official
-FormatJS extractor. All 34 visible SDK labels, consent text, preview states and
-SDK/API errors have English source messages with translator notes. Build writes
-translations/messages_en.json; catalog tests verify required fields, limits and
-real message formatting. Canva translation upload/review and actual translated
-locale acceptance are still pending. These changes do not translate or alter the
-canonical website, shared account system or entitlements. Preview failures now
-show a recoverable localized error; error alerts and busy state are exposed to
-assistive technology. Real screen-reader/mobile acceptance remains pending.
+## Environment and remaining release gates
 
-Commit 41505f6 passed both GitHub CI runs and Vercel preview build. The final
-short-label follow-up is locally tested. The QA bundle renders after upload.
-Canva pseudolocales exercised both text directions on the disconnected screen;
-long buttons were shortened after visual clipping was observed. Actual translated
-locales, authenticated layouts and mobile/device checks remain release gates.
+QA uses Supabase `edfqrmkrfqnovzrryrxa` and
+`https://canva-qa.placeandplenty.com`. Only the feature preview is enabled. Copied
+notification jobs and external push remain disabled. Production is unchanged.
+Existing Vercel Tina credentials work; no Tina credentials are needed from the owner.
 
-## Safeguards follow-up — 23 October 2026
-
-QA migration `canva_publisher_rate_limits_and_idempotency` is applied. The earlier
-interrupted attempt had not changed the database. Limits are per authenticated
-account: 60 gathering reads/minute, 5 publish attempts/minute and 30/hour, and
-10 authorization-code issuances/10 minutes. Rejected attempts return a bounded
-Retry-After; the SDK displays localized guidance and never retries automatically.
-Direct authenticated code INSERT is replaced with a user-bound issuance RPC.
-
-Each opt-in creates a stable request UUID. An account/request/content ledger
-serializes concurrent attempts; canonical artwork save and ledger completion
-share one transaction. Replays return the completed result without uploading or
-reapplying older artwork. Changed content requires a fresh opt-in. Unknown save
-responses retain the new object because commit may already have occurred; only
-a confirmed PostgreSQL rejection permits removing that attempt's object.
-
-QA-only cleanup runs every 15 minutes: consumed/expired authorization codes,
-quota events older than one hour, and completed or abandoned request records
-older than 24 hours. It never deletes accounts, gatherings, entitlements or
-artwork. The idempotency guarantee lasts through this retention window.
-
-Current local verification: 111 web + 60 SDK tests, both typechecks and QA-targeted
-SDK build pass. The real QA API harness passes 26 checks, including concurrent
-identical requests, completed replay and changed-content conflict. Live SQL tests
-verify quota boundaries/account isolation/private grants and rerun all seven
-entitlement cases with rollback. Hosted consent and transfer passed 28 checks on 50c0510a; both CI runs and the
-full Tina/Next preview build passed. The updated QA-targeted bundle was uploaded
-and renders in the actual Canva editor (see canva-qa-safeguards-preview.jpg). Existing short-lived grants remain
-unchanged; renewable/revocable connections are a separate release gate.
-
-Verified hosted revision: `50c0510a2d8a49e99f6c30d611936f4e4691ba7f`.
-Both GitHub CI runs succeeded. Vercel preview `dpl_DW12jkxqqzXEM3qB9x7iy9mnnPxB`
-is READY on the feature branch and QA alias. Hosted verification passed 28 checks,
-including signed-in consent plus the new duplicate/concurrency controls. The
-1,313,486-byte QA bundle is saved in the existing Canva draft and renders.
-No translation submission, marketplace review, merge or production deploy occurred.
+Remaining: normal signup and confirmation-email delivery, renewable/revocable
+connections (current grants expire within ten minutes), broader device,
+accessibility/localization and recovery testing, listing/security review and
+owner release approval. No translation upload/review submission has occurred.

@@ -13,16 +13,29 @@ beforeAll(async () => {
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema auth to authenticated; grant execute on function auth.uid() to authenticated;
     create table storage.objects(bucket_id text,name text);
-    create table public.qa_gatherings(id uuid primary key,owner_id uuid,effective_status text,duration_type text,path text,saves integer default 0);
-    insert into public.qa_gatherings values ('${gathering}','${owner}','active','single_day',null,0);
-    create function public.list_my_gatherings_with_lifecycle() returns setof public.qa_gatherings language sql security definer as $$ select * from public.qa_gatherings where owner_id=auth.uid(); $$;
+    create table public.gatherings(id uuid primary key,owner_user_id uuid,effective_status text,duration_type text,path text,saves integer default 0);
+    insert into public.gatherings values ('${gathering}','${owner}','active','single_day',null,0);
+    insert into public.gatherings values ('66666666-6666-4666-8666-666666666666','${other}','active','single_day',null,0);
+    alter table public.gatherings enable row level security;
+    grant select on public.gatherings to authenticated;
+    create policy owned on public.gatherings for select to authenticated using(owner_user_id=auth.uid());
+    create function public.is_accepted_gathering_member(p_id uuid) returns boolean language sql security definer as $$
+      select exists(select 1 from public.gatherings where id=p_id and owner_user_id=auth.uid()); $$;
+    create function public.effective_gathering_status(p_id uuid) returns text language plpgsql security definer as $$ begin
+      if not public.is_accepted_gathering_member(p_id) then raise exception 'not_authorized'; end if;
+      return (select effective_status from public.gatherings where id=p_id);
+    end $$;
+    -- Like production: invoker/RLS list calls a guarded lifecycle function per row.
+    create function public.list_my_gatherings_with_lifecycle() returns table(id uuid,effective_status text,duration_type text) language sql as $$
+      select g.id,public.effective_gathering_status(g.id),g.duration_type from public.gatherings g; $$;
     create function public.save_invitation_artwork(p_id uuid,p_path text,p_mime text,p_name text) returns void language plpgsql security definer as $$ begin
-      if not exists(select 1 from public.qa_gatherings where id=p_id and owner_id=auth.uid()) then raise exception 'not authorized'; end if;
-      update public.qa_gatherings set path=p_path,saves=saves+1 where id=p_id;
+      if not exists(select 1 from public.gatherings where id=p_id and owner_user_id=auth.uid()) then raise exception 'not authorized'; end if;
+      update public.gatherings set path=p_path,saves=saves+1 where id=p_id;
     end $$;`);
   for (const file of [
     "canva_authorization_codes.sql",
     "canva_publisher_safeguards.sql",
+    "canva_selected_gathering_guard.sql",
   ])
     await db.exec(
       await readFile(
@@ -35,7 +48,7 @@ beforeEach(async () => {
   await db.exec(`reset role; reset request.jwt.claim.sub;
     delete from canva_private.rate_events; delete from canva_private.publish_requests;
     delete from public.canva_authorization_codes; delete from storage.objects;
-    update public.qa_gatherings set effective_status='active',path=null,saves=0;`);
+    update public.gatherings set effective_status='active',path=null,saves=0;`);
 });
 afterAll(async () => {
   await db.close();
@@ -155,7 +168,7 @@ it("completed retries do not save again; request keys bind content and gathering
   expect(
     (
       await db.query<{ saves: number }>(
-        "select saves from public.qa_gatherings",
+        `select saves from public.gatherings where id='${gathering}'`,
       )
     ).rows[0]!.saves,
   ).toBe(1);
@@ -181,7 +194,7 @@ it("permission/lifecycle changes prevent completion without mutating canonical a
   const claim = await begin();
   await storeObject(claim.path);
   await db.exec(
-    "reset role; update public.qa_gatherings set effective_status='archived'",
+    "reset role; update public.gatherings set effective_status='archived'",
   );
   await asUser();
   await expect(complete(claim.lease_id)).rejects.toThrow(
@@ -191,7 +204,7 @@ it("permission/lifecycle changes prevent completion without mutating canonical a
   expect(
     (
       await db.query<{ saves: number }>(
-        "select saves from public.qa_gatherings",
+        `select saves from public.gatherings where id='${gathering}'`,
       )
     ).rows[0]!.saves,
   ).toBe(0);
@@ -218,8 +231,19 @@ it("cleanup removes only eligible temporary records and preserves canonical artw
   expect(
     (
       await db.query<{ saves: number }>(
-        "select saves from public.qa_gatherings",
+        `select saves from public.gatherings where id='${gathering}'`,
       )
     ).rows[0]!.saves,
   ).toBe(1);
+});
+
+it("an unrelated host's gathering cannot block the selected authorized gathering", async () => {
+  await asUser();
+  const listed = await db.query(
+    "select * from public.list_my_gatherings_with_lifecycle()",
+  );
+  expect(listed.rows).toHaveLength(1);
+  expect((await begin()).status).toBe("claimed");
+  await asUser(other);
+  await expect(begin()).rejects.toThrow(/Gathering unavailable/);
 });

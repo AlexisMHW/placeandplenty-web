@@ -107,3 +107,11 @@ Reference: https://www.canva.dev/docs/apps/localization/recommended-workflow/
 API fetches have a 30-second timeout. An interrupted save is not retried
 automatically because it may already have succeeded; the host is asked to
 check their gathering before manually retrying.
+
+### Required publishing guard patch
+
+Apply `docs/integrations/sql/canva_selected_gathering_guard.sql` immediately after
+`canva_publisher_safeguards.sql` before enabling the publisher. It preserves
+canonical membership/lifecycle checks while targeting only the selected gathering.
+The separate `canva_qa_host_read_grants.sql` is isolated QA bootstrap parity only;
+it is not a production migration. See `CANVA_BUILD_STATUS.md` for verified scope.

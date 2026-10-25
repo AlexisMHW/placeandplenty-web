@@ -170,3 +170,31 @@ is READY on the feature branch and QA alias. Hosted verification passed 28 check
 including signed-in consent plus the new duplicate/concurrency controls. The
 1,313,486-byte QA bundle is saved in the existing Canva draft and renders.
 No translation submission, marketplace review, merge or production deploy occurred.
+
+## Actual editor test — 24 October 2026 (Nashville)
+
+PASS: a dedicated confirmed synthetic Free account signed in through the real
+Canva OAuth popup. Explicit consent returned to Canva; the app listed its one
+QA gathering. After selection and opt-in, Publish now displayed Canva's success
+dialog. The canonical ledger completed and the private object/gathering paths
+match. Download as that QA user validated a 4,322-byte 800×600 PNG from the
+original blank test design. Check it out opened the QA gathering after its
+missing production-equivalent SELECT bootstrap grants were restored.
+
+The first attempt exposed an integration guard bug masked by the earlier
+single-gathering fixture: SECURITY DEFINER enumerated the invoker/RLS list and
+hit lifecycle authorization for an unrelated host. QA patch
+`canva_selected_gathering_permission_guard` invokes the unchanged canonical
+membership/lifecycle checks for the selected gathering only. The database
+regression now includes a second unrelated owner, real RLS behavior and guarded
+lifecycle reads. Owner passes, unrelated owner remains denied.
+
+QA-only `canva_qa_host_hub_read_grant_parity` restores authenticated SELECT on
+seven tables whose production SELECT grants and identical RLS policies were
+verified. No RLS, write rights or production permissions changed. Dedicated QA
+account has zero purchased entitlements; the rendered gathering is Free.
+
+Latest verification: 63 SDK/database tests, both typechecks, 28 hosted checks
+with multiple unrelated hosts, and rolled-back live quota/entitlement matrices.
+Evidence: `canva-qa-real-publish-success.jpg`, `canva-qa-published-gathering.jpg`.
+Normal signup email delivery and finished invitation visual QA are not claimed.

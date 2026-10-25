@@ -1,5 +1,7 @@
 -- Review-only for production. Applied only to the owner-approved isolated QA.
 -- Canonical gathering, storage, membership and entitlement policies are unchanged.
+-- REQUIRED: apply canva_selected_gathering_guard.sql immediately after this file
+-- and before enabling publishing. It fixes privileged-list enumeration.
 create schema canva_private;
 revoke all on schema canva_private from public, anon, authenticated;
 create table canva_private.rate_events (
