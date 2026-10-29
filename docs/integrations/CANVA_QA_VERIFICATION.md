@@ -212,3 +212,31 @@ logged or added to git. Production SMTP was not changed or tested.
 This normal email signup and the earlier real Canva editor publication are
 separately verified; a continuous new-user signup-to-Canva-return browser journey
 still belongs to broader flow/recovery acceptance.
+
+## Confirmed owner QA account — editor recovery acceptance, 29 October 2026
+
+The owner reported completing email confirmation in their own browser. Secure
+browser-auth password sign-in in the cloud browser then visibly reached My
+Gatherings, showing the signed-in owner and no current gatherings. With explicit
+owner approval, the normal web wizard created the Free one-day dinner gathering
+`Canva Connection Test` (`ced772af-b318-4a16-ac5f-16ef78882d9f`). No guest
+contacts or outbound invitations were added.
+
+In the saved JavaScript-bundle preview of app AAHOGO4RP4c:
+
+- Explicitly approved consent returned to Canva and listed the test gathering.
+- Selecting it and opting in enabled Publish now. Owner-approved publication
+  displayed “Your content has been published!”. Reloading the QA gathering
+  confirmed it was using uploaded invitation artwork and still displayed FREE.
+- Disconnect returned to Connect account with artwork opt-in disabled/unchecked.
+- Reloading the ordinary QA gathering still showed its authenticated host view.
+- Fresh reconnection with the same scope succeeded without another password;
+  gathering selection was empty, artwork opt-in unchecked/disabled, and Publish
+  now disabled until a fresh selection and opt-in.
+
+Limitations: the sample was the blank 800×600 design, not finished invitation
+visual acceptance. Signup/email confirmation and publishing were separate
+browser journeys; a continuous new-user signup-through-Canva flow is not claimed.
+Google login separately returned redirect_uri_mismatch for the QA callback; the
+successful run used email/password. No production deployment or marketplace
+submission occurred.
