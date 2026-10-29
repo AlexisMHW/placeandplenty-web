@@ -71,12 +71,12 @@ instructions after approval of the production configuration.
   replacement. Ambiguous committed-save responses preserve the uploaded object.
 - Limits: 60 gathering reads/minute, 5 publish attempts/minute and 30/hour,
   10 code issuances/10 minutes, per account. Completed retry records last 24 hours.
-- The pending revocation update stores grant hashes, user identifiers and expiry,
+- The QA revocation update stores grant hashes, user identifiers and expiry,
   not raw grants. Disconnect restricts Canva access without signing out the normal
   application. Its cleanup removes expired temporary integration records only.
 - QA temporary-record cleanup runs every 15 minutes. It does not remove accounts,
-  gatherings, invitations or entitlements. The new revocation extension is not
-  live until the QA migration succeeds.
+  gatherings, invitations or entitlements. The revocation migration is applied
+  to QA; production release remains pending.
 
 Review the published privacy wording against these facts before release. This
 document does not amend the public privacy policy or assert legal review.
@@ -88,8 +88,8 @@ document does not amend the public privacy policy or assert legal review.
 | Existing real Canva export | Passed twice; private PNG and destination verified |
 | Normal QA email signup | Owner confirmed email and sign-in; backend verified |
 | New user through Canva → signup → email → Canva → publish | Still needs one continuous browser run |
-| Revocation / expiry implementation | Local automated coverage; live QA blocked on migration |
-| Revocation provider URL | Configure QA `/api/canva/revoke` after backend is ready |
+| Revocation / expiry implementation | QA migration and 36 backend checks recorded; actual editor disconnect/reconnect passed 29 October; full timed expiry acceptance remains |
+| Revocation provider URL | QA draft configured; editor disconnect/reconnect verified |
 | Full QA regression | Rerun updated HTTP harness after migration and preview update |
 | Mobile and accessibility | Test actual Canva mobile, keyboard, focus, labels, alert announcements, light/dark and narrow layouts; record results |
 | Recovery | Exercise expired session, rejected permissions, unavailable backend and disconnect failure in the real editor |
