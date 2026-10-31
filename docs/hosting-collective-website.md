@@ -25,3 +25,13 @@ Review and access:
 Before public launch: review privacy coverage for creator applications and Tally, approve retention/reviewer access, finalize partner terms, verify notification and consent processing, test submissions and mobile embeds, add the landing page to navigation/sitemap and remove its temporary noindex metadata. Keep join/apply noindex. Existing old Founding Host Application form rjZ6yL was observed but not edited or reused; audit existing links to it separately before launch.
 
 Validation: TypeScript and existing suite pass. Local server process could start but was not reachable through a later command; no successful local HTTP or visual verification claimed. Use the branch Vercel preview for visual QA once its build is READY.
+
+## Existing-account hub access
+
+The /hosting-collective/hub route now uses the existing cookie client and Auth getUser(), redirecting unsigned visitors through /login with a safe return path. Signup can use the same /signup?next=/hosting-collective/hub flow; no second password or identity model is created. Public intake routes stay unauthenticated. Fixed the previous broad /host prefix check, which also captured /hosting-collective.
+
+The hub authorizes confirmed, non-anonymous users with an Auth-admin-managed app_metadata.hosting_collective object: role contributor or partner, status active. It ignores user_metadata, query parameters, paid plans and form fields. Suspended/revoked/pending/unknown roles fail closed. Every server render retrieves current Auth user details; there is no client-only gate or shared user cache. This is a pilot access record, not the final audited application approval workflow. No metadata grants were made and no live Auth configuration changed.
+
+Approved resources are rendered only after authorization. Ordinary users get an access explanation without resources. Partner status does not imply Affiliate Partner activation; no earnings, link or fake payout data is shown. Every future protected resource/API/download must independently use the same server verification and role check; do not place private files in public/.
+
+Still required: secure application-to-canonical-user identity linking, owner review interface with auditable approval/revocation, terms acceptance record, signup/login end-to-end staging verification with synthetic identities, resource access tests using real sessions, and affiliate provider activation. Never grant access from an email match or an unverified Tally submission alone.

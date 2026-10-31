@@ -24,6 +24,7 @@ export default function HostingCollective() {
           <div className="mt-9 flex flex-wrap gap-3">
             <Link href="/hosting-collective/join" className={`${button} bg-offwhite text-forest`}>Join the Collective</Link>
             <Link href="/hosting-collective/apply" className={`${button} border border-offwhite/60 text-offwhite`}>Apply to Partner</Link>
+            <Link href="/hosting-collective/hub" className="self-center px-2 py-3 font-body text-sm underline underline-offset-4">Contributor & Partner sign in</Link>
           </div>
         </div>
         <div className="relative aspect-[4/3] overflow-hidden rounded-t-[6rem] rounded-b-card">
