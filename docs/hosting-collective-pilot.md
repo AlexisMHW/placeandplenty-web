@@ -29,7 +29,7 @@ This is accounting logic, NOT deployed referral tracking or a payment integratio
 
 ## Provider configuration and integration gate
 
-PromoteKit is the proposed link/portal provider, not purchased. Its documentation supports fixed/product-specific commissions and Stripe refund adjustment, but its default campaign behavior alone must not establish eligibility. First-purchase eligibility must cover prior native and unsupported-product purchases too; the vendor's first subscription payment is not necessarily the customer's first paid purchase.
+PromoteKit is connected to Stripe in the P&P workspace. Pro trial is verified active through November 14, 2026, renewing at USD 39/month. Manual payouts, USD, portal subdomain placeandplenty, and self-referral detection are saved. No campaign has been created and no tracking is live. Its documentation supports fixed/product-specific commissions and Stripe refund adjustment, but its default campaign behavior alone must not establish eligibility. First-purchase eligibility must cover prior native and unsupported-product purchases too; the vendor's first subscription payment is not necessarily the customer's first paid purchase.
 
 Before implementing the production adapter, obtain the actual campaign identifiers and verify a sandbox account can enforce the approved rules. Keep automatic payouts disabled. Preserve the existing entitlement webhook as authoritative; never mint entitlements from affiliate callbacks.
 
@@ -50,3 +50,13 @@ Before implementing the production adapter, obtain the actual campaign identifie
 - https://www.promotekit.com/pricing
 
 No vendor API credential or campaign identifier is present in this change. Existing product permissions, entitlements, prices, discounts, Stripe checkout and billing behavior remain unchanged.
+
+## Reconciliation and provider timing
+
+`lib/affiliate-reconciliation.ts` compares complete server-retrieved vendor commission snapshots with the canonical policy. It blocks missing, duplicate, mismatched, already-paid and unvalidated records. Refunds flag unpaid records for voiding and paid records for recovery; it performs neither action itself. A reconciled payment is only a line-item check: partner-level $50 minimum, durable reservation and final refund recheck remain required.
+
+PromoteKit Net terms schedule monthly payout reports; they do not mean a hold measured from each payment. The UI offers Net-0/15/30/60/90, without an exact 45-day validation option. No substitute term has been accepted. An attempted temporary $0/Net-60 campaign save was blocked by automatic review and was not retried. Resolve accurate two-product configuration and payout presentation before creating the campaign.
+
+The provider documentation warns that manual commission creation is for commissions not automatically tracked through Stripe. Do not implement a second create-commission path for the same Stripe payment. Verify whether provider-generated records can be corrected/voided safely and how to represent the precise eligibility date; until then, keep provider writes disabled and do not onboard partners.
+
+Sources: https://www.promotekit.com/docs/payouts and https://www.promotekit.com/docs/api-reference/commissions/create-commission (checked October 31, 2026).
