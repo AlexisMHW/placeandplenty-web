@@ -14,7 +14,7 @@ export function collectiveRole(user: {
 
 /** Exact segment matching keeps /hosting-collective public. */
 export function requiresAccount(pathname: string): boolean {
-  return pathname === '/host' || pathname.startsWith('/host/') ||
+  return pathname === '/command-center' || pathname.startsWith('/command-center/') || pathname === '/host' || pathname.startsWith('/host/') ||
     pathname === '/hosting-collective/hub' || pathname.startsWith('/hosting-collective/hub/') ||
     pathname === '/hosting-collective/review' || pathname.startsWith('/hosting-collective/review/');
 }

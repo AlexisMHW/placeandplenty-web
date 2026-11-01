@@ -45,3 +45,11 @@ The read-only inbox calls the fixed Partner application form using server-only T
 Remaining activation dependencies: securely configure TALLY_API_KEY in the preview environment; explicitly authorize the reviewer identity through the trusted admin process; verify with a synthetic submission and confirm least-privilege data access. The inbox cannot store a decision, send notifications, link an applicant to an Auth identity, or assign access yet. Those need durable audited workflow storage and an administrative mutation path; do not treat reading an application as approval.
 
 Preview verification November 1: deployed landing, join and apply routes return 200; intake remains opening-soon. Hub request leads to login content and private/no-store response; no authenticated-role end-to-end verification is claimed. PromoteKit support thread still contains only the original outgoing question.
+
+## Command Center (November 1)
+
+Owner approved the private administrative home at /command-center. Added its authenticated home and /command-center/applications inbox. Both require the separate reviewer capability, never creator membership or paid access. Former /hosting-collective/review now redirects to the canonical queue. Middleware protects the exact Command Center segment and the inbox also checks authorization before fetching data.
+
+Tally partner application self-email is configured to alexis@placeandplenty.com with a subject, submission reference and canonical queue link. No applicant answers are included in the custom email body. Form remains closed and DRAFT; actual notification delivery has not been tested. The queue production URL will not work until this branch is deployed and reviewer access is configured; email includes Tally workspace fallback guidance during setup. No email sent by this configuration change.
+
+No fabricated new-application count, financial figure or working approval button is displayed. The application queue is read-only; marketing/PR/affiliate sections explicitly show their connection status. Still required: Tally server credential, reviewer provisioning with owner authorization, secure durable decision/audit storage, verified account linking, notification delivery test, and real-session browser QA. Do not open intake until the owner can successfully review a synthetic application and act on it.

@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { collectiveRole, requiresAccount } from '../lib/collective-access.ts';
 const user = { email_confirmed_at: '2026-10-31', app_metadata: { hosting_collective: { role: 'partner', status: 'active' } } };
 test('host segment and private hub require login while public collective routes do not', () => {
-  for (const path of ['/host','/host/account','/hosting-collective/hub','/hosting-collective/hub/resources']) assert.equal(requiresAccount(path),true);
-  for (const path of ['/hosting-collective','/hosting-collective/join','/hosting-collective/apply','/hosting-collective/hub-public']) assert.equal(requiresAccount(path),false);
+  for (const path of ['/command-center','/command-center/applications','/host','/host/account','/hosting-collective/hub','/hosting-collective/hub/resources']) assert.equal(requiresAccount(path),true);
+  for (const path of ['/hosting-collective','/hosting-collective/join','/hosting-collective/apply','/hosting-collective/hub-public','/command-center-public']) assert.equal(requiresAccount(path),false);
 });
 test('active trusted roles alone unlock resources', () => {
   assert.equal(collectiveRole(user),'partner');
