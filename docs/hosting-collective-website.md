@@ -35,3 +35,13 @@ The hub authorizes confirmed, non-anonymous users with an Auth-admin-managed app
 Approved resources are rendered only after authorization. Ordinary users get an access explanation without resources. Partner status does not imply Affiliate Partner activation; no earnings, link or fake payout data is shown. Every future protected resource/API/download must independently use the same server verification and role check; do not place private files in public/.
 
 Still required: secure application-to-canonical-user identity linking, owner review interface with auditable approval/revocation, terms acceptance record, signup/login end-to-end staging verification with synthetic identities, resource access tests using real sessions, and affiliate provider activation. Never grant access from an email match or an unverified Tally submission alone.
+
+## Private application inbox (November 1)
+
+Added /hosting-collective/review. Auth getUser() runs before any provider call; confirmed, non-anonymous accounts must have a separately managed app_metadata.hosting_collective_reviewer boolean true. Contributor/Partner roles do not imply reviewer permission. No account received reviewer permission in this change. Anonymous visitors return through login; unauthorized signed-in users receive not-found.
+
+The read-only inbox calls the fixed Partner application form using server-only TALLY_API_KEY, a pinned tally-version, no-store fetch, a timeout and bounded pagination. It displays completed answers as escaped text, omits unknown/hidden questions and raw provider metadata, and fails visibly on malformed responses or vendor errors. No secret or raw vendor error is returned to the browser. The connector confirms the partner form has zero submissions and supplies the questions/questionId/submittedAt response contract. A real HTTP API integration with a credential has NOT been verified.
+
+Remaining activation dependencies: securely configure TALLY_API_KEY in the preview environment; explicitly authorize the reviewer identity through the trusted admin process; verify with a synthetic submission and confirm least-privilege data access. The inbox cannot store a decision, send notifications, link an applicant to an Auth identity, or assign access yet. Those need durable audited workflow storage and an administrative mutation path; do not treat reading an application as approval.
+
+Preview verification November 1: deployed landing, join and apply routes return 200; intake remains opening-soon. Hub request leads to login content and private/no-store response; no authenticated-role end-to-end verification is claimed. PromoteKit support thread still contains only the original outgoing question.

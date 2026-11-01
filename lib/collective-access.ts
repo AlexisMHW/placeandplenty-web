@@ -15,5 +15,12 @@ export function collectiveRole(user: {
 /** Exact segment matching keeps /hosting-collective public. */
 export function requiresAccount(pathname: string): boolean {
   return pathname === '/host' || pathname.startsWith('/host/') ||
-    pathname === '/hosting-collective/hub' || pathname.startsWith('/hosting-collective/hub/');
+    pathname === '/hosting-collective/hub' || pathname.startsWith('/hosting-collective/hub/') ||
+    pathname === '/hosting-collective/review' || pathname.startsWith('/hosting-collective/review/');
+}
+
+/** Separate from creator roles; set only through a trusted administrative process. */
+export function canReviewCollective(user: Parameters<typeof collectiveRole>[0]): boolean {
+  return Boolean(user && !user.is_anonymous && user.email_confirmed_at &&
+    user.app_metadata?.hosting_collective_reviewer === true);
 }
