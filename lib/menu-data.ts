@@ -44,7 +44,7 @@ export async function getMyTableData(gatheringId: string): Promise<{
       .from("gathering_guests")
       .select("rsvp_status, guest_dietary_notes, guest_allergy_notes, guest:guests(dietary_notes, allergy_notes)")
       .eq("gathering_id", gatheringId)
-      .neq("rsvp_status", "no"),
+      .or("rsvp_status.is.null,rsvp_status.neq.no"),
   ]);
 
   if (itemsResult.error) throw itemsResult.error;
