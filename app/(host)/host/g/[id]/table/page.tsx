@@ -55,7 +55,7 @@ export default async function TablePage({
 
   const dietaryNeeds = [
     ...(context.dietary_notes ? [context.dietary_notes] : []),
-    ...context.guestSafetyNotes.map((entry) => entry.note),
+    ...context.guestSafetyNotes.map((entry) => `${entry.category === "allergy" ? "Allergy" : "Dietary restriction"}: ${entry.note}`),
   ];
   const accessibilityNeeds = context.accessibility_notes ? [context.accessibility_notes] : [];
 
