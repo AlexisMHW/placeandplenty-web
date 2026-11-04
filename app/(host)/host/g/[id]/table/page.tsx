@@ -87,6 +87,22 @@ export default async function TablePage({
         </section>
       )}
 
+      {context.guestSafetyNotes.length > 0 && (
+        <section className="mt-5 max-w-3xl rounded-card border border-sage/30 bg-cream px-5 py-4">
+          <p className="font-body text-sm font-bold text-forest">Guest food needs</p>
+          <p className="mt-1 font-body text-xs text-forest/70">
+            Review ingredients and provide suitable options. This is not an allergen-safety certification.
+          </p>
+          <ul className="mt-3 space-y-1.5 font-body text-sm text-forest/80">
+            {context.guestSafetyNotes.map((entry) => (
+              <li key={entry.category + entry.note}>
+                <strong>{entry.category === "allergy" ? "Allergy" : "Dietary"}:</strong> {entry.note}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {hasUnseededFigureItOut && (
         <section className="mt-5 flex max-w-3xl flex-wrap items-center justify-between gap-4 rounded-card border border-gold/35 bg-parchment px-5 py-4">
           <div>
