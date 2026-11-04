@@ -14,6 +14,8 @@ export interface WebMenuItem {
 }
 
 export interface MenuContext {
+  guestSafetyNotes: Array<{ category: "allergy" | "dietary"; note: string }>;
+
   leftover_preference: "just_enough" | "a_little_extra" | "send_home_with_plates" | null;
   dietary_notes: string | null;
   accessibility_notes: string | null;
@@ -25,7 +27,7 @@ export async function getMyTableData(gatheringId: string): Promise<{
   context: MenuContext;
 }> {
   const supabase = createClient();
-  const [itemsResult, gatheringResult] = await Promise.all([
+  const [itemsResult, gatheringResult, guestResult] = await Promise.all([
     supabase
       .from("menu_items")
       .select(
@@ -38,13 +40,37 @@ export async function getMyTableData(gatheringId: string): Promise<{
       .select("leftover_preference, dietary_notes, accessibility_notes, last_plan_output")
       .eq("id", gatheringId)
       .single(),
+    supabase
+      .from("gathering_guests")
+      .select("rsvp_status, guest_dietary_notes, guest_allergy_notes, guest:guests(dietary_notes, allergy_notes)")
+      .eq("gathering_id", gatheringId)
+      .neq("rsvp_status", "no"),
   ]);
 
   if (itemsResult.error) throw itemsResult.error;
   if (gatheringResult.error) throw gatheringResult.error;
+  if (guestResult.error) throw guestResult.error;
+
+  const guestSafetyNotes: MenuContext["guestSafetyNotes"] = [];
+  const seen = new Set<string>();
+  for (const row of guestResult.data ?? []) {
+    const guest = Array.isArray(row.guest) ? row.guest[0] : row.guest;
+    for (const [category, value] of [
+      ["allergy", row.guest_allergy_notes],
+      ["allergy", guest?.allergy_notes],
+      ["dietary", row.guest_dietary_notes],
+      ["dietary", guest?.dietary_notes],
+    ] as const) {
+      const note = typeof value === "string" ? value.trim() : "";
+      const key = `${category}:${note.toLowerCase()}`;
+      if (!note || seen.has(key)) continue;
+      seen.add(key);
+      guestSafetyNotes.push({ category, note });
+    }
+  }
 
   return {
     items: (itemsResult.data ?? []) as WebMenuItem[],
-    context: gatheringResult.data as MenuContext,
+    context: { ...(gatheringResult.data as Omit<MenuContext, "guestSafetyNotes">), guestSafetyNotes },
   };
 }
