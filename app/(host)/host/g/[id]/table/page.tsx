@@ -53,7 +53,10 @@ export default async function TablePage({
     (value): value is string => Boolean(value?.trim())
   );
 
-  const dietaryNeeds = context.dietary_notes ? [context.dietary_notes] : [];
+  const dietaryNeeds = [
+    ...(context.dietary_notes ? [context.dietary_notes] : []),
+    ...context.guestSafetyNotes.map((entry) => entry.note),
+  ];
   const accessibilityNeeds = context.accessibility_notes ? [context.accessibility_notes] : [];
 
   return (
