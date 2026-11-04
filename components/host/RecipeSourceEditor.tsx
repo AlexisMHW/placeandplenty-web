@@ -235,6 +235,9 @@ export function RecipeSourceEditor({
                     {suggestion.ingredients.map((ingredient, index) => <li key={`${ingredient.name}:${index}`}>{ingredient.quantity ?? ""} {ingredient.unit ?? ""} {ingredient.name}</li>)}
                   </ul>
                   {suggestion.instructions && <p className="mt-3 font-body text-sm leading-relaxed text-forest/70">{suggestion.instructions}</p>}
+                  {dietaryNeeds.length > 0 && (
+                    <p role="note" className="mt-3 font-body text-sm text-forest/75">Before approving, check every ingredient against your guests’ allergies and dietary needs. AI suggestions are not verified allergen-safe.</p>
+                  )}
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" disabled={pending} onClick={() => run(() => approveSuggestedRecipeWeb(gatheringId, item.id, item.name, { ...suggestion, baseServings: targetServings }))} className="rounded-full bg-forest px-5 py-2.5 font-body text-sm font-semibold text-offwhite disabled:opacity-50">Approve & use it</button>
                     <button type="button" onClick={() => setSuggestion(null)} className="font-body text-sm text-forest/65">Try again</button>
