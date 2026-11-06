@@ -5,7 +5,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PRICING_TIERS } from "@/lib/pricing";
+import { PRICING_TIERS, MULTI_DAY_PRICING, MULTI_DAY_NOTE } from "@/lib/pricing";
 import { REFUND_POLICY } from "@/lib/refund-policy";
 import LegalPage, { LegalCallout } from "@/components/LegalPage";
 
@@ -21,7 +21,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Use"
-      lastUpdated="2 September 2026"
+      lastUpdated="5 November 2026"
       intro={
         <p>
           These terms cover the Place &amp; Plenty app and this website. They
@@ -110,6 +110,23 @@ export default function TermsPage() {
         These are real limits, and we state them plainly rather than implying
         there are none.
       </p>
+
+      <h3>Multi-Day Pass and upgrades</h3>
+      <p>{MULTI_DAY_NOTE}</p>
+      <LegalCallout heading="Multi-Day pricing">
+        <ul>
+          <li>Multi-Day Pass (2–4 days): {MULTI_DAY_PRICING.standard.priceLine}</li>
+          <li>Upgrade from Gathering Pass: {MULTI_DAY_PRICING.gathering_pass.priceLine}</li>
+          <li>Plus member Multi-Day rate: {MULTI_DAY_PRICING.plus.priceLine}</li>
+          <li>One-time extension (up to 7 days): {MULTI_DAY_PRICING.extension.priceLine}</li>
+        </ul>
+      </LegalCallout>
+      <p>Multi-Day access, upgrades and extensions apply to an eligible individual gathering and do not create an additional account-wide subscription.</p>
+      <h3>Finalizing a gathering consumes its token</h3>
+      <LegalCallout heading="Final purchases after wizard completion">
+        <p><strong>Once the gathering wizard is finalized and the applicable purchase token or premium gathering allowance is consumed, that entitlement is non-refundable and non-transferable.</strong> Canceling, postponing, deleting, archiving or changing the gathering does not restore the token. This is subject to applicable law, payment-platform rights and correction of verified billing or technical errors.</p>
+      </LegalCallout>
+      <p>A saved draft does not itself consume a token. Upgrading later does not automatically refund an already consumed pass, restore an allowance or reset the annual Plus limit. Any promotional credit or proration must be expressly offered at checkout.</p>
 
       <h3>One account, several ways to buy</h3>
       <p>
