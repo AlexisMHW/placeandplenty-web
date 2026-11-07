@@ -29,8 +29,8 @@
 // so a phone that ALREADY has the app does not deep-link into it and
 // swallow the download request.
 
-/** The live App Store listing. Null until it exists. */
-export const APP_STORE_URL: string | null = null;
+/** The live App Store listing. */
+export const APP_STORE_URL: string | null = "https://apps.apple.com/us/app/place-and-plenty/id6806853614";
 
 /** The live Google Play listing. Null until it exists. */
 export const PLAY_STORE_URL: string | null = "https://play.google.com/store/apps/details?id=com.placeandplenty.app";
