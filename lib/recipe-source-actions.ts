@@ -139,7 +139,7 @@ export async function suggestRecipeWeb(input: {
   }
   const dietaryNeeds = [
     gatheringResult.data.dietary_notes,
-    ...(restrictionsResult.data ?? []).flatMap((row) => [
+    ...(restrictionsResult.data ?? []).flatMap((row: { dietary_note: string | null; allergy_note: string | null }) => [
       row.dietary_note ? `Guest dietary requirement: ${row.dietary_note}` : null,
       row.allergy_note ? `Guest-reported allergy (verify ingredients and cross-contact): ${row.allergy_note}` : null,
     ]),
