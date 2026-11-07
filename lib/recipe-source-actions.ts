@@ -130,8 +130,27 @@ export async function suggestRecipeWeb(input: {
   accessibilityNeeds?: string[];
 }): Promise<{ ok: true; value: SuggestedRecipeDraft } | { ok: false; message: string }> {
   const supabase = createClient();
+  // Never trust dietary requirements supplied by the browser: they may be stale
+  // or intentionally omitted. Resolve the authoritative gathering notes here.
+  const [gatheringResult, restrictionsResult] = await Promise.all([
+    supabase.from("gatherings").select("dietary_notes, accessibility_notes").eq("id", input.gatheringId).single(),
+    supabase.rpc("gathering_menu_guest_restrictions", { p_gathering_id: input.gatheringId }),
+  ]);
+  if (gatheringResult.error || restrictionsResult.error || !gatheringResult.data) {
+    return { ok: false, message: "We couldn’t verify the gathering’s dietary requirements. Please try again." };
+  }
+  const dietaryNeeds = [
+    gatheringResult.data.dietary_notes,
+    ...(restrictionsResult.data ?? []).flatMap((row) => [
+      row.dietary_note ? `Guest dietary requirement: ${row.dietary_note}` : null,
+      row.allergy_note ? `Guest-reported allergy (verify ingredients and cross-contact): ${row.allergy_note}` : null,
+    ]),
+  ].filter((note): note is string => Boolean(note?.trim()));
+  const accessibilityNeeds = gatheringResult.data.accessibility_notes
+    ? [gatheringResult.data.accessibility_notes]
+    : [];
   const { data, error } = await supabase.functions.invoke("suggest-recipe", {
-    body: input,
+    body: { gatheringId: input.gatheringId, dishName: input.dishName, targetServings: input.targetServings, dietaryNeeds, accessibilityNeeds },
   });
   if (error || !data) {
     return { ok: false, message: "We couldn’t suggest a recipe right now. Try again in a moment." };
