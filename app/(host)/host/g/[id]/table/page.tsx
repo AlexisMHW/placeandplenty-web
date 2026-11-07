@@ -74,6 +74,16 @@ export default async function TablePage({
         />
       </div>
 
+      {sourceOptions.dietaryNeeds.length > 0 && (
+        <section className="mt-5 max-w-3xl rounded-card border border-sage/40 bg-cream px-5 py-4">
+          <p className="font-body text-sm font-bold text-forest">Check dietary menu coverage</p>
+          <ul className="mt-2 list-disc pl-5 font-body text-sm text-forest/80">
+            {sourceOptions.dietaryNeeds.map((note) => <li key={note}>{note}</li>)}
+          </ul>
+          <p className="mt-2 font-body text-xs text-forest/75">Confirm that each guest has an appropriate option. Place &amp; Plenty has not verified that the dishes on this menu meet these requirements.</p>
+        </section>
+      )}
+
       {sourceOptions.allergyNeeds.length > 0 && (
         <section role="alert" className="mt-5 max-w-3xl rounded-card border border-gold/50 bg-parchment px-5 py-4">
           <p className="font-body text-sm font-bold text-forest">Guest allergies need your review</p>
