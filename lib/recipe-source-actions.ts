@@ -126,8 +126,6 @@ export async function suggestRecipeWeb(input: {
   gatheringId: string;
   dishName: string;
   targetServings: number;
-  dietaryNeeds?: string[];
-  accessibilityNeeds?: string[];
 }): Promise<{ ok: true; value: SuggestedRecipeDraft } | { ok: false; message: string }> {
   const supabase = createClient();
   // Never trust dietary requirements supplied by the browser: they may be stale
