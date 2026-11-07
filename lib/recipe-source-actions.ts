@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase-server";
 import type { ActionResult } from "@/lib/host-actions";
 
@@ -153,7 +154,19 @@ export async function suggestRecipeWeb(input: {
   if (error || !data) {
     return { ok: false, message: "We couldn’t suggest a recipe right now. Try again in a moment." };
   }
-  return { ok: true, value: data as SuggestedRecipeDraft };
+  const parsed = z.object({
+    ingredients: z.array(z.object({
+      name: z.string().trim().min(1),
+      quantity: z.number().positive().optional(),
+      unit: z.string().optional(),
+    })).min(1),
+    instructions: z.string().optional(),
+    baseServings: z.number().positive().optional(),
+  }).safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, message: "The recipe suggestion was incomplete. Please try again." };
+  }
+  return { ok: true, value: parsed.data };
 }
 
 export async function approveSuggestedRecipeWeb(
