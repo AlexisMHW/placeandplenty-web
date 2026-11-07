@@ -53,7 +53,11 @@ export default async function TablePage({
     (value): value is string => Boolean(value?.trim())
   );
 
-  const dietaryNeeds = context.dietary_notes ? [context.dietary_notes] : [];
+  const dietaryNeeds = [
+    ...(context.dietary_notes ? [context.dietary_notes] : []),
+    ...sourceOptions.dietaryNeeds.map((note) => `Guest dietary requirement: ${note}`),
+    ...sourceOptions.allergyNeeds.map((note) => `Guest-reported allergy (requires host verification): ${note}`),
+  ];
   const accessibilityNeeds = context.accessibility_notes ? [context.accessibility_notes] : [];
 
   return (
@@ -69,6 +73,16 @@ export default async function TablePage({
           action={setCanonicalLeftoversWeb.bind(null, params.id)}
         />
       </div>
+
+      {sourceOptions.allergyNeeds.length > 0 && (
+        <section role="alert" className="mt-5 max-w-3xl rounded-card border border-gold/50 bg-parchment px-5 py-4">
+          <p className="font-body text-sm font-bold text-forest">Guest allergies need your review</p>
+          <ul className="mt-2 list-disc pl-5 font-body text-sm text-forest/80">
+            {sourceOptions.allergyNeeds.map((note) => <li key={note}>{note}</li>)}
+          </ul>
+          <p className="mt-2 font-body text-xs text-forest/75">Check every ingredient, label, substitution, and cross-contact risk with the guest. Suggested recipes are not verified allergen-safe.</p>
+        </section>
+      )}
 
       {planningNeeds.length > 0 && (
         <section className="mt-5 max-w-3xl rounded-card border border-sage/30 bg-cream px-5 py-4">
