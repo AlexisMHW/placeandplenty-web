@@ -33,10 +33,9 @@ export default function QrCode({
   qr.make();
 
   const count = qr.getModuleCount();
-  // One module of quiet zone on each side. The spec asks for four, but
-  // the card around this code already supplies generous padding in the
-  // same colour, so four more would only shrink the modules.
-  const quiet = 1;
+  // Keep the full quiet zone inside the SVG so scanning does not depend
+  // on the surrounding card's padding or background color.
+  const quiet = 4;
   const dim = count + quiet * 2;
 
   // One path for every dark module beats one <rect> each: a 29×29 code is

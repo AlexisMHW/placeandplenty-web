@@ -1,27 +1,13 @@
 import Image from "next/image";
-import QrCode from "@/components/QrCode";
+import PlatformQrCodes from "@/components/PlatformQrCodes";
 import {
   APP_STORE_URL,
   PLAY_STORE_URL,
-  APP_DOWNLOAD_URL,
   STORE_BADGES,
   hasAnyStoreLink,
 } from "@/lib/app-links";
 
-// The app-download area. Store buttons lead; the QR is secondary and sits
-// inside the same panel rather than in a block of its own.
-//
-// THE GATE IS THE POINT. Founder instruction: no placeholder or dead
-// store links. Until lib/app-links.ts holds real URLs this renders the
-// panel with its explanation and NO actions — the layout is real and
-// tested, the buttons simply are not there to be tapped. Nothing here
-// needs editing when the links land.
-//
-// The QR is hidden below `sm`, because a code shown on the phone you
-// would be scanning it with is useless — on that screen the store buttons
-// already do the job. It is not `hidden` in the accessibility sense
-// either way: QrCode is aria-hidden, and the same destination is always
-// reachable as a real link beneath it.
+// Store buttons and labeled platform codes share verified store destinations.
 
 function StoreButton({
   href,
@@ -41,7 +27,7 @@ function StoreButton({
       <a href={href} className="inline-block rounded-lg">
         {/* Official vendor artwork carries its own wordmark, so the alt
             text is the badge's own text and nothing is added around it. */}
-        <Image src={badge} alt={badgeAlt} width={168} height={50} />
+        <Image src={badge} alt={badgeAlt} width={120} height={40} className="h-12 w-auto" />
       </a>
     );
   }
@@ -106,27 +92,7 @@ export default function AppDownload() {
             )}
           </div>
 
-          {live && (
-            <div className="hidden flex-shrink-0 sm:block">
-              <div className="rounded-card border border-offwhite/20 bg-offwhite/5 p-5 text-center">
-                <div className="rounded-md bg-offwhite p-2.5">
-                  <QrCode value={APP_DOWNLOAD_URL} size={132} />
-                </div>
-                <p className="mt-3 max-w-[9.5rem] font-body text-xs leading-relaxed text-offwhite/75">
-                  Scan to download Place &amp; Plenty
-                </p>
-                {/* The QR is aria-hidden and useless to anyone who cannot
-                    point a camera at it, so its destination is also a
-                    plain link. */}
-                <a
-                  href={APP_DOWNLOAD_URL}
-                  className="mt-2 inline-block font-body text-xs underline decoration-gold underline-offset-4 text-offwhite/70 transition-colors duration-400 hover:text-offwhite"
-                >
-                  Or open the download page
-                </a>
-              </div>
-            </div>
-          )}
+          {live && <PlatformQrCodes className="w-full max-w-sm flex-shrink-0" />}
         </div>
       </div>
     </section>

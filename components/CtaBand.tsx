@@ -1,8 +1,8 @@
 import { Display } from "@/components/Display";
 import { BotanicalBough } from "@/components/Botanical";
 import ConversionPaths from "@/components/ConversionPaths";
-import QrCode from "@/components/QrCode";
-import { APP_DOWNLOAD_URL, hasAnyStoreLink } from "@/lib/app-links";
+import PlatformQrCodes from "@/components/PlatformQrCodes";
+import { hasAnyStoreLink } from "@/lib/app-links";
 import { RALLY } from "@/lib/brand";
 
 // THE CLOSING BAND. Every reference page ends with one and they are all
@@ -22,9 +22,7 @@ import { RALLY } from "@/lib/brand";
 // must not be the only conversion path: the site's most prominent
 // recurring CTA now offers the web first. See lib/conversion.ts.
 //
-// THE QR IS SECONDARY AND DESKTOP-ONLY. A code shown on the phone you
-// would scan it with is useless, and it is gated on a store listing
-// existing at all — §18 forbids dead download destinations.
+// Platform-specific codes remain secondary to the web and store links.
 
 export default function CtaBand({
   headline,
@@ -75,24 +73,7 @@ export default function CtaBand({
             <ConversionPaths tone="dark" className="mt-8" />
           </div>
 
-          {qr && (
-            <div className="hidden flex-shrink-0 lg:block">
-              <div className="rounded-2xl border border-offwhite/20 bg-offwhite/5 p-6 text-center">
-                <div className="rounded-lg bg-offwhite p-3">
-                  <QrCode value={APP_DOWNLOAD_URL} size={138} />
-                </div>
-                <p className="mt-3 max-w-[10rem] font-body text-xs leading-relaxed text-offwhite/80">
-                  Scan to download Place &amp; Plenty
-                </p>
-                <a
-                  href={APP_DOWNLOAD_URL}
-                  className="mt-2 inline-block font-body text-xs text-offwhite/65 underline decoration-gold underline-offset-4 transition-colors duration-400 hover:text-offwhite"
-                >
-                  Or open the download page
-                </a>
-              </div>
-            </div>
-          )}
+          {qr && <PlatformQrCodes className="w-full max-w-sm" />}
         </div>
       </div>
     </section>
