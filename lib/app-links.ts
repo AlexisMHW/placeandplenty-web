@@ -1,33 +1,5 @@
-// Store destinations for the app, and the one URL a QR code should ever
-// encode.
-//
-// NOTHING HERE MAY BE A PLACEHOLDER. Founder instruction, 28 Aug 2026:
-// no dead store links. A badge pointing at a listing that does not exist
-// is worse than no badge — it reads as a live product, and the person who
-// taps it lands on an App Store error.
-//
-// So both constants below are `null` until the real listings exist, and
-// every download surface asks `hasAnyStoreLink()` before rendering an
-// action. The layout is built and tested; only the links are withheld.
-//
-// TO GO LIVE: paste the two URLs in. That is the entire change — the
-// badges, the QR code and the /get route all switch on by themselves, and
-// the "not yet" copy disappears.
-//
-// WHY THE QR POINTS AT OUR OWN /get AND NOT AT A STORE.
-//
-// One QR cannot serve two stores, and a QR that resolves to whichever
-// store the founder happened to pick sends half the people who scan it to
-// the wrong place. /get reads the platform and forwards, so a single code
-// works on both — and because the destination is ours, the printed or
-// on-screen code never needs regenerating if a store URL changes.
-//
-// It is also deliberately NOT the homepage: someone scanning a code
-// labelled "scan to download" has asked for the app, not for marketing.
-//
-// /get is deliberately absent from the AASA (which claims only /invite/*),
-// so a phone that ALREADY has the app does not deep-link into it and
-// swallow the download request.
+// Verified public store destinations. Each platform QR encodes its store URL.
+// The /get route remains the platform-aware fallback for existing printed links.
 
 /** The live App Store listing. */
 export const APP_STORE_URL: string | null = "https://apps.apple.com/us/app/place-and-plenty/id6806853614";
@@ -64,6 +36,6 @@ export function hasAllStoreLinks(): boolean {
  * approximation of someone else's trademark.
  */
 export const STORE_BADGES = {
-  apple: null as string | null, // e.g. "/images/badge-app-store.svg"
+  apple: "/images/badge-app-store.svg" as string | null,
   google: null as string | null, // e.g. "/images/badge-google-play.png"
 };
