@@ -53,12 +53,6 @@ export default async function TablePage({
     (value): value is string => Boolean(value?.trim())
   );
 
-  const dietaryNeeds = [
-    ...(context.dietary_notes ? [context.dietary_notes] : []),
-    ...sourceOptions.dietaryNeeds.map((note) => `Guest dietary requirement: ${note}`),
-    ...sourceOptions.allergyNeeds.map((note) => `Guest-reported allergy (requires host verification): ${note}`),
-  ];
-  const accessibilityNeeds = context.accessibility_notes ? [context.accessibility_notes] : [];
 
   return (
     <div>
@@ -189,8 +183,6 @@ export default async function TablePage({
                       recipes={sourceOptions.recipes}
                       guests={sourceOptions.guests}
                       coHosts={sourceOptions.coHosts}
-                      dietaryNeeds={dietaryNeeds}
-                      accessibilityNeeds={accessibilityNeeds}
                     />
                   </li>
                 ))}
