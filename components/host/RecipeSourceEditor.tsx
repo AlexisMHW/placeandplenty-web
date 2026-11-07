@@ -29,8 +29,6 @@ export function RecipeSourceEditor({
   recipes,
   guests,
   coHosts,
-  dietaryNeeds,
-  accessibilityNeeds,
 }: {
   gatheringId: string;
   item: {
@@ -45,8 +43,6 @@ export function RecipeSourceEditor({
   recipes: SavedRecipeOption[];
   guests: Array<{ id: string; label: string }>;
   coHosts: Array<{ id: string; label: string }>;
-  dietaryNeeds: string[];
-  accessibilityNeeds: string[];
 }) {
   const [mode, setMode] = useState<Mode>("closed");
   const [pending, start] = useTransition();
@@ -219,7 +215,7 @@ export function RecipeSourceEditor({
                   onClick={() => {
                     setError(null);
                     start(async () => {
-                      const result = await suggestRecipeWeb({ gatheringId, dishName: item.name, targetServings, dietaryNeeds, accessibilityNeeds });
+                      const result = await suggestRecipeWeb({ gatheringId, dishName: item.name, targetServings });
                       if (result.ok) setSuggestion(result.value);
                       else setError(result.message);
                     });
