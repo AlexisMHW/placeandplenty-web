@@ -27,7 +27,7 @@ function StoreButton({
       <a href={href} className="inline-block rounded-lg">
         {/* Official vendor artwork carries its own wordmark, so the alt
             text is the badge's own text and nothing is added around it. */}
-        <Image src={badge} alt={badgeAlt} width={120} height={40} className="h-12 w-auto" />
+        <Image src={badge} alt={badgeAlt} width={120} height={40} unoptimized={badge.startsWith("https://")} className="h-12 w-auto" />
       </a>
     );
   }
