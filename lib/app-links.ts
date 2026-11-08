@@ -37,5 +37,5 @@ export function hasAllStoreLinks(): boolean {
  */
 export const STORE_BADGES = {
   apple: "/images/badge-app-store.svg" as string | null,
-  google: null as string | null, // e.g. "/images/badge-google-play.png"
+  google: "https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" as string | null,
 };
