@@ -73,7 +73,7 @@ export async function getGuestExperience(gatheringId: string): Promise<{
   for (const row of guestRows ?? []) {
     if (!row.invitation_party_id) continue;
     if (row.rsvp_status === "yes" || row.rsvp_status === "maybe") comingPartyIds.add(row.invitation_party_id);
-    if (row.rsvp_status === "no_response") awaitingPartyIds.add(row.invitation_party_id);
+    if (row.rsvp_status === "invited" || row.rsvp_status === "no_response") awaitingPartyIds.add(row.invitation_party_id);
   }
 
   const rows = (updateRows ?? []) as GuestUpdateRow[];
