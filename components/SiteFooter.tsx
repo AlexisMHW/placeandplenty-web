@@ -83,7 +83,7 @@ function StoreBadge({
   if (badge) {
     return (
       <a href={href} className="inline-block rounded-lg">
-        <Image src={badge} alt={alt} width={120} height={40} className="h-12 w-auto" />
+        <Image src={badge} alt={alt} width={120} height={40} unoptimized={badge.startsWith("https://")} className="h-12 w-auto" />
       </a>
     );
   }

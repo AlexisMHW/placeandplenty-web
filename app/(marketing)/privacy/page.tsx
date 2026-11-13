@@ -22,7 +22,8 @@
 // LAUNCH-BLOCKERS.md, which is the list to work from — not this comment.
 //
 // Counsel and the founder must still settle:
-//   * the registered entity name and postal address
+// Entity and postal contact verified against the public Google Play listing
+// on 13 November 2026. Remaining legal-review items are tracked below.
 //   * whether a US state-specific rights section (CA/CO/CT/VA) is needed
 //   * whether any EU/UK transfer language is needed for the launch market
 //   * the payment provider's own processor terms, once one is chosen
@@ -48,7 +49,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="27 August 2026"
+      lastUpdated="13 November 2026"
       intro={
         <p>
           Place &amp; Plenty helps you get ready for people coming over. To
@@ -82,15 +83,14 @@ export default function PrivacyPage() {
 
       <h2>Who we are</h2>
       <p>
-        Place &amp; Plenty (&ldquo;Place &amp; Plenty&rdquo;,
-        &ldquo;we&rdquo;, &ldquo;us&rdquo;) provides the Place &amp; Plenty
+        AR Squared Inc., operating as Place &amp; Plenty
+        (&ldquo;Place &amp; Plenty&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;), provides the Place &amp; Plenty
         mobile app and this website. You can reach us at{" "}
         <a href="mailto:support@placeandplenty.com">
           support@placeandplenty.com
         </a>
-        . Our registered entity name and postal address will be stated
-        here, and will be in place before Place &amp; Plenty is offered for
-        sale. Until then the address above reaches us and is answered.
+        . Our postal contact address is 4264 Brick Church Pike,
+        Whites Creek, TN 37189-9176, United States.
       </p>
 
       <h2>What we collect</h2>
@@ -331,10 +331,9 @@ export default function PrivacyPage() {
           support@placeandplenty.com
         </a>{" "}
         and we will help. We will not treat you differently for exercising a
-        right. Where the law where you live requires additional
-        disclosures, they will be set out here; in the meantime, write to
-        us and we will honour the underlying right whether or not it is
-        listed above.
+        right. These choices do not limit any privacy rights you have under
+        applicable law. Contact us to exercise those rights or ask about the
+        personal information we hold about you.
       </p>
 
       <h2>Security</h2>
