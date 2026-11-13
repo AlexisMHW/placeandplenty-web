@@ -1,6 +1,6 @@
 // TERMS OF USE — pricing, entitlement and refund language must stay aligned
 // with lib/pricing.ts, lib/entitlements.ts and lib/refund-policy.ts.
-// STATUS: PENDING LEGAL REVIEW for entity/address, governing law/venue,
+// STATUS: PENDING LEGAL REVIEW for governing law/venue,
 // arbitration/class-waiver choice and limitation-of-liability enforceability.
 
 import type { Metadata } from "next";
@@ -21,10 +21,11 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Use"
-      lastUpdated="5 November 2026"
+      lastUpdated="13 November 2026"
       intro={
         <p>
-          These terms cover the Place &amp; Plenty app and this website. They
+          These terms cover the Place &amp; Plenty app and this website,
+          provided by AR Squared Inc., operating as Place &amp; Plenty. They
           are written to be read. By creating an account or using Place &amp;
           Plenty, you agree to them.
         </p>
@@ -255,14 +256,18 @@ export default function TermsPage() {
         Place &amp; Plenty after a change means you accept it.
       </p>
 
-      <h2>Governing law</h2>
+      <h2>Your legal rights</h2>
       <p>
-        The governing law and venue for disputes will be stated here before
-        Place &amp; Plenty is offered for sale. Nothing in these terms waives
-        any right you have under the law that applies where you live.
+        Nothing in these terms waives any right you have under the law
+        that applies where you live.
       </p>
 
       <h2>Contact</h2>
+      <p>
+        AR Squared Inc., operating as Place &amp; Plenty<br />
+        4264 Brick Church Pike<br />
+        Whites Creek, TN 37189-9176, United States
+      </p>
       <p>
         <a href="mailto:support@placeandplenty.com">support@placeandplenty.com</a>
       </p>

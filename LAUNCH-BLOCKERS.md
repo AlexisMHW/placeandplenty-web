@@ -1,7 +1,7 @@
 # LAUNCH BLOCKERS — the open items, and who can close each one
 
 **For:** Alexis
-**Date:** 28 August 2026
+**Date:** 28 August 2026 · legal-copy update 13 November 2026
 **Why this exists:** the words "under review" were removed from the
 visible legal copy on 28 Aug 2026. They read to a customer as an
 unfinished website rather than as the disclosure they are. **The
@@ -13,24 +13,25 @@ decision, or a person I am not.
 
 ---
 
-## A. LEGAL — must be closed before Place & Plenty is offered for sale
+## A. LEGAL — outstanding review items
 
-The public copy now commits to each of these being in place *before
-anything is sold*. That is a promise with a deadline attached, so these
-are genuinely blocking.
+The public legal pages now identify AR Squared Inc. and the postal contact
+address published in the Google Play listing. The pre-launch placeholder
+promises have been removed. This copy cleanup does not resolve the remaining
+legal-review decisions below or certify the policies against current app behavior.
 
 | # | Item | Where it appears | Who closes it |
 |---|---|---|---|
-| A1 | **Registered entity name and postal address** | `/privacy` §Who we are · `/terms` | You — it is a fact, not a decision |
-| A2 | **Governing law and venue** | `/terms` §Governing law | You + counsel — normally where the entity is registered |
+| A1 | **Company identity and postal contact — completed 13 November 2026** | `/privacy` §Who we are · `/terms` intro/contact | AR Squared Inc.; 4264 Brick Church Pike, Whites Creek, TN 37189-9176, United States; verified against public Google Play listing |
+| A2 | **Governing law and venue — still undecided** | No jurisdiction or exclusive venue is designated in the public Terms; existing non-waivable rights language is retained | You + counsel |
 | A3 | **Arbitration / class-action waiver — yes or no** | `/terms` — currently absent entirely | Counsel. Absent is a valid answer; it just has to be a decided one |
 | A4 | **Is the liability cap enforceable as drafted?** | `/terms` §What we do not promise | Counsel |
 | A5 | **US state-specific rights (CA/CO/CT/VA)** | `/privacy` §Your choices and rights | Counsel, once the launch market is fixed |
 | A6 | **EU/UK transfer language** | `/privacy` | Counsel — only if you launch there at V1 |
 | A7 | **Payment provider's processor terms** | `/privacy` §Third parties | Follows from the Stripe decision (§B) |
 
-**A1 is the one to do first** and you can do it today without anyone
-else. It appears in two places and both read from plain copy.
+**A1 is complete.** Counsel review remains open for A2–A7; do not infer it
+from the absence of placeholder wording on the public pages.
 
 > **Note on A3.** The Terms currently contain no arbitration clause. That
 > is a real choice with real consequences and it should be made
