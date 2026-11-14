@@ -1,0 +1,155 @@
+PASS apply 215003
+PASS re-run 215003
+PASS re-run leaves catalog unchanged
+PASS A public.hc_admin_list_tiers allowed owner
+PASS A public.hc_admin_list_tiers allowed business_admin
+PASS A public.hc_admin_list_tiers allowed creator_program_manager
+PASS A public.hc_admin_list_tiers denied support
+PASS A public.hc_admin_list_tiers denied non-staff
+PASS A public.hc_admin_list_tiers denied revoked owner
+PASS A public.hc_admin_list_tiers anon blocked
+PASS A public.hc_admin_tier_audit allowed owner
+PASS A public.hc_admin_tier_audit allowed business_admin
+PASS A public.hc_admin_tier_audit allowed creator_program_manager
+PASS A public.hc_admin_tier_audit denied support
+PASS A public.hc_admin_tier_audit denied non-staff
+PASS A public.hc_admin_tier_audit denied revoked owner
+PASS A public.hc_admin_tier_audit anon blocked
+PASS A public.hc_admin_list_events allowed owner
+PASS A public.hc_admin_list_events allowed business_admin
+PASS A public.hc_admin_list_events allowed creator_program_manager
+PASS A public.hc_admin_list_events denied support
+PASS A public.hc_admin_list_events denied non-staff
+PASS A public.hc_admin_list_events denied revoked owner
+PASS A public.hc_admin_list_events anon blocked
+PASS A public.hc_admin_delivery_health allowed owner
+PASS A public.hc_admin_delivery_health allowed business_admin
+PASS A public.hc_admin_delivery_health allowed creator_program_manager
+PASS A public.hc_admin_delivery_health denied support
+PASS A public.hc_admin_delivery_health denied non-staff
+PASS A public.hc_admin_delivery_health denied revoked owner
+PASS A public.hc_admin_delivery_health anon blocked
+PASS A public.hc_admin_list_destinations allowed owner
+PASS A public.hc_admin_list_destinations allowed business_admin
+PASS A public.hc_admin_list_destinations allowed creator_program_manager
+PASS A public.hc_admin_list_destinations denied support
+PASS A public.hc_admin_list_destinations denied non-staff
+PASS A public.hc_admin_list_destinations denied revoked owner
+PASS A public.hc_admin_list_destinations anon blocked
+PASS A service-only public.hc_claim_deliveries blocked for owner(authenticated)
+PASS A service-only public.hc_claim_deliveries blocked for anon
+PASS A service-only public.hc_delivery_recipient blocked for owner(authenticated)
+PASS A service-only public.hc_delivery_recipient blocked for anon
+PASS A service-only public.hc_record_delivery_result blocked for owner(authenticated)
+PASS A service-only public.hc_record_delivery_result blocked for anon
+PASS A service-only public.hc_emit_awaiting_review blocked for owner(authenticated)
+PASS A service-only public.hc_emit_awaiting_review blocked for anon
+PASS A service-only public.hc_mark_destination_verified blocked for owner(authenticated)
+PASS A service-only public.hc_mark_destination_verified blocked for anon
+PASS A service-only public.hc_emit_event blocked for owner(authenticated)
+PASS A service-only public.hc_emit_event blocked for anon
+PASS A service-only public.hc_my_application_id blocked for owner(authenticated)
+PASS A service-only public.hc_my_application_id blocked for anon
+PASS A table hc_events not readable by authenticated
+PASS A table hc_event_deliveries not readable by authenticated
+PASS A table hc_notification_destinations not readable by authenticated
+PASS A table hc_tier_audit not readable by authenticated
+PASS B0 no tiers shipped by this migration
+PASS B1 manager (hc.manage) can create tier with referral OFF
+PASS B2 manager cannot enable referral eligibility
+PASS B3 owner can enable referral eligibility
+PASS B4 support cannot upsert
+PASS B5 bad slug rejected
+PASS B6 benefits must be array of short strings
+PASS B7 benefits max 12
+PASS B8 audit has created + updated rows
+PASS B9 audit is append-only (update blocked)
+PASS B10 audit is append-only (delete blocked)
+PASS B11 tier writes logged in admin_audit_log
+PASS B12 tier list includes member counts
+PASS C1 applicant sees own status
+PASS C2 applicant response has no review note or email
+PASS C3 applicant sees no member yet
+PASS C4 other applicant sees only their own
+PASS C5 non-applicant sees nothing
+PASS C6 anon blocked
+PASS C7 withdraw by applicant A
+PASS C8 withdrawn state visible
+PASS C9 second withdraw rejected
+PASS C10 non-applicant cannot withdraw
+PASS C11 reviewer cannot approve a withdrawn application
+PASS C12 withdrawal emitted exactly one event
+PASS C13 approve without tier works (basic member)
+PASS C14 basic member has NULL tier
+PASS C15 approved event emitted once
+PASS C16 approved event queues one applicant_email delivery
+PASS C17 applicant resolver returns display name, service-only
+PASS C18 member sees approved status
+PASS C19 basic member referral NOT eligible, reason
+PASS C20 decline works
+PASS C21 declined event emitted once
+PASS C22 declined state visible, internal note NOT visible
+PASS C23 withdraw after decision rejected
+PASS C24 recipient resolver returns email for consenting applicant (service)
+PASS D1 assign tier (manager)
+PASS D2 unknown tier rejected
+PASS D3 member tier change audited
+PASS D4 referral not eligible while program disabled
+PASS D5 eligible only when program on + approved + tier referral-eligible
+PASS D6 basic member (tier null) never eligible
+PASS D7 tier set back
+PASS D8 suspend via existing RPC
+PASS D9 suspended member not eligible
+PASS D10 suspension audited + event
+PASS D11 cannot set tier while suspended
+PASS D12 suspended member status visible to member
+PASS D13 deactivate tier then reinstate
+PASS D14 reinstate
+PASS D15 reinstated event emitted
+PASS D16 inactive tier => not eligible
+PASS E1 assign to approved member in open campaign
+PASS E2 tier with assignments disabled blocks
+PASS E3 closed campaign blocks
+PASS E4 suspended member blocks
+PASS F1 event rows carry no email/name
+PASS F2 duplicate emission is a no-op
+PASS F3 events are append-only (delete blocked)
+PASS F4 events: only ack columns mutable
+PASS F5 ack by manager
+PASS F6 ack by support denied
+PASS F7 payout draft emits needs-approval event (action severity)
+PASS F8 bridge maps member_claimed->member_onboarded, content_submitted kept
+PASS F9 sweep emits for stale received applications
+PASS F10 sweep is idempotent same day
+PASS G1 manager cannot add destination (owner only)
+PASS G2 bad address rejected
+PASS G3 added unverified
+PASS G4 cannot activate unverified
+PASS G5 check constraint forbids active+unverified
+PASS G6 destination list masks address
+PASS G7 audit log does not contain the address
+PASS G8 no staff_email deliveries queued while destination unverified
+PASS G9 verify (service)
+PASS G10 activate verified
+PASS G11 new event queues one staff_email delivery for the active destination
+PASS G12 staff recipient resolves to address (service only)
+PASS G13 claim returns the queued delivery with kind and refs only
+PASS G14 claim result carries no address
+PASS G15 claimed again immediately => nothing (lease)
+PASS G16 record sent
+PASS G17 sent is NOT delivered
+PASS G18 record delivered
+PASS G19 delivered is final (failed after delivered ignored)
+PASS G20 failure requeues with backoff
+PASS G21 provider text sanitised to a code
+PASS G22 exhausted attempts => failed
+PASS G23 health reports a failed delivery
+PASS G24 invalid outcome rejected
+PASS G25 deactivate destination stops new queueing
+PASS G26 no staff delivery after deactivation
+PASS G27 inbox delivery row exists for every event
+PASS G28 events list shows delivery summary
+TOTAL pass=148 fail=0
+PASS rollback 215003 runs
+PASS after rollback catalog equals pre-215003
+TOTAL pass=153 fail=0

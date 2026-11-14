@@ -172,7 +172,7 @@ test("customer lookup never puts the query in a URL: no searchParams.q anywhere,
 });
 
 test("no Command Center file calls a write RPC outside the reviewed list, and money-moving verbs appear nowhere", () => {
-  const WRITE_RPCS = new Set(["hc_review_application", "hc_admin_review_submission", "hc_admin_ack_notification", "hc_create_payout_draft", "hc_approve_payout", "hc_mark_payout_paid", "hc_void_payout", "hc_add_terms_version", "hc_admin_create_campaign", "hc_admin_assign_campaign", "hc_admin_close_campaign", "admin_grant_staff_role", "admin_revoke_staff_role"]);
+  const WRITE_RPCS = new Set(["hc_review_application", "hc_admin_review_submission", "hc_admin_ack_notification", "hc_create_payout_draft", "hc_approve_payout", "hc_mark_payout_paid", "hc_void_payout", "hc_add_terms_version", "hc_admin_create_campaign", "hc_admin_assign_campaign", "hc_admin_close_campaign", "hc_set_partner_status", "hc_admin_upsert_tier", "hc_admin_set_member_tier", "hc_admin_ack_event", "hc_admin_add_destination", "hc_admin_set_destination_active", "admin_grant_staff_role", "admin_revoke_staff_role"]);
   const READ_ONLY_OK = /^(get_my_staff_context|admin_[a-z_]+|hc_admin_[a-z_]+|growth_funnel_summary|creator_portal_summary|claim_my_membership)$/;
   for (const f of cc) {
     const src = readFileSync(f, "utf8");

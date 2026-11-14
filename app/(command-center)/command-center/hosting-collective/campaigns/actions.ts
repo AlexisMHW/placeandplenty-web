@@ -6,7 +6,7 @@ import { parseAssignForm, parseCampaignForm } from "@/lib/admin/campaigns";
 // CAMPAIGN / CHALLENGE ACTIONS. hc.manage re-checked here and inside each database function (which also writes the audit row).
 // Compensation wording is whatever staff type; nothing is prefilled. Database error text is never forwarded.
 const PATH = "/command-center/hosting-collective/campaigns";
-const KNOWN = /not_authorized|partner_not_approved|campaign_not_found/;
+const KNOWN = /not_authorized|partner_not_approved|campaign_not_found|tier_assignments_disabled|campaign_closed/;
 
 export async function createCampaign(formData: FormData): Promise<{ ok: boolean; code: string }> {
   const { supabase } = await requireStaff("hc.manage", PATH);

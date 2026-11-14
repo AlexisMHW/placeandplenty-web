@@ -1,6 +1,7 @@
 import { requireStaff } from "@/lib/admin/server";
 import { hcCapabilities, parseApplications } from "@/lib/admin/hc";
-import { reviewApplication } from "../actions";
+import { ActionForm } from "@/components/hc/ActionForm";
+import { reviewApplicationForm } from "../form-actions";
 
 // APPLICATIONS QUEUE. hc.read to see (emails are masked by the database unless the caller has hc.manage);
 // approve/decline controls render only for hc.applications.review, and the database enforces it again.
@@ -31,20 +32,18 @@ export default async function ApplicationsPage() {
               <p className="mt-1 text-charcoal/70">Niches: {a.niches.join(", ").replace(/_/g, " ") || "none"}</p>
               <p className="text-charcoal/70">Platforms: {a.platforms.map((p) => `${p.platform} ${p.handle ?? p.url ?? ""}`).join("; ") || "none"}</p>
               {caps.canReviewApplications && (a.status === "received" || a.status === "in_review") ? (
-                <form action={async (fd) => { "use server"; await reviewApplication(fd); }} className="mt-3 flex flex-wrap items-end gap-2">
+                <ActionForm action={reviewApplicationForm} buttons={[{ label: "Approve", name: "decision", value: "approved" }, { label: "Decline", name: "decision", value: "declined", secondary: true }]} className="mt-3 flex flex-wrap items-end gap-2">
                   <input type="hidden" name="id" value={a.id} />
                   <label className="text-xs">Tier (optional; blank = basic member)<input name="tier" maxLength={32} className="ml-1 rounded border border-forest/30 px-2 py-1" /></label>
                   <label className="text-xs">Referral code (optional)<input name="code" maxLength={32} className="ml-1 rounded border border-forest/30 px-2 py-1" /></label>
                   <label className="text-xs">Note<input name="note" maxLength={1000} className="ml-1 rounded border border-forest/30 px-2 py-1" /></label>
-                  <button name="decision" value="approved" className="rounded bg-forest px-3 py-1 text-parchment">Approve</button>
-                  <button name="decision" value="declined" className="rounded border border-forest/30 px-3 py-1 text-forest">Decline</button>
-                </form>
+                </ActionForm>
               ) : null}
             </li>
           ))}
         </ul>
       )}
-      <p className="text-xs text-charcoal/70">Approving with no tier makes a basic member: creator portal and referral link only, no paid terms, and any commission is held until you decide. A tier you type must already be defined. Approval sends no email.</p>
+      <p className="text-xs text-charcoal/70">Approving with no tier makes a basic member: creator portal and referral link only, no paid terms, and any commission is held until you decide. A tier you type must already be defined. Approving or declining queues the applicant message and a Command Center inbox entry; nothing is emailed unless message delivery has been switched on and verified.</p>
     </div>
   );
 }

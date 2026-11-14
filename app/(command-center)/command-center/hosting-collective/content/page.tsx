@@ -1,6 +1,7 @@
 import { requireStaff } from "@/lib/admin/server";
 import { hcCapabilities, parseSubmissions } from "@/lib/admin/hc";
-import { reviewSubmission } from "../actions";
+import { ActionForm } from "@/components/hc/ActionForm";
+import { reviewSubmissionForm } from "../form-actions";
 
 // CONTENT SUBMISSIONS. "Usage permissions" shows only rights the creator has actively granted for that piece. No row = no rights.
 export default async function ContentPage() {
@@ -21,13 +22,10 @@ export default async function ContentPage() {
             <p><span className="font-medium">{s.displayName}</span> on {s.platform}: <a href={s.url} rel="noopener noreferrer nofollow" target="_blank" className="underline">{s.url}</a></p>
             <p className="text-charcoal/70">Status: {s.status.replace("_", " ")}. Usage permissions granted: {s.activePermissions.length ? s.activePermissions.join(", ").replace(/_/g, " ") : "none (no rights to reuse this piece)"}.</p>
             {caps.canReviewContent ? (
-              <form action={async (fd) => { "use server"; await reviewSubmission(fd); }} className="mt-2 flex flex-wrap items-end gap-2">
+              <ActionForm action={reviewSubmissionForm} buttons={[{ label: "Approve", name: "decision", value: "approved" }, { label: "Request changes", name: "decision", value: "changes_requested", secondary: true }, { label: "Reject", name: "decision", value: "rejected", secondary: true }]} className="mt-2 flex flex-wrap items-end gap-2">
                 <input type="hidden" name="id" value={s.id} />
                 <label className="text-xs">Note<input name="note" maxLength={1000} className="ml-1 rounded border border-forest/30 px-2 py-1" /></label>
-                <button name="decision" value="approved" className="rounded bg-forest px-3 py-1 text-parchment">Approve</button>
-                <button name="decision" value="changes_requested" className="rounded border border-forest/30 px-3 py-1 text-forest">Request changes</button>
-                <button name="decision" value="rejected" className="rounded border border-forest/30 px-3 py-1 text-forest">Reject</button>
-              </form>
+              </ActionForm>
             ) : null}
           </li>))}
         </ul>

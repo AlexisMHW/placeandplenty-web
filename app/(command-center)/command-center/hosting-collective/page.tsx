@@ -17,7 +17,7 @@ export default async function HostingCollectiveHome() {
         <p className="text-sm text-charcoal/70">Creator applications, members, content and referral results. No payouts are made from this screen.</p>
       </div>
       <nav aria-label="Hosting Collective sections" className="flex flex-wrap gap-2 text-sm">
-        {[["applications", "Applications"], ["members", "Members"], ["content", "Content"], ["payouts", "Referrals and payout eligibility"]].map(([slug, label]) => (
+        {[["applications", "Applications"], ["members", "Members"], ["content", "Content"], ["tiers", "Tiers"], ["campaigns", "Campaigns"], ["inbox", "Inbox and delivery"], ["payouts", "Referrals and payout eligibility"]].map(([slug, label]) => (
           <Link key={slug} href={`/command-center/hosting-collective/${slug}`} className="rounded-full border border-forest/30 px-3 py-1 text-forest">{label}</Link>
         ))}
       </nav>
