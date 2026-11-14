@@ -1,3 +1,4 @@
+import { requiresAccount } from "@/lib/collective-access";
 import { safeNext } from "@/lib/auth-redirects";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
@@ -18,7 +19,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // optimisation, so this runs on documents rather than on every .png.
 // Public marketing routes still pass through — they need the session
 // refresh so the header can show "My Gatherings" instead of "Log in" —
-// but only /host is redirected.
+// but only host account and private Collective hub routes are redirected.
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -50,7 +51,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/host") && !user) {
+  if (requiresAccount(pathname) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     // Come back to where they were trying to go. Only a path is carried,
