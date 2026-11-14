@@ -24,6 +24,7 @@ export interface PeopleWorkspaceRow {
     party_name: string | null;
     contact_email: string | null;
     first_share_initiated_at: string | null;
+    public_token?: string | null;
   } | null;
   latest_invitation_delivery_status: string | null;
   /** Server delivery label from get_invitation_delivery_summary (queued/accepted/delivered/delayed/undeliverable/failed), or null when the RPC is absent or not permitted. */
@@ -44,7 +45,7 @@ export async function getPeopleWorkspace(gatheringId: string): Promise<PeopleWor
   const { data, error } = await supabase
     .from("gathering_guests")
     .select(
-      "id, rsvp_status, plus_one_count, notes, guest_dietary_notes, guest_allergy_notes, invitation_party_id, guest:guests(id, first_name, last_name, household_name, email, phone, dietary_notes, allergy_notes, accessibility_notes), party:invitation_parties(id, party_name, contact_email, first_share_initiated_at)"
+      "id, rsvp_status, plus_one_count, notes, guest_dietary_notes, guest_allergy_notes, invitation_party_id, guest:guests(id, first_name, last_name, household_name, email, phone, dietary_notes, allergy_notes, accessibility_notes), party:invitation_parties(id, party_name, contact_email, first_share_initiated_at, public_token)"
     )
     .eq("gathering_id", gatheringId);
   if (error) throw error;

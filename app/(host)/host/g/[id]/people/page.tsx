@@ -18,6 +18,9 @@ import {
 } from "@/lib/people-actions";
 import { rsvpLabel } from "@/lib/host-format";
 import { deliveryCopy, resolveDeliveryLabel } from "@/lib/invitation-delivery";
+import ShareByTextButton from "@/components/host/ShareByTextButton";
+import ShareStepThrough from "@/components/host/ShareStepThrough";
+import { DEFAULT_GUEST_INVITE_BASE_URL } from "@/lib/share-by-text";
 
 const RSVP_OPTIONS = ["yes", "maybe", "no", "invited", "no_response"].map(
   (value) => ({ value, label: rsvpLabel(value) })
@@ -66,6 +69,27 @@ export default async function PeoplePage({ params }: { params: { id: string } })
       });
     }
   }
+
+  // Share by text: every phone in a household, read from existing guests.phone.
+  // Co-hosts may not be able to read the owner's guest rows; they get an empty
+  // composer and choose the contact themselves.
+  const phonesByParty = new Map<string, string[]>();
+  for (const row of guests) {
+    if (!row.invitation_party_id || !row.guest?.phone) continue;
+    phonesByParty.set(row.invitation_party_id, [...(phonesByParty.get(row.invitation_party_id) ?? []), row.guest.phone]);
+  }
+  const hostName = String((user?.user_metadata as { full_name?: string } | undefined)?.full_name ?? "").trim() || null;
+  const inviteBaseUrl = process.env.GUEST_PAGE_BASE_URL || DEFAULT_GUEST_INVITE_BASE_URL;
+  // Bulk share by text: one entry per household (the party lead), never per person.
+  const stepHouseholds = guests
+    .filter((row) => !!row.invitation_party_id && leadByParty.get(row.invitation_party_id as string) === row.id && !!row.party)
+    .map((row) => ({
+      partyId: row.party!.id,
+      token: row.party!.public_token,
+      phones: phonesByParty.get(row.party!.id) ?? [],
+      leadFirstName: row.guest?.first_name,
+      displayName: row.party!.party_name || [row.guest?.first_name, row.guest?.last_name].filter(Boolean).join(" ") || "Household",
+    }));
 
   return (
     <div>
@@ -218,6 +242,18 @@ export default async function PeoplePage({ params }: { params: { id: string } })
             {" "}· {guests.length} invited
           </p>
 
+          {!isArchived && (
+            <ShareStepThrough
+              gatheringId={params.id}
+              gatheringName={gathering.name}
+              gatheringDate={gathering.gathering_date}
+              arrivalTime={gathering.arrival_time}
+              hostName={hostName}
+              baseUrl={inviteBaseUrl}
+              households={stepHouseholds}
+            />
+          )}
+
           <div className="mt-8 space-y-10">
             {groups.map((group) => (
               <section key={group.status}>
@@ -328,6 +364,21 @@ export default async function PeoplePage({ params }: { params: { id: string } })
                               </ActionButton>
                             )}
                           </div>
+                        )}
+
+                        {isPartyLead && g.party && !isArchived && (
+                          <ShareByTextButton
+                            gatheringId={params.id}
+                            partyId={g.party.id}
+                            token={g.party.public_token}
+                            phones={phonesByParty.get(g.party.id) ?? []}
+                            guestFirstName={g.guest?.first_name}
+                            hostName={hostName}
+                            gatheringName={gathering.name}
+                            gatheringDate={gathering.gathering_date}
+                            arrivalTime={gathering.arrival_time}
+                            baseUrl={inviteBaseUrl}
+                          />
                         )}
 
                         {!isArchived && g.guest && isOwner && (
