@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import type { ActionResult } from "@/lib/host-actions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 function failure(error: unknown): ActionResult {
   const message = String((error as { message?: string } | null)?.message ?? "");
@@ -40,6 +41,8 @@ export async function setContributionAssignmentWeb(
   }
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("set_contribution_assignment", {
     p_gathering_id: gatheringId,
     p_contribution_id: contributionId,

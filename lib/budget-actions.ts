@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase-server";
 import type { ActionResult } from "@/lib/host-actions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 function refresh(gatheringId: string) {
   revalidatePath(`/host/g/${gatheringId}/shopping`);
@@ -19,6 +20,8 @@ function fail(error: { message?: string; code?: string } | null): ActionResult {
 
 export async function updateBudgetTargetWeb(gatheringId: string, value: number | null): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("gatherings")
     .update({ budget_target: value })
@@ -32,6 +35,8 @@ export async function updateBudgetTargetWeb(gatheringId: string, value: number |
 
 export async function updateSpentOverrideWeb(gatheringId: string, value: number | null): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("gatherings")
     .update({ spent_override: value })
@@ -51,6 +56,8 @@ export async function createExpenseWeb(gatheringId: string, formData: FormData):
   if (!user) return { ok: false, message: "Sign in again to save this expense." };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.from("gathering_expenses").insert({
     gathering_id: gatheringId,
     amount,
@@ -67,6 +74,8 @@ export async function createExpenseWeb(gatheringId: string, formData: FormData):
 
 export async function deleteExpenseWeb(gatheringId: string, expenseId: string): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("gathering_expenses")
     .delete()
@@ -91,6 +100,8 @@ export async function attachReceiptWeb(gatheringId: string, expenseId: string, f
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const path = `${gatheringId}/${randomUUID()}.${extension}`;
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   const { error: uploadError } = await supabase.storage

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import type { ActionResult } from "@/lib/host-actions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 function refresh(gatheringId: string) {
   revalidatePath(`/host/g/${gatheringId}/people`);
@@ -29,6 +30,8 @@ export async function addSavedPersonToGatheringWeb(
   guestId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("people_add_existing_to_gathering", {
     p_gathering_id: gatheringId,
     p_guest_id: guestId,
@@ -46,6 +49,8 @@ export async function addNewPersonToGatheringWeb(
   if (!firstName) return { ok: false, message: "A first name is enough to start." };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("people_create_and_add_to_gathering", {
     p_gathering_id: gatheringId,
     p_first_name: firstName,
@@ -101,6 +106,8 @@ export async function updateGatheringPersonWeb(
   const plusOne = Math.max(0, Number.parseInt(String(formData.get("plus_one_count") ?? "0"), 10) || 0);
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("people_update_gathering_person", {
     p_gathering_id: gatheringId,
     p_gathering_guest_id: gatheringGuestId,
@@ -130,6 +137,8 @@ export async function updateGatheringPersonDetailsWeb(
 ): Promise<ActionResult> {
   const plusOne = Math.max(0, Number.parseInt(String(formData.get("plus_one_count") ?? "0"), 10) || 0);
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("people_update_gathering_details", {
     p_gathering_id: gatheringId,
     p_gathering_guest_id: gatheringGuestId,
@@ -148,6 +157,8 @@ export async function saveGatheringPersonToGuestBookWeb(
   guestId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("people_set_guest_saved", {
     p_guest_id: guestId,
     p_saved: true,
@@ -162,6 +173,8 @@ export async function removePersonFromGatheringWeb(
   gatheringGuestId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("people_remove_from_gathering", {
     p_gathering_id: gatheringId,
     p_gathering_guest_id: gatheringGuestId,
@@ -177,6 +190,8 @@ export async function sendInvitationToPartyWeb(
   invitationPartyId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("send_gathering_invitation", {
     p_gathering_id: gatheringId,
     p_invitation_party_id: invitationPartyId,
@@ -212,6 +227,8 @@ export async function sendGuestMessageWeb(
   }
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("send_guest_message", {
     p_gathering_id: gatheringId,
     p_subject: subject.slice(0, 200),

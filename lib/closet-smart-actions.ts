@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import type { ActionResult } from "@/lib/host-actions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 export interface SmartClosetMatch {
   entitled: boolean;
@@ -82,6 +83,8 @@ export async function resolveSmartClosetWeb(input: {
   provider?: string | null;
 }): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, input.gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("resolve_need_from_closet", {
     p_gathering_id: input.gatheringId,
     p_need_name: input.needName,

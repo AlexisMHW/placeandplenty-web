@@ -37,10 +37,28 @@ const EXCLUDED_PREFIXES = [
   "/creator",
 ];
 
+// Normalise before matching so an encoded ("/%63ommand-center"), double-slashed ("//command-center") or
+// differently-cased request can never slip past the exclusion that protects bearer-token and private areas.
+function normalizeForExclusion(pathname: string): string {
+  let p = String(pathname ?? "").split(/[?#]/)[0];
+  for (let i = 0; i < 3; i++) {
+    let decoded = p;
+    try { decoded = decodeURIComponent(p); } catch { /* keep as-is; malformed escapes are still matched below */ }
+    if (decoded === p) break;
+    p = decoded;
+  }
+  p = p.replace(/\\/g, "/").replace(/\/{2,}/g, "/").toLowerCase();
+  return p.startsWith("/") ? p : `/${p}`;
+}
+
 export function isAnalyticsExcludedPath(pathname: string): boolean {
-  const p = pathname.toLowerCase();
+  const p = normalizeForExclusion(pathname);
   return EXCLUDED_PREFIXES.some((prefix) => p === prefix || p.startsWith(`${prefix}/`));
 }
+
+// Private administrative / creator / bearer areas: even if a path ever reached a sanitiser, its segments
+// (ids, applicant names, tokens) are never reported.
+const PRIVATE_AREA_ROOTS = new Set(["command-center", "creator", "admin", "invite", "gallery"]);
 
 // ---------------------------------------------------------------------------
 // Business events. This list is the ONLY set of custom events that may leave the
@@ -97,6 +115,8 @@ function safeDecode(seg: string): string {
 // gathering id, name or slug can appear in a page address; other paths only lose id-like segments.
 export function sanitizePathForAnalytics(pathname: string): string {
   const segs = pathname.split("/").filter(Boolean);
+  const norm = normalizeForExclusion(pathname).split("/").filter(Boolean);
+  if (norm.length && PRIVATE_AREA_ROOTS.has(norm[0])) return norm.length === 1 ? `/${norm[0]}` : `/${norm[0]}/[private]`;
   if (segs[0]?.toLowerCase() === "host") {
     if (segs.length === 1) return "/host";
     const second = segs[1].toLowerCase();

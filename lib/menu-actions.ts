@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import type { ActionResult } from "@/lib/host-actions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 function message(error: { message?: string } | null): string {
   const raw = error?.message ?? "";
@@ -25,6 +26,8 @@ export async function addCanonicalMenuItemWeb(gatheringId: string, formData: For
   const category = String(formData.get("category") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim().slice(0, 500) || null;
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_add_item", {
     p_gathering_id: gatheringId,
     p_name: name,
@@ -42,6 +45,8 @@ export async function setCanonicalMenuServingsWeb(
   servings: number
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_update_servings", {
     p_gathering_id: gatheringId,
     p_menu_item_id: itemId,
@@ -54,6 +59,8 @@ export async function setCanonicalMenuServingsWeb(
 
 export async function deleteCanonicalMenuItemWeb(gatheringId: string, itemId: string): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_delete_item", {
     p_gathering_id: gatheringId,
     p_menu_item_id: itemId,
@@ -68,6 +75,8 @@ export async function setCanonicalLeftoversWeb(
   preference: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_set_leftover_preference", {
     p_gathering_id: gatheringId,
     p_preference: preference,
@@ -79,6 +88,8 @@ export async function setCanonicalLeftoversWeb(
 
 export async function seedCanonicalMenuWeb(gatheringId: string): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_seed_from_last_plan", {
     p_gathering_id: gatheringId,
   });

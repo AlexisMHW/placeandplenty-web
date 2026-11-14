@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import type { StyleSwatch } from "@/lib/style-board-data";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 export type StyleActionResult = { ok: true } | { ok: false; message: string };
 export type StyleSuggestionResult =
@@ -60,6 +61,8 @@ export async function saveStyleBoardWeb(
   const moods = input.moodDescriptors.map((mood) => mood.trim()).filter(Boolean).slice(0, 10);
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.from("gathering_style").upsert(
     {
       gathering_id: gatheringId,
@@ -97,6 +100,8 @@ export async function uploadStyleImageWeb(
   if (!extension) return { ok: false, message: "Use a JPG, PNG, or WebP image." };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { data: existing, error: existingError } = await supabase
     .from("gathering_style_images")
     .select("display_order")
@@ -137,6 +142,8 @@ export async function deleteStyleImageWeb(
   if (!allowed.ok) return allowed;
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { data, error } = await supabase
     .from("gathering_style_images")
     .delete()
@@ -170,6 +177,8 @@ export async function matchStyleComponentsToClosetWeb(
   | { ok: false; message: string }
 > {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -266,6 +275,8 @@ export async function requestStyleSuggestionWeb(
   gatheringId: string,
   input: { occasion: string; theme: string; moodDescriptors: string[]; visionNotes: string }
 ): Promise<StyleSuggestionResult> {
+  const __writeBlock = await gatheringWriteBlock(createClient(), gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await callStyleFunction<{
     theme: string;
     palette: StyleSwatch[];
@@ -283,6 +294,8 @@ export async function requestStyleSuggestionWeb(
 }
 
 export async function analyzeStyleImagesWeb(gatheringId: string): Promise<StyleActionResult> {
+  const __writeBlock = await gatheringWriteBlock(createClient(), gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await callStyleFunction<Record<string, unknown>>("analyze-style-images", { gatheringId });
   if (!result.ok) return { ok: false, message: styleAiMessage(result.code) };
   revalidatePath(`/host/g/${gatheringId}/style`);

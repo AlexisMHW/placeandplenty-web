@@ -12,7 +12,8 @@ export default function robots(): MetadataRoute.Robots {
       // Note the trailing slashes: these match /invite/<token> and
       // /gallery/<token>, NOT the bare /invite landing page, which
       // carries its own noindex.
-      disallow: ["/invite/", "/gallery/"],
+      // Private signed-in areas are never useful to a crawler (and the first two are noindex too).
+      disallow: ["/invite/", "/gallery/", "/command-center/", "/creator/"],
     },
     sitemap: "https://placeandplenty.com/sitemap.xml",
   };
