@@ -14,6 +14,7 @@ import {
   VALIDATION_MESSAGES,
   type CreateGatheringInput,
 } from "@/lib/gathering-creation";
+import { LEVEL_ERROR_MESSAGES, NOT_ALLOWED_MESSAGE, ASSIGNABLE_LEVELS, type AssignableLevel } from "@/lib/cohost-permissions";
 import {
   ALLOWED_ARTWORK_MIME_TYPES,
   ARTWORK_REJECTION_MESSAGES,
@@ -148,8 +149,11 @@ function translate(error: { message?: string; code?: string } | null): string {
   if (raw.includes("smart_closet_requires_pass_or_plus")) {
     return "Your Hosting Closet is always yours. Smart matching needs a Gathering Pass or Place & Plenty Plus.";
   }
+  for (const [code, sentence] of Object.entries(LEVEL_ERROR_MESSAGES)) {
+    if (raw.includes(code)) return sentence;
+  }
   if (raw.includes("not_authorized") || raw.includes("not authorized")) {
-    return "You don't have access to change that.";
+    return NOT_ALLOWED_MESSAGE;
   }
   if (error?.code === "23505") {
     return "That already exists.";
@@ -158,7 +162,7 @@ function translate(error: { message?: string; code?: string } | null): string {
     return "Something that referred to this is missing. Try refreshing.";
   }
   if (error?.code === "42501") {
-    return "You don't have access to change that.";
+    return NOT_ALLOWED_MESSAGE;
   }
   return "That didn't save. Please try again.";
 }
@@ -641,6 +645,33 @@ export async function removeCoHost(
 
   revalidatePath(`/host/g/${gatheringId}/co-hosts`);
   revalidatePath(`/host/g/${gatheringId}`);
+  return { ok: true };
+}
+
+/**
+ * Owner only (the RPC enforces it). Moves an existing co-host between Planner and Manager.
+ * Before the permission-levels migration the RPC does not exist: report that plainly instead of failing obscurely.
+ */
+export async function setCoHostPermission(
+  gatheringId: string,
+  memberId: string,
+  level: string
+): Promise<ActionResult> {
+  if (!(ASSIGNABLE_LEVELS as readonly string[]).includes(level)) {
+    return { ok: false, message: LEVEL_ERROR_MESSAGES.invalid_permission_level };
+  }
+  const supabase = createClient();
+  const { error } = await supabase.rpc("set_cohost_permission_level", {
+    p_member_id: memberId,
+    p_level: level as AssignableLevel,
+  });
+  if (error) {
+    if (error.code === "PGRST202" || error.code === "42883") {
+      return { ok: false, message: "Permission levels aren't available yet." };
+    }
+    return fail(error);
+  }
+  revalidatePath(`/host/g/${gatheringId}/co-hosts`);
   return { ok: true };
 }
 
