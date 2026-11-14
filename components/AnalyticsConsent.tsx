@@ -17,11 +17,13 @@ import {
   resolveMode,
   sanitizeUrlForAnalytics,
   serializeConsent,
+  takeQueue,
   shouldShowBanner,
   type BrowserSignals,
   type ConsentChoice,
 } from "@/lib/analytics-privacy";
 import { POSTHOG_PROJECT_KEY, POSTHOG_STUB } from "@/lib/posthog-loader";
+import { track, type AnalyticsEvent } from "@/lib/analytics";
 
 const GA_MEASUREMENT_ID = "G-1YEDLLVR34";
 const MODE = resolveMode(process.env.NEXT_PUBLIC_ANALYTICS_MODE);
@@ -32,6 +34,8 @@ declare global {
     __ppAnalyticsPaused?: boolean; // on a secret-bearing route: scripts stay loaded, nothing is sent
     __ppScriptsInjected?: boolean; // vendor scripts were injected once this page load
     __ppLastPageView?: string; // last address sent, so one visit is not counted twice
+    __ppAnalyticsDecided?: boolean; // the first consent decision has been made (see routeTrackCall)
+    __ppAnalyticsQueue?: Array<[string, Record<string, unknown>]>; // calls made before that decision
     dataLayer?: unknown[];
   }
 }
@@ -98,6 +102,9 @@ export default function AnalyticsConsent() {
       window.__ppAnalyticsPaused = false;
       if (window.posthog?.has_opted_out_capturing?.()) window.posthog.opt_in_capturing?.();
       sendPageView(window.location.href);
+      window.__ppAnalyticsDecided = true;
+      // replay events that fired before this decision existed (React effect order is not guaranteed)
+      for (const [name, meta] of takeQueue(window)) track(name as AnalyticsEvent, meta as Record<string, string | number | boolean | null | undefined>);
     } else if (window.__ppScriptsInjected) {
       if (decision.reason === "excluded_path") {
         // Moved (client-side) onto a secret-bearing route: pause. Nothing is sent from here,
@@ -111,6 +118,10 @@ export default function AnalyticsConsent() {
         window.__ppAnalyticsLoaded = false;
         window.posthog?.opt_out_capturing?.();
       }
+    }
+    if (!decision.load) {
+      window.__ppAnalyticsDecided = true;
+      takeQueue(window); // not allowed to send: discard anything held
     }
     setShowBanner(shouldShowBanner({ mode: MODE, pathname, signals }));
   }, [pathname]);

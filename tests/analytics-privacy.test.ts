@@ -4,6 +4,9 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import {
   ANALYTICS_EVENT_NAMES,
+  ANALYTICS_QUEUE_LIMIT,
+  routeTrackCall,
+  takeQueue,
   SAFE_EVENT_PROPERTY_KEYS,
   CONSENT_POLICY_VERSION,
   decideAnalytics,
@@ -406,4 +409,32 @@ test("privacy page states the invariants the code enforces (consent, GPC, no rep
     "We do not record or replay your sessions",
   ]) assert.ok(t.includes(phrase), `privacy page is missing: ${phrase}`);
   assert.ok(!/we use Google Analytics and PostHog[^.]*to everyone/i.test(t));
+});
+
+test("first-load ordering: calls before the first consent decision are held in memory, then replayed or discarded; never sent", () => {
+  const st: Record<string, unknown> = {};
+  assert.equal(routeTrackCall(st, "pricing_viewed", { client_platform: "web" }), "queued");
+  assert.equal(routeTrackCall(st, "checkout_started", {}), "queued");
+  assert.deepEqual(takeQueue(st).map((e) => e[0]), ["pricing_viewed", "checkout_started"]);
+  assert.deepEqual(takeQueue(st), []);
+  for (let i = 0; i < ANALYTICS_QUEUE_LIMIT + 5; i++) routeTrackCall(st, "pricing_viewed", {});
+  assert.equal(takeQueue(st).length, ANALYTICS_QUEUE_LIMIT);
+});
+
+test("after a decision: loaded sends; not loaded or paused drops (nothing is held for a future Accept)", () => {
+  assert.equal(routeTrackCall({ __ppAnalyticsLoaded: true, __ppAnalyticsDecided: true }, "x", {}), "send");
+  assert.equal(routeTrackCall({ __ppAnalyticsLoaded: true, __ppAnalyticsDecided: true, __ppAnalyticsPaused: true }, "x", {}), "drop");
+  const declined: Record<string, unknown> = { __ppAnalyticsDecided: true };
+  assert.equal(routeTrackCall(declined, "x", {}), "drop");
+  assert.equal(declined.__ppAnalyticsQueue, undefined);
+  const pausedBeforeDecision: Record<string, unknown> = { __ppAnalyticsPaused: true };
+  assert.equal(routeTrackCall(pausedBeforeDecision, "x", {}), "drop");
+});
+
+test("AnalyticsConsent flushes the queue on load and discards it when sending is not allowed", () => {
+  const t = readFileSync(join(ROOT, "components/AnalyticsConsent.tsx"), "utf8");
+  assert.equal((t.match(/takeQueue\(window\)/g) ?? []).length, 2);
+  assert.ok(t.includes("track(name as AnalyticsEvent"));
+  const a = readFileSync(join(ROOT, "lib/analytics.ts"), "utf8");
+  assert.ok(a.includes("routeTrackCall("));
 });

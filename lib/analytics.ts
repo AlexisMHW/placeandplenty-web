@@ -1,6 +1,6 @@
 "use client";
 
-import { ANALYTICS_EVENT_NAMES, isAnalyticsExcludedPath, scrubEventProperties } from "./analytics-privacy";
+import { ANALYTICS_EVENT_NAMES, isAnalyticsExcludedPath, routeTrackCall, scrubEventProperties, type AnalyticsWindowState } from "./analytics-privacy";
 
 // One canonical client-side analytics wrapper. Only allowlisted, plain-text event
 // properties are sent (see SAFE_EVENT_PROPERTY_KEYS); names, emails, invitation
@@ -28,11 +28,12 @@ declare global {
 export function track(event: AnalyticsEvent, meta: AnalyticsMeta = {}) {
   if (typeof window === "undefined") return;
 
-  // Consent gate: nothing is sent unless AnalyticsConsent has loaded analytics for
-  // this visitor, and never from bearer-token routes (see lib/analytics-privacy.ts).
-  const flags = window as unknown as { __ppAnalyticsLoaded?: boolean; __ppAnalyticsPaused?: boolean };
-  if (!flags.__ppAnalyticsLoaded || flags.__ppAnalyticsPaused) return;
+  // Consent gate: nothing is sent unless AnalyticsConsent has loaded analytics for this visitor,
+  // and never from bearer-token routes (see lib/analytics-privacy.ts). A call that arrives before
+  // the first consent decision is held in memory and replayed or discarded by AnalyticsConsent.
   if (isAnalyticsExcludedPath(window.location.pathname)) return;
+  const route = routeTrackCall(window as unknown as AnalyticsWindowState, event, meta);
+  if (route !== "send") return;
 
   const cleanMeta = scrubEventProperties(
     Object.fromEntries(Object.entries(meta).filter(([, value]) => value !== undefined))

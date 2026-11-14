@@ -207,6 +207,38 @@ export function scrubPostHogEvent<T extends { event?: string; properties?: Recor
   return evt;
 }
 
+// ---------------------------------------------------------------------------
+// First-load ordering. React does not guarantee that sibling effects in different <Suspense>
+// boundaries run in tree order in a PRODUCTION build (found by the production-mode browser
+// check: `pricing_viewed` was lost on a static page although it worked in dev). So track()
+// must not depend on effect order. Calls made BEFORE the first consent decision exists are held
+// in memory (never sent), then replayed if the decision is "load" or discarded otherwise.
+// Calls made after a decision that says "don't send" are simply dropped; nothing is ever held
+// waiting for a future "Accept".
+export interface AnalyticsWindowState {
+  __ppAnalyticsLoaded?: boolean;
+  __ppAnalyticsPaused?: boolean;
+  __ppAnalyticsDecided?: boolean;
+  __ppAnalyticsQueue?: Array<[string, Record<string, unknown>]>;
+}
+export const ANALYTICS_QUEUE_LIMIT = 20;
+
+export function routeTrackCall(state: AnalyticsWindowState, event: string, meta: Record<string, unknown>): "send" | "queued" | "drop" {
+  if (state.__ppAnalyticsLoaded && !state.__ppAnalyticsPaused) return "send";
+  if (!state.__ppAnalyticsDecided && !state.__ppAnalyticsPaused) {
+    const q = (state.__ppAnalyticsQueue ??= []);
+    if (q.length < ANALYTICS_QUEUE_LIMIT) q.push([event, meta]);
+    return "queued";
+  }
+  return "drop";
+}
+
+export function takeQueue(state: AnalyticsWindowState): Array<[string, Record<string, unknown>]> {
+  const q = state.__ppAnalyticsQueue ?? [];
+  state.__ppAnalyticsQueue = [];
+  return q;
+}
+
 export interface BrowserSignals {
   globalPrivacyControl?: boolean;
   doNotTrack?: string | null;
