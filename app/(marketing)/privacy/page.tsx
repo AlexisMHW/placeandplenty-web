@@ -218,10 +218,11 @@ export default function PrivacyPage() {
       </p>
       <p>
         We never load analytics on your invitation link, RSVP page, photo
-        gallery link, co-host invitation, sign-in or password-reset pages, or
-        on the signed-in host area, and we strip anything that looks like a
-        token, code, email address or name from the page address before it is
-        sent. {/* COUNSEL/OWNER: add retention periods for Google Analytics and PostHog once confirmed in each dashboard; add transfer/legal-basis wording if EU/UK visitors are in scope; add a "change your analytics choice" link once the build item exists. */}
+        gallery link, co-host invitation, sign-in confirmation or
+        password-reset pages. On the sign-in page and the signed-in host
+        area, only the page address is sent, with identifiers, tokens,
+        codes, email addresses and names removed; we do not send what is
+        on the page. {/* COUNSEL/OWNER: add retention periods for Google Analytics and PostHog once confirmed in each dashboard; add transfer/legal-basis wording if EU/UK visitors are in scope; add a "change your analytics choice" link once the build item exists. */}
       </p>
 
       <h3>What we do not collect</h3>
