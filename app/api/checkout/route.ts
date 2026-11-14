@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   const product = findWebProduct(slug);
   if (!product) return NextResponse.json({ error: "invalid_product" }, { status: 400 });
   // Release gate: flag + processor + approved price ids, and only the products approved for web sale.
-  if (!isCheckoutAvailableFor(product)) {
+  if (!isCheckoutAvailableFor(product, user.id)) {
     return NextResponse.json({ error: "checkout_unavailable" }, { status: 503 });
   }
   if (product.requiresGathering && !gatheringId) {

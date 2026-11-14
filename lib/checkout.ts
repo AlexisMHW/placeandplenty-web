@@ -1,5 +1,5 @@
 import { WEB_CHECKOUT_LIVE, type CanonicalProductId } from "@/lib/entitlements";
-import { isWebSellable, webCheckoutOpen } from "./checkout-gate";
+import { checkoutOpenFor, isWebSellable, webCheckoutOpen } from "./checkout-gate";
 import { MULTI_DAY_NOTE, MULTI_DAY_PRICING, PRICING_TIERS } from "@/lib/pricing";
 
 // WEB PURCHASE — the third channel into the one canonical entitlement
@@ -121,9 +121,23 @@ export function isCheckoutConfigured(): boolean {
   });
 }
 
-/** Checkout is open AND this product is one the web may sell in this release. */
-export function isCheckoutAvailableFor(product: WebProduct): boolean {
-  return isCheckoutConfigured() && isWebSellable(product.canonicalProductId);
+/**
+ * Checkout is open for this signed-in user AND this product is one the web may sell in this release.
+ * Public open still requires WEB_CHECKOUT_LIVE; a listed tester account may also pass while it is off.
+ */
+export function isCheckoutAvailableFor(product: WebProduct, userId?: string | null): boolean {
+  return (
+    checkoutOpenFor(
+      WEB_CHECKOUT_LIVE,
+      {
+        PAYMENT_PROCESSOR_SECRET_KEY: process.env.PAYMENT_PROCESSOR_SECRET_KEY,
+        STRIPE_PLUS_ANNUAL_PRICE_ID: process.env.STRIPE_PLUS_ANNUAL_PRICE_ID,
+        STRIPE_GATHERING_PASS_PRICE_ID: process.env.STRIPE_GATHERING_PASS_PRICE_ID,
+      },
+      userId,
+      process.env.WEB_CHECKOUT_TESTER_USER_IDS,
+    ) && isWebSellable(product.canonicalProductId)
+  );
 }
 
 /**

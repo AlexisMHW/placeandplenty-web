@@ -228,7 +228,7 @@ export default async function CheckoutPage({
             email={user?.email ?? null}
             alreadyHasPlus={alreadyHasPlus}
             notice={searchParams.purchase === "cancelled" || searchParams.purchase === "error" ? searchParams.purchase : null}
-            checkoutConfigured={isCheckoutAvailableFor(product)}
+            checkoutConfigured={isCheckoutAvailableFor(product, user?.id)}
             pendingNote={
               product.canonicalProductId === "multi_day_pass" ||
               product.canonicalProductId === "multi_day_extension"
