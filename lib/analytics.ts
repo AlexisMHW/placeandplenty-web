@@ -1,5 +1,7 @@
 "use client";
 
+import { isAnalyticsExcludedPath, scrubEventProperties } from "./analytics-privacy";
+
 // One canonical client-side analytics wrapper. Keep event payloads free of
 // names, emails, invitation content, guest data, or other private content.
 // GA4 and PostHog receive the same business events so acquisition and product
@@ -38,7 +40,9 @@ declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     posthog?: {
+      init?: (...args: unknown[]) => void;
       capture?: (event: string, properties?: Record<string, unknown>) => void;
+      opt_out_capturing?: () => void;
     };
   }
 }
@@ -46,8 +50,13 @@ declare global {
 export function track(event: AnalyticsEvent, meta: AnalyticsMeta = {}) {
   if (typeof window === "undefined") return;
 
-  const cleanMeta = Object.fromEntries(
-    Object.entries(meta).filter(([, value]) => value !== undefined)
+  // Consent gate: nothing is sent unless AnalyticsConsent has loaded analytics for
+  // this visitor, and never from bearer-token routes (see lib/analytics-privacy.ts).
+  if (!(window as unknown as { __ppAnalyticsLoaded?: boolean }).__ppAnalyticsLoaded) return;
+  if (isAnalyticsExcludedPath(window.location.pathname)) return;
+
+  const cleanMeta = scrubEventProperties(
+    Object.fromEntries(Object.entries(meta).filter(([, value]) => value !== undefined))
   );
 
   window.gtag?.("event", event, cleanMeta);
