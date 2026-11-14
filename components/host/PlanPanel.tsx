@@ -9,6 +9,7 @@ import {
   isLive,
   CROSS_PLATFORM_PROMISE,
   FEATURE_AVAILABILITY_NOTE,
+  WEB_CHECKOUT_LIVE,
 } from "@/lib/entitlements";
 import {
   FREE_LIMITS_NOTE,
@@ -55,18 +56,37 @@ export default async function PlanPanel() {
             {PURCHASE_AVAILABILITY_NOTE}
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link
-              href="/get"
-              className="rounded-lg bg-forest px-5 py-3 text-center font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
-            >
-              Get the app to unlock
-            </Link>
-            <Link
-              href="/pricing"
-              className="rounded-lg border border-forest/30 px-5 py-3 text-center font-body text-sm font-semibold text-forest transition-colors duration-400 hover:bg-forest/5"
-            >
-              Compare plans
-            </Link>
+            {WEB_CHECKOUT_LIVE ? (
+              <>
+                <Link
+                  href="/pricing"
+                  className="rounded-lg bg-forest px-5 py-3 text-center font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
+                >
+                  Choose a plan
+                </Link>
+                <Link
+                  href="/get"
+                  className="rounded-lg border border-forest/30 px-5 py-3 text-center font-body text-sm font-semibold text-forest transition-colors duration-400 hover:bg-forest/5"
+                >
+                  Get the app
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/get"
+                  className="rounded-lg bg-forest px-5 py-3 text-center font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90"
+                >
+                  Get the app to unlock
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="rounded-lg border border-forest/30 px-5 py-3 text-center font-body text-sm font-semibold text-forest transition-colors duration-400 hover:bg-forest/5"
+                >
+                  Compare plans
+                </Link>
+              </>
+            )}
           </div>
         </div>
       ) : (

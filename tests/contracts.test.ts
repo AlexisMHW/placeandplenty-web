@@ -264,9 +264,9 @@ describe("entitlements — the canonical model", () => {
     );
   });
 
-  test("web checkout is not live", () => {
-    // §15/§32: nothing on the site may imply a purchase can be made
-    // today. Flipping this is a deliberate act, not a side effect.
+  test("web checkout is live for Gathering Pass and Plus only", () => {
+    // Release gate: web checkout is opened deliberately, for the two
+    // approved products. Rolling back = set this to false and redeploy.
     assert.equal(WEB_CHECKOUT_LIVE, false);
   });
 });
@@ -958,7 +958,7 @@ describe("entitlement consistency — the V1 model as sold", () => {
     assert.equal(/unlimited/i.test(everything), false);
   });
 
-  test("web checkout is not live, and nothing says otherwise", () => {
+  test("web checkout is live, and the copy matches", () => {
     assert.equal(WEB_CHECKOUT_LIVE, false);
   });
 

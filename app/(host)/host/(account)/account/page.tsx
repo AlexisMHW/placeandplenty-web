@@ -5,6 +5,9 @@ import { getProfileAvatarState } from "@/lib/profile-data";
 import { WorkspaceHeader, Panel } from "@/components/host/Workspace";
 import PlanPanel from "@/components/host/PlanPanel";
 import ProfilePhotoPanel from "@/components/host/ProfilePhotoPanel";
+import PurchaseStatusBanner from "@/components/host/PurchaseStatusBanner";
+import { getMyEntitlements } from "@/lib/entitlement-data";
+import { isLive } from "@/lib/entitlements";
 
 // ACCOUNT / PROFILE / SETTINGS (§11).
 //
@@ -35,12 +38,29 @@ import ProfilePhotoPanel from "@/components/host/ProfilePhotoPanel";
 
 export const metadata = { title: "Account" };
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams?: { purchase?: string; billing?: string };
+}) {
   const [user, profile, avatar] = await Promise.all([
     getUser(),
     getProfile(),
     getProfileAvatarState(),
   ]);
+
+  // Stripe returns here with ?purchase=success; the webhook grants access a few seconds later.
+  const bannerKind =
+    searchParams?.purchase === "success"
+      ? ("success" as const)
+      : searchParams?.billing === "already-owned"
+        ? ("already-owned" as const)
+        : null;
+  const recentWebPurchaseLive = bannerKind === "success"
+    ? (await getMyEntitlements()).some(
+        (e) => isLive(e) && e.provider === "web" && Date.now() - new Date(e.purchased_at).getTime() < 30 * 60 * 1000,
+      )
+    : false;
 
   const rows = [
     { label: "Name", value: profile?.display_name || profile?.first_name },
@@ -63,6 +83,8 @@ export default async function AccountPage() {
         title="Account"
         description="The same Place & Plenty account you use in the app."
       />
+
+      {bannerKind && <PurchaseStatusBanner kind={bannerKind} hasPaidAccess={recentWebPurchaseLive} />}
 
       <div className="mt-8">
         <ProfilePhotoPanel

@@ -1,4 +1,5 @@
-import type { CanonicalProductId } from "@/lib/entitlements";
+import { WEB_CHECKOUT_LIVE, type CanonicalProductId } from "@/lib/entitlements";
+import { isWebSellable, webCheckoutOpen } from "./checkout-gate";
 import { MULTI_DAY_NOTE, MULTI_DAY_PRICING, PRICING_TIERS } from "@/lib/pricing";
 
 // WEB PURCHASE — the third channel into the one canonical entitlement
@@ -113,7 +114,16 @@ export function findWebProduct(slug: string): WebProduct | undefined {
  * half-finished must read as off.
  */
 export function isCheckoutConfigured(): boolean {
-  return Boolean(process.env.PAYMENT_PROCESSOR_SECRET_KEY);
+  return webCheckoutOpen(WEB_CHECKOUT_LIVE, {
+    PAYMENT_PROCESSOR_SECRET_KEY: process.env.PAYMENT_PROCESSOR_SECRET_KEY,
+    STRIPE_PLUS_ANNUAL_PRICE_ID: process.env.STRIPE_PLUS_ANNUAL_PRICE_ID,
+    STRIPE_GATHERING_PASS_PRICE_ID: process.env.STRIPE_GATHERING_PASS_PRICE_ID,
+  });
+}
+
+/** Checkout is open AND this product is one the web may sell in this release. */
+export function isCheckoutAvailableFor(product: WebProduct): boolean {
+  return isCheckoutConfigured() && isWebSellable(product.canonicalProductId);
 }
 
 /**
@@ -123,6 +133,10 @@ export function isCheckoutConfigured(): boolean {
  */
 export const CHECKOUT_PENDING_NOTE =
   "Card checkout is temporarily unavailable on this deployment. Your plan, price and account stay the same; you can keep planning for free and return to checkout later.";
+
+/** Shown on Multi-Day pages: those products are not part of web checkout in this release. */
+export const MULTI_DAY_WEB_PENDING_NOTE =
+  "Multi-Day purchases are not open on the web yet. Your gathering is saved; we will tell you when you can add Multi-Day access here.";
 
 /**
  * Said on every checkout surface. It is the reason someone can buy here

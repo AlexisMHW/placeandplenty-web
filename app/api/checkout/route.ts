@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getUser } from "@/lib/supabase-server";
-import { findWebProduct } from "@/lib/checkout";
+import { findWebProduct, isCheckoutAvailableFor } from "@/lib/checkout";
 
 export const runtime = "nodejs";
 
@@ -77,6 +77,10 @@ export async function POST(req: NextRequest) {
   const gatheringId = String(form.get("gatheringId") || "") || null;
   const product = findWebProduct(slug);
   if (!product) return NextResponse.json({ error: "invalid_product" }, { status: 400 });
+  // Release gate: flag + processor + approved price ids, and only the products approved for web sale.
+  if (!isCheckoutAvailableFor(product)) {
+    return NextResponse.json({ error: "checkout_unavailable" }, { status: 503 });
+  }
   if (product.requiresGathering && !gatheringId) {
     return NextResponse.json({ error: "gathering_required" }, { status: 400 });
   }

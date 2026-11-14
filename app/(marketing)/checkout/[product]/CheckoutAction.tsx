@@ -21,6 +21,7 @@ export default function CheckoutAction({
   checkoutConfigured,
   pendingNote,
   gatherings,
+  notice = null,
 }: {
   product: WebProduct;
   signedIn: boolean;
@@ -29,6 +30,7 @@ export default function CheckoutAction({
   checkoutConfigured: boolean;
   pendingNote: string;
   gatherings: GatheringOption[];
+  notice?: "cancelled" | "error" | null;
 }) {
   const [gatheringId, setGatheringId] = useState(gatherings[0]?.id ?? "");
   const selectedGathering = gatherings.find((g) => g.id === gatheringId);
@@ -65,6 +67,20 @@ export default function CheckoutAction({
     );
   }
 
+  // Not purchasable here (checkout closed, or a product outside this release's web checkout):
+  // say so first, rather than asking the person to pick a gathering for something they cannot buy.
+  if (!checkoutConfigured) {
+    return (
+      <div className={panel}>
+        <h2 className="font-display text-xl text-forest">{product.name}</h2>
+        <div className="mt-4 rounded-lg border border-gold/50 bg-cream px-5 py-4">
+          <p className="font-body text-sm leading-relaxed text-forest/80">{pendingNote}</p>
+          <Link href="/host" className="mt-4 block w-full rounded-lg bg-forest px-5 py-3 text-center font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90">Keep planning for free</Link>
+        </div>
+      </div>
+    );
+  }
+
   if (product.requiresGathering && gatherings.length === 0) {
     return (
       <div className={panel}>
@@ -81,6 +97,12 @@ export default function CheckoutAction({
 
   return (
     <div className={panel}>
+      {notice === "cancelled" && (
+        <p role="status" className="mb-5 rounded-lg bg-cream px-4 py-3 font-body text-sm text-forest/80">Checkout was cancelled. You have not been charged. You can pick up where you left off below.</p>
+      )}
+      {notice === "error" && (
+        <p role="alert" className="mb-5 rounded-lg border border-gold/50 bg-cream px-4 py-3 font-body text-sm text-forest/80">We could not open secure checkout just now. You have not been charged. Please try again in a moment.</p>
+      )}
       <h2 className="font-display text-xl text-forest">{product.name}</h2>
       <p className="mt-1.5 font-display text-lg text-forest/85">{displayedPrice}</p>
 

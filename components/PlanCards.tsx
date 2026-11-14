@@ -10,6 +10,7 @@ import {
   type PricingTier,
 } from "@/lib/pricing";
 import { isCheckoutConfigured, findWebProduct } from "@/lib/checkout";
+import { isWebSellable } from "@/lib/checkout-gate";
 
 function CheckItem({ children, filled }: { children: string; filled: boolean }) {
   return (
@@ -22,7 +23,7 @@ function CheckItem({ children, filled }: { children: string; filled: boolean }) 
   );
 }
 
-function PlanCard({ tier, checkoutLive }: { tier: PricingTier; checkoutLive: boolean }) {
+function PlanCard({ tier, checkoutLive: checkoutOpen }: { tier: PricingTier; checkoutLive: boolean }) {
   const highlight = Boolean(tier.highlight);
   const free = tier.price === "$0";
   const qualifier = tier.priceLine.replace(tier.price, "").replace(tier.billing, "").trim();
@@ -35,6 +36,8 @@ function PlanCard({ tier, checkoutLive }: { tier: PricingTier; checkoutLive: boo
             ? "multi-day"
             : "plus"
       );
+  // Multi-Day is not part of web checkout in this release, even when checkout is open.
+  const checkoutLive = checkoutOpen && (free || isWebSellable(product?.canonicalProductId ?? ""));
   const href = free ? "/signup" : checkoutLive ? `/checkout/${product?.slug ?? "plus"}` : "/get";
   const label = free
     ? "Start Hosting"

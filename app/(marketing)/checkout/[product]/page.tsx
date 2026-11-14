@@ -7,8 +7,9 @@ import { Display } from "@/components/Display";
 import {
   WEB_PRODUCTS,
   findWebProduct,
-  isCheckoutConfigured,
+  isCheckoutAvailableFor,
   CHECKOUT_PENDING_NOTE,
+  MULTI_DAY_WEB_PENDING_NOTE,
   CHECKOUT_ASSURANCE,
 } from "@/lib/checkout";
 import {
@@ -86,7 +87,7 @@ export default async function CheckoutPage({
   searchParams,
 }: {
   params: { product: string };
-  searchParams: { gatheringId?: string };
+  searchParams: { gatheringId?: string; purchase?: string };
 }) {
   const product = findWebProduct(params.product);
   if (!product) notFound();
@@ -226,8 +227,14 @@ export default async function CheckoutPage({
             signedIn={Boolean(user)}
             email={user?.email ?? null}
             alreadyHasPlus={alreadyHasPlus}
-            checkoutConfigured={isCheckoutConfigured()}
-            pendingNote={CHECKOUT_PENDING_NOTE}
+            notice={searchParams.purchase === "cancelled" || searchParams.purchase === "error" ? searchParams.purchase : null}
+            checkoutConfigured={isCheckoutAvailableFor(product)}
+            pendingNote={
+              product.canonicalProductId === "multi_day_pass" ||
+              product.canonicalProductId === "multi_day_extension"
+                ? MULTI_DAY_WEB_PENDING_NOTE
+                : CHECKOUT_PENDING_NOTE
+            }
             gatherings={gatherings.map((g) => ({
               id: g.id,
               name: g.name,
