@@ -14,6 +14,7 @@ import {
   isRenderableArtwork,
   resolveArtworkMimeType,
 } from "@/lib/invitations";
+import { cleanupArtworkObject } from "@/lib/invitation-artwork-cleanup";
 
 function newFileId(): string {
   try {
@@ -29,6 +30,7 @@ export default function InvitationArtworkManager({
   gatheringName,
   currentFilename,
   currentMimeType,
+  currentArtworkPath,
   currentArtworkUrl,
   readOnly = false,
 }: {
@@ -36,6 +38,8 @@ export default function InvitationArtworkManager({
   gatheringName: string;
   currentFilename?: string | null;
   currentMimeType?: string | null;
+  /** Storage path of the artwork now saved on the gathering; the object replaced when new artwork is saved. */
+  currentArtworkPath?: string | null;
   currentArtworkUrl?: string | null;
   readOnly?: boolean;
 }) {
@@ -45,6 +49,7 @@ export default function InvitationArtworkManager({
   const [filename, setFilename] = useState(currentFilename ?? null);
   const [mimeType, setMimeType] = useState(currentMimeType ?? null);
   const [artworkUrl, setArtworkUrl] = useState(currentArtworkUrl ?? null);
+  const [savedPath, setSavedPath] = useState(currentArtworkPath ?? null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -95,9 +100,17 @@ export default function InvitationArtworkManager({
       );
 
       if (!saved.ok) {
+        // The new object was uploaded but never attached to the gathering: it is ours to clean up (guarded).
+        await cleanupArtworkObject(supabase, INVITATION_ARTWORK_BUCKET, gatheringId, path);
         setError(saved.message);
         return;
       }
+
+      // Replaced artwork: the OLD object is deleted only when the server confirms nothing references it.
+      if (savedPath && savedPath !== path) {
+        await cleanupArtworkObject(supabase, INVITATION_ARTWORK_BUCKET, gatheringId, savedPath);
+      }
+      setSavedPath(path);
 
       setFilename(file.name);
       setMimeType(resolvedMime);
