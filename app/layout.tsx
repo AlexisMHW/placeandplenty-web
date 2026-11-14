@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { Playfair_Display, Lato } from "next/font/google";
 import "./globals.css";
 import { BRAND_NAME, BRAND_TITLE, TAGLINE } from "@/lib/brand";
-import AnalyticsTracker from "@/components/AnalyticsTracker";
-import AnalyticsConsent from "@/components/AnalyticsConsent";
+import AnalyticsRoot from "@/components/AnalyticsRoot";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -76,8 +74,6 @@ export const metadata: Metadata = {
   },
 };
 
-
-
 export default function RootLayout({
   children,
 }: {
@@ -87,14 +83,7 @@ export default function RootLayout({
     <html lang="en" className={`${playfair.variable} ${lato.variable}`}>
       <body className="font-body antialiased">
         {children}
-        {/* AnalyticsConsent must come BEFORE AnalyticsTracker: sibling effects run in
-            order, and track() is a no-op until AnalyticsConsent has loaded analytics. */}
-        <Suspense fallback={null}>
-          <AnalyticsConsent />
-        </Suspense>
-        <Suspense fallback={null}>
-          <AnalyticsTracker />
-        </Suspense>
+        <AnalyticsRoot />
       </body>
     </html>
   );

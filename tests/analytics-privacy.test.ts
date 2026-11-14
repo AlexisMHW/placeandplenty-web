@@ -4,6 +4,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import {
   ANALYTICS_EVENT_NAMES,
+  SAFE_EVENT_PROPERTY_KEYS,
   CONSENT_POLICY_VERSION,
   decideAnalytics,
   ga4ConfigParams,
@@ -356,4 +357,38 @@ test("AnalyticsConsent keeps replay off, never opts in to recording, and uses th
   assert.ok(text.includes("ga4PageParams"));
   assert.ok(!/disable_session_recording\s*:\s*false/.test(text));
   assert.ok(!/session_recording\s*:/.test(text));
+});
+
+test("every property key passed to track() anywhere in the source is on the allowlist (no silent data loss)", () => {
+  const seen = new Set<string>();
+  for (const f of SOURCES) {
+    const text = readFileSync(f, "utf8");
+    for (const m of text.matchAll(/\btrack\(\s*["'][a-z_]+["']\s*,\s*\{([^}]*)\}/g)) {
+      for (const entry of m[1].split(",")) {
+        const k = entry.trim().match(/^([a-z_]+)\s*(?::|$)/);
+        if (k) seen.add(k[1]);
+      }
+    }
+  }
+  assert.ok(seen.size >= 5, `parsed too few keys: ${[...seen]}`);
+  for (const k of seen) assert.ok(SAFE_EVENT_PROPERTY_KEYS.has(k), `track() uses property "${k}" that scrubEventProperties would drop`);
+});
+
+test("analytics-off path: mode off never loads, shows no banner, and the consent component honors it", () => {
+  const off = { mode: "off" as const, pathname: "/", signals: { stored: granted, globalPrivacyControl: false, doNotTrack: null } };
+  assert.deepEqual(decideAnalytics(off), { load: false, reason: "mode_off" });
+  assert.equal(shouldShowBanner(off), false);
+  const text = readFileSync(join(ROOT, "components/AnalyticsConsent.tsx"), "utf8");
+  assert.ok(text.includes("NEXT_PUBLIC_ANALYTICS_MODE") && text.includes("resolveMode("));
+  assert.ok(!/https:\/\/www\.googletagmanager\.com/.test(readFileSync(join(ROOT, "app/layout.tsx"), "utf8")), "layout must not load Google directly");
+  assert.ok(!/posthog/i.test(readFileSync(join(ROOT, "app/layout.tsx"), "utf8")), "layout must not embed the PostHog snippet");
+});
+
+test("layout mounts <AnalyticsRoot />, which renders AnalyticsConsent before AnalyticsTracker", () => {
+  const layout = readFileSync(join(ROOT, "app/layout.tsx"), "utf8");
+  assert.ok(layout.includes("<AnalyticsRoot />"));
+  assert.ok(!layout.includes("AnalyticsTracker") && !layout.includes("next/script"));
+  const root = readFileSync(join(ROOT, "components/AnalyticsRoot.tsx"), "utf8");
+  const a = root.indexOf("<AnalyticsConsent"), b = root.indexOf("<AnalyticsTracker");
+  assert.ok(a > 0 && b > 0 && a < b);
 });

@@ -58,7 +58,7 @@ export const ANALYTICS_EVENT_NAMES = [
 // Custom event properties that may be sent (allowlist). Values must also pass isSafeValue.
 export const SAFE_EVENT_PROPERTY_KEYS = new Set([
   "client_platform", "product", "topic", "entry_point", "gathering_type", "piece_type", "size_id",
-  "matched_invitation", "quantity", "email_confirmation_required",
+  "matched_invitation", "quantity", "email_confirmation_required", "edition",
 ]);
 
 // Hosts treated as "ours". Anything else (a referrer such as google.com) is reduced to its origin.
