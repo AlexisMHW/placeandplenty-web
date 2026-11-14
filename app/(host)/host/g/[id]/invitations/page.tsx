@@ -14,7 +14,7 @@ export default async function InvitationsPage({ params }: { params: { id: string
   const [{ data: artworkMeta }, artwork] = await Promise.all([
     supabase
       .from("gatherings")
-      .select("invitation_artwork_original_filename, invitation_artwork_mime_type")
+      .select("invitation_artwork_original_filename, invitation_artwork_mime_type, invitation_artwork_path")
       .eq("id", params.id)
       .maybeSingle(),
     signArtwork([gathering]),
@@ -36,6 +36,7 @@ export default async function InvitationsPage({ params }: { params: { id: string
         gatheringName={gathering.name}
         currentFilename={artworkMeta?.invitation_artwork_original_filename ?? null}
         currentMimeType={artworkMeta?.invitation_artwork_mime_type ?? null}
+        currentArtworkPath={artworkMeta?.invitation_artwork_path ?? null}
         currentArtworkUrl={artwork.get(gathering.id) ?? null}
         readOnly={readOnly}
       />

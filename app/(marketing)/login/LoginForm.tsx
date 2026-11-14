@@ -6,6 +6,8 @@ import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import ResendConfirmation from "@/components/auth/ResendConfirmation";
+import { authEmailErrorMessage, classifyAuthEmailError, isEmailNotConfirmed } from "@/lib/resend-cooldown";
 
 // Sign-in for the host web app. Same Supabase Auth identity as the
 // native app (§11) — this creates no separate web account model.
@@ -44,6 +46,7 @@ export default function LoginForm({ next }: { next?: string }) {
     "idle" | "submitting" | "sent" | "error"
   >("idle");
   const [message, setMessage] = useState("");
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   const destination = safeNext(next);
 
@@ -51,6 +54,7 @@ export default function LoginForm({ next }: { next?: string }) {
     e.preventDefault();
     setStatus("submitting");
     setMessage("");
+    setNeedsConfirmation(false);
 
     const supabase = getBrowserClient();
 
@@ -60,7 +64,16 @@ export default function LoginForm({ next }: { next?: string }) {
         password,
       });
       if (error) {
-        setMessage(error.message);
+        if (isEmailNotConfirmed(error)) {
+          // Offer a fresh confirmation email instead of a dead-end provider message.
+          setNeedsConfirmation(true);
+          setMessage("Please confirm your email first. We can send the link again.");
+        } else {
+          setNeedsConfirmation(false);
+          setMessage(
+            classifyAuthEmailError(error) === "unknown" ? error.message : authEmailErrorMessage(error)
+          );
+        }
         setStatus("error");
         return;
       }
@@ -188,6 +201,9 @@ export default function LoginForm({ next }: { next?: string }) {
         <p role="alert" className="mt-4 font-body text-sm text-error">
           {message}
         </p>
+      )}
+      {status === "error" && needsConfirmation && (
+        <ResendConfirmation email={email} next={destination} />
       )}
 
       <button
