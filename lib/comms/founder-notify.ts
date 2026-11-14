@@ -35,8 +35,8 @@ export function loadFounderNotifyConfig(env: Record<string, string | undefined>)
   const attempts = Number(env.FOUNDER_NOTIFY_MAX_ATTEMPTS);
   return {
     enabled: env.FOUNDER_NOTIFY_ENABLED === "true",
-    destination: env.FOUNDER_NOTIFY_EMAIL?.trim() || null,
-    destinationVerified: env.FOUNDER_NOTIFY_EMAIL_VERIFIED === "true",
+    destination: env.FOUNDER_NOTIFICATION_EMAIL?.trim() || null,
+    destinationVerified: env.FOUNDER_NOTIFICATION_EMAIL_VERIFIED === "true",
     maxAttempts: Number.isInteger(attempts) && attempts > 0 ? Math.min(attempts, 10) : 4,
     backoffSeconds: csv.length ? csv : [60, 300, 1800],
     baseUrl: env.NEXT_PUBLIC_SITE_URL?.trim() || env.SITE_URL?.trim() || null,

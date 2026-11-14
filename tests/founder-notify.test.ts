@@ -8,7 +8,7 @@ import {
 import { createFakeProvider } from "../lib/comms/provider.ts";
 import { createMemorySuppressionStore } from "../lib/comms/suppression.ts";
 
-const goodEnv = { FOUNDER_NOTIFY_ENABLED: "true", FOUNDER_NOTIFY_EMAIL: "owner@example.test", FOUNDER_NOTIFY_EMAIL_VERIFIED: "true", SITE_URL: "https://example.test" };
+const goodEnv = { FOUNDER_NOTIFY_ENABLED: "true", FOUNDER_NOTIFICATION_EMAIL: "owner@example.test", FOUNDER_NOTIFICATION_EMAIL_VERIFIED: "true", SITE_URL: "https://example.test" };
 let t = Date.parse("2026-11-14T12:00:00Z"); const clock = { now: () => new Date(t).toISOString() };
 function mk(env: Record<string, string | undefined>, script: Parameters<typeof createFakeProvider>[0] = [], sendEnabled = true) {
   const store = createMemoryFounderStore(); const provider = createFakeProvider(script); let n = 0;
@@ -36,8 +36,8 @@ describe("configuration (destination never hardcoded; send only when verified)",
 describe("channel A inbox is always recorded; channel B only when verified", () => {
   for (const [name, env, reason] of [
     ["disabled", { ...goodEnv, FOUNDER_NOTIFY_ENABLED: undefined }, "disabled"],
-    ["no destination", { ...goodEnv, FOUNDER_NOTIFY_EMAIL: undefined }, "no_destination"],
-    ["unverified destination", { ...goodEnv, FOUNDER_NOTIFY_EMAIL_VERIFIED: undefined }, "destination_unverified"],
+    ["no destination", { ...goodEnv, FOUNDER_NOTIFICATION_EMAIL: undefined }, "no_destination"],
+    ["unverified destination", { ...goodEnv, FOUNDER_NOTIFICATION_EMAIL_VERIFIED: undefined }, "destination_unverified"],
   ] as const) {
     test(`${name}: inbox record exists, email skipped (${reason}), provider untouched`, async () => {
       const { deps, provider } = mk(env);
@@ -118,5 +118,37 @@ describe("delivery truthfulness, dedup, severity, retry, audit", () => {
     const { notification } = await raiseFounderNotification(deps, { category: "creator_content_submitted", entityId: "c" });
     const n = await attemptFounderEmail(deps, notification);
     assert.doesNotMatch(JSON.stringify(n.audit), /@/);
+  });
+});
+
+describe("documented default destination is config-only", () => {
+  const ADDR = ["alexis", "placeandplenty.com"].join("@"); // assembled so this test file is not itself a literal
+  test("no source file (lib/app/components/supabase) contains the founder address literal", async () => {
+    const { readdirSync, statSync } = await import("node:fs");
+    const hits: string[] = [];
+    const walk = (d: string) => {
+      for (const e of readdirSync(d)) {
+        if (["node_modules", ".next", ".git"].includes(e)) continue;
+        const p = `${d}/${e}`; const s = statSync(p);
+        if (s.isDirectory()) walk(p);
+        else if (/\.(ts|tsx|js|mjs|json|sql)$/.test(e) && readFileSync(p, "utf8").includes(ADDR)) hits.push(p);
+      }
+    };
+    for (const d of ["lib", "app", "components", "supabase", "scripts"]) { try { walk(d); } catch { /* dir absent */ } }
+    // lib/checklist-delivery.ts has a PRE-EXISTING marketing replyTo literal (not founder notifications, not A4-owned); flagged in REPORT, not changed here.
+    assert.deepEqual(hits.filter((h) => h !== "lib/checklist-delivery.ts"), []);
+  });
+  test("with the address configured but VERIFIED=false, nothing is sent; inbox still records", async () => {
+    const { store, provider, deps } = mk({ FOUNDER_NOTIFY_ENABLED: "true", FOUNDER_NOTIFICATION_EMAIL: ADDR, FOUNDER_NOTIFICATION_EMAIL_VERIFIED: "false", SITE_URL: "https://example.test" });
+    const r = await raiseFounderNotification(deps, { category: "payout_needs_approval", entityId: "p1" });
+    assert.equal(r.emailEligible, false);
+    await attemptFounderEmail(deps, r.notification);
+    assert.equal(provider.calls, 0);
+    assert.equal(store.all.length, 1);
+  });
+  test("documented in docs/ENV_COMMS.md with verified=false", () => {
+    const doc = readFileSync("docs/ENV_COMMS.md", "utf8");
+    assert.match(doc, /FOUNDER_NOTIFICATION_EMAIL_VERIFIED=false/);
+    assert.ok(doc.includes(ADDR));
   });
 });
