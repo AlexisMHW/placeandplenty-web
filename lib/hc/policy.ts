@@ -4,7 +4,7 @@
 // hc_terms_amounts (owner-set, versioned) and are never invented in code.
 
 export const HC_DEFAULTS = { attributionDays: 30, validationDays: 45, minPayoutCents: 5000 } as const;
-export const QUALIFYING_PRODUCTS = ["gathering_pass", "plus"] as const; // web checkout products; Multi-Day is closed on web
+export const QUALIFYING_PRODUCTS = ["gathering_pass", "plus_annual", "plus"] as const; // canonical ids sold on web (plus_annual is the checkout canonical id; "plus" kept as alias). Multi-Day is closed on web
 export type QualifyingProduct = (typeof QUALIFYING_PRODUCTS)[number];
 const DAY = 86_400_000;
 
