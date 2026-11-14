@@ -392,3 +392,18 @@ test("layout mounts <AnalyticsRoot />, which renders AnalyticsConsent before Ana
   const a = root.indexOf("<AnalyticsConsent"), b = root.indexOf("<AnalyticsTracker");
   assert.ok(a > 0 && b > 0 && a < b);
 });
+
+test("privacy page states the invariants the code enforces (consent, GPC, no replay, secret routes, host/login limits)", () => {
+  const t = readFileSync(join(ROOT, "app/(marketing)/privacy/page.tsx"), "utf8").replace(/\s+/g, " ");
+  for (const phrase of [
+    "only if you choose &ldquo;Accept analytics&rdquo;",
+    "Global Privacy Control or Do Not Track",
+    "we load neither tool",
+    "never load or send analytics from your invitation link, RSVP page, photo gallery link, co-host invitation, sign-in confirmation or password-reset pages",
+    "PostHog not to record sessions or screens",
+    "/host/g/[id]/people",
+    "page titles",
+    "We do not record or replay your sessions",
+  ]) assert.ok(t.includes(phrase), `privacy page is missing: ${phrase}`);
+  assert.ok(!/we use Google Analytics and PostHog[^.]*to everyone/i.test(t));
+});
