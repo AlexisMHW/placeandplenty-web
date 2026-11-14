@@ -6,8 +6,11 @@
 // Node version the host uses, so it must not depend on TypeScript type stripping.
 
 export const PRODUCTION_SUPABASE_REF = "iyvdxvotthwrerirdzwd";
+// The only Supabase project a Preview build of this repo may be wired to (QA). Fail closed:
+// anything else (missing, malformed, another project) is rejected, not just "not production".
+export const QA_SUPABASE_REF = "gpzlytukyvshrrxrmooo";
 
-// Input: { vercelEnv, supabaseUrl, anonKey } (all optional strings).
+// Input: { vercelEnv, supabaseUrl, anonKey, analyticsMode } (all optional strings).
 // Result: { ok, applies, reasons } where applies=false means the guard is a no-op and
 // reasons never contain key material. There is deliberately no "allow production in preview" override.
 
@@ -60,6 +63,19 @@ export function checkPreviewIsolation(input) {
   if (!input.supabaseUrl) {
     // A preview with no Supabase URL cannot show the product; fail loudly rather than fall back.
     reasons.push("NEXT_PUBLIC_SUPABASE_URL is not set for this Preview build");
+  }
+  // Fail closed on anything that is not exactly the QA project.
+  if (input.supabaseUrl && urlRef !== PRODUCTION_SUPABASE_REF && urlRef !== QA_SUPABASE_REF) {
+    reasons.push("NEXT_PUBLIC_SUPABASE_URL is not the approved QA Supabase project");
+  }
+  if (!input.anonKey) {
+    reasons.push("NEXT_PUBLIC_SUPABASE_ANON_KEY is not set for this Preview build");
+  } else if (keyRef !== PRODUCTION_SUPABASE_REF && keyRef !== QA_SUPABASE_REF) {
+    reasons.push("NEXT_PUBLIC_SUPABASE_ANON_KEY is not an anon key of the approved QA Supabase project");
+  }
+  // Analytics must be explicitly off (default "consent" would load GA4/PostHog after consent).
+  if ((input.analyticsMode ?? "").trim() !== "off") {
+    reasons.push('NEXT_PUBLIC_ANALYTICS_MODE must be explicitly "off" for Preview builds');
   }
   return { ok: reasons.length === 0, applies: true, reasons };
 }

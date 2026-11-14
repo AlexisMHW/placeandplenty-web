@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 // @ts-ignore plain JS module
-import { checkPreviewIsolation, refFromSupabaseUrl, refFromJwt, PRODUCTION_SUPABASE_REF } from "../scripts/lib/preview-isolation.mjs";
+import { checkPreviewIsolation, QA_SUPABASE_REF, refFromSupabaseUrl, refFromJwt, PRODUCTION_SUPABASE_REF } from "../scripts/lib/preview-isolation.mjs";
 
 const PROD = PRODUCTION_SUPABASE_REF;
 const QA = "gpzlytukyvshrrxrmooo";
@@ -40,7 +40,7 @@ test("unparseable value containing the production ref still fails", () => {
 });
 
 test("preview on QA project passes", () => {
-  const r = checkPreviewIsolation({ vercelEnv: "preview", supabaseUrl: `https://${QA}.supabase.co`, anonKey: jwt(QA) });
+  const r = checkPreviewIsolation({ vercelEnv: "preview", supabaseUrl: `https://${QA}.supabase.co`, anonKey: jwt(QA), analyticsMode: "off" });
   assert.equal(r.ok, true);
   assert.deepEqual(r.reasons, []);
 });
@@ -82,7 +82,8 @@ test("CLI: exits 1 for production-wired Preview, 0 otherwise, and prints no env 
   const bad = runGuard({ VERCEL_ENV: "preview", NEXT_PUBLIC_SUPABASE_URL: `https://${PROD}.supabase.co`, NEXT_PUBLIC_SUPABASE_ANON_KEY: jwt(PROD) });
   assert.equal(bad.status, 1);
   assert.ok(!bad.stdout.includes(jwt(PROD)) && !bad.stderr.includes(jwt(PROD)));
-  assert.equal(runGuard({ VERCEL_ENV: "preview", NEXT_PUBLIC_SUPABASE_URL: `https://${QA}.supabase.co` }).status, 0);
+  assert.equal(runGuard({ VERCEL_ENV: "preview", NEXT_PUBLIC_SUPABASE_URL: `https://${QA}.supabase.co`, NEXT_PUBLIC_SUPABASE_ANON_KEY: jwt(QA), NEXT_PUBLIC_ANALYTICS_MODE: "off" }).status, 0);
+  assert.equal(runGuard({ VERCEL_ENV: "preview", NEXT_PUBLIC_SUPABASE_URL: `https://${QA}.supabase.co`, NEXT_PUBLIC_SUPABASE_ANON_KEY: jwt(QA) }).status, 1); // analytics not off
   assert.equal(runGuard({ VERCEL_ENV: "production", NEXT_PUBLIC_SUPABASE_URL: `https://${PROD}.supabase.co` }).status, 0);
   assert.equal(runGuard({ NEXT_PUBLIC_SUPABASE_URL: `https://${PROD}.supabase.co` }).status, 0);
 });
@@ -94,4 +95,18 @@ test("guard script is plain JS (no TS type stripping needed on the build host) a
     const src = readFileSync(f, "utf8");
     assert.ok(!/from ["'][^"']+\.ts["']/.test(src), `${f} must not import .ts`);
   }
+});
+
+test("preview fails unless analytics mode is exactly off", () => {
+  const base = { vercelEnv: "preview", supabaseUrl: `https://${QA}.supabase.co`, anonKey: jwt(QA) };
+  for (const m of [undefined, "", "consent", "legacy", "OFF", "on"]) assert.equal(checkPreviewIsolation({ ...base, analyticsMode: m }).ok, false, String(m));
+  assert.equal(checkPreviewIsolation({ ...base, analyticsMode: "off" }).ok, true);
+});
+
+test("preview fails closed for any project other than QA, and for a missing anon key", () => {
+  const other = "abcdefghij0123456789";
+  assert.equal(checkPreviewIsolation({ vercelEnv: "preview", supabaseUrl: `https://${other}.supabase.co`, anonKey: jwt(other), analyticsMode: "off" }).ok, false);
+  assert.equal(checkPreviewIsolation({ vercelEnv: "preview", supabaseUrl: "https://example.com", anonKey: jwt(QA), analyticsMode: "off" }).ok, false);
+  assert.equal(checkPreviewIsolation({ vercelEnv: "preview", supabaseUrl: `https://${QA}.supabase.co`, analyticsMode: "off" }).ok, false);
+  assert.equal(QA_SUPABASE_REF, QA);
 });
