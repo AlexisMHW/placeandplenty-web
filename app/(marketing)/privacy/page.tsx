@@ -34,7 +34,9 @@
 //     push are disclosed below);
 //   * the WEBSITE uses Google Analytics and PostHog, only after the visitor
 //     accepts (see components/AnalyticsConsent.tsx), never on invitation,
-//     gallery, co-host-invite, auth, /command-center or /creator routes.
+//     gallery, co-host-invite, auth, reset-password, /command-center, /admin
+//     or /creator routes; on /login and /host only sanitized page templates
+//     and named events (see lib/analytics-privacy.ts).
 //     Adding or changing a tool on either surface changes this page.
 //
 // DRAFT CORRECTION, 13 Nov 2026 (fork PRIVACY-VERIFY). NOT LEGAL ADVICE.
@@ -209,20 +211,37 @@ export default function PrivacyPage() {
         analytics&rdquo; in the banner, we use Google Analytics and PostHog
         to understand how people use the website, for example which pages
         help someone plan a gathering. They may set cookies or use local
-        storage on your device and receive your IP address, device and
-        browser details, and the pages you visit. We configure them not to
-        build advertising profiles, not to record your screen or
-        interactions, and not to collect names or email addresses. If you
-        decline, or if your browser sends a Global Privacy Control signal,
-        we load neither tool.
+        storage on your device, and they receive your IP address, your
+        browser, device type, screen size and time zone, and a random
+        identifier stored in your browser. If you decline, or if your browser
+        sends a Global Privacy Control or Do Not Track signal, we load neither
+        tool.
       </p>
       <p>
-        We never load analytics on your invitation link, RSVP page, photo
-        gallery link, co-host invitation, sign-in confirmation or
-        password-reset pages. On the sign-in page and the signed-in host
-        area, only the page address is sent, with identifiers, tokens,
-        codes, email addresses and names removed; we do not send what is
-        on the page. {/* COUNSEL/OWNER: add retention periods for Google Analytics and PostHog once confirmed in each dashboard; add transfer/legal-basis wording if EU/UK visitors are in scope; add a "change your analytics choice" link once the build item exists. */}
+        <strong>Where analytics never run.</strong> We never load or send
+        analytics from your invitation link, RSVP page, photo gallery link,
+        co-host invitation, sign-in confirmation or password-reset pages, or
+        from our staff and creator pages.
+      </p>
+      <p>
+        <strong>Sign-in page and signed-in host area.</strong> If you accept,
+        analytics also run here, in a limited form. We send only (1) a
+        shortened page address: in the host area a gathering appears as
+        &ldquo;/host/g/[id]/people&rdquo;, never its name or number, and
+        everything after a &ldquo;?&rdquo; or &ldquo;#&rdquo; is removed
+        except simple campaign or referral tags such as &ldquo;utm_source&rdquo;; and (2)
+        a short list of named actions, such as viewing pricing, starting to
+        create a gathering, starting checkout, completing a purchase or tapping an app-store link. For
+        a site you came from, we send only that site&rsquo;s name, not its
+        address. We do not tell either tool who you are, and we do not send
+        your name, email address, guests, page content, page titles, what you
+        type, or what you click beyond those named actions.
+      </p>
+      <p>
+        We configure Google Analytics not to use Google signals or ad
+        personalization, and PostHog not to record sessions or screens, track
+        general clicks or run surveys.{" "}
+        {/* COUNSEL/OWNER: add retention periods for Google Analytics and PostHog once confirmed in each dashboard; add transfer/legal-basis wording if EU/UK visitors are in scope; add a "change your analytics choice" link once the build item exists. OWNER: confirm in GA4 DebugView/Realtime that Google's automatic (enhanced measurement) events also carry the shortened address, or turn those toggles off, before relying on the Google Analytics half of this paragraph. */}
       </p>
 
       <h3>What we do not collect</h3>
@@ -307,10 +326,10 @@ export default function PrivacyPage() {
         <li>
           <strong>Google (Analytics)</strong> and <strong>PostHog</strong> —
           website analytics, only if you accept in the banner (see
-          &ldquo;Website analytics&rdquo;). They receive page addresses
-          (with tokens, codes and personal values removed), device and browser
-          details and your IP address. PostHog is hosted in the United
-          States.
+          &ldquo;Website analytics&rdquo;). They receive shortened page
+          addresses (with tokens, codes, ids and personal values removed), a
+          short list of named actions, device and browser details and your IP
+          address. PostHog is hosted in the United States.
         </li>
         <li>
           <strong>Resend</strong> — sends invitation, reminder and account

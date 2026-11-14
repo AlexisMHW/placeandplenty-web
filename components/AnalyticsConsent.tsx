@@ -12,6 +12,7 @@ import {
   GA4_CONSENT_DEFAULT_DENIED,
   decideAnalytics,
   ga4ConfigParams,
+  ga4PageParams,
   postHogInitOptions,
   resolveMode,
   sanitizeUrlForAnalytics,
@@ -27,7 +28,10 @@ const MODE = resolveMode(process.env.NEXT_PUBLIC_ANALYTICS_MODE);
 
 declare global {
   interface Window {
-    __ppAnalyticsLoaded?: boolean;
+    __ppAnalyticsLoaded?: boolean; // analytics may send right now
+    __ppAnalyticsPaused?: boolean; // on a secret-bearing route: scripts stay loaded, nothing is sent
+    __ppScriptsInjected?: boolean; // vendor scripts were injected once this page load
+    __ppLastPageView?: string; // last address sent, so one visit is not counted twice
     dataLayer?: unknown[];
   }
 }
@@ -44,8 +48,8 @@ function readSignals(): BrowserSignals {
 }
 
 function loadScriptsOnce() {
-  if (window.__ppAnalyticsLoaded) return;
-  window.__ppAnalyticsLoaded = true;
+  if (window.__ppScriptsInjected) return;
+  window.__ppScriptsInjected = true;
 
   // GA4
   window.dataLayer = window.dataLayer || [];
@@ -54,7 +58,7 @@ function loadScriptsOnce() {
   gtag("consent", "default", GA4_CONSENT_DEFAULT_DENIED);
   gtag("consent", "update", { analytics_storage: "granted" });
   gtag("js", new Date());
-  gtag("config", GA_MEASUREMENT_ID, ga4ConfigParams(window.location.href));
+  gtag("config", GA_MEASUREMENT_ID, ga4ConfigParams(window.location.href, document.referrer));
   const ga = document.createElement("script");
   ga.async = true;
   ga.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
@@ -65,9 +69,18 @@ function loadScriptsOnce() {
   window.posthog?.init?.(POSTHOG_PROJECT_KEY, postHogInitOptions());
 }
 
+// Keep Google's page location/title/referrer defaults sanitized on every navigation, so any event
+// Google builds itself (enhanced measurement) cannot carry a raw URL or a gathering name.
+function pinGaPageParams(href: string) {
+  (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag?.("set", ga4PageParams(href, document.referrer));
+}
+
 export function sendPageView(href: string) {
-  if (!window.__ppAnalyticsLoaded) return;
+  if (!window.__ppAnalyticsLoaded || window.__ppAnalyticsPaused) return;
+  if (window.__ppLastPageView === href) return;
+  window.__ppLastPageView = href;
   const location = sanitizeUrlForAnalytics(href);
+  pinGaPageParams(href);
   (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag?.("event", "page_view", { page_location: location });
   window.posthog?.capture?.("$pageview", { $current_url: location });
 }
@@ -81,11 +94,23 @@ export default function AnalyticsConsent() {
     const decision = decideAnalytics({ mode: MODE, pathname, signals });
     if (decision.load) {
       loadScriptsOnce();
+      window.__ppAnalyticsLoaded = true;
+      window.__ppAnalyticsPaused = false;
+      if (window.posthog?.has_opted_out_capturing?.()) window.posthog.opt_in_capturing?.();
       sendPageView(window.location.href);
-    } else if (window.__ppAnalyticsLoaded) {
-      // Consent withdrawn or navigated onto a secret-bearing route: stop collection.
-      window.posthog?.opt_out_capturing?.();
-      window.__ppAnalyticsLoaded = false;
+    } else if (window.__ppScriptsInjected) {
+      if (decision.reason === "excluded_path") {
+        // Moved (client-side) onto a secret-bearing route: pause. Nothing is sent from here,
+        // and the SDK's own before_send guard drops anything that slips through. No persistent
+        // opt-out is written, so the visitor's earlier choice still applies on other pages.
+        window.__ppAnalyticsPaused = true;
+        window.__ppLastPageView = undefined;
+        pinGaPageParams(window.location.href); // sanitizes to /<first>/[redacted]
+      } else {
+        // Consent withdrawn / GPC / DNT / mode off: stop collection and remember the opt-out.
+        window.__ppAnalyticsLoaded = false;
+        window.posthog?.opt_out_capturing?.();
+      }
     }
     setShowBanner(shouldShowBanner({ mode: MODE, pathname, signals }));
   }, [pathname]);

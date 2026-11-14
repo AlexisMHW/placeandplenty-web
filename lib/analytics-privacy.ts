@@ -1,5 +1,5 @@
 // Pure, dependency-free privacy helpers for web analytics (GA4 + PostHog).
-// PROPOSAL ONLY - not wired into app/layout.tsx until the owner approves.
+// Release candidate (Phase 2): consent gating + URL/property allowlists. Not merged or deployed.
 // Nothing here loads a script, sets a cookie or sends an event; it only decides
 // WHETHER something may happen and WHAT it may contain, so it is unit-testable.
 //
@@ -42,15 +42,85 @@ export function isAnalyticsExcludedPath(pathname: string): boolean {
   return EXCLUDED_PREFIXES.some((prefix) => p === prefix || p.startsWith(`${prefix}/`));
 }
 
-const UUID_SEGMENT = /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=\/|$)/gi;
+// ---------------------------------------------------------------------------
+// Business events. This list is the ONLY set of custom events that may leave the
+// browser (plus PostHog's "$pageview"). Anything else - $identify, $autocapture,
+// $set, $web_vitals, $snapshot, ... - is dropped by scrubPostHogEvent.
+export const ANALYTICS_EVENT_NAMES = [
+  "checklist_requested", "checklist_signup_completed", "checklist_downloaded", "checklist_account_clicked",
+  "homepage_view", "search_landing_view", "guest_list_signup_started", "guest_list_signup_completed",
+  "founding_host_clicked", "founding_host_application_completed", "pricing_viewed", "support_viewed",
+  "signup_started", "account_created", "app_store_click", "play_store_click", "gathering_started",
+  "gathering_created", "paywall_viewed", "checkout_started", "purchase_completed", "paper_suite_viewed",
+  "paper_suite_preview_generated", "paper_suite_quote_received", "paper_suite_checkout_started",
+] as const;
 
-const SENSITIVE_QUERY_KEYS = new Set([
-  "token", "code", "access_token", "refresh_token", "id_token", "token_hash", "t", "key",
-  "email", "e", "phone", "name", "invite", "rsvp", "session_id", "next", "state",
+// Custom event properties that may be sent (allowlist). Values must also pass isSafeValue.
+export const SAFE_EVENT_PROPERTY_KEYS = new Set([
+  "client_platform", "product", "topic", "entry_point", "gathering_type", "piece_type", "size_id",
+  "matched_invitation", "quantity", "email_confirmation_required",
 ]);
 
+// Hosts treated as "ours". Anything else (a referrer such as google.com) is reduced to its origin.
+const OWN_HOSTS = new Set(["placeandplenty.com", "www.placeandplenty.com", "localhost", "127.0.0.1"]);
+
+const MARKETING_QUERY_KEYS = new Set(["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "ref", "via"]);
+
+// A marketing value is short, plain text. Anything that could be an email, token or name-like
+// free text is dropped rather than trusted.
+function isSafeMarketingValue(v: string): boolean {
+  return /^[A-Za-z0-9._~ +\-]{1,64}$/.test(v) && !v.includes("@");
+}
+
+function isSafeValue(v: unknown): boolean {
+  if (typeof v === "boolean") return true;
+  if (typeof v === "number") return Number.isFinite(v);
+  if (typeof v === "string") return /^[A-Za-z0-9._:+ \-]{0,64}$/.test(v) && !v.includes("@");
+  return false;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Long unbroken id-like segment (base64/hex/nanoid tokens, Stripe cs_/pi_ ids, slugs with digits are shorter).
+const TOKENISH_RE = /^[A-Za-z0-9_-]{24,}$/;
+
+const HOST_STATIC_PAGES = new Set(["account", "closet", "create", "guest-book", "invited", "notifications"]);
+const HOST_GATHERING_SECTIONS = new Set([
+  "co-hosts", "contributions", "find-help", "guest-experience", "hub", "invitations", "music",
+  "paper-suite", "people", "photos", "schedule", "settings", "shopping", "style", "table",
+]);
+
+function safeDecode(seg: string): string {
+  try { return decodeURIComponent(seg); } catch { return seg; }
+}
+
+// Path templating. The signed-in host area is reduced to a fixed set of route shapes so no
+// gathering id, name or slug can appear in a page address; other paths only lose id-like segments.
+export function sanitizePathForAnalytics(pathname: string): string {
+  const segs = pathname.split("/").filter(Boolean);
+  if (segs[0]?.toLowerCase() === "host") {
+    if (segs.length === 1) return "/host";
+    const second = segs[1].toLowerCase();
+    if (segs.length === 2 && HOST_STATIC_PAGES.has(second)) return `/host/${second}`;
+    if (second === "g") {
+      if (segs.length === 2) return "/host/g/[other]";
+      if (segs.length === 3) return "/host/g/[id]";
+      const section = segs[3].toLowerCase();
+      return segs.length === 4 && HOST_GATHERING_SECTIONS.has(section) ? `/host/g/[id]/${section}` : "/host/g/[id]/[other]";
+    }
+    return "/host/[other]";
+  }
+  const out = segs.map((seg) => {
+    const d = safeDecode(seg);
+    if (UUID_RE.test(d)) return "[id]";
+    if (d.includes("@") || d.length > 80) return "[redacted]";
+    if (TOKENISH_RE.test(d)) return "[id]";
+    return seg;
+  });
+  return "/" + out.join("/");
+}
+
 // Strip anything secret/personal from a URL before it can reach a third party.
-// Keeps marketing parameters (utm_*, ref/creator code handled by first-party attribution).
+// Keeps only marketing parameters (utm_*, ref, via) with plain-text values.
 export function sanitizeUrlForAnalytics(raw: string): string {
   let url: URL;
   try {
@@ -58,74 +128,82 @@ export function sanitizeUrlForAnalytics(raw: string): string {
   } catch {
     return "";
   }
+  if (!OWN_HOSTS.has(url.hostname.toLowerCase())) return `${url.origin}/`; // external referrer: origin only
   if (isAnalyticsExcludedPath(url.pathname)) {
     const first = `/${url.pathname.split("/").filter(Boolean)[0] ?? ""}`;
     return `${url.origin}${first}/[redacted]`;
   }
-  for (const key of Array.from(url.searchParams.keys())) {
-    const k = key.toLowerCase();
-    if (SENSITIVE_QUERY_KEYS.has(k) || (!k.startsWith("utm_") && k !== "ref" && k !== "via")) {
-      url.searchParams.delete(key);
-    }
-  }
-  url.hash = "";
-  url.pathname = url.pathname.replace(UUID_SEGMENT, "/[id]");
-  return url.toString().replace("%5Bid%5D", "[id]");
+  const kept = new URLSearchParams();
+  url.searchParams.forEach((value, key) => {
+    if (MARKETING_QUERY_KEYS.has(key.toLowerCase()) && isSafeMarketingValue(value)) kept.append(key.toLowerCase(), value);
+  });
+  const qs = kept.toString();
+  return `${url.origin}${sanitizePathForAnalytics(url.pathname)}${qs ? `?${qs}` : ""}`;
 }
 
+// Custom event properties: allowlist of keys AND plain-text values only.
 export function scrubEventProperties(props: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(props)) {
-    if (typeof v === "string" && /^https?:\/\//i.test(v)) out[k] = sanitizeUrlForAnalytics(v);
-    else if (/email|phone|name|token|address|message/i.test(k)) continue;
-    else out[k] = v;
+    if (SAFE_EVENT_PROPERTY_KEYS.has(k) && isSafeValue(v)) out[k] = v;
   }
   return out;
 }
 
-// Events we never want to leave the browser at all, whatever the SDK or a remote
-// config tries to enable. $web_vitals carries an unsanitized `current_url`; the others
-// can carry text, element names or screen content.
-const BLOCKED_POSTHOG_EVENTS = new Set([
-  "$web_vitals", "$autocapture", "$snapshot", "$performance_event", "$exception",
-  "$dead_click", "$rageclick", "$heatmap", "$pageleave", "$survey shown", "$survey sent",
-]);
+// PostHog events allowed out of the browser at all. Everything else is dropped.
+const ALLOWED_POSTHOG_EVENTS = new Set<string>(["$pageview", ...ANALYTICS_EVENT_NAMES]);
 
 // Keys PostHog itself requires. `token` is the public project key (not a user token);
 // dropping it makes PostHog reject every event.
 const POSTHOG_REQUIRED_KEYS = new Set(["token", "distinct_id", "$device_id", "$session_id", "$window_id"]);
 
-function scrubDeep(value: unknown, depth = 0): unknown {
-  if (depth > 6) return undefined;
-  if (typeof value === "string") {
-    return /^https?:\/\//i.test(value) ? sanitizeUrlForAnalytics(value) : value;
-  }
-  if (Array.isArray(value)) return value.map((v) => scrubDeep(v, depth + 1));
-  if (value && typeof value === "object") {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      if (!(depth === 0 && POSTHOG_REQUIRED_KEYS.has(k)) &&
-          /email|phone|(^|_)name($|_)|token|address|message|\$el_text|\$elements/i.test(k)) continue;
-      out[k] = scrubDeep(v, depth + 1);
-    }
-    return out;
-  }
-  return value;
+// Automatic, non-identifying PostHog properties we keep (allowlist). URL-bearing ones are sanitized.
+const POSTHOG_URL_KEYS = new Set(["$current_url", "$referrer", "$session_entry_url", "$session_entry_referrer"]);
+const POSTHOG_PATH_KEYS = new Set(["$pathname", "$session_entry_pathname"]);
+const POSTHOG_SAFE_AUTO_KEYS = new Set([
+  "$lib", "$lib_version", "$browser", "$browser_version", "$os", "$os_version", "$device_type",
+  "$screen_height", "$screen_width", "$viewport_height", "$viewport_width", "$timezone", "$timezone_offset",
+  "$time", "$insert_id", "$is_identified", "$process_person_profile", "$host", "$referring_domain",
+  "$session_entry_host", "$session_entry_referring_domain",
+]);
+
+function currentPathname(): string | null {
+  const loc = (globalThis as { location?: { pathname?: string } }).location;
+  return typeof loc?.pathname === "string" ? loc.pathname : null;
 }
 
-// PostHog before_send hook: runs on EVERY event after the SDK adds its automatic
-// properties ($current_url, $session_entry_url, $referrer, $initial_*, ...), so those
-// are sanitized too. Returning null drops the event.
+// PostHog before_send hook: runs on EVERY event after the SDK adds its automatic properties.
+// Returning null drops the event. Defence in depth, in this order:
+//   1. only business events and $pageview may be sent (no $identify/$autocapture/$set/$snapshot/...)
+//   2. nothing is sent while paused or while the browser is on a secret-bearing route
+//   3. only allowlisted properties survive; URLs and paths are sanitized; $set/$set_once are removed
 export function scrubPostHogEvent<T extends { event?: string; properties?: Record<string, unknown> } | null>(
   evt: T,
 ): T | null {
   if (!evt) return null;
-  if (evt.event && BLOCKED_POSTHOG_EVENTS.has(evt.event)) return null;
-  if (evt.properties) evt.properties = scrubDeep(evt.properties) as Record<string, unknown>;
+  if (!evt.event || !ALLOWED_POSTHOG_EVENTS.has(evt.event)) return null;
+  if ((globalThis as { __ppAnalyticsPaused?: boolean }).__ppAnalyticsPaused === true) return null;
+  const here = currentPathname();
+  if (here !== null && isAnalyticsExcludedPath(here)) return null;
   const rest = evt as unknown as Record<string, unknown>;
-  for (const key of ["$set", "$set_once"]) {
-    if (rest[key]) rest[key] = scrubDeep(rest[key]);
+  delete rest["$set"];
+  delete rest["$set_once"];
+  const props = (evt.properties ?? {}) as Record<string, unknown>;
+  const clean: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(props)) {
+    if (POSTHOG_REQUIRED_KEYS.has(k) || POSTHOG_SAFE_AUTO_KEYS.has(k)) {
+      clean[k] = v;
+    } else if (POSTHOG_URL_KEYS.has(k)) {
+      if (typeof v === "string" && v) clean[k] = sanitizeUrlForAnalytics(v);
+    } else if (POSTHOG_PATH_KEYS.has(k)) {
+      if (typeof v === "string") clean[k] = sanitizePathForAnalytics(v);
+    } else if (SAFE_EVENT_PROPERTY_KEYS.has(k)) {
+      if (isSafeValue(v)) clean[k] = v;
+    } else if (/^utm_(source|medium|campaign|term|content)$/.test(k) || k === "ref" || k === "via") {
+      if (typeof v === "string" && isSafeMarketingValue(v)) clean[k] = v;
+    }
   }
+  evt.properties = clean;
   return evt;
 }
 
@@ -189,6 +267,13 @@ export function postHogInitOptions(apiHost = "https://us.i.posthog.com") {
     disable_surveys: true,
     capture_dead_clicks: false,
     capture_performance: false, // no web-vitals / network timing events (they carry raw URLs)
+    capture_heatmaps: false,
+    capture_exceptions: false,
+    advanced_disable_flags: true, // no feature-flag/remote-config round trip; we use no flags
+    disable_external_dependency_loading: true, // never lazy-load the session recorder, surveys, toolbar or exception scripts
+    disable_product_tours: true,
+    disable_conversations: true,
+    enable_recording_console_log: false,
     before_send: scrubPostHogEvent,
     person_profiles: "identified_only" as const, // we never call identify()
     persistence: "localStorage" as const, // first-party storage only after consent
@@ -201,12 +286,25 @@ export function postHogInitOptions(apiHost = "https://us.i.posthog.com") {
 // GA4 config. No Google signals, no ad personalization, no automatic page_view
 // (we send one with a sanitized location). Consent Mode is set to "denied" by default
 // as defence in depth, but the script is not loaded at all without consent.
-export function ga4ConfigParams(pageLocation: string) {
+// The page title is replaced by a constant because host-area titles can contain a gathering name.
+export const GA4_STATIC_PAGE_TITLE = "Place & Plenty";
+
+export function ga4PageParams(pageLocation: string, referrer = "") {
+  return {
+    page_location: sanitizeUrlForAnalytics(pageLocation),
+    page_referrer: referrer ? sanitizeUrlForAnalytics(referrer) : "",
+    page_title: GA4_STATIC_PAGE_TITLE,
+  };
+}
+
+export function ga4ConfigParams(pageLocation: string, referrer = "") {
   return {
     send_page_view: false,
     allow_google_signals: false,
     allow_ad_personalization_signals: false,
-    page_location: sanitizeUrlForAnalytics(pageLocation),
+    ads_data_redaction: true,
+    url_passthrough: false,
+    ...ga4PageParams(pageLocation, referrer),
   };
 }
 

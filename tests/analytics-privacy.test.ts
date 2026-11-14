@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import {
+  ANALYTICS_EVENT_NAMES,
   CONSENT_POLICY_VERSION,
   decideAnalytics,
   ga4ConfigParams,
@@ -8,6 +11,7 @@ import {
   parseStoredConsent,
   postHogInitOptions,
   resolveMode,
+  sanitizePathForAnalytics,
   sanitizeUrlForAnalytics,
   scrubEventProperties,
   scrubPostHogEvent,
@@ -94,7 +98,7 @@ test("sanitizeUrl redacts secret paths and strips non-marketing query/hash/ids",
   assert.equal(sanitizeUrlForAnalytics("http://"), "");
 });
 
-test("scrubEventProperties removes personal keys and sanitizes URLs", () => {
+test("scrubEventProperties is an allowlist: unknown keys, URLs and free text are dropped", () => {
   const out = scrubEventProperties({
     client_platform: "web",
     product: "gathering_pass",
@@ -102,8 +106,12 @@ test("scrubEventProperties removes personal keys and sanitizes URLs", () => {
     guest_name: "Sam",
     referrer: "https://placeandplenty.com/invite/SECRET",
     count: 2,
+    topic: "Betsy Hughes betsy@example.com",
+    entry_point: "guest_list",
+    quantity: 3,
+    matched_invitation: true,
   });
-  assert.deepEqual(out, { client_platform: "web", product: "gathering_pass", referrer: "https://placeandplenty.com/invite/[redacted]", count: 2 });
+  assert.deepEqual(out, { client_platform: "web", product: "gathering_pass", entry_point: "guest_list", quantity: 3, matched_invitation: true });
 });
 
 test("PostHog options: replay, autocapture, surveys, person profiles are off", () => {
@@ -127,7 +135,7 @@ test("GA4 config: no signals, no ad personalization, no auto page_view, sanitize
 
 test("PostHog before_send drops web-vitals/autocapture/snapshot events", () => {
   for (const event of ["$web_vitals", "$autocapture", "$snapshot", "$exception"]) {
-    assert.equal(scrubPostHogEvent({ event, properties: { current_url: "https://x.test/invite/abc" } }), null);
+    assert.equal(scrubPostHogEvent({ event, properties: { current_url: "https://placeandplenty.com/invite/abc" } }), null);
   }
   assert.equal(scrubPostHogEvent(null), null);
 });
@@ -136,9 +144,9 @@ test("PostHog before_send sanitizes automatic URL properties and drops personal 
   const out = scrubPostHogEvent({
     event: "$pageview",
     properties: {
-      $current_url: "https://x.test/login?next=%2Fhost%2Fco-host-invite%2FSECRET&utm_source=a",
-      $session_entry_url: "https://x.test/pricing?email=betsy@example.com&name=Betsy%20Hughes&ref=c1",
-      $referrer: "https://x.test/auth/callback?code=ABC#frag",
+      $current_url: "https://placeandplenty.com/login?next=%2Fhost%2Fco-host-invite%2FSECRET&utm_source=a",
+      $session_entry_url: "https://placeandplenty.com/pricing?email=betsy@example.com&name=Betsy%20Hughes&ref=c1",
+      $referrer: "https://placeandplenty.com/auth/callback?code=ABC#frag",
       user_email: "betsy@example.com",
       $pathname: "/pricing",
     },
@@ -163,4 +171,189 @@ test("PostHog before_send keeps the project token and ids PostHog needs to accep
   assert.equal(out?.properties?.token, "phc_public_project_key");
   assert.equal(out?.properties?.distinct_id, "abc");
   assert.equal(out?.properties?.auth_token, undefined);
+});
+
+
+// ---------------------------------------------------------------------------
+// Phase 2: /host and /login stay measurable, but only through sanitized, allowlisted data.
+
+test("host area paths are templated: gathering ids (UUID or not) never appear", () => {
+  const uuid = "3f2b8c1e-1a2b-4c3d-8e9f-0a1b2c3d4e5f";
+  assert.equal(sanitizePathForAnalytics("/host"), "/host");
+  assert.equal(sanitizePathForAnalytics("/host/create"), "/host/create");
+  assert.equal(sanitizePathForAnalytics(`/host/g/${uuid}`), "/host/g/[id]");
+  assert.equal(sanitizePathForAnalytics("/host/g/betsys-fall-dinner"), "/host/g/[id]");
+  assert.equal(sanitizePathForAnalytics("/host/g/abc123/people"), "/host/g/[id]/people");
+  assert.equal(sanitizePathForAnalytics("/host/g/abc123/shopping"), "/host/g/[id]/shopping");
+  assert.equal(sanitizePathForAnalytics("/host/g/abc123/not-a-section"), "/host/g/[id]/[other]");
+  assert.equal(sanitizePathForAnalytics("/host/g/abc123/people/extra"), "/host/g/[id]/[other]");
+  assert.equal(sanitizePathForAnalytics("/host/something-new/betsy@example.com"), "/host/[other]");
+  assert.equal(sanitizePathForAnalytics("/HOST/G/Secret/People"), "/host/g/[id]/people");
+});
+
+test("non-host paths lose id-like, token-like and email-like segments", () => {
+  assert.equal(sanitizePathForAnalytics("/pricing"), "/pricing");
+  assert.equal(sanitizePathForAnalytics("/checkout/gathering_pass"), "/checkout/gathering_pass");
+  assert.equal(sanitizePathForAnalytics("/x/cs_test_a1B2c3D4e5F6g7H8i9J0kLmNoP"), "/x/[id]");
+  assert.equal(sanitizePathForAnalytics("/x/betsy%40example.com"), "/x/[redacted]");
+  assert.equal(sanitizePathForAnalytics("/x/3f2b8c1e-1a2b-4c3d-8e9f-0a1b2c3d4e5f/y"), "/x/[id]/y");
+  assert.equal(sanitizePathForAnalytics("/gathering-ideas/cozy-fall-supper"), "/gathering-ideas/cozy-fall-supper");
+});
+
+test("login redirect URLs keep no next/token/email/name/hash; host URLs keep no ids", () => {
+  const u = sanitizeUrlForAnalytics("https://placeandplenty.com/login?next=%2Fhost%2Fg%2F3f2b8c1e-1a2b-4c3d-8e9f-0a1b2c3d4e5f%2Fpeople&email=betsy%40example.com&name=Betsy#access_token=SECRET");
+  assert.equal(u, "https://placeandplenty.com/login");
+  assert.equal(
+    sanitizeUrlForAnalytics("https://placeandplenty.com/host/g/betsys-fall-dinner/people?guest=Betsy%20Hughes&purchase=success&utm_source=newsletter"),
+    "https://placeandplenty.com/host/g/[id]/people?utm_source=newsletter",
+  );
+});
+
+test("marketing query values must be short plain text (no emails, no free text)", () => {
+  assert.equal(sanitizeUrlForAnalytics("https://placeandplenty.com/?utm_source=betsy@example.com&utm_medium=email&ref=creator_1"), "https://placeandplenty.com/?utm_medium=email&ref=creator_1");
+  assert.equal(sanitizeUrlForAnalytics("https://placeandplenty.com/?utm_campaign=" + "a".repeat(65)), "https://placeandplenty.com/");
+  assert.equal(sanitizeUrlForAnalytics("https://placeandplenty.com/?utm_campaign=Betsy%27s%20dinner%21"), "https://placeandplenty.com/");
+});
+
+test("external referrers are reduced to their origin (no path, query or search terms)", () => {
+  assert.equal(sanitizeUrlForAnalytics("https://www.google.com/search?q=betsy+hughes+dinner&oq=x"), "https://www.google.com/");
+  assert.equal(sanitizeUrlForAnalytics("https://l.facebook.com/l.php?u=https%3A%2F%2Fplaceandplenty.com%2Finvite%2FSECRET"), "https://l.facebook.com/");
+});
+
+test("PostHog before_send: only business events and $pageview may leave; identity events are dropped", () => {
+  for (const event of ["$identify", "$create_alias", "$groupidentify", "$set", "$autocapture", "$web_vitals", "$snapshot", "$pageleave", "$exception", "some_new_event", "$feature_flag_called"]) {
+    assert.equal(scrubPostHogEvent({ event, properties: { distinct_id: "x" } }), null, event);
+  }
+  for (const event of ["$pageview", ...ANALYTICS_EVENT_NAMES]) {
+    assert.notEqual(scrubPostHogEvent({ event, properties: { distinct_id: "x" } }), null, event);
+  }
+});
+
+test("PostHog before_send: unknown properties, $set and $set_once are removed (allowlist)", () => {
+  const evt = {
+    event: "$pageview",
+    $set: { email: "betsy@example.com", $initial_current_url: "https://placeandplenty.com/invite/SECRET" },
+    $set_once: { $initial_referrer: "https://placeandplenty.com/gallery/SECRET" },
+    properties: {
+      token: "phc_x", distinct_id: "d1", $browser: "Chrome", $device_type: "Desktop",
+      $current_url: "https://placeandplenty.com/host/g/betsys-fall-dinner/people?guest=Betsy",
+      $pathname: "/host/g/betsys-fall-dinner/people",
+      $referrer: "https://www.google.com/search?q=betsy",
+      title: "Betsy's Fall Dinner - Place & Plenty",
+      $title: "Betsy's Fall Dinner",
+      $el_text: "Betsy Hughes",
+      email: "betsy@example.com",
+      $feature_flag_response: true,
+      client_platform: "web",
+      utm_source: "newsletter",
+      utm_campaign: "betsy@example.com",
+    } as Record<string, unknown>,
+  };
+  const out = scrubPostHogEvent(evt) as typeof evt & Record<string, unknown>;
+  assert.equal(out.$set, undefined);
+  assert.equal(out.$set_once, undefined);
+  const json = JSON.stringify(out);
+  for (const secret of ["Betsy", "betsy", "SECRET", "betsys-fall-dinner", "q=betsy"]) assert.ok(!json.includes(secret), secret);
+  assert.equal(out.properties.$current_url, "https://placeandplenty.com/host/g/[id]/people");
+  assert.equal(out.properties.$pathname, "/host/g/[id]/people");
+  assert.equal(out.properties.$referrer, "https://www.google.com/");
+  assert.equal(out.properties.$browser, "Chrome");
+  assert.equal(out.properties.client_platform, "web");
+  assert.equal(out.properties.utm_source, "newsletter");
+  assert.equal(out.properties.utm_campaign, undefined);
+});
+
+test("PostHog before_send: nothing is sent while paused or while the browser is on a secret-bearing route", () => {
+  const g = globalThis as { __ppAnalyticsPaused?: boolean; location?: { pathname: string } };
+  try {
+    g.__ppAnalyticsPaused = true;
+    assert.equal(scrubPostHogEvent({ event: "$pageview", properties: { distinct_id: "d" } }), null);
+    g.__ppAnalyticsPaused = false;
+    g.location = { pathname: "/invite/SECRET" };
+    assert.equal(scrubPostHogEvent({ event: "$pageview", properties: { distinct_id: "d" } }), null);
+    g.location = { pathname: "/host/g/abc/people" };
+    assert.notEqual(scrubPostHogEvent({ event: "$pageview", properties: { distinct_id: "d" } }), null);
+  } finally {
+    delete g.__ppAnalyticsPaused;
+    delete g.location;
+  }
+});
+
+test("PostHog options keep replay, recorder loading, autocapture, flags, surveys and exceptions off", () => {
+  const o = postHogInitOptions() as Record<string, unknown>;
+  assert.equal(o.disable_session_recording, true);
+  assert.equal(o.disable_external_dependency_loading, true);
+  assert.equal(o.advanced_disable_flags, true);
+  assert.equal(o.autocapture, false);
+  assert.equal(o.capture_pageview, false);
+  assert.equal(o.capture_pageleave, false);
+  assert.equal(o.capture_heatmaps, false);
+  assert.equal(o.capture_exceptions, false);
+  assert.equal(o.capture_dead_clicks, false);
+  assert.equal(o.enable_recording_console_log, false);
+  assert.equal(o.disable_surveys, true);
+});
+
+test("GA4 page params: sanitized location and referrer, constant title, no signals", () => {
+  const c = ga4ConfigParams("https://placeandplenty.com/host/g/betsys-fall-dinner?x=1", "https://placeandplenty.com/invite/SECRET");
+  assert.equal(c.page_location, "https://placeandplenty.com/host/g/[id]");
+  assert.equal(c.page_referrer, "https://placeandplenty.com/invite/[redacted]");
+  assert.equal(c.page_title, "Place & Plenty");
+  assert.equal(c.ads_data_redaction, true);
+  assert.equal(c.url_passthrough, false);
+});
+
+test("/host and /login are measurable with consent (not blanket-excluded), co-host invites are not", () => {
+  for (const p of ["/host", "/host/create", "/host/g/abc/people", "/login", "/signup"]) {
+    assert.equal(decideAnalytics({ mode: "consent", pathname: p, signals: { ...none, stored: granted } }).load, true, p);
+    assert.equal(decideAnalytics({ mode: "consent", pathname: p, signals: none }).load, false, p);
+  }
+  assert.equal(decideAnalytics({ mode: "consent", pathname: "/host/co-host-invite/T", signals: { ...none, stored: granted } }).load, false);
+});
+
+// --- source-tree guards: removing a safeguard makes these fail ---------------------------
+function walk(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    if (name === "node_modules" || name === ".next" || name === "tests" || name.startsWith(".")) continue;
+    const full = join(dir, name);
+    const st = statSync(full);
+    if (st.isDirectory()) walk(full, out);
+    else if (/\.(ts|tsx)$/.test(name)) out.push(full);
+  }
+  return out;
+}
+const ROOT = join(import.meta.dirname ?? ".", "..");
+const SOURCES = ["app", "components", "lib"].flatMap((d) => walk(join(ROOT, d)));
+
+test("no source file identifies users, sets user properties or starts session recording", () => {
+  const banned = [/posthog\??\.(identify|alias|people|setPersonProperties|startSessionRecording|group)\b/, /gtag\(\s*["']set["']\s*,\s*["']user_(id|properties)["']/, /gtag\(\s*["']config["'][^)]*user_id/];
+  for (const f of SOURCES) {
+    const text = readFileSync(f, "utf8");
+    for (const re of banned) assert.ok(!re.test(text), `${f} matches ${re}`);
+  }
+});
+
+test("every track() call in the source uses an event on the allowlist and never passes banned keys", () => {
+  const names = new Set<string>(ANALYTICS_EVENT_NAMES);
+  let calls = 0;
+  for (const f of SOURCES) {
+    const text = readFileSync(f, "utf8");
+    for (const m of text.matchAll(/\btrack\(\s*["']([a-z_]+)["']/g)) {
+      calls += 1;
+      assert.ok(names.has(m[1]), `${f}: track("${m[1]}") is not in ANALYTICS_EVENT_NAMES`);
+    }
+    for (const m of text.matchAll(/\btrack\(\s*["'][a-z_]+["']\s*,\s*\{([^}]*)\}/g)) {
+      assert.ok(!/\b(email|name|phone|token|address|message|guest\w*|invite\w*)\s*:/i.test(m[1]), `${f}: track() meta has a personal key: ${m[1]}`);
+    }
+  }
+  assert.ok(calls >= 15, `expected to find track() calls, found ${calls}`);
+});
+
+test("AnalyticsConsent keeps replay off, never opts in to recording, and uses the sanitizers", () => {
+  const text = readFileSync(join(ROOT, "components/AnalyticsConsent.tsx"), "utf8");
+  assert.ok(text.includes("postHogInitOptions()"));
+  assert.ok(text.includes("sanitizeUrlForAnalytics"));
+  assert.ok(text.includes("ga4PageParams"));
+  assert.ok(!/disable_session_recording\s*:\s*false/.test(text));
+  assert.ok(!/session_recording\s*:/.test(text));
 });
