@@ -1,0 +1,267 @@
+From 376a9241c97a927c28670ff923dc51a404e9d2c5 Mon Sep 17 00:00:00 2001
+From: comms <comms@local>
+Date: Sat, 14 Nov 2026 11:43:18 -0500
+Subject: [PATCH 1/2] COMMS: email delivery status (web) rebased on 9933a6b
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016NMbSxK35zQvFFyuuSYwpj
+---
+ app/(host)/host/g/[id]/people/page.tsx | 33 ++++--------
+ lib/invitation-delivery.ts             | 73 ++++++++++++++++++++++++++
+ lib/people-data.ts                     | 23 +++++++-
+ tests/invitation-delivery.test.ts      | 44 ++++++++++++++++
+ 4 files changed, 149 insertions(+), 24 deletions(-)
+ create mode 100644 lib/invitation-delivery.ts
+ create mode 100644 tests/invitation-delivery.test.ts
+
+diff --git a/app/(host)/host/g/[id]/people/page.tsx b/app/(host)/host/g/[id]/people/page.tsx
+index fda2afd..6fd275a 100644
+--- a/app/(host)/host/g/[id]/people/page.tsx
++++ b/app/(host)/host/g/[id]/people/page.tsx
+@@ -17,6 +17,7 @@ import {
+   updateGatheringPersonWeb,
+ } from "@/lib/people-actions";
+ import { rsvpLabel } from "@/lib/host-format";
++import { deliveryCopy, resolveDeliveryLabel } from "@/lib/invitation-delivery";
+ 
+ const RSVP_OPTIONS = ["yes", "maybe", "no", "invited", "no_response"].map(
+   (value) => ({ value, label: rsvpLabel(value) })
+@@ -26,26 +27,6 @@ const INPUT = "w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-b
+ 
+ export const metadata = { title: "My People" };
+ 
+-function deliveryLabel(firstShare: string | null | undefined, latest: string | null): string {
+-  if (!firstShare) return "Not sent";
+-  if (!latest) return "Queued";
+-  const labels: Record<string, string> = {
+-    proposed: "Queued",
+-    scheduled: "Queued",
+-    processing: "Queued",
+-    pending: "Queued",
+-    queued: "Queued",
+-    sent: "Sent",
+-    delivered: "Delivered",
+-    opened: "Opened",
+-    failed: "Needs attention",
+-    bounced: "Needs attention",
+-    skipped: "Not sent",
+-    cancelled: "Not sent",
+-  };
+-  return labels[latest] ?? latest.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+-}
+-
+ export default async function PeoplePage({ params }: { params: { id: string } }) {
+   const [gathering, guests, guestBook, user] = await Promise.all([
+     getGathering(params.id),
+@@ -256,10 +237,13 @@ export default async function PeoplePage({ params }: { params: { id: string } })
+                     ].filter(Boolean) as string[];
+                     const isSaved = g.guest?.id ? savedIds.has(g.guest.id) : false;
+                     const isPartyLead = !!g.invitation_party_id && leadByParty.get(g.invitation_party_id) === g.id;
+-                    const invitationState = deliveryLabel(
++                    const deliveryKey = resolveDeliveryLabel(
+                       g.party?.first_share_initiated_at,
+-                      g.latest_invitation_delivery_status
++                      g.latest_invitation_delivery_status,
++                      g.invitation_delivery_state
+                     );
++                    const invitationState = deliveryCopy(deliveryKey).label;
++                    const invitationHint = deliveryCopy(deliveryKey).hint;
+ 
+                     return (
+                       <li key={g.id} className="py-5">
+@@ -322,7 +306,10 @@ export default async function PeoplePage({ params }: { params: { id: string } })
+                         {isPartyLead && g.party && (
+                           <div className="mt-4 rounded-card border border-sage/25 bg-parchment px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-5">
+                             <div>
+-                              <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.16em] text-forest/50">
++                              <p
++                                className="font-body text-[0.62rem] font-bold uppercase tracking-[0.16em] text-forest/50"
++                                title={invitationHint}
++                              >
+                                 Invitation · {invitationState}
+                               </p>
+                               <p className="mt-1 font-body text-sm font-semibold text-forest">
+diff --git a/lib/invitation-delivery.ts b/lib/invitation-delivery.ts
+new file mode 100644
+index 0000000..1a618f7
+--- /dev/null
++++ b/lib/invitation-delivery.ts
+@@ -0,0 +1,73 @@
++// Host-facing invitation delivery status (web). Pure module: no imports, safe for node --test.
++//
++// HONESTY RULES
++//   * "delivered" is only ever shown when the server's summary says 'delivered' (a provider delivery event was
++//     recorded). Without that evidence a provider-accepted message is "accepted", never "delivered".
++//   * Nothing here ever says "opened" or "read": open tracking is off.
++//   * Complaints, bounces and suppression all read as "undeliverable" server-side, so a guest's spam complaint is
++//     never disclosed to the host.
++//   * Old schemas: if the summary RPC does not exist, callers pass summaryState = null and we fall back to the
++//     released `status` enum (pending/submitted/sent/failed) with the same honesty rules.
++
++export type DeliveryLabelKey = "not_sent" | "queued" | "accepted" | "delivered" | "delayed" | "undeliverable" | "failed";
++export type DeliveryLocale = "en" | "es";
++
++export const DELIVERY_COPY: Record<DeliveryLocale, Record<DeliveryLabelKey, { label: string; hint: string }>> = {
++  en: {
++    not_sent:      { label: "Not sent",             hint: "This invitation has not been sent yet." },
++    queued:        { label: "Waiting to send",      hint: "This invitation has not been handed to the mail provider yet." },
++    accepted:      { label: "Sent to mail provider", hint: "Handed to our email provider. We have not received confirmation that it reached their inbox." },
++    delivered:     { label: "Delivered to their email provider", hint: "Their email provider accepted it. We can't see whether it was opened." },
++    delayed:       { label: "Delayed",              hint: "Their email provider is slow to accept it. We'll keep trying for a while." },
++    undeliverable: { label: "Email address didn't work", hint: "This address can't receive our email. Ask them for another address, or share the invitation by text." },
++    failed:        { label: "Couldn't send",        hint: "We couldn't send this invitation. Try again or share it by text." },
++  },
++  es: {
++    not_sent:      { label: "No enviada",           hint: "Esta invitación aún no se ha enviado." },
++    queued:        { label: "En espera de envío",   hint: "Esta invitación aún no se ha entregado al proveedor de correo." },
++    accepted:      { label: "Enviada al proveedor de correo", hint: "Se entregó a nuestro proveedor de correo. Aún no recibimos confirmación de que llegara a su bandeja." },
++    delivered:     { label: "Entregada a su proveedor de correo", hint: "Su proveedor de correo la aceptó. No podemos ver si la abrieron." },
++    delayed:       { label: "Retrasada",            hint: "Su proveedor de correo tarda en aceptarla. Seguiremos intentando durante un tiempo." },
++    undeliverable: { label: "El correo no funcionó", hint: "Esta dirección no puede recibir nuestro correo. Pídele otra dirección o comparte la invitación por mensaje de texto." },
++    failed:        { label: "No se pudo enviar",    hint: "No pudimos enviar esta invitación. Inténtalo de nuevo o compártela por mensaje de texto." },
++  },
++};
++
++const SERVER_STATES: ReadonlySet<string> = new Set(["queued", "accepted", "delivered", "delayed", "undeliverable", "failed"]);
++
++/**
++ * Resolve the label key.
++ * @param firstShareInitiatedAt invitation_parties.first_share_initiated_at ("an invite was initiated")
++ * @param legacyStatus  latest communication_deliveries.status (released enum), or null
++ * @param summaryState  get_invitation_delivery_summary().delivery_state, or null when the RPC is absent/failed
++ */
++export function resolveDeliveryLabel(
++  firstShareInitiatedAt: string | null | undefined,
++  legacyStatus: string | null | undefined,
++  summaryState: string | null | undefined
++): DeliveryLabelKey {
++  if (summaryState && SERVER_STATES.has(summaryState)) {
++    return summaryState as DeliveryLabelKey;   // server is authoritative; unknown/future states fall through below
++  }
++  if (!firstShareInitiatedAt) return "not_sent";
++  switch (legacyStatus) {
++    case "sent":      return "accepted";   // provider accepted the API call; no delivery evidence
++    case "failed":    return "failed";
++    case "pending":
++    case "submitted":
++    case null:
++    case undefined:   return "queued";
++    default:          return "queued";     // never invent a stronger claim for an unrecognised value
++  }
++}
++
++export function deliveryCopy(key: DeliveryLabelKey, locale: DeliveryLocale = "en") {
++  return DELIVERY_COPY[locale][key];
++}
++
++/** Tone for the badge. Calm for expected states, attention for ones the host can act on. */
++export function deliveryTone(key: DeliveryLabelKey): "neutral" | "good" | "attention" {
++  if (key === "delivered") return "good";
++  if (key === "undeliverable" || key === "failed") return "attention";
++  return "neutral";
++}
+diff --git a/lib/people-data.ts b/lib/people-data.ts
+index 84359b9..7c94033 100644
+--- a/lib/people-data.ts
++++ b/lib/people-data.ts
+@@ -26,6 +26,8 @@ export interface PeopleWorkspaceRow {
+     first_share_initiated_at: string | null;
+   } | null;
+   latest_invitation_delivery_status: string | null;
++  /** Server delivery label from get_invitation_delivery_summary (queued/accepted/delivered/delayed/undeliverable/failed), or null when the RPC is absent or not permitted. */
++  invitation_delivery_state: string | null;
+ }
+ 
+ /**
+@@ -47,7 +49,7 @@ export async function getPeopleWorkspace(gatheringId: string): Promise<PeopleWor
+     .eq("gathering_id", gatheringId);
+   if (error) throw error;
+ 
+-  const rows = (data ?? []) as unknown as Omit<PeopleWorkspaceRow, "latest_invitation_delivery_status">[];
++  const rows = (data ?? []) as unknown as Omit<PeopleWorkspaceRow, "latest_invitation_delivery_status" | "invitation_delivery_state">[];
+ 
+   // Invitation state is party-level. Read the same delivery rows native uses
+   // and keep only the newest status for each party. `first_share_initiated_at`
+@@ -72,10 +74,29 @@ export async function getPeopleWorkspace(gatheringId: string): Promise<PeopleWor
+     latestByParty.set(delivery.invitation_party_id, delivery.status ?? null);
+   }
+ 
++  // Feature-detected: get_invitation_delivery_summary exists only after migration 213001. On an older schema, or for a
++  // viewer who is not allowed to call it, the RPC errors and we silently fall back to the released status enum.
++  const summaryByParty = new Map<string, string>();
++  try {
++    const { data: summary, error: summaryError } = await supabase.rpc("get_invitation_delivery_summary", {
++      p_gathering_id: gatheringId,
++    });
++    if (!summaryError && Array.isArray(summary)) {
++      for (const r of summary as Array<{ invitation_party_id: string | null; delivery_state: string | null }>) {
++        if (r.invitation_party_id && r.delivery_state) summaryByParty.set(r.invitation_party_id, r.delivery_state);
++      }
++    }
++  } catch {
++    /* older schema: keep the fallback */
++  }
++
+   return rows.map((row) => ({
+     ...row,
+     latest_invitation_delivery_status: row.invitation_party_id
+       ? latestByParty.get(row.invitation_party_id) ?? null
+       : null,
++    invitation_delivery_state: row.invitation_party_id
++      ? summaryByParty.get(row.invitation_party_id) ?? null
++      : null,
+   }));
+ }
+diff --git a/tests/invitation-delivery.test.ts b/tests/invitation-delivery.test.ts
+new file mode 100644
+index 0000000..d1569eb
+--- /dev/null
++++ b/tests/invitation-delivery.test.ts
+@@ -0,0 +1,44 @@
++import { test, describe } from "node:test";
++import assert from "node:assert/strict";
++import { DELIVERY_COPY, deliveryCopy, deliveryTone, resolveDeliveryLabel } from "../lib/invitation-delivery.ts";
++
++describe("invitation delivery label (web)", () => {
++  test("server summary is authoritative for every state", () => {
++    for (const s of ["queued", "accepted", "delivered", "delayed", "undeliverable", "failed"]) {
++      assert.equal(resolveDeliveryLabel("2026-11-01", "sent", s), s);
++    }
++  });
++  test("'delivered' never appears without server evidence", () => {
++    for (const legacy of ["sent", "pending", "submitted", "failed", null, undefined, "delivered", "opened"]) {
++      assert.notEqual(resolveDeliveryLabel("2026-11-01", legacy as string | null, null), "delivered");
++    }
++  });
++  test("released enum fallback (old schema)", () => {
++    assert.equal(resolveDeliveryLabel(null, null, null), "not_sent");
++    assert.equal(resolveDeliveryLabel("t", null, null), "queued");
++    assert.equal(resolveDeliveryLabel("t", "pending", null), "queued");
++    assert.equal(resolveDeliveryLabel("t", "submitted", null), "queued");
++    assert.equal(resolveDeliveryLabel("t", "sent", null), "accepted");
++    assert.equal(resolveDeliveryLabel("t", "failed", null), "failed");
++  });
++  test("unknown values never produce a stronger claim", () => {
++    assert.equal(resolveDeliveryLabel("t", "opened", null), "queued");
++    assert.equal(resolveDeliveryLabel("t", "sent", "bounced"), "accepted");   // raw provider states are not exposed to hosts
++  });
++  test("no copy claims opened/read, or the word 'complaint'; delivered copy is scoped to the provider", () => {
++    for (const loc of ["en", "es"] as const) {
++      for (const [k, v] of Object.entries(DELIVERY_COPY[loc])) {
++        assert.ok(v.label.length > 0 && v.hint.length > 0, `${loc}.${k}`);
++        assert.doesNotMatch(v.label + " " + v.hint, /\b(read|opened it|spam|complain|queja|spam)\b/i, `${loc}.${k}`);
++      }
++    }
++    assert.match(DELIVERY_COPY.en.delivered.label, /provider/);
++    assert.match(DELIVERY_COPY.en.accepted.hint, /not received confirmation/);
++  });
++  test("en and es cover the same keys; tone", () => {
++    assert.deepEqual(Object.keys(DELIVERY_COPY.en).sort(), Object.keys(DELIVERY_COPY.es).sort());
++    assert.equal(deliveryTone("undeliverable"), "attention");
++    assert.equal(deliveryTone("delivered"), "good");
++    assert.equal(deliveryCopy("failed", "es").label, "No se pudo enviar");
++  });
++});
+-- 
+2.43.0
+

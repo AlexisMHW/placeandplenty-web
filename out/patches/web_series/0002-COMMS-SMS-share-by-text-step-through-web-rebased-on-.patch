@@ -1,0 +1,1063 @@
+From bd2f910105e9b49165dd90d785a1a06d2f832599 Mon Sep 17 00:00:00 2001
+From: comms <comms@local>
+Date: Sat, 14 Nov 2026 11:43:22 -0500
+Subject: [PATCH 2/2] COMMS: SMS share-by-text + step-through (web) rebased on
+ 9933a6b
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016NMbSxK35zQvFFyuuSYwpj
+---
+ app/(host)/host/g/[id]/people/page.tsx |  51 ++++++
+ components/host/ShareByTextButton.tsx  | 128 +++++++++++++++
+ components/host/ShareStepThrough.tsx   | 114 +++++++++++++
+ lib/people-data.ts                     |   3 +-
+ lib/share-by-text-actions.ts           |  30 ++++
+ lib/share-by-text-copy.ts              |  52 ++++++
+ lib/share-by-text.ts                   | 217 +++++++++++++++++++++++++
+ lib/share-step-through-copy.ts         |  37 +++++
+ lib/share-step-through.ts              |  50 ++++++
+ tests/share-by-text.test.ts            | 150 +++++++++++++++++
+ tests/share-step-through.test.ts       |  58 +++++++
+ tests/sms-no-paid-surface.test.ts      |  27 +++
+ 12 files changed, 916 insertions(+), 1 deletion(-)
+ create mode 100644 components/host/ShareByTextButton.tsx
+ create mode 100644 components/host/ShareStepThrough.tsx
+ create mode 100644 lib/share-by-text-actions.ts
+ create mode 100644 lib/share-by-text-copy.ts
+ create mode 100644 lib/share-by-text.ts
+ create mode 100644 lib/share-step-through-copy.ts
+ create mode 100644 lib/share-step-through.ts
+ create mode 100644 tests/share-by-text.test.ts
+ create mode 100644 tests/share-step-through.test.ts
+ create mode 100644 tests/sms-no-paid-surface.test.ts
+
+diff --git a/app/(host)/host/g/[id]/people/page.tsx b/app/(host)/host/g/[id]/people/page.tsx
+index 6fd275a..ed6c266 100644
+--- a/app/(host)/host/g/[id]/people/page.tsx
++++ b/app/(host)/host/g/[id]/people/page.tsx
+@@ -18,6 +18,9 @@ import {
+ } from "@/lib/people-actions";
+ import { rsvpLabel } from "@/lib/host-format";
+ import { deliveryCopy, resolveDeliveryLabel } from "@/lib/invitation-delivery";
++import ShareByTextButton from "@/components/host/ShareByTextButton";
++import ShareStepThrough from "@/components/host/ShareStepThrough";
++import { DEFAULT_GUEST_INVITE_BASE_URL } from "@/lib/share-by-text";
+ 
+ const RSVP_OPTIONS = ["yes", "maybe", "no", "invited", "no_response"].map(
+   (value) => ({ value, label: rsvpLabel(value) })
+@@ -67,6 +70,27 @@ export default async function PeoplePage({ params }: { params: { id: string } })
+     }
+   }
+ 
++  // Share by text: every phone in a household, read from existing guests.phone.
++  // Co-hosts may not be able to read the owner's guest rows; they get an empty
++  // composer and choose the contact themselves.
++  const phonesByParty = new Map<string, string[]>();
++  for (const row of guests) {
++    if (!row.invitation_party_id || !row.guest?.phone) continue;
++    phonesByParty.set(row.invitation_party_id, [...(phonesByParty.get(row.invitation_party_id) ?? []), row.guest.phone]);
++  }
++  const hostName = String((user?.user_metadata as { full_name?: string } | undefined)?.full_name ?? "").trim() || null;
++  const inviteBaseUrl = process.env.GUEST_PAGE_BASE_URL || DEFAULT_GUEST_INVITE_BASE_URL;
++  // Bulk share by text: one entry per household (the party lead), never per person.
++  const stepHouseholds = guests
++    .filter((row) => !!row.invitation_party_id && leadByParty.get(row.invitation_party_id as string) === row.id && !!row.party)
++    .map((row) => ({
++      partyId: row.party!.id,
++      token: row.party!.public_token,
++      phones: phonesByParty.get(row.party!.id) ?? [],
++      leadFirstName: row.guest?.first_name,
++      displayName: row.party!.party_name || [row.guest?.first_name, row.guest?.last_name].filter(Boolean).join(" ") || "Household",
++    }));
++
+   return (
+     <div>
+       <WorkspaceHeader
+@@ -218,6 +242,18 @@ export default async function PeoplePage({ params }: { params: { id: string } })
+             {" "}· {guests.length} invited
+           </p>
+ 
++          {!isArchived && (
++            <ShareStepThrough
++              gatheringId={params.id}
++              gatheringName={gathering.name}
++              gatheringDate={gathering.gathering_date}
++              arrivalTime={gathering.arrival_time}
++              hostName={hostName}
++              baseUrl={inviteBaseUrl}
++              households={stepHouseholds}
++            />
++          )}
++
+           <div className="mt-8 space-y-10">
+             {groups.map((group) => (
+               <section key={group.status}>
+@@ -330,6 +366,21 @@ export default async function PeoplePage({ params }: { params: { id: string } })
+                           </div>
+                         )}
+ 
++                        {isPartyLead && g.party && !isArchived && (
++                          <ShareByTextButton
++                            gatheringId={params.id}
++                            partyId={g.party.id}
++                            token={g.party.public_token}
++                            phones={phonesByParty.get(g.party.id) ?? []}
++                            guestFirstName={g.guest?.first_name}
++                            hostName={hostName}
++                            gatheringName={gathering.name}
++                            gatheringDate={gathering.gathering_date}
++                            arrivalTime={gathering.arrival_time}
++                            baseUrl={inviteBaseUrl}
++                          />
++                        )}
++
+                         {!isArchived && g.guest && isOwner && (
+                           <AddForm
+                             label={`Edit ${name}`}
+diff --git a/components/host/ShareByTextButton.tsx b/components/host/ShareByTextButton.tsx
+new file mode 100644
+index 0000000..9169955
+--- /dev/null
++++ b/components/host/ShareByTextButton.tsx
+@@ -0,0 +1,128 @@
++"use client";
++
++import { useState } from "react";
++import {
++  buildInvitationUrl,
++  buildInviteMessage,
++  buildSmsUri,
++  detectWebPlatform,
++  pickPartyPhone,
++  type ShareLocale,
++} from "@/lib/share-by-text";
++import { SHARE_BY_TEXT_COPY } from "@/lib/share-by-text-copy";
++import { recordShareInitiatedWeb } from "@/lib/share-by-text-actions";
++
++interface Props {
++  gatheringId: string;
++  partyId: string;
++  /** invitation_parties.public_token: the household's existing private link. */
++  token: string | null | undefined;
++  phones: Array<string | null | undefined>;
++  guestFirstName?: string | null;
++  hostName?: string | null;
++  gatheringName: string;
++  gatheringDate?: string | null;
++  arrivalTime?: string | null;
++  /** Origin + /invite for this deployment; defaults to the production guest page. */
++  baseUrl?: string;
++  locale?: ShareLocale;
++}
++
++/**
++ * Hands a prepared invitation to the host's own messaging app (phones) or
++ * copies it (computers). Never sends, never claims it was delivered.
++ */
++export default function ShareByTextButton(props: Props) {
++  const locale: ShareLocale = props.locale ?? "en";
++  const copy = SHARE_BY_TEXT_COPY[locale];
++  const [notice, setNotice] = useState<string | null>(null);
++
++  const url = buildInvitationUrl(props.token, props.baseUrl);
++  const phone = pickPartyPhone(props.phones);
++  const body = url
++    ? buildInviteMessage({
++        locale,
++        url,
++        gatheringName: props.gatheringName,
++        hostName: props.hostName,
++        guestFirstName: props.guestFirstName,
++        gatheringDate: props.gatheringDate,
++        arrivalTime: props.arrivalTime,
++      })
++    : null;
++
++  async function copyText() {
++    if (!body) return setNotice(copy.noLink);
++    try {
++      await navigator.clipboard.writeText(body);
++      setNotice(copy.copied);
++      void recordShareInitiatedWeb(props.gatheringId, props.partyId, "copy_link", locale);
++    } catch {
++      setNotice(copy.copyFailed);
++    }
++  }
++
++  function openMessages() {
++    if (!body) return setNotice(copy.noLink);
++    const platform = detectWebPlatform(navigator.userAgent, navigator.maxTouchPoints);
++    if (platform === "web") {
++      // A desktop browser has no SMS app to hand off to. Copy instead of a dead link.
++      setNotice(copy.desktopHint);
++      void copyText();
++      return;
++    }
++    window.location.href = buildSmsUri({ platform, phone, body });
++    setNotice(phone ? copy.opened : copy.openedNoPhone);
++    void recordShareInitiatedWeb(props.gatheringId, props.partyId, "sms_web", locale);
++  }
++
++  async function shareSheet() {
++    if (!body || !navigator.share) return copyText();
++    try {
++      await navigator.share({ text: body });
++      void recordShareInitiatedWeb(props.gatheringId, props.partyId, "share_sheet", locale);
++    } catch {
++      /* dismissed by the host: nothing happened */
++    }
++  }
++
++  const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
++
++  return (
++    <div className="mt-2 flex flex-wrap items-center gap-2">
++      <button
++        type="button"
++        onClick={openMessages}
++        disabled={!body}
++        aria-label={copy.a11yText(props.guestFirstName ?? "")}
++        className="rounded-full border border-forest px-4 py-2 font-body text-xs font-semibold text-forest disabled:opacity-50"
++      >
++        {copy.textButton}
++      </button>
++      <button
++        type="button"
++        onClick={copyText}
++        disabled={!body}
++        className="rounded-full border border-sage/50 px-4 py-2 font-body text-xs font-semibold text-forest/80 disabled:opacity-50"
++      >
++        {copy.copyButton}
++      </button>
++      {canNativeShare && (
++        <button
++          type="button"
++          onClick={shareSheet}
++          disabled={!body}
++          className="rounded-full border border-sage/50 px-4 py-2 font-body text-xs font-semibold text-forest/80 disabled:opacity-50"
++        >
++          {copy.shareButton}
++        </button>
++      )}
++      {!phone && body && <p className="w-full font-body text-xs italic text-forest/55">{copy.noPhoneHint}</p>}
++      {notice && (
++        <p role="status" className="w-full font-body text-xs text-forest/75">
++          {notice}
++        </p>
++      )}
++    </div>
++  );
++}
+diff --git a/components/host/ShareStepThrough.tsx b/components/host/ShareStepThrough.tsx
+new file mode 100644
+index 0000000..025f195
+--- /dev/null
++++ b/components/host/ShareStepThrough.tsx
+@@ -0,0 +1,114 @@
++"use client";
++
++import { useMemo, useState } from "react";
++import {
++  buildInviteMessage, buildSmsUri, detectWebPlatform, planShareQueue, type ShareLocale,
++} from "@/lib/share-by-text";
++import { back, createWalk, currentItem, isDone, markOpened, skip, summarize, type WalkState } from "@/lib/share-step-through";
++import { STEP_THROUGH_COPY } from "@/lib/share-step-through-copy";
++import { recordShareInitiatedWeb } from "@/lib/share-by-text-actions";
++
++export interface StepHousehold {
++  partyId: string;
++  token: string | null | undefined;
++  phones: Array<string | null | undefined>;
++  leadFirstName?: string | null;
++  displayName: string;
++}
++
++interface Props {
++  gatheringId: string;
++  gatheringName: string;
++  gatheringDate?: string | null;
++  arrivalTime?: string | null;
++  hostName?: string | null;
++  baseUrl?: string;
++  households: StepHousehold[];
++  locale?: ShareLocale;
++}
++
++/**
++ * Bulk "text every household, one at a time". One composer per household with that household's own private link,
++ * with Skip and Back. On phones it opens the messaging app; on computers it copies the text. It never sends anything
++ * and never says it did.
++ */
++export default function ShareStepThrough(props: Props) {
++  const locale: ShareLocale = props.locale ?? "en";
++  const copy = STEP_THROUGH_COPY[locale];
++  const plan = useMemo(
++    () => planShareQueue(props.households.map((h) => ({ partyId: h.partyId, token: h.token, phones: h.phones })), props.baseUrl),
++    [props.households, props.baseUrl]
++  );
++  const [open, setOpen] = useState(false);
++  const [walk, setWalk] = useState<WalkState>(() => createWalk(plan.queue));
++  const [notice, setNotice] = useState<string | null>(null);
++
++  const item = currentItem(walk);
++  const household = item ? props.households.find((h) => h.partyId === item.partyId) : undefined;
++  const body = item && household
++    ? buildInviteMessage({
++        locale, url: item.url, gatheringName: props.gatheringName, hostName: props.hostName,
++        guestFirstName: household.leadFirstName, gatheringDate: props.gatheringDate, arrivalTime: props.arrivalTime,
++      })
++    : null;
++  const summary = summarize(walk);
++
++  async function handoff() {
++    if (!item || !body) return;
++    const platform = detectWebPlatform(navigator.userAgent, navigator.maxTouchPoints);
++    if (platform === "web") {
++      try {
++        await navigator.clipboard.writeText(body);
++        void recordShareInitiatedWeb(props.gatheringId, item.partyId, "copy_link", locale);
++        setNotice(null);
++        setWalk((w) => markOpened(w));
++      } catch {
++        setNotice(copy.desktopHint);
++      }
++      return;
++    }
++    window.location.href = buildSmsUri({ platform, phone: item.phone, body });
++    void recordShareInitiatedWeb(props.gatheringId, item.partyId, "sms_web", locale);
++    setNotice(null);
++    setWalk((w) => markOpened(w));
++  }
++
++  if (props.households.length < 2) return null;
++  if (!open) {
++    return (
++      <button type="button" onClick={() => setOpen(true)} className="mt-6 rounded-full border border-forest px-4 py-2 font-body text-xs font-semibold text-forest">
++        {copy.entry}
++      </button>
++    );
++  }
++  return (
++    <section aria-label={copy.title} className="mt-6 rounded-card border border-sage/25 bg-parchment p-5">
++      <h3 className="font-display text-lg text-forest">{copy.title}</h3>
++      <p className="mt-1 font-body text-xs text-forest/65">{copy.explainer}</p>
++      {plan.skipped.length > 0 && <p className="mt-2 font-body text-xs italic text-forest/60">{copy.noLinkNote(plan.skipped.length)}</p>}
++      {!isDone(walk) && item && household ? (
++        <div className="mt-4 space-y-2">
++          <p className="font-body text-xs text-forest/60">{copy.progress(walk.index + 1, summary.total)}</p>
++          <p className="font-body text-sm font-semibold text-forest">{household.displayName}</p>
++          {body && <p className="whitespace-pre-wrap font-body text-sm text-forest/80">{body}</p>}
++          {!item.phone && <p className="font-body text-xs italic text-forest/55">{copy.noPhoneHint}</p>}
++          {notice && <p role="status" className="font-body text-xs text-forest/75">{notice}</p>}
++          <div className="flex flex-wrap items-center gap-3 pt-1">
++            <button type="button" onClick={handoff} className="rounded-full bg-forest px-4 py-2 font-body text-xs font-semibold text-parchment">
++              {typeof navigator !== "undefined" && detectWebPlatform(navigator.userAgent, navigator.maxTouchPoints) === "web" ? copy.copyAndNext : copy.openMessages}
++            </button>
++            <button type="button" onClick={() => setWalk((w) => back(w))} disabled={walk.index === 0} className="font-body text-xs font-semibold text-forest disabled:opacity-40">{copy.back}</button>
++            <button type="button" onClick={() => { setNotice(null); setWalk((w) => skip(w)); }} className="font-body text-xs font-semibold text-forest">{copy.skip}</button>
++          </div>
++        </div>
++      ) : (
++        <div className="mt-4 space-y-1">
++          <p className="font-body text-sm font-semibold text-forest">{copy.doneTitle}</p>
++          <p className="font-body text-sm text-forest/80">{copy.doneBody(summary.opened, summary.skipped)}</p>
++          <p className="font-body text-xs italic text-forest/60">{copy.doneHonest}</p>
++        </div>
++      )}
++      <button type="button" onClick={() => setOpen(false)} className="mt-4 font-body text-xs font-semibold text-forest/70">{copy.close}</button>
++    </section>
++  );
++}
+diff --git a/lib/people-data.ts b/lib/people-data.ts
+index 7c94033..38f1f1d 100644
+--- a/lib/people-data.ts
++++ b/lib/people-data.ts
+@@ -24,6 +24,7 @@ export interface PeopleWorkspaceRow {
+     party_name: string | null;
+     contact_email: string | null;
+     first_share_initiated_at: string | null;
++    public_token?: string | null;
+   } | null;
+   latest_invitation_delivery_status: string | null;
+   /** Server delivery label from get_invitation_delivery_summary (queued/accepted/delivered/delayed/undeliverable/failed), or null when the RPC is absent or not permitted. */
+@@ -44,7 +45,7 @@ export async function getPeopleWorkspace(gatheringId: string): Promise<PeopleWor
+   const { data, error } = await supabase
+     .from("gathering_guests")
+     .select(
+-      "id, rsvp_status, plus_one_count, notes, guest_dietary_notes, guest_allergy_notes, invitation_party_id, guest:guests(id, first_name, last_name, household_name, email, phone, dietary_notes, allergy_notes, accessibility_notes), party:invitation_parties(id, party_name, contact_email, first_share_initiated_at)"
++      "id, rsvp_status, plus_one_count, notes, guest_dietary_notes, guest_allergy_notes, invitation_party_id, guest:guests(id, first_name, last_name, household_name, email, phone, dietary_notes, allergy_notes, accessibility_notes), party:invitation_parties(id, party_name, contact_email, first_share_initiated_at, public_token)"
+     )
+     .eq("gathering_id", gatheringId);
+   if (error) throw error;
+diff --git a/lib/share-by-text-actions.ts b/lib/share-by-text-actions.ts
+new file mode 100644
+index 0000000..117709a
+--- /dev/null
++++ b/lib/share-by-text-actions.ts
+@@ -0,0 +1,30 @@
++"use server";
++
++import { createClient } from "@/lib/supabase-server";
++
++/**
++ * Best-effort audit that the host opened a messaging/share hand-off for one
++ * household. Calls the OPTIONAL RPC proposed in migration 208000; when the
++ * backend does not have it (older schema) this resolves false and the
++ * hand-off is unaffected. It never writes guests, parties or RSVP rows and
++ * never claims a message was sent.
++ */
++export async function recordShareInitiatedWeb(
++  gatheringId: string,
++  invitationPartyId: string,
++  channel: "sms_web" | "share_sheet" | "copy_link",
++  locale: "en" | "es"
++): Promise<boolean> {
++  try {
++    const supabase = createClient();
++    const { error } = await supabase.rpc("record_invitation_share_initiated", {
++      p_gathering_id: gatheringId,
++      p_invitation_party_id: invitationPartyId,
++      p_channel: channel,
++      p_locale: locale,
++    });
++    return !error;
++  } catch {
++    return false;
++  }
++}
+diff --git a/lib/share-by-text-copy.ts b/lib/share-by-text-copy.ts
+new file mode 100644
+index 0000000..abbf9e6
+--- /dev/null
++++ b/lib/share-by-text-copy.ts
+@@ -0,0 +1,52 @@
++// Host-facing strings for Share by Text (web). Honest by construction:
++// nothing here may say a message was sent, delivered or read. The host's
++// own messaging app sends it; Place & Plenty only prepares the text.
++
++export type ShareCopyLocale = "en" | "es";
++
++export interface ShareByTextCopy {
++  textButton: string;
++  copyButton: string;
++  shareButton: string;
++  opened: string;
++  openedNoPhone: string;
++  copied: string;
++  copyFailed: string;
++  noPhoneHint: string;
++  noLink: string;
++  desktopHint: string;
++  a11yText: (name: string) => string;
++}
++
++export const SHARE_BY_TEXT_COPY: Record<ShareCopyLocale, ShareByTextCopy> = {
++  en: {
++    textButton: "Text this invitation",
++    copyButton: "Copy invitation text",
++    shareButton: "Share…",
++    opened:
++      "Your messaging app opened with the invitation ready. Nothing is sent until you press Send there, and Place & Plenty cannot see whether it was delivered or read.",
++    openedNoPhone:
++      "Your messaging app opened with the invitation ready. Choose who to send it to and press Send there. Place & Plenty cannot see whether it was delivered or read.",
++    copied: "Invitation text copied. Paste it into any message.",
++    copyFailed: "Could not copy automatically. Select and copy the text manually.",
++    noPhoneHint: "No phone number on file. You will choose the contact in your messaging app.",
++    noLink: "This invitation does not have a link yet. Try again in a moment.",
++    desktopHint: "On a computer, copy the text and paste it into your messaging app.",
++    a11yText: (name) => `Text the invitation to ${name}`,
++  },
++  es: {
++    textButton: "Enviar esta invitación por mensaje",
++    copyButton: "Copiar texto de la invitación",
++    shareButton: "Compartir…",
++    opened:
++      "Se abrió tu app de mensajes con la invitación lista. No se envía nada hasta que pulses Enviar allí, y Place & Plenty no puede saber si se entregó o se leyó.",
++    openedNoPhone:
++      "Se abrió tu app de mensajes con la invitación lista. Elige a quién enviarla y pulsa Enviar allí. Place & Plenty no puede saber si se entregó o se leyó.",
++    copied: "Texto de la invitación copiado. Pégalo en cualquier mensaje.",
++    copyFailed: "No se pudo copiar automáticamente. Selecciona y copia el texto manualmente.",
++    noPhoneHint: "No hay número de teléfono guardado. Elegirás el contacto en tu app de mensajes.",
++    noLink: "Esta invitación todavía no tiene enlace. Inténtalo de nuevo en un momento.",
++    desktopHint: "En una computadora, copia el texto y pégalo en tu app de mensajes.",
++    a11yText: (name) => `Enviar la invitación por mensaje a ${name}`,
++  },
++};
+diff --git a/lib/share-by-text.ts b/lib/share-by-text.ts
+new file mode 100644
+index 0000000..f186d76
+--- /dev/null
++++ b/lib/share-by-text.ts
+@@ -0,0 +1,217 @@
++/**
++ * SHARE BY TEXT -- pure helpers (no React Native, no network, no Supabase).
++ *
++ * The host's OWN messaging app sends the message. Place & Plenty only
++ * prepares the text and the link and hands them to the operating system.
++ * Nothing here can know whether the host pressed Send, whether the carrier
++ * delivered the text, or whether the guest read it, so no function or
++ * string in this feature may claim otherwise.
++ *
++ * The link is the party's existing invitation link
++ * (`<base>/<invitation_parties.public_token>`): the guest lands on the
++ * existing branded invitation page, which renders the CURRENT artwork and
++ * RSVP form live. This file never creates a token, guest or party.
++ *
++ * Kept byte-for-byte parallel with the web copy at lib/share-by-text.ts.
++ */
++
++export type ShareLocale = 'en' | 'es';
++export type SharePlatform = 'ios' | 'android' | 'web';
++
++export const DEFAULT_GUEST_INVITE_BASE_URL = 'https://placeandplenty.com/invite';
++
++/** Above this, shorten the gathering name. Longer texts are legal but read as spam. */
++export const MAX_SHARE_MESSAGE_LENGTH = 300;
++
++const TOKEN_PATTERN = /^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$/;
++
++/** Collapses whitespace and strips control / bidi characters from host-supplied text. */
++export function cleanText(value: string | null | undefined): string {
++  return (value ?? '')
++    // eslint-disable-next-line no-control-regex
++    .replace(/[\u0000-\u001F\u007F‎‏‪-‮⁦-⁩]/g, ' ')
++    .replace(/\s+/g, ' ')
++    .trim();
++}
++
++/**
++ * Lenient "can a phone dial this" check. This is NOT E.164 normalisation
++ * (that belongs to the paid-SMS provider path, which needs a country
++ * default and consent). Returns the number with only a leading "+" and
++ * digits, or null when it cannot plausibly be dialled.
++ */
++export function sanitizeDialableNumber(raw: string | null | undefined): string | null {
++  if (!raw) return null;
++  const withoutExtension = raw.replace(/\s*(?:ext\.?|extension|x|#)\s*\d+\s*$/i, '');
++  const hasPlus = withoutExtension.trim().startsWith('+');
++  const digits = withoutExtension.replace(/\D/g, '');
++  if (digits.length < 7 || digits.length > 15) return null;
++  return `${hasPlus ? '+' : ''}${digits}`;
++}
++
++/** First dialable number among a household's people, preserving order. */
++export function pickPartyPhone(phones: Array<string | null | undefined>): string | null {
++  for (const phone of phones) {
++    const dialable = sanitizeDialableNumber(phone);
++    if (dialable) return dialable;
++  }
++  return null;
++}
++
++/** Builds `<base>/<token>`; null if the token is not a UUID (never guess a link). */
++export function buildInvitationUrl(
++  token: string | null | undefined,
++  baseUrl: string = DEFAULT_GUEST_INVITE_BASE_URL
++): string | null {
++  if (!token || !TOKEN_PATTERN.test(token.trim())) return null;
++  const base = (baseUrl || DEFAULT_GUEST_INVITE_BASE_URL).trim().replace(/\/+$/, '');
++  if (!/^https:\/\//i.test(base)) return null;
++  return `${base}/${token.trim()}`;
++}
++
++function formatTime12h(time: string | null | undefined, locale: ShareLocale): string | null {
++  const match = /^(\d{1,2}):(\d{2})/.exec(time ?? '');
++  if (!match) return null;
++  const hours = Number(match[1]);
++  const minutes = match[2];
++  if (hours > 23) return null;
++  if (locale === 'es') return `${hours}:${minutes}`;
++  const suffix = hours >= 12 ? 'PM' : 'AM';
++  const h12 = hours % 12 === 0 ? 12 : hours % 12;
++  return minutes === '00' ? `${h12} ${suffix}` : `${h12}:${minutes} ${suffix}`;
++}
++
++/** `date` is a calendar date (YYYY-MM-DD); it is never shifted by the device time zone. */
++export function formatInviteWhen(
++  date: string | null | undefined,
++  time: string | null | undefined,
++  locale: ShareLocale
++): string | null {
++  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date ?? '');
++  if (!match) return null;
++  const utc = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
++  if (Number.isNaN(utc.getTime())) return null;
++  const day = new Intl.DateTimeFormat(locale === 'es' ? 'es' : 'en-US', {
++    weekday: 'short',
++    month: 'short',
++    day: 'numeric',
++    timeZone: 'UTC',
++  }).format(utc);
++  const at = formatTime12h(time, locale);
++  if (!at) return day;
++  return locale === 'es' ? `${day}, ${at} h` : `${day}, ${at}`;
++}
++
++export interface InviteMessageInput {
++  locale: ShareLocale;
++  url: string;
++  gatheringName: string;
++  hostName?: string | null;
++  guestFirstName?: string | null;
++  gatheringDate?: string | null;
++  arrivalTime?: string | null;
++}
++
++function truncate(value: string, max: number): string {
++  if (value.length <= max) return value;
++  return `${value.slice(0, Math.max(1, max - 1)).trimEnd()}…`;
++}
++
++/**
++ * The branded invitation text. Plain text, one link, no emoji, no claim
++ * about delivery. Greeting uses the guest's first name only when known.
++ */
++export function buildInviteMessage(input: InviteMessageInput): string {
++  const { locale, url } = input;
++  const host = cleanText(input.hostName);
++  const first = cleanText(input.guestFirstName).split(' ')[0] ?? '';
++  const when = formatInviteWhen(input.gatheringDate, input.arrivalTime, locale);
++
++  const compose = (name: string): string => {
++    if (locale === 'es') {
++      const greeting = first ? `Hola ${first}.` : 'Hola.';
++      const who = host ? `${host} te invita a` : 'Te invitan a';
++      const whenPart = when ? ` (${when})` : '';
++      return `${greeting} ${who} ${name}${whenPart}. Mira la invitación y confirma tu asistencia aquí: ${url} - Place & Plenty`;
++    }
++    const greeting = first ? `Hi ${first}!` : 'Hi!';
++    const who = host ? `${host} invited you to` : 'You are invited to';
++    const whenPart = when ? ` (${when})` : '';
++    return `${greeting} ${who} ${name}${whenPart}. See the invitation and RSVP here: ${url} - Place & Plenty`;
++  };
++
++  let name = cleanText(input.gatheringName) || (locale === 'es' ? 'una reunión' : 'a gathering');
++  let message = compose(name);
++  if (message.length > MAX_SHARE_MESSAGE_LENGTH) {
++    const overflow = message.length - MAX_SHARE_MESSAGE_LENGTH;
++    name = truncate(name, Math.max(12, name.length - overflow));
++    message = compose(name);
++  }
++  return message;
++}
++
++/**
++ * Builds the `sms:` URI for ONE recipient (or none).
++ *  - iOS separates the body with "&", Android with "?".
++ *  - Web follows the same rule from the user agent (see detectWebPlatform).
++ *  - No recipient: the composer opens empty so the host can pick a contact.
++ * The body is percent-encoded; the number is already digits and "+".
++ */
++export function buildSmsUri(params: { platform: SharePlatform; phone?: string | null; body: string }): string {
++  const phone = sanitizeDialableNumber(params.phone) ?? '';
++  const separator = params.platform === 'ios' ? '&' : '?';
++  return `sms:${phone}${separator}body=${encodeURIComponent(params.body)}`;
++}
++
++/** iPadOS 13+ reports itself as "Macintosh" with touch points; callers may pass maxTouchPoints. */
++export function detectWebPlatform(userAgent: string, maxTouchPoints = 0): SharePlatform {
++  if (/iPhone|iPad|iPod/i.test(userAgent)) return 'ios';
++  if (/Macintosh/i.test(userAgent) && maxTouchPoints > 1) return 'ios';
++  if (/Android/i.test(userAgent)) return 'android';
++  return 'web';
++}
++
++export type ShareSkipReason = 'no_link' | 'no_phone';
++
++export interface ShareCandidate {
++  partyId: string;
++  token: string | null | undefined;
++  phones: Array<string | null | undefined>;
++}
++
++export interface ShareQueueItem {
++  partyId: string;
++  url: string;
++  phone: string | null;
++}
++
++/**
++ * Bulk = a step-through queue with ONE composer per household. A single
++ * group text is deliberately not offered: every household has its own
++ * private link, and putting one link in a group thread would expose it
++ * (and the RSVP it controls) to everyone in that thread.
++ * Parties with no phone stay in the queue (the host picks a contact);
++ * parties with no valid token are reported so nothing is silently dropped.
++ */
++export function planShareQueue(
++  candidates: ShareCandidate[],
++  baseUrl: string = DEFAULT_GUEST_INVITE_BASE_URL
++): { queue: ShareQueueItem[]; skipped: Array<{ partyId: string; reason: ShareSkipReason }>; withoutPhone: number } {
++  const seen = new Set<string>();
++  const queue: ShareQueueItem[] = [];
++  const skipped: Array<{ partyId: string; reason: ShareSkipReason }> = [];
++  let withoutPhone = 0;
++  for (const candidate of candidates) {
++    if (seen.has(candidate.partyId)) continue; // one entry per party, never per person
++    seen.add(candidate.partyId);
++    const url = buildInvitationUrl(candidate.token, baseUrl);
++    if (!url) {
++      skipped.push({ partyId: candidate.partyId, reason: 'no_link' });
++      continue;
++    }
++    const phone = pickPartyPhone(candidate.phones);
++    if (!phone) withoutPhone += 1;
++    queue.push({ partyId: candidate.partyId, url, phone });
++  }
++  return { queue, skipped, withoutPhone };
++}
+diff --git a/lib/share-step-through-copy.ts b/lib/share-step-through-copy.ts
+new file mode 100644
+index 0000000..faf4442
+--- /dev/null
++++ b/lib/share-step-through-copy.ts
+@@ -0,0 +1,37 @@
++// Host-facing strings for the bulk "text every household, one at a time" step-through (web).
++// Honest by construction: nothing here may say a message was sent, delivered or read.
++export type StepCopyLocale = "en" | "es";
++export interface StepThroughCopy {
++  entry: string; title: string; explainer: string; progress: (current: number, total: number) => string;
++  openMessages: string; copyAndNext: string; skip: string; back: string; close: string;
++  noLinkNote: (count: number) => string; doneTitle: string; doneBody: (opened: number, skipped: number) => string; doneHonest: string;
++  desktopHint: string; noPhoneHint: string;
++}
++export const STEP_THROUGH_COPY: Record<StepCopyLocale, StepThroughCopy> = {
++  en: {
++    entry: "Text everyone, one at a time",
++    title: "Text every household, one at a time",
++    explainer: "Your messaging app opens once for each household with that household's own private link. Nothing is sent until you press Send there. Each household gets its own message, never a group text.",
++    progress: (c, t) => `Household ${c} of ${t}`,
++    openMessages: "Open messaging app", copyAndNext: "Copy text", skip: "Skip this household", back: "Back", close: "Close",
++    noLinkNote: (n) => `${n} ${n === 1 ? "household has" : "households have"} no invitation link yet and ${n === 1 ? "was" : "were"} left out.`,
++    doneTitle: "All households reviewed",
++    doneBody: (o, s) => `You opened or copied the text for ${o} and skipped ${s}.`,
++    doneHonest: "Place & Plenty cannot see whether those texts were sent, delivered or read.",
++    desktopHint: "On a computer, copy the text and paste it into your messaging app.",
++    noPhoneHint: "No phone number on file. You will choose the contact in your messaging app.",
++  },
++  es: {
++    entry: "Enviar texto a todos, uno por uno",
++    title: "Enviar texto a cada hogar, uno por uno",
++    explainer: "Tu app de mensajes se abre una vez por cada hogar con el enlace privado de ese hogar. No se envía nada hasta que pulses Enviar allí. Cada hogar recibe su propio mensaje, nunca un chat de grupo.",
++    progress: (c, t) => `Hogar ${c} de ${t}`,
++    openMessages: "Abrir app de mensajes", copyAndNext: "Copiar texto", skip: "Omitir este hogar", back: "Atrás", close: "Cerrar",
++    noLinkNote: (n) => `${n} ${n === 1 ? "hogar aún no tiene" : "hogares aún no tienen"} enlace de invitación y se ${n === 1 ? "dejó" : "dejaron"} fuera.`,
++    doneTitle: "Todos los hogares revisados",
++    doneBody: (o, s) => `Abriste o copiaste el texto de ${o} y omitiste ${s}.`,
++    doneHonest: "Place & Plenty no puede ver si esos textos se enviaron, se entregaron o se leyeron.",
++    desktopHint: "En una computadora, copia el texto y pégalo en tu app de mensajes.",
++    noPhoneHint: "No hay número de teléfono guardado. Elegirás el contacto en tu app de mensajes.",
++  },
++};
+diff --git a/lib/share-step-through.ts b/lib/share-step-through.ts
+new file mode 100644
+index 0000000..001ea41
+--- /dev/null
++++ b/lib/share-step-through.ts
+@@ -0,0 +1,50 @@
++import type { ShareQueueItem } from "./share-by-text.ts";
++
++/**
++ * Step-through state for "Text every household, one at a time". Pure (no React, no network).
++ *
++ * One composer per HOUSEHOLD, in order. There is no group thread: each household has its own private link.
++ * 'opened' means the operating system accepted the hand-off to the host's messaging app. It is NEVER "sent",
++ * "delivered" or "read": this app cannot observe any of those, and no label in this feature may claim them.
++ */
++export type StepOutcome = 'pending' | 'opened' | 'skipped';
++
++export interface WalkState {
++  queue: ShareQueueItem[];
++  index: number;
++  outcomes: Record<string, StepOutcome>;
++}
++
++export function createWalk(queue: ShareQueueItem[]): WalkState {
++  const seen = new Set<string>();
++  const unique = queue.filter((q) => (seen.has(q.partyId) ? false : (seen.add(q.partyId), true)));
++  return { queue: unique, index: 0, outcomes: Object.fromEntries(unique.map((q) => [q.partyId, 'pending' as StepOutcome])) };
++}
++
++export const isDone = (s: WalkState): boolean => s.index >= s.queue.length;
++export const currentItem = (s: WalkState): ShareQueueItem | null => (isDone(s) ? null : s.queue[s.index]);
++
++function advance(s: WalkState, outcome: StepOutcome): WalkState {
++  const item = currentItem(s);
++  if (!item) return s;
++  return { ...s, index: s.index + 1, outcomes: { ...s.outcomes, [item.partyId]: outcome } };
++}
++
++/** Call after the OS accepted the hand-off for the current household. */
++export const markOpened = (s: WalkState): WalkState => advance(s, 'opened');
++/** Host chose to skip this household; it stays 'skipped' unless the host steps back and opens it. */
++export const skip = (s: WalkState): WalkState => advance(s, 'skipped');
++/** Step back one household (e.g. the messaging app was closed too early). Previous outcome is kept until acted on. */
++export function back(s: WalkState): WalkState { return s.index === 0 ? s : { ...s, index: Math.min(s.index, s.queue.length) - 1 }; }
++
++export interface WalkSummary { total: number; opened: number; skipped: number; pending: number; withoutPhone: number }
++export function summarize(s: WalkState): WalkSummary {
++  const vals = s.queue.map((q) => s.outcomes[q.partyId]);
++  return {
++    total: s.queue.length,
++    opened: vals.filter((v) => v === 'opened').length,
++    skipped: vals.filter((v) => v === 'skipped').length,
++    pending: vals.filter((v) => v === 'pending').length,
++    withoutPhone: s.queue.filter((q) => !q.phone).length,
++  };
++}
+diff --git a/tests/share-by-text.test.ts b/tests/share-by-text.test.ts
+new file mode 100644
+index 0000000..296f14b
+--- /dev/null
++++ b/tests/share-by-text.test.ts
+@@ -0,0 +1,150 @@
++import { test, describe } from "node:test";
++import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
++
++import {
++  buildInvitationUrl,
++  buildInviteMessage,
++  buildSmsUri,
++  cleanText,
++  detectWebPlatform,
++  formatInviteWhen,
++  MAX_SHARE_MESSAGE_LENGTH,
++  pickPartyPhone,
++  planShareQueue,
++  sanitizeDialableNumber,
++} from "../lib/share-by-text.ts";
++import { SHARE_BY_TEXT_COPY } from "../lib/share-by-text-copy.ts";
++
++const TOKEN = "3f2b8c1e-9a4d-4e6b-8f10-2c7d5a9b1e44";
++const URL_ = `https://placeandplenty.com/invite/${TOKEN}`;
++
++describe("phone handling", () => {
++  test("sanitises to digits and a leading plus", () => {
++    assert.equal(sanitizeDialableNumber("(555) 123-4567"), "5551234567");
++    assert.equal(sanitizeDialableNumber("+1 (555) 123-4567"), "+15551234567");
++    assert.equal(sanitizeDialableNumber("555-123-4567 ext. 22"), "5551234567");
++  });
++  test("rejects unusable numbers and URI syntax cannot survive", () => {
++    assert.equal(sanitizeDialableNumber(null), null);
++    assert.equal(sanitizeDialableNumber("12345"), null);
++    assert.equal(sanitizeDialableNumber("1234567890123456"), null);
++    assert.match(sanitizeDialableNumber("5551234567&body=evil") ?? "", /^\+?\d+$/);
++  });
++  test("picks the first dialable household phone", () => {
++    assert.equal(pickPartyPhone([null, "n/a", "555-987-6543"]), "5559876543");
++    assert.equal(pickPartyPhone([]), null);
++  });
++});
++
++describe("link", () => {
++  test("uses the existing party token; never guesses", () => {
++    assert.equal(buildInvitationUrl(TOKEN), URL_);
++    assert.equal(buildInvitationUrl(null), null);
++    assert.equal(buildInvitationUrl("nope"), null);
++    assert.equal(buildInvitationUrl(TOKEN, "http://placeandplenty.com/invite"), null);
++  });
++});
++
++describe("message", () => {
++  const base = {
++    locale: "en" as const,
++    url: URL_,
++    gatheringName: "Fall Supper",
++    hostName: "Alexis",
++    guestFirstName: "Maria",
++    gatheringDate: "2026-11-21",
++    arrivalTime: "17:00:00",
++  };
++  test("is branded and concise", () => {
++    const msg = buildInviteMessage(base);
++    assert.equal(
++      msg,
++      `Hi Maria! Alexis invited you to Fall Supper (Sat, Nov 21, 5 PM). See the invitation and RSVP here: ${URL_} - Place & Plenty`
++    );
++    assert.ok(msg.length <= MAX_SHARE_MESSAGE_LENGTH);
++  });
++  test("never claims delivery", () => {
++    assert.doesNotMatch(buildInviteMessage(base).toLowerCase(), /delivered|\bread\b|sent you/);
++  });
++  test("Spanish and missing fields", () => {
++    assert.match(buildInviteMessage({ ...base, locale: "es" }), /Hola Maria\. Alexis te invita a Fall Supper.*invitación/);
++    assert.equal(
++      buildInviteMessage({ locale: "en", url: URL_, gatheringName: "Fall Supper" }),
++      `Hi! You are invited to Fall Supper. See the invitation and RSVP here: ${URL_} - Place & Plenty`
++    );
++  });
++  test("long names shorten, link stays; control characters removed", () => {
++    const msg = buildInviteMessage({ ...base, gatheringName: "A".repeat(400) });
++    assert.ok(msg.length <= MAX_SHARE_MESSAGE_LENGTH);
++    assert.ok(msg.includes(URL_));
++    assert.equal(cleanText("Fall\nSupper‮  night"), "Fall Supper night");
++  });
++  test("dates are not shifted by time zone", () => {
++    assert.equal(formatInviteWhen("2026-11-21", null, "en"), "Sat, Nov 21");
++    assert.equal(formatInviteWhen("soon", null, "en"), null);
++  });
++});
++
++describe("sms URI", () => {
++  const body = "Hi! A & B: https://x.test/a?b=c#d";
++  test("iOS uses & and Android/web use ?", () => {
++    assert.equal(buildSmsUri({ platform: "ios", phone: "+15551234567", body }), `sms:+15551234567&body=${encodeURIComponent(body)}`);
++    assert.equal(buildSmsUri({ platform: "android", phone: "5551234567", body }), `sms:5551234567?body=${encodeURIComponent(body)}`);
++    assert.equal(buildSmsUri({ platform: "web", phone: "5551234567", body }), `sms:5551234567?body=${encodeURIComponent(body)}`);
++  });
++  test("no phone opens an empty composer", () => {
++    assert.equal(buildSmsUri({ platform: "ios", body: "x" }), "sms:&body=x");
++    assert.equal(buildSmsUri({ platform: "android", phone: null, body: "x" }), "sms:?body=x");
++  });
++  test("body cannot inject parameters or recipients", () => {
++    const uri = buildSmsUri({ platform: "android", phone: "5551234567", body: "a&body=b,c?d" });
++    assert.equal(uri.split("?").length, 2);
++    assert.ok(!uri.includes("&"));
++  });
++  test("web platform detection", () => {
++    assert.equal(detectWebPlatform("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"), "ios");
++    assert.equal(detectWebPlatform("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", 5), "ios");
++    assert.equal(detectWebPlatform("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", 0), "web");
++    assert.equal(detectWebPlatform("Mozilla/5.0 (Linux; Android 14; Pixel 8)"), "android");
++  });
++});
++
++describe("bulk vs individual", () => {
++  const T2 = "7d1e0c52-1b2a-4c33-9d44-0a1b2c3d4e5f";
++  test("one private link per household, no duplicate households", () => {
++    const { queue, skipped, withoutPhone } = planShareQueue([
++      { partyId: "p1", token: TOKEN, phones: ["555-123-4567"] },
++      { partyId: "p1", token: TOKEN, phones: ["555-765-4321"] },
++      { partyId: "p2", token: T2, phones: [] },
++      { partyId: "p3", token: null, phones: ["555-123-4567"] },
++    ]);
++    assert.equal(queue.length, 2);
++    assert.equal(new Set(queue.map((q) => q.url)).size, 2);
++    assert.equal(withoutPhone, 1);
++    assert.deepEqual(skipped, [{ partyId: "p3", reason: "no_link" }]);
++  });
++});
++
++describe("host copy and wiring", () => {
++  test("English and Spanish strings never claim sent/delivered/read", () => {
++    for (const locale of ["en", "es"] as const) {
++      const c = SHARE_BY_TEXT_COPY[locale];
++      for (const [key, value] of Object.entries(c)) {
++        if (typeof value !== "string") continue;
++        const v = value.replace(/whether it was delivered or read/i, "").replace(/si se entregó o se leyó/i, "");
++        assert.doesNotMatch(v, /\b(was|has been|ha sido|fue) (sent|delivered|read|enviad|entregad)/i, key);
++      }
++    }
++    assert.match(SHARE_BY_TEXT_COPY.en.opened, /Nothing is sent until you press Send/);
++  });
++  test("web action never touches guests, parties or RSVP tables", () => {
++    const src = readFileSync(new URL("../lib/share-by-text-actions.ts", import.meta.url), "utf8");
++    assert.match(src, /record_invitation_share_initiated/);
++    assert.doesNotMatch(src, /\.from\(|\.insert\(|\.update\(|\.delete\(/);
++  });
++  test("people page renders the button for the household lead only and never when archived", () => {
++    const src = readFileSync(new URL("../app/(host)/host/g/[id]/people/page.tsx", import.meta.url), "utf8");
++    assert.match(src, /isPartyLead && g\.party && !isArchived && \(\s*<ShareByTextButton/);
++  });
++});
+diff --git a/tests/share-step-through.test.ts b/tests/share-step-through.test.ts
+new file mode 100644
+index 0000000..65949ca
+--- /dev/null
++++ b/tests/share-step-through.test.ts
+@@ -0,0 +1,58 @@
++import { test, describe } from "node:test";
++import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
++import { planShareQueue } from "../lib/share-by-text.ts";
++import { back, createWalk, currentItem, isDone, markOpened, skip, summarize } from "../lib/share-step-through.ts";
++import { STEP_THROUGH_COPY } from "../lib/share-step-through-copy.ts";
++
++const T = (n: number) => `3f2b8c1e-9a4d-4e6b-8f10-2c7d5a9b1e${String(n).padStart(2, "0")}`;
++const cand = (n: number, phones: Array<string | null> = ["(555) 123-4567"]) => ({ partyId: `p${n}`, token: T(n), phones });
++
++describe("share step-through walk (web)", () => {
++  test("one household at a time, in order, never repeated", () => {
++    let w = createWalk(planShareQueue([cand(1), cand(2), cand(2), cand(3)]).queue);
++    assert.deepEqual(w.queue.map((q) => q.partyId), ["p1", "p2", "p3"]);
++    w = markOpened(w); w = skip(w); w = markOpened(w);
++    assert.equal(isDone(w), true); assert.equal(currentItem(w), null);
++    assert.deepEqual(summarize(w), { total: 3, opened: 2, skipped: 1, pending: 0, withoutPhone: 0 });
++  });
++  test("back keeps the previous outcome until acted on; end is a no-op", () => {
++    let w = createWalk(planShareQueue([cand(1), cand(2)]).queue);
++    w = markOpened(w); w = back(w);
++    assert.equal(currentItem(w)!.partyId, "p1"); assert.equal(w.outcomes.p1, "opened");
++    w = skip(w); assert.equal(w.outcomes.p1, "skipped");
++    let d = createWalk(planShareQueue([cand(1)]).queue); d = markOpened(d);
++    assert.equal(markOpened(d), d);
++  });
++  test("no-phone households stay; no-link households are reported", () => {
++    const plan = planShareQueue([cand(1, [null]), { partyId: "p2", token: "bad", phones: ["(555) 123-4567"] }, cand(3)]);
++    assert.deepEqual(plan.queue.map((q) => q.partyId), ["p1", "p3"]);
++    assert.deepEqual(plan.skipped, [{ partyId: "p2", reason: "no_link" }]);
++    assert.equal(summarize(createWalk(plan.queue)).withoutPhone, 1);
++  });
++});
++
++describe("step-through copy and component are honest and group-free", () => {
++  test("never claims sent/delivered/read as fact; discloses what we cannot see (en + es)", () => {
++    for (const locale of ["en", "es"] as const) {
++      const c = STEP_THROUGH_COPY[locale];
++      const text = [c.explainer, c.doneBody(2, 1), c.noLinkNote(1), c.noLinkNote(3), c.desktopHint].join(" ");
++      assert.doesNotMatch(text, /\bhas been (sent|delivered)\b|ya se (envió|entregó)/i);
++      assert.match(c.doneHonest, locale === "en" ? /cannot see whether/ : /no puede ver si/);
++      assert.match(c.progress(2, 5), /2/); assert.match(c.progress(2, 5), /5/);
++    }
++    assert.match(STEP_THROUGH_COPY.en.noLinkNote(1), /household has/); assert.match(STEP_THROUGH_COPY.en.noLinkNote(2), /households have/);
++  });
++  test("component opens ONE composer per household with that household's own link; no group or new dependency", () => {
++    const src = readFileSync(new URL("../components/host/ShareStepThrough.tsx", import.meta.url), "utf8");
++    assert.match(src, /buildSmsUri\(\{ platform, phone: item\.phone, body \}\)/);
++    assert.match(src, /markOpened/); assert.doesNotMatch(src, /expo-sms|sendSMS|navigator\.contacts/);
++    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
++    assert.equal(pkg.dependencies["expo-sms"], undefined);
++  });
++  test("people page passes ONE entry per party lead, not per person", () => {
++    const page = readFileSync(new URL("../app/(host)/host/g/[id]/people/page.tsx", import.meta.url), "utf8");
++    assert.match(page, /leadByParty\.get\(row\.invitation_party_id as string\) === row\.id/);
++    assert.match(page, /<ShareStepThrough/);
++  });
++});
+diff --git a/tests/sms-no-paid-surface.test.ts b/tests/sms-no-paid-surface.test.ts
+new file mode 100644
+index 0000000..0ed7605
+--- /dev/null
++++ b/tests/sms-no-paid-surface.test.ts
+@@ -0,0 +1,27 @@
++import { test } from "node:test";
++import assert from "node:assert/strict";
++import { readdirSync, readFileSync, statSync } from "node:fs";
++import { join } from "node:path";
++
++// Entitlement model v2: the web app has NO paid Place & Plenty SMS surface. Share-by-text (host's own phone) is the only
++// text path, and no page may call the paid-SMS RPCs or promise SMS in upgrade copy until the owner approves launch.
++const SKIP = new Set(["node_modules", ".next", ".git", "tests", "docs", "content"]);
++function walk(dir: string, out: string[] = []): string[] {
++  for (const n of readdirSync(dir)) {
++    if (SKIP.has(n)) continue;
++    const p = join(dir, n);
++    if (statSync(p).isDirectory()) walk(p, out);
++    else if (/\.(tsx?|jsx?)$/.test(n)) out.push(p);
++  }
++  return out;
++}
++const files = ["app", "components", "lib"].flatMap((d) => { try { return walk(join(process.cwd(), d)); } catch { return []; } });
++
++test("no web code calls the paid SMS RPCs", () => {
++  const bad = files.filter((f) => /get_sms_usage_summary|sms_queue_prepared|sms_allowance_snapshot/.test(readFileSync(f, "utf8")));
++  assert.deepEqual(bad, []);
++});
++test("no pricing or upgrade page promises Place & Plenty-sent texts", () => {
++  const bad = files.filter((f) => /(pricing|upgrade|plus|purchase|paywall)/i.test(f) && /(we|place & plenty)\s+(will\s+)?(send|text)[^.]{0,40}(guests?|invitations?)|includes?\s+(text|sms)/i.test(readFileSync(f, "utf8")));
++  assert.deepEqual(bad, []);
++});
+-- 
+2.43.0
+
