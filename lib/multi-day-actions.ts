@@ -5,6 +5,7 @@ import { createClient, getUser } from "@/lib/supabase-server";
 import { findWebProduct, isCheckoutAvailableFor } from "@/lib/checkout";
 import type { Entitlement } from "@/lib/entitlements";
 import { finaliseGatheringCreation } from "@/lib/host-actions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 import {
   classifyMultiDayPass,
   isMultiDayPassRequired,
@@ -77,6 +78,8 @@ export async function getMultiDayLockInGate(): Promise<MultiDayGateMode> {
 
 export async function initializeMultiDaySchedule(gatheringId: string): Promise<Result> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { data: hasAccess, error: accessError } = await supabase.rpc("gathering_has_multi_day_access", {
     p_gathering_id: gatheringId,
   });
@@ -108,6 +111,8 @@ export async function initializeMultiDaySchedule(gatheringId: string): Promise<R
 
 export async function updateScheduleDay(gatheringId: string, dayId: string, form: FormData): Promise<Result> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase
     .from("gathering_days")
     .update({ title: text(form, "title", 120), notes: text(form, "notes", 1500) })
@@ -124,6 +129,8 @@ export async function createScheduleActivity(gatheringId: string, dayId: string,
   const visibility = String(form.get("guest_visibility") ?? "all_invited");
   const allowed = ["all_invited", "accepted_guests", "selected_guests"];
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.from("gathering_activities").insert({
     gathering_id: gatheringId,
     gathering_day_id: dayId,
@@ -154,6 +161,8 @@ export async function updateScheduleActivity(gatheringId: string, activityId: st
   const visibility = String(form.get("guest_visibility") ?? "all_invited");
   const allowed = ["all_invited", "accepted_guests", "selected_guests"];
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase
     .from("gathering_activities")
     .update({
@@ -182,6 +191,8 @@ export async function updateScheduleActivity(gatheringId: string, activityId: st
 
 export async function deleteScheduleActivity(gatheringId: string, activityId: string): Promise<Result> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.from("gathering_activities").delete().eq("id", activityId).eq("gathering_id", gatheringId);
   if (error) return fail(error);
   refresh(gatheringId);
@@ -190,6 +201,8 @@ export async function deleteScheduleActivity(gatheringId: string, activityId: st
 
 export async function moveScheduleActivity(gatheringId: string, activityId: string, dayId: string): Promise<Result> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("move_gathering_activity_day", {
     p_gathering_id: gatheringId,
     p_activity_id: activityId,
@@ -206,6 +219,8 @@ export async function setActivityVisibleGuests(
   guestIds: string[]
 ): Promise<Result> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error: clearError } = await supabase
     .from("gathering_activity_visible_guests")
     .delete()
@@ -234,6 +249,8 @@ export async function addActivityPayment(gatheringId: string, activityId: string
     return { ok: false, message: "Choose either one guest or one invitation household." };
   }
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.from("gathering_activity_payment_ledger").insert({
     gathering_id: gatheringId,
     activity_id: activityId,
@@ -251,6 +268,8 @@ export async function addActivityPayment(gatheringId: string, activityId: string
 
 export async function deleteActivityPayment(gatheringId: string, paymentId: string): Promise<Result> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase
     .from("gathering_activity_payment_ledger")
     .delete()
@@ -277,6 +296,8 @@ export async function setPlanningAssociation(
           ? "contributions"
           : "gathering_expenses";
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase
     .from(table)
     .update({ gathering_day_id: dayId, gathering_activity_id: activityId })
@@ -289,6 +310,8 @@ export async function setPlanningAssociation(
 
 export async function extendMultiDayDuration(gatheringId: string, totalDays: 5 | 6 | 7): Promise<Result> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const [{ data: hasPass }, { data: hasExtension }, { data: gathering, error: loadError }] = await Promise.all([
     supabase.rpc("gathering_has_multi_day_access", { p_gathering_id: gatheringId }),
     supabase.rpc("gathering_has_multi_day_extension", { p_gathering_id: gatheringId }),

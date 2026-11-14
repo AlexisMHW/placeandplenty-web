@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import type { ActionResult } from "@/lib/host-actions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 function refresh(gatheringId: string) {
   revalidatePath(`/host/g/${gatheringId}/guest-experience`);
@@ -22,6 +23,8 @@ export async function saveGuestExperienceSettingsWeb(
   formData: FormData
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("set_guest_page_content", {
     p_gathering_id: gatheringId,
     p_attire_text: String(formData.get("attire_text") ?? "").trim() || null,
@@ -57,6 +60,8 @@ export async function publishGuestUpdateWeb(
   const partyIds = formData.getAll("party_ids").map(String).filter(Boolean);
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("publish_guest_update", {
     p_gathering_id: gatheringId,
     p_category: category,
@@ -77,6 +82,8 @@ export async function deleteGuestUpdateWeb(
   updateId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("delete_guest_update", { p_update_id: updateId });
   if (error) return fail(error);
   refresh(gatheringId);

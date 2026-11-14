@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import type { ActionResult } from "@/lib/host-actions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 export interface SuggestedRecipeDraft {
   ingredients: Array<{ name: string; quantity?: number; unit?: string }>;
@@ -31,6 +32,8 @@ export async function applySavedRecipeSourceWeb(
   recipeId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_apply_recipe_source", {
     p_gathering_id: gatheringId,
     p_menu_item_id: menuItemId,
@@ -49,6 +52,8 @@ export async function applyPreparedRecipeSourceWeb(
   description: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_apply_recipe_source", {
     p_gathering_id: gatheringId,
     p_menu_item_id: menuItemId,
@@ -66,6 +71,8 @@ export async function applySelfManagedRecipeSourceWeb(
   menuItemId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_apply_recipe_source", {
     p_gathering_id: gatheringId,
     p_menu_item_id: menuItemId,
@@ -85,6 +92,8 @@ export async function assignBringingRecipeSourceWeb(
   assigneeId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_assign_bringing_person", {
     p_gathering_id: gatheringId,
     p_menu_item_id: menuItemId,
@@ -108,6 +117,8 @@ export async function createRecipeAndApplyWeb(
   }
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_create_recipe_and_apply", {
     p_gathering_id: gatheringId,
     p_menu_item_id: menuItemId,
@@ -130,6 +141,8 @@ export async function suggestRecipeWeb(input: {
   accessibilityNeeds?: string[];
 }): Promise<{ ok: true; value: SuggestedRecipeDraft } | { ok: false; message: string }> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, input.gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { data, error } = await supabase.functions.invoke("suggest-recipe", {
     body: input,
   });
@@ -146,6 +159,8 @@ export async function approveSuggestedRecipeWeb(
   input: SuggestedRecipeDraft
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("menu_create_recipe_and_apply", {
     p_gathering_id: gatheringId,
     p_menu_item_id: menuItemId,

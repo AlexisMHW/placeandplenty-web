@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import type { ActionResult } from "@/lib/host-actions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 function refresh(gatheringId: string) {
   revalidatePath(`/host/g/${gatheringId}/shopping`);
@@ -29,6 +30,8 @@ export async function addCanonicalShoppingItemWeb(gatheringId: string, formData:
   if (estimatedCost !== null && (!Number.isFinite(estimatedCost) || estimatedCost < 0)) return { ok: false, message: "Enter a valid estimated cost." };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("shopping_add_item", {
     p_gathering_id: gatheringId,
     p_name: name,
@@ -46,6 +49,8 @@ export async function addCanonicalShoppingItemWeb(gatheringId: string, formData:
 
 export async function setCanonicalShoppingStatusWeb(gatheringId: string, itemId: string, status: string): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("shopping_set_status", {
     p_gathering_id: gatheringId,
     p_shopping_item_id: itemId,
@@ -58,6 +63,8 @@ export async function setCanonicalShoppingStatusWeb(gatheringId: string, itemId:
 
 export async function deleteCanonicalShoppingItemWeb(gatheringId: string, itemId: string): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("shopping_delete_item", {
     p_gathering_id: gatheringId,
     p_shopping_item_id: itemId,
@@ -69,6 +76,8 @@ export async function deleteCanonicalShoppingItemWeb(gatheringId: string, itemId
 
 export async function seedCanonicalShoppingWeb(gatheringId: string): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("shopping_seed_from_last_plan", { p_gathering_id: gatheringId });
   if (error) return fail(error);
   refresh(gatheringId);
@@ -82,6 +91,8 @@ export async function assignCanonicalBorrowWeb(
   assigneeId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("shopping_assign_borrow", {
     p_gathering_id: gatheringId,
     p_shopping_item_id: itemId,
@@ -101,6 +112,8 @@ export async function setCanonicalProviderWeb(
   provider: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("shopping_set_provider", {
     p_gathering_id: gatheringId,
     p_shopping_item_id: itemId,
@@ -118,6 +131,8 @@ export async function setCanonicalBorrowReturnedWeb(
   returned: boolean
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("shopping_set_returned", {
     p_gathering_id: gatheringId,
     p_shopping_item_id: itemId,

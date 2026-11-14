@@ -17,3 +17,7 @@ node_modules
 # tina/tina-lock.json IS committed — Tina Cloud reads the schema from it.
 tina/__generated__/
 tsconfig.tsbuildinfo
+
+# Playwright
+/test-results/
+/playwright-report/

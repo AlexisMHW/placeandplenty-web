@@ -3,6 +3,7 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 export type PhotoActionResult = { ok: true } | { ok: false; message: string };
 
@@ -41,6 +42,8 @@ export async function uploadGatheringPhotoWeb(gatheringId: string, formData: For
   if (!extension) return { ok: false, message: "Use a JPG, PNG, or WebP image." };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const path = `${gatheringId}/${randomUUID()}.${extension}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
   const { error: uploadError } = await supabase.storage
@@ -65,6 +68,8 @@ export async function uploadGatheringPhotoWeb(gatheringId: string, formData: For
 
 export async function setGatheringPhotoHiddenWeb(gatheringId: string, photoId: string, hidden: boolean): Promise<PhotoActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("set_gathering_photo_hidden", { p_photo_id: photoId, p_hidden: hidden });
   if (error) return { ok: false, message: photoError(error.message ?? "") };
   revalidatePath(`/host/g/${gatheringId}/photos`);
@@ -73,6 +78,8 @@ export async function setGatheringPhotoHiddenWeb(gatheringId: string, photoId: s
 
 export async function deleteGatheringPhotoWeb(gatheringId: string, photoId: string): Promise<PhotoActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { data: path, error } = await supabase.rpc("delete_gathering_photo", { p_photo_id: photoId });
   if (error) return { ok: false, message: photoError(error.message ?? "") };
   if (typeof path === "string" && path) {

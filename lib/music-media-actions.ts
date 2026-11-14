@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 
 export type MusicMediaActionResult =
   | { ok: true }
@@ -40,6 +41,8 @@ export async function saveMusicMediaWeb(
   }
 ): Promise<MusicMediaActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("music_media_upsert", {
     p_gathering_id: gatheringId,
     p_music_styles: input.musicStyles.map((value) => value.trim()).filter(Boolean).slice(0, 30),
@@ -112,6 +115,8 @@ export async function requestSoundtrackSuggestionWeb(
   }
 ): Promise<SoundtrackSuggestionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { data: workspace, error: workspaceError } = await supabase.rpc("music_media_workspace", {
     p_gathering_id: gatheringId,
   });
@@ -150,6 +155,8 @@ export async function addMusicMediaSuggestedTasksWeb(
   if (!titles.length) return { ok: true };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { data: workspace, error: workspaceError } = await supabase.rpc("music_media_workspace", {
     p_gathering_id: gatheringId,
   });
