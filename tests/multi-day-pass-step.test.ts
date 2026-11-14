@@ -11,6 +11,7 @@ import {
   multiDayPassPriceLine,
   multiDayPassStepPath,
   planMultiDayLockIn,
+  parseMultiDayGateMode,
 } from "../lib/multi-day-pass.ts";
 import { MULTI_DAY_PRICING } from "../lib/pricing.ts";
 import { WEB_CHECKOUT_LIVE, type Entitlement } from "../lib/entitlements.ts";
@@ -41,7 +42,7 @@ function row(over: Partial<Entitlement> = {}): Entitlement {
 describe("203001 error string", () => {
   test("literal matches the migration", () => {
     const sql = readFileSync(
-      "/home/claude/recovery/proposed/20261111203001_qa_OPTIONAL_require_multi_day_pass_at_lock_in.sql",
+      "/home/claude/pp-recovery-ws/docs/recovery/proposed/20261111203001_qa_OPTIONAL_require_multi_day_pass_at_lock_in.sql",
       "utf8"
     );
     assert.ok(sql.includes(`'${MULTI_DAY_PASS_REQUIRED_CODE}'`));
@@ -131,5 +132,28 @@ describe("wiring (source contracts)", () => {
     const src = readFileSync("app/(host)/host/(account)/create/pass/PassStepActions.tsx", "utf8");
     assert.ok(src.includes('action="/api/checkout"'));
     assert.ok(!/stripe/i.test(src));
+  });
+});
+
+describe("interim gate (203003) awareness", () => {
+  test("gate off: legacy finalise even without a pass", () =>
+    assert.deepEqual(planMultiDayLockIn({ durationType: "multi_day", access: { ok: true, hasPass: false }, gate: "off" }), { action: "finalise" }));
+  test("gate absent (RPC not deployed): legacy finalise", () =>
+    assert.deepEqual(planMultiDayLockIn({ durationType: "multi_day", access: { ok: false }, gate: "absent" }), { action: "finalise" }));
+  test("gate enforce, no pass: pass step", () =>
+    assert.deepEqual(planMultiDayLockIn({ durationType: "multi_day", access: { ok: true, hasPass: false }, gate: "enforce" }), { action: "pass_step" }));
+  test("gate enforce, pass: finalise", () =>
+    assert.deepEqual(planMultiDayLockIn({ durationType: "multi_day", access: { ok: true, hasPass: true }, gate: "enforce" }), { action: "finalise" }));
+  test("gate enforce, unreadable access: stop, never guess", () =>
+    assert.equal(planMultiDayLockIn({ durationType: "multi_day", access: { ok: false }, gate: "enforce" }).action, "stop"));
+  test("gate omitted: unchanged existing behaviour", () =>
+    assert.deepEqual(planMultiDayLockIn({ durationType: "multi_day", access: { ok: true, hasPass: false } }), { action: "pass_step" }));
+  test("single-day ignores the gate", () =>
+    assert.deepEqual(planMultiDayLockIn({ durationType: "single_day", access: { ok: false }, gate: "enforce" }), { action: "finalise" }));
+  test("parse: enforce/off/garbage", () => {
+    assert.equal(parseMultiDayGateMode({ mode: "enforce" }), "enforce");
+    assert.equal(parseMultiDayGateMode({ mode: "off" }), "off");
+    assert.equal(parseMultiDayGateMode(null), "absent");
+    assert.equal(parseMultiDayGateMode({ mode: "ENFORCE " }), "absent");
   });
 });

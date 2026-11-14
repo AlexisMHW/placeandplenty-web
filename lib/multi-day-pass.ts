@@ -82,10 +82,28 @@ export const ACCESS_CHECK_FAILED_MESSAGE =
 export function planMultiDayLockIn(input: {
   durationType: "single_day" | "multi_day";
   access: { ok: true; hasPass: boolean } | { ok: false };
+  /**
+   * Interim gate mode (migration 203003). Optional so existing callers keep
+   * today's behaviour. "off"/"absent" = the database is not enforcing, so the
+   * legacy lock-in is used; "enforce" = pass-first (the database would refuse).
+   */
+  gate?: MultiDayGateMode;
 }): LockInPlan {
   if (input.durationType !== "multi_day") return { action: "finalise" };
+  if (input.gate === "off" || input.gate === "absent") return { action: "finalise" };
   if (!input.access.ok) return { action: "stop", message: ACCESS_CHECK_FAILED_MESSAGE };
   return input.access.hasPass ? { action: "finalise" } : { action: "pass_step" };
+}
+
+/** Interim gate (203003) mode as seen by a client. "absent" = RPC not deployed or unreadable-as-missing. */
+export type MultiDayGateMode = "off" | "enforce" | "absent";
+
+/** Parse the get_multi_day_lock_in_gate() payload. Anything unrecognised that is not an explicit "enforce" is treated as not enforcing, never as a bypass of the database (the DB still decides). */
+export function parseMultiDayGateMode(payload: unknown): MultiDayGateMode {
+  const mode = (payload as { mode?: unknown } | null | undefined)?.mode;
+  if (mode === "enforce") return "enforce";
+  if (mode === "off") return "off";
+  return "absent";
 }
 
 /* ------------------------------------------------------------------ */

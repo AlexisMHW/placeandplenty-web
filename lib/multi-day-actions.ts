@@ -9,7 +9,9 @@ import {
   classifyMultiDayPass,
   isMultiDayPassRequired,
   LOCK_IN_REFUSED_MESSAGE,
+  type MultiDayGateMode,
   type MultiDayPassStatus,
+  parseMultiDayGateMode,
 } from "@/lib/multi-day-pass";
 
 type Result = { ok: true } | { ok: false; message: string };
@@ -59,6 +61,18 @@ export async function getMultiDayAccessState(
     hasPass: hasPass === true,
     hasExtension: hasExtension === true,
   };
+}
+
+/**
+ * Interim gate mode (203003). Feature-detects the RPC: if it is not deployed
+ * (or errors) the answer is "absent", which keeps the legacy flow. The database
+ * trigger is still the authority; this only lets the wizard order its steps.
+ */
+export async function getMultiDayLockInGate(): Promise<MultiDayGateMode> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("get_multi_day_lock_in_gate");
+  if (error) return "absent";
+  return parseMultiDayGateMode(data);
 }
 
 export async function initializeMultiDaySchedule(gatheringId: string): Promise<Result> {

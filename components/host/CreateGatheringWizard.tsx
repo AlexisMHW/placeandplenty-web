@@ -16,7 +16,7 @@ import {
 } from "@/lib/host-actions";
 import type { GatheringLimitCode } from "@/lib/gathering-limits";
 import { multiDayPassStepPath, planMultiDayLockIn } from "@/lib/multi-day-pass";
-import { getMultiDayAccessState } from "@/lib/multi-day-actions";
+import { getMultiDayAccessState, getMultiDayLockInGate } from "@/lib/multi-day-actions";
 import {
   DEFAULT_ARRIVAL_TIME,
   EMPTY_GATHERING_INPUT,
@@ -404,10 +404,12 @@ export default function CreateGatheringWizard({
       // Multi-day: verify the pass BEFORE locking in, so a host without one
       // reaches the pass step instead of a refused write (optional 203001).
       if (input.durationType === "multi_day") {
+        const gate = await getMultiDayLockInGate();
         const access = await getMultiDayAccessState(saved.value);
         const plan = planMultiDayLockIn({
           durationType: "multi_day",
           access: access.ok ? { ok: true, hasPass: access.hasPass } : { ok: false },
+          gate,
         });
         if (plan.action === "stop") {
           setError(plan.message);
