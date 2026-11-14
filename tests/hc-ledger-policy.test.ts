@@ -72,3 +72,8 @@ test("brand readiness lists exactly what is missing", () => {
   const ok = brandReadiness({ approved: true, platforms: 1, niches: 1, audienceSummary: "Home cooks who host monthly.", collaborationInterest: 1, hasApprovedContent: true, hasUsagePermission: false, disclosureAcknowledged: true });
   assert.ok(ok.ready); assert.deepEqual(ok.missing, []);
 });
+
+test("A7: canonical web product id plus_annual qualifies (was silently skipped before); multi_day_pass does not", () => {
+  assert.equal(planLedgerCalls({ ...purchase, product: "plus_annual" }).ok, true);
+  assert.equal(planLedgerCalls({ ...purchase, product: "multi_day_pass" }).ok, false);
+});
