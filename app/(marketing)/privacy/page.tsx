@@ -27,10 +27,26 @@
 //   * whether any EU/UK transfer language is needed for the launch market
 //   * the payment provider's own processor terms, once one is chosen
 //
-// If app behaviour changes, this page changes with it. Specifically: it
-// currently states there is NO analytics, advertising, attribution or
-// crash-reporting SDK on either surface. That is true today (directive
-// §22). Adding one makes this page false.
+// If app behaviour changes, this page changes with it. Specifically:
+//   * the NATIVE APP has no analytics, advertising, attribution or
+//     crash-reporting SDK (re-verify at each release; RevenueCat and Expo
+//     push are disclosed below);
+//   * the WEBSITE uses Google Analytics and PostHog, only after the visitor
+//     accepts (see components/AnalyticsConsent.tsx), never on invitation,
+//     gallery, co-host-invite, auth, /command-center or /creator routes.
+//     Adding or changing a tool on either surface changes this page.
+//
+// DRAFT CORRECTION, 13 Nov 2026 (fork PRIVACY-VERIFY). NOT LEGAL ADVICE.
+// DO NOT PUBLISH until ALL of the following are true:
+//   1. the consent-gating patch (web_analytics_consent_gating.patch) ships in
+//      the SAME release as this page, so the page matches behaviour;
+//   2. the owner has checked the PostHog and GA4 dashboard settings listed in
+//      recovery/privacy/ANALYTICS_AUDIT.md section 7 (replay project setting,
+//      IP discard, GA4 retention/Google signals) and the "Website analytics"
+//      wording below still matches them;
+//   3. counsel has reviewed the whole page (US state rights, EU/UK scope,
+//      retention periods, referral wording).
+// Set lastUpdated to the actual publication date at release.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -66,8 +82,14 @@ export default function PrivacyPage() {
             for advertising.
           </li>
           <li>
-            There is no analytics SDK, advertising SDK, attribution SDK or
-            crash-reporting SDK in the Place &amp; Plenty app.
+            The Place &amp; Plenty mobile app contains no analytics,
+            advertising, attribution or crash-reporting SDK.
+          </li>
+          <li>
+            On this website, we use Google Analytics and PostHog to see which
+            pages are useful, but only if you say yes, and never on your
+            invitation, RSVP or photo-gallery links. We do not record your
+            screen. See &ldquo;Website analytics&rdquo; below.
           </li>
           <li>
             You can delete your account and its data yourself, from inside
@@ -181,13 +203,50 @@ export default function PrivacyPage() {
         is still active.
       </p>
 
+      <h3 id="website-analytics">Website analytics</h3>
+      <p>
+        On placeandplenty.com, and only if you choose &ldquo;Accept
+        analytics&rdquo; in the banner, we use Google Analytics and PostHog
+        to understand how people use the website, for example which pages
+        help someone plan a gathering. They may set cookies or use local
+        storage on your device and receive your IP address, device and
+        browser details, and the pages you visit. We configure them not to
+        build advertising profiles, not to record your screen or
+        interactions, and not to collect names or email addresses. If you
+        decline, or if your browser sends a Global Privacy Control signal,
+        we load neither tool.
+      </p>
+      <p>
+        We never load analytics on your invitation link, RSVP page, photo
+        gallery link, co-host invitation, sign-in or password-reset pages, or
+        on the signed-in host area, and we strip anything that looks like a
+        token, code, email address or name from the page address before it is
+        sent. {/* COUNSEL/OWNER: add retention periods for Google Analytics and PostHog once confirmed in each dashboard; add transfer/legal-basis wording if EU/UK visitors are in scope; add a "change your analytics choice" link once the build item exists. */}
+      </p>
+
       <h3>What we do not collect</h3>
       <p>
         We do not collect your precise device location. We do not use
-        cookies or similar technologies for advertising or cross-site
-        tracking. We do not build advertising profiles. We do not run
-        session replay.
+        advertising cookies, and we do not track you across other websites.
+        We do not build advertising profiles. We do not record or replay
+        your sessions, on the website or in the app. We use a small number of
+        cookies and local-storage items to keep you signed in, to remember
+        your analytics choice, and to run the website.
       </p>
+      {/*
+        COUNSEL / OWNER PLACEHOLDER: Hosting Collective referral link.
+        NOT RENDERED until the creator program and its first-party referral
+        cookie ship. Draft wording to insert under "What we collect" at that time:
+          "If you arrive through a Place & Plenty Hosting Collective creator's
+          link, we store that creator's referral code and the time you arrived
+          in a first-party cookie for up to 30 days, so the creator can be
+          credited if you later buy. We do not use it to track you on other
+          websites, and we do not tell the creator who you are."
+        Open for counsel: EU/UK treatment (consent before setting?), whether the
+        Global Privacy Control signal should also suppress it (recommendation:
+        no, it is first-party and needed to pay a creator, but disclose it), and
+        what creators may be told (aggregate counts only).
+      */}
 
       <h2>Why we use it</h2>
       <ul>
@@ -243,6 +302,30 @@ export default function PrivacyPage() {
         <li>
           <strong>Vercel</strong> — hosts this website and keeps standard
           server request logs.
+        </li>
+        <li>
+          <strong>Google (Analytics)</strong> and <strong>PostHog</strong> —
+          website analytics, only if you accept in the banner (see
+          &ldquo;Website analytics&rdquo;). They receive page addresses
+          (with tokens, codes and personal values removed), device and browser
+          details and your IP address. PostHog is hosted in the United
+          States.
+        </li>
+        <li>
+          <strong>Resend</strong> — sends invitation, reminder and account
+          emails on our behalf. It receives the recipient&rsquo;s email
+          address and the content of the message.
+        </li>
+        <li>
+          <strong>Brevo</strong> and <strong>MailerLite</strong> — if you
+          ask for a free hosting checklist or opt in to hosting emails,
+          they receive your email address and the choices you made, to
+          deliver the checklist and any emails you asked for.
+        </li>
+        <li>
+          <strong>RevenueCat</strong> — manages in-app purchase and
+          entitlement status for the mobile app. It receives your account
+          identifier and purchase records. {/* COUNSEL/OWNER: confirm this disclosure and RevenueCat's region/terms before publishing. */}
         </li>
       </ul>
       <p>
