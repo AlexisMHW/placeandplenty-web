@@ -248,12 +248,24 @@ export default async function PeoplePage({ params }: { params: { id: string } })
                     const name = g.guest
                       ? [g.guest.first_name, g.guest.last_name].filter(Boolean).join(" ")
                       : "Guest";
+                    // Gathering-specific RSVP notes must not be hidden by saved Guest Book notes.
+                    // Keep both sources visible, labeled, without duplicating identical values.
                     const notes = [
-                      g.guest?.dietary_notes || g.guest_dietary_notes,
-                      g.guest?.allergy_notes || g.guest_allergy_notes,
-                      g.guest?.accessibility_notes,
-                      g.notes,
-                    ].filter(Boolean) as string[];
+                      ["Gathering dietary", g.guest_dietary_notes],
+                      ["Saved dietary", g.guest?.dietary_notes],
+                      ["Gathering allergies", g.guest_allergy_notes],
+                      ["Saved allergies", g.guest?.allergy_notes],
+                      ["Accessibility", g.guest?.accessibility_notes],
+                      ["Host note", g.notes],
+                    ]
+                      .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim().length > 0)
+                      .filter((entry, index, entries) =>
+                        !entries.slice(0, index).some((previous) =>
+                          previous[0].replace(/^(Gathering|Saved) /, "") === entry[0].replace(/^(Gathering|Saved) /, "") &&
+                          previous[1].trim().toLowerCase() === entry[1].trim().toLowerCase()
+                        )
+                      )
+                      .map(([label, value]) => `${label}: ${value.trim()}`);
                     const isSaved = g.guest?.id ? savedIds.has(g.guest.id) : false;
                     const isPartyLead = !!g.invitation_party_id && leadByParty.get(g.invitation_party_id) === g.id;
                     const invitationState = deliveryLabel(

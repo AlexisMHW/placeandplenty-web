@@ -168,6 +168,11 @@ export interface GuestPageData {
   plusOneLimit: number;
   contactEmail: { has: boolean; masked: string | null };
   rsvpDeadline: string | null;
+  // Additive RSVP state (guest-page-lookup v29+). Absent on older deployments: treat as open.
+  rsvpDeadlineTimezone?: string | null;
+  rsvpOpen?: boolean;
+  rsvpClosedReason?: string | null;
+  rsvpClosedMessage?: string | null;
   invitationMode: "p_and_p" | "uploaded" | "details_only";
   invitationStyle: string | null;
   invitationArtwork: { url: string; mimeType: string } | null;
@@ -229,12 +234,14 @@ export async function submitRsvp(
   token: string,
   responses: RsvpResponseInput[],
   plusOneName?: string,
-  contactEmail?: string
+  contactEmail?: string,
+  plusOneKey?: string
 ) {
   return call<{ success: boolean }>("guest-rsvp-submit", {
     token,
     responses,
     ...(plusOneName ? { plusOneName } : {}),
+    ...(plusOneName && plusOneKey ? { plusOneKey } : {}),
     ...(contactEmail ? { contactEmail } : {}),
   });
 }

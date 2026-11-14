@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getGathering } from "@/lib/host-data";
 import { getUser } from "@/lib/supabase-server";
 import { WorkspaceHeader } from "@/components/host/Workspace";
+import { supportsGuestCountUnknown } from "@/lib/guest-count-support";
 import GatheringSettingsForm from "./GatheringSettingsForm";
 import GatheringLifecyclePanel from "./GatheringLifecyclePanel";
 
@@ -25,6 +26,7 @@ export default async function SettingsPage({
     getUser(),
   ]);
   if (!gathering) notFound();
+  const allowUnknownGuestCount = await supportsGuestCountUnknown();
 
   return (
     <div>
@@ -32,7 +34,7 @@ export default async function SettingsPage({
         title="Gathering details"
         description="The details of this gathering — and the lifecycle actions that belong to it."
       />
-      <GatheringSettingsForm gathering={gathering} />
+      <GatheringSettingsForm gathering={gathering} allowUnknownGuestCount={allowUnknownGuestCount} />
       <GatheringLifecyclePanel
         gathering={gathering}
         isOwner={user?.id === gathering.owner_user_id}

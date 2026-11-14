@@ -1,3 +1,4 @@
+import { formatGuestCount } from "@/lib/guest-count-state";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -157,7 +158,7 @@ export default async function GatheringOverviewPage({ params }: { params: { id: 
               <dl className="grid grid-cols-3 gap-4 border-b border-sage/20 pb-4">
                 <div><dt className="font-body text-xs uppercase tracking-[0.12em] text-forest/55">Dishes</dt><dd className="mt-1 font-display text-2xl text-forest">{menu.length}</dd></div>
                 <div><dt className="font-body text-xs uppercase tracking-[0.12em] text-forest/55">Serves</dt><dd className="mt-1 font-display text-2xl text-forest">{coming.length + plusOnes}</dd></div>
-                <div><dt className="font-body text-xs uppercase tracking-[0.12em] text-forest/55">Guests</dt><dd className="mt-1 font-display text-2xl text-forest">{gathering.expected_guest_count}</dd></div>
+                <div><dt className="font-body text-xs uppercase tracking-[0.12em] text-forest/55">Guests</dt><dd className="mt-1 font-display text-2xl text-forest">{formatGuestCount(gathering)}</dd></div>
               </dl>
               <ul className="mt-4 space-y-1.5">
                 {menu.slice(0, 4).map((m) => <li key={m.id} className="font-body text-sm text-forest/75">{m.name}</li>)}

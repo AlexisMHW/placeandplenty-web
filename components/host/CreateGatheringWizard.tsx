@@ -1,5 +1,6 @@
 "use client";
 
+import { GUEST_COUNT_COPY } from "@/lib/guest-count-state";
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -139,10 +140,13 @@ export default function CreateGatheringWizard({
   resume = null,
   preset,
   checklistEdition,
+  allowUnknownGuestCount = false,
 }: {
   resume?: ResumedDraft | null;
   preset?: Partial<CreateGatheringInput>;
   checklistEdition?: string;
+  /** Only true when the database can store an unknown count (see lib/guest-count-support.ts). */
+  allowUnknownGuestCount?: boolean;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(() => clampWizardStep(resume?.step ?? 1));
@@ -238,7 +242,7 @@ export default function CreateGatheringWizard({
         return days >= 2 && days <= 4;
       }
       case 3:
-        return input.adultCount + input.childCount > 0;
+        return input.guestCountUnknown === true || input.adultCount + input.childCount > 0;
       case 5:
         if (decision === null) return false;
         if (decision === "not_yet") return mode !== null;
@@ -525,9 +529,23 @@ export default function CreateGatheringWizard({
 
           {step === 3 && (
             <div className="mt-7 space-y-4">
-              <CountField label="Adults" value={input.adultCount} onChange={(n) => update("adultCount", n)} />
-              <CountField label="Children" value={input.childCount} onChange={(n) => update("childCount", n)} />
-              <p className="font-body text-sm text-forest/65">Expected guests is worked out from these two — {input.adultCount + input.childCount} so far.</p>
+              {(allowUnknownGuestCount || input.guestCountUnknown === true) && <ChipGrid>
+                <Chip
+                  selected={input.guestCountUnknown === true}
+                  onClick={() => setInput((prev) => ({ ...prev, guestCountUnknown: prev.guestCountUnknown !== true, adultCount: 0, childCount: 0 }))}
+                >
+                  {GUEST_COUNT_COPY.en.notSureYet}
+                </Chip>
+              </ChipGrid>}
+              {input.guestCountUnknown === true ? (
+                <p className="font-body text-sm text-forest/65">{GUEST_COUNT_COPY.en.unknownHelp}</p>
+              ) : (
+                <>
+                  <CountField label="Adults" value={input.adultCount} onChange={(n) => setInput((prev) => ({ ...prev, guestCountUnknown: false, adultCount: n }))} />
+                  <CountField label="Children" value={input.childCount} onChange={(n) => setInput((prev) => ({ ...prev, guestCountUnknown: false, childCount: n }))} />
+                  <p className="font-body text-sm text-forest/65">Expected guests is worked out from these two — {input.adultCount + input.childCount} so far.</p>
+                </>
+              )}
             </div>
           )}
 

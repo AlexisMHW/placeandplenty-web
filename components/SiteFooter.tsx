@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Icon from "@/components/Icon";
-import QrCode from "@/components/QrCode";
+import PlatformQrCodes from "@/components/PlatformQrCodes";
 import Wordmark from "@/components/Wordmark";
 import { BRAND_NAME, TAGLINE } from "@/lib/brand";
 import {
@@ -16,7 +16,6 @@ import {
 import {
   APP_STORE_URL,
   PLAY_STORE_URL,
-  APP_DOWNLOAD_URL,
   STORE_BADGES,
   hasAnyStoreLink,
 } from "@/lib/app-links";
@@ -84,7 +83,7 @@ function StoreBadge({
   if (badge) {
     return (
       <a href={href} className="inline-block rounded-lg">
-        <Image src={badge} alt={alt} width={168} height={50} />
+        <Image src={badge} alt={alt} width={120} height={40} className="h-12 w-auto" />
       </a>
     );
   }
@@ -158,12 +157,12 @@ export default function SiteFooter() {
 
             <p className="mt-4 font-body text-xs leading-relaxed text-forest/55">
               {appLinksLive
-                ? "Scan to download Place & Plenty or choose your store above."
+                ? "Choose your store above, or scan the code labeled for your phone."
                 : "Store links and the live download QR switch on when the app listings are published."}
             </p>
           </div>
 
-          <div className="relative mx-auto flex w-full max-w-[31rem] items-end justify-center gap-5 lg:justify-end">
+          <div className="relative mx-auto flex w-full max-w-[31rem] flex-col items-center justify-center gap-5 sm:flex-row sm:items-end lg:justify-end">
             <div className="relative z-10 w-[10.5rem] overflow-hidden rounded-[2rem] border-[6px] border-forest bg-forest shadow-lift sm:w-[12rem]">
               <Image
                 src="/images/hero-app-screen.png"
@@ -175,24 +174,7 @@ export default function SiteFooter() {
               />
             </div>
 
-            <div className="mb-4 hidden rounded-2xl border border-sage/35 bg-offwhite p-4 text-center shadow-softer sm:block">
-              {appLinksLive ? (
-                <>
-                  <div className="rounded-lg bg-offwhite p-1.5">
-                    <QrCode value={APP_DOWNLOAD_URL} size={112} />
-                  </div>
-                  <p className="mt-3 max-w-[8.5rem] font-body text-xs leading-relaxed text-forest/65">
-                    Scan to download Place &amp; Plenty.
-                  </p>
-                </>
-              ) : (
-                <div className="flex h-[112px] w-[112px] items-center justify-center rounded-lg border border-dashed border-sage/55 bg-parchment px-3">
-                  <p className="font-body text-[0.66rem] font-semibold uppercase leading-relaxed tracking-[0.12em] text-forest/45">
-                    QR activates at app release
-                  </p>
-                </div>
-              )}
-            </div>
+            {appLinksLive && <PlatformQrCodes className="sm:grid-cols-1" />}
           </div>
         </div>
       </section>

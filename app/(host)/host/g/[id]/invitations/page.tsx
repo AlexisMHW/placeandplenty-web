@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
-import InvitationArtworkManager from "@/components/host/InvitationArtworkManager";
+import InvitationArtworkCard from "@/components/host/InvitationArtworkCard";
+import RsvpControlsCard from "@/components/host/RsvpControlsCard";
+import { getRsvpControlsWeb } from "@/lib/rsvp-controls-actions";
 import { WorkspaceHeader } from "@/components/host/Workspace";
 import { getGathering, signArtwork } from "@/lib/host-data";
 import { createClient } from "@/lib/supabase-server";
@@ -20,6 +22,8 @@ export default async function InvitationsPage({ params }: { params: { id: string
     signArtwork([gathering]),
   ]);
 
+  const rsvpControls = await getRsvpControlsWeb(gathering.id);
+
   const readOnly = ["completed", "cancelled", "archived"].includes(
     gathering.effective_status
   );
@@ -31,7 +35,7 @@ export default async function InvitationsPage({ params }: { params: { id: string
         description="Use your own artwork or keep the invitation identity connected to this gathering."
       />
 
-      <InvitationArtworkManager
+      <InvitationArtworkCard
         gatheringId={gathering.id}
         gatheringName={gathering.name}
         currentFilename={artworkMeta?.invitation_artwork_original_filename ?? null}
@@ -39,6 +43,10 @@ export default async function InvitationsPage({ params }: { params: { id: string
         currentArtworkUrl={artwork.get(gathering.id) ?? null}
         readOnly={readOnly}
       />
+
+      {rsvpControls.ok ? (
+        <RsvpControlsCard gatheringId={gathering.id} initial={rsvpControls.state} readOnly={readOnly} />
+      ) : null}
 
       <section className="mt-6 rounded-2xl border border-sage/25 bg-offwhite p-5 md:p-6">
         <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.18em] text-forest/55">

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import ResendConfirmation from "@/components/auth/ResendConfirmation";
 
 // WEB ACCOUNT CREATION. Founder requirement, 28 Aug 2026: a person must
 // be able to create an account on the website and use Place & Plenty
@@ -110,13 +111,25 @@ export default function SignUpForm({ next }: { next?: string }) {
           Check your email.
         </h2>
         <p className="mt-3 font-body text-base leading-relaxed text-forest/80">
-          We’ve sent a confirmation link to{" "}
+          Look for a confirmation link at{" "}
           <strong className="font-semibold text-forest">{email}</strong>. Open
           it and you’ll land straight in your account.
         </p>
         <p className="mt-4 font-body text-sm leading-relaxed text-forest/65">
-          Nothing there after a minute or two? Check the spam folder — and if
-          it still hasn’t arrived,{" "}
+          Best to open it on the same device and browser you signed up on. If
+          you open it somewhere else and it says the link didn’t work, your
+          email may still be confirmed — try{" "}
+          <Link
+            href={`/login?next=${encodeURIComponent(destination)}`}
+            className="underline decoration-gold underline-offset-4"
+          >
+            logging in
+          </Link>
+          . Already have an account? Log in the same way.
+        </p>
+        <p className="mt-3 font-body text-sm leading-relaxed text-forest/65">
+          Nothing there after a minute or two? Check the spam folder, or ask for
+          a new link below — and if it still hasn’t arrived,{" "}
           <Link
             href="/support"
             className="underline decoration-gold underline-offset-4"
@@ -125,6 +138,7 @@ export default function SignUpForm({ next }: { next?: string }) {
           </Link>
           .
         </p>
+        <ResendConfirmation initialEmail={email} next={destination} />
       </div>
     );
   }

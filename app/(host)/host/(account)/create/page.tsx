@@ -1,3 +1,5 @@
+import { isGuestCountUnknown } from "@/lib/guest-count-state";
+import { supportsGuestCountUnknown } from "@/lib/guest-count-support";
 import { getChecklist, checklistPdf } from "@/lib/checklists";
 import { checklistPreset } from "@/lib/checklist-flow";
 import Link from "next/link";
@@ -109,6 +111,7 @@ async function loadDraft(editId: string): Promise<ResumedDraft> {
       locationName: fields.location_name ?? "",
       adultCount: fields.adult_count ?? 0,
       childCount: fields.child_count ?? 0,
+      guestCountUnknown: isGuestCountUnknown(fields),
       budgetTarget: fields.budget_target,
       foodStyle:
         fields.food_style && isFoodStyle(fields.food_style)
@@ -132,6 +135,7 @@ export default async function CreateGatheringPage({
 }) {
   const editId = searchParams.editId;
   const resume = editId ? await loadDraft(editId) : null;
+  const allowUnknownGuestCount = await supportsGuestCountUnknown();
   const kit = !resume && typeof searchParams.checklist === "string" ? getChecklist(searchParams.checklist) : undefined;
 
   return (
@@ -169,7 +173,7 @@ export default async function CreateGatheringPage({
 
       <div className="mt-6 rounded-[1.75rem] border border-sage/25 bg-offwhite p-4 shadow-sm md:p-6">
         {kit && <aside className="mb-6 rounded-card border border-gold/40 bg-cream p-5"><h2 className="font-display text-xl text-forest">Your {kit.name} plan starts here</h2><p className="mt-2 font-body text-sm text-forest/80">Answer the setup questions, choose your invitation, and add your people. Review everything before sending invitations from My People.</p><Link href={checklistPdf(kit.slug)} download className="mt-3 inline-block font-body text-sm text-forest underline">Download your checklist again</Link>{(kit.slug === "bachelorette-weekend" || kit.slug === "family-reunion") && <p className="mt-3 font-body text-sm text-forest/70">Choose a single-day gathering to start free. Multi-Day planning requires access under your plan and current purchase availability.</p>}</aside>}
-        <CreateGatheringWizard resume={resume} preset={kit ? checklistPreset(kit.slug) : undefined} checklistEdition={kit?.slug} />
+        <CreateGatheringWizard resume={resume} preset={kit ? checklistPreset(kit.slug) : undefined} checklistEdition={kit?.slug} allowUnknownGuestCount={allowUnknownGuestCount} />
       </div>
     </div>
   );
