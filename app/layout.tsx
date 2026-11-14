@@ -87,11 +87,13 @@ export default function RootLayout({
     <html lang="en" className={`${playfair.variable} ${lato.variable}`}>
       <body className="font-body antialiased">
         {children}
-        <Suspense fallback={null}>
-          <AnalyticsTracker />
-        </Suspense>
+        {/* AnalyticsConsent must come BEFORE AnalyticsTracker: sibling effects run in
+            order, and track() is a no-op until AnalyticsConsent has loaded analytics. */}
         <Suspense fallback={null}>
           <AnalyticsConsent />
+        </Suspense>
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
         </Suspense>
       </body>
     </html>
