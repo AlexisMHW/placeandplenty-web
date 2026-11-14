@@ -190,28 +190,41 @@ export function parseFinancial(raw: unknown): FinancialSummary | null {
 }
 
 // ---- payouts (hc_admin_list_payouts + action forms) ----
-export interface PayoutRow { id: string; partnerId: string; displayName: string; totalCents: number; status: "draft" | "approved" | "paid" | "void"; createdAt: string | null; approvedAt: string | null; paidAt: string | null; externalRef: string | null; voidReason: string | null }
+export interface PayoutRow { id: string; partnerId: string; displayName: string; totalCents: number; status: "draft" | "approved" | "paid" | "void" | "reversed"; createdAt: string | null; approvedAt: string | null; paidAt: string | null; paidOn: string | null; externalRef: string | null; voidReason: string | null; reversalReason: string | null; reversedAt: string | null; method: string | null }
 export function parsePayouts(raw: unknown): PayoutRow[] | null {
   if (!Array.isArray(raw)) return null;
   return raw.flatMap((x) => { const o = rec(x); const id = str(o?.id), pid = str(o?.partner_id), total = int(o?.total_cents);
-    const status = ["draft", "approved", "paid", "void"].find((s) => s === o?.status) as PayoutRow["status"] | undefined;
-    return o && id && pid && total !== null && status ? [{ id, partnerId: pid, displayName: str(o.display_name) ?? "(no name)", totalCents: total, status, createdAt: str(o.created_at), approvedAt: str(o.approved_at), paidAt: str(o.paid_at), externalRef: str(o.external_ref), voidReason: str(o.void_reason) }] : []; });
+    const status = ["draft", "approved", "paid", "void", "reversed"].find((s) => s === o?.status) as PayoutRow["status"] | undefined;
+    return o && id && pid && total !== null && status ? [{ id, partnerId: pid, displayName: str(o.display_name) ?? "(no name)", totalCents: total, status, createdAt: str(o.created_at), approvedAt: str(o.approved_at), paidAt: str(o.paid_at), paidOn: str(o.paid_on), externalRef: str(o.external_ref), voidReason: str(o.void_reason), reversalReason: str(o.reversed_reason), reversedAt: str(o.reversed_at), method: str(o.external_method) }] : []; });
 }
-export type PayoutAction = { kind: "draft"; partnerId: string } | { kind: "approve"; payoutId: string } | { kind: "paid"; payoutId: string; externalRef: string } | { kind: "void"; payoutId: string; reason: string };
-export function parsePayoutActionForm(form: { get(name: string): unknown }): { ok: true; value: PayoutAction } | { ok: false; error: string } {
+export type PayoutAction = { kind: "draft"; partnerId: string } | { kind: "approve"; payoutId: string } | { kind: "paid"; payoutId: string; externalRef: string; paidOn: string; method: string } | { kind: "void"; payoutId: string; reason: string } | { kind: "reverse"; payoutId: string; reason: string };
+export function parsePayoutActionForm(form: { get(name: string): unknown }, today: Date = new Date()): { ok: true; value: PayoutAction } | { ok: false; error: string } {
   const g = (k: string) => { const v = form.get(k); return typeof v === "string" ? v.trim() : ""; };
   const kind = g("kind");
   if (kind === "draft") { const partnerId = g("partner_id"); return UUID.test(partnerId) ? { ok: true, value: { kind, partnerId } } : { ok: false, error: "invalid_id" }; }
-  if (kind !== "approve" && kind !== "paid" && kind !== "void") return { ok: false, error: "invalid_kind" };
+  if (kind !== "approve" && kind !== "paid" && kind !== "void" && kind !== "reverse") return { ok: false, error: "invalid_kind" };
   const payoutId = g("payout_id");
   if (!UUID.test(payoutId)) return { ok: false, error: "invalid_id" };
   if (kind === "approve") return { ok: true, value: { kind, payoutId } };
   if (kind === "paid") {
     const externalRef = g("external_ref");
     // The reference records a transfer made OUTSIDE this system. It must be present and plain text.
-    if (externalRef.length < 3 || externalRef.length > 120 || /[<>]/.test(externalRef)) return { ok: false, error: "invalid_reference" };
+    if (externalRef.length < 4 || externalRef.length > 120 || /[<>]/.test(externalRef)) return { ok: false, error: "invalid_reference" };
+    const method = g("method");
+    if (method.length < 2 || method.length > 60 || /[<>]/.test(method)) return { ok: false, error: "invalid_method" };
+    // The date the owner sent the payment outside this system: not in the future, not older than a year (the database repeats both checks).
+    const paidOn = g("paid_on");
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(paidOn) ? new Date(`${paidOn}T00:00:00Z`) : null;
+    const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+    if (!d || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== paidOn || d.getTime() > todayUtc || todayUtc - d.getTime() > 365 * 86400000) return { ok: false, error: "invalid_paid_on" };
     if (g("confirm") !== "yes") return { ok: false, error: "confirmation_required" };
-    return { ok: true, value: { kind, payoutId, externalRef } };
+    return { ok: true, value: { kind, payoutId, externalRef, paidOn, method } };
+  }
+  if (kind === "reverse") {
+    const reason = g("reason");
+    if (reason.length < 3 || reason.length > 200) return { ok: false, error: "invalid_reason" };
+    if (g("confirm") !== "yes") return { ok: false, error: "confirmation_required" };
+    return { ok: true, value: { kind, payoutId, reason } };
   }
   if (kind === "void") {
     const reason = g("reason");

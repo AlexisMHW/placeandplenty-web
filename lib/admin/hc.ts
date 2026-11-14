@@ -175,7 +175,7 @@ export interface PayoutPartnerRow {
   heldCount: number | null; outstandingClawbackCents: number | null; eligible: boolean;
 }
 export interface PayoutEligibility {
-  programEnabled: boolean; rateConfigured: boolean; live: boolean; minPayoutCents: number | null; partners: PayoutPartnerRow[];
+  programEnabled: boolean; rateConfigured: boolean; paidReferralsEnabled: boolean; live: boolean; minPayoutCents: number | null; partners: PayoutPartnerRow[];
 }
 export function parsePayoutEligibility(raw: unknown): PayoutEligibility | null {
   if (!raw || typeof raw !== "object") return null;
@@ -185,6 +185,7 @@ export function parsePayoutEligibility(raw: unknown): PayoutEligibility | null {
     programEnabled: r.program_enabled,
     rateConfigured: r.rate_configured,
     // "live" is only true when the database says so; never inferred here.
+    paidReferralsEnabled: r.paid_referrals_enabled === true,
     live: r.live === true,
     minPayoutCents: int(r.min_payout_cents),
     partners: r.partners.flatMap((p: any) =>

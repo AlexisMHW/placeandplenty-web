@@ -1,4 +1,5 @@
 import { requireStaff } from "@/lib/admin/server";
+import { ActionForm } from "../../_components/action-form";
 import { STAFF_ROLES } from "@/lib/admin/access";
 import { parseStaff } from "@/lib/admin/ops";
 import { staffAction } from "./actions";
@@ -16,17 +17,16 @@ export default async function StaffPage() {
           <li key={s.userId} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-forest/15 p-3 text-sm">
             <span>{s.displayName ?? s.userId} · {s.role.replace(/_/g, " ")} · {s.status}</span>
             {s.status === "active" ? (
-              <form action={async (fd) => { "use server"; await staffAction(fd); }}><input type="hidden" name="kind" value="revoke" /><input type="hidden" name="user_id" value={s.userId} /><button className="rounded border border-forest/30 px-3 py-1 text-forest">Revoke</button></form>
+              <ActionForm action={staffAction} submitLabel="Revoke" submitClassName="rounded border border-forest/30 px-3 py-1 text-forest" successText="Access revoked."><input type="hidden" name="kind" value="revoke" /><input type="hidden" name="user_id" value={s.userId} /></ActionForm>
             ) : null}
           </li>))}</ul>)}
-      <form action={async (fd) => { "use server"; await staffAction(fd); }} className="space-y-2 rounded-lg border border-forest/15 p-4 text-sm">
+      <ActionForm action={staffAction} submitLabel="Save" className="space-y-2 rounded-lg border border-forest/15 p-4 text-sm" successText="Role saved.">
         <h2 className="font-display text-xl text-forest">Give or change a role</h2>
         <input type="hidden" name="kind" value="grant" />
         <label className="block">Account id<input name="user_id" required pattern="[0-9a-fA-F-]{36}" className="mt-1 w-full rounded border border-forest/30 px-2 py-1" /></label>
         <label className="block">Role<select name="role" className="mt-1 rounded border border-forest/30 px-2 py-1">{STAFF_ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}</select></label>
         <label className="flex items-center gap-2"><input type="checkbox" name="confirm_owner" value="yes" /> I am granting the owner role on purpose</label>
-        <button className="rounded bg-forest px-3 py-1 text-parchment">Save</button>
-      </form>
+      </ActionForm>
     </div>
   );
 }
