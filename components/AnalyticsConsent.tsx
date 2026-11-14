@@ -52,6 +52,11 @@ function readSignals(): BrowserSignals {
 }
 
 function loadScriptsOnce() {
+  // Build-time kill switch: NEXT_PUBLIC_ANALYTICS_MODE is inlined at build, so with "off" the
+  // bundler drops everything below (GA4 + PostHog loaders and IDs never ship). The runtime
+  // decision in lib/analytics-privacy.ts already refuses to load in "off"; this makes the
+  // built output provable (scripts/check-analytics-off.mjs).
+  if (process.env.NEXT_PUBLIC_ANALYTICS_MODE === "off") return;
   if (window.__ppScriptsInjected) return;
   window.__ppScriptsInjected = true;
 
