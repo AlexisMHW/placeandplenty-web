@@ -26,6 +26,8 @@ export interface PeopleWorkspaceRow {
     first_share_initiated_at: string | null;
   } | null;
   latest_invitation_delivery_status: string | null;
+  /** Server delivery label from get_invitation_delivery_summary (queued/accepted/delivered/delayed/undeliverable/failed), or null when the RPC is absent or not permitted. */
+  invitation_delivery_state: string | null;
 }
 
 /**
@@ -47,7 +49,7 @@ export async function getPeopleWorkspace(gatheringId: string): Promise<PeopleWor
     .eq("gathering_id", gatheringId);
   if (error) throw error;
 
-  const rows = (data ?? []) as unknown as Omit<PeopleWorkspaceRow, "latest_invitation_delivery_status">[];
+  const rows = (data ?? []) as unknown as Omit<PeopleWorkspaceRow, "latest_invitation_delivery_status" | "invitation_delivery_state">[];
 
   // Invitation state is party-level. Read the same delivery rows native uses
   // and keep only the newest status for each party. `first_share_initiated_at`
@@ -72,10 +74,29 @@ export async function getPeopleWorkspace(gatheringId: string): Promise<PeopleWor
     latestByParty.set(delivery.invitation_party_id, delivery.status ?? null);
   }
 
+  // Feature-detected: get_invitation_delivery_summary exists only after migration 213001. On an older schema, or for a
+  // viewer who is not allowed to call it, the RPC errors and we silently fall back to the released status enum.
+  const summaryByParty = new Map<string, string>();
+  try {
+    const { data: summary, error: summaryError } = await supabase.rpc("get_invitation_delivery_summary", {
+      p_gathering_id: gatheringId,
+    });
+    if (!summaryError && Array.isArray(summary)) {
+      for (const r of summary as Array<{ invitation_party_id: string | null; delivery_state: string | null }>) {
+        if (r.invitation_party_id && r.delivery_state) summaryByParty.set(r.invitation_party_id, r.delivery_state);
+      }
+    }
+  } catch {
+    /* older schema: keep the fallback */
+  }
+
   return rows.map((row) => ({
     ...row,
     latest_invitation_delivery_status: row.invitation_party_id
       ? latestByParty.get(row.invitation_party_id) ?? null
+      : null,
+    invitation_delivery_state: row.invitation_party_id
+      ? summaryByParty.get(row.invitation_party_id) ?? null
       : null,
   }));
 }

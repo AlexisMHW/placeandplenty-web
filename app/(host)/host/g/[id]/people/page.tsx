@@ -17,6 +17,7 @@ import {
   updateGatheringPersonWeb,
 } from "@/lib/people-actions";
 import { rsvpLabel } from "@/lib/host-format";
+import { deliveryCopy, resolveDeliveryLabel } from "@/lib/invitation-delivery";
 
 const RSVP_OPTIONS = ["yes", "maybe", "no", "invited", "no_response"].map(
   (value) => ({ value, label: rsvpLabel(value) })
@@ -25,26 +26,6 @@ const ORDER = ["yes", "maybe", "invited", "no_response", "no"];
 const INPUT = "w-full rounded-md border border-sage/40 bg-white px-3 py-2 font-body text-sm text-forest";
 
 export const metadata = { title: "My People" };
-
-function deliveryLabel(firstShare: string | null | undefined, latest: string | null): string {
-  if (!firstShare) return "Not sent";
-  if (!latest) return "Queued";
-  const labels: Record<string, string> = {
-    proposed: "Queued",
-    scheduled: "Queued",
-    processing: "Queued",
-    pending: "Queued",
-    queued: "Queued",
-    sent: "Sent",
-    delivered: "Delivered",
-    opened: "Opened",
-    failed: "Needs attention",
-    bounced: "Needs attention",
-    skipped: "Not sent",
-    cancelled: "Not sent",
-  };
-  return labels[latest] ?? latest.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
-}
 
 export default async function PeoplePage({ params }: { params: { id: string } }) {
   const [gathering, guests, guestBook, user] = await Promise.all([
@@ -268,10 +249,13 @@ export default async function PeoplePage({ params }: { params: { id: string } })
                       .map(([label, value]) => `${label}: ${value.trim()}`);
                     const isSaved = g.guest?.id ? savedIds.has(g.guest.id) : false;
                     const isPartyLead = !!g.invitation_party_id && leadByParty.get(g.invitation_party_id) === g.id;
-                    const invitationState = deliveryLabel(
+                    const deliveryKey = resolveDeliveryLabel(
                       g.party?.first_share_initiated_at,
-                      g.latest_invitation_delivery_status
+                      g.latest_invitation_delivery_status,
+                      g.invitation_delivery_state
                     );
+                    const invitationState = deliveryCopy(deliveryKey).label;
+                    const invitationHint = deliveryCopy(deliveryKey).hint;
 
                     return (
                       <li key={g.id} className="py-5">
@@ -334,7 +318,10 @@ export default async function PeoplePage({ params }: { params: { id: string } })
                         {isPartyLead && g.party && (
                           <div className="mt-4 rounded-card border border-sage/25 bg-parchment px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-5">
                             <div>
-                              <p className="font-body text-[0.62rem] font-bold uppercase tracking-[0.16em] text-forest/50">
+                              <p
+                                className="font-body text-[0.62rem] font-bold uppercase tracking-[0.16em] text-forest/50"
+                                title={invitationHint}
+                              >
                                 Invitation · {invitationState}
                               </p>
                               <p className="mt-1 font-body text-sm font-semibold text-forest">
