@@ -1,4 +1,5 @@
 import { requireStaff } from "@/lib/admin/server";
+import { ActionForm, SubmitButton } from "../../_components/action-form";
 import { hcCapabilities, parseApplications } from "@/lib/admin/hc";
 import { reviewApplication } from "../actions";
 
@@ -31,14 +32,14 @@ export default async function ApplicationsPage() {
               <p className="mt-1 text-charcoal/70">Niches: {a.niches.join(", ").replace(/_/g, " ") || "none"}</p>
               <p className="text-charcoal/70">Platforms: {a.platforms.map((p) => `${p.platform} ${p.handle ?? p.url ?? ""}`).join("; ") || "none"}</p>
               {caps.canReviewApplications && (a.status === "received" || a.status === "in_review") ? (
-                <form action={async (fd) => { "use server"; await reviewApplication(fd); }} className="mt-3 flex flex-wrap items-end gap-2">
+                <ActionForm action={reviewApplication} submitLabel="" className="mt-3 flex flex-wrap items-end gap-2" successText="Decision saved. The applicant has not been emailed by this action.">
                   <input type="hidden" name="id" value={a.id} />
                   <label className="text-xs">Tier (optional; blank = basic member)<input name="tier" maxLength={32} className="ml-1 rounded border border-forest/30 px-2 py-1" /></label>
                   <label className="text-xs">Referral code (optional)<input name="code" maxLength={32} className="ml-1 rounded border border-forest/30 px-2 py-1" /></label>
                   <label className="text-xs">Note<input name="note" maxLength={1000} className="ml-1 rounded border border-forest/30 px-2 py-1" /></label>
-                  <button name="decision" value="approved" className="rounded bg-forest px-3 py-1 text-parchment">Approve</button>
-                  <button name="decision" value="declined" className="rounded border border-forest/30 px-3 py-1 text-forest">Decline</button>
-                </form>
+                  <SubmitButton name="decision" value="approved" label="Approve" className="rounded bg-forest px-3 py-1 text-parchment" />
+                  <SubmitButton name="decision" value="declined" label="Decline" className="rounded border border-forest/30 px-3 py-1 text-forest" />
+                </ActionForm>
               ) : null}
             </li>
           ))}

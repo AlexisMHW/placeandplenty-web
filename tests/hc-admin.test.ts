@@ -120,7 +120,7 @@ const HC_DIR = "app/(command-center)/command-center/hosting-collective";
 
 test("every HC page requires hc.read and every server action requires its own permission BEFORE any rpc", () => {
   const pages = walk(HC_DIR).filter((f) => f.endsWith("page.tsx"));
-  assert.equal(pages.length, 6); // applications, content, members, overview, payouts, campaigns
+  assert.equal(pages.length, 7); // applications, content, members, overview, payouts, campaigns, tiers
   for (const f of pages) assert.match(readFileSync(f, "utf8"), /requireStaff\("hc\.read"/, f);
   const actions = readFileSync(join(HC_DIR, "actions.ts"), "utf8");
   const fns = actions.split(/export async function /).slice(1);

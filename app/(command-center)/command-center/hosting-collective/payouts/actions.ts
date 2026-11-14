@@ -2,14 +2,17 @@
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/admin/server";
 import { parsePayoutActionForm, parseTermsForm } from "@/lib/admin/cc";
+import { knownCode } from "@/lib/admin/messages";
+import { parsePaidSwitchForm } from "@/lib/admin/tiers";
 
-// PAYOUT AND TERMS ACTIONS. Owner only: hc.payout is checked here AND inside every database function, each of which writes an audit row.
-// NOTHING HERE MOVES MONEY. "Mark paid" only RECORDS a transfer the owner made elsewhere (bank, PayPal, etc.) with its reference.
-// The database error text is never forwarded; only a short known code is returned.
-const KNOWN = /below_minimum|partner_not_approved|payout_not_draft|payout_not_approved|payout_not_voidable|not_authorized|terms_must_be_effective_in_the_future|invalid_[a-z_]+/;
+// MANUAL PAYOUT ACTIONS (founder decision D3). Owner only: hc.payout is checked here AND inside every database function, each of which writes an audit row.
+// NOTHING HERE MOVES MONEY, EVER. "Record external payment" only RECORDS a transfer the owner already made elsewhere (bank, PayPal, etc.),
+// with that transfer's reference, the date sent, and an explicit confirmation. Approved is not paid. A paid payout can be reversed with a reason.
+// The database error text is never forwarded; only a short known code is returned (lib/admin/messages.ts).
 const PATH = "/command-center/hosting-collective/payouts";
+type State = { ok: boolean; code: string };
 
-export async function payoutAction(formData: FormData): Promise<{ ok: boolean; code: string }> {
+export async function payoutAction(formData: FormData): Promise<State> {
   const { supabase } = await requireStaff("hc.payout", PATH);
   const parsed = parsePayoutActionForm(formData);
   if (!parsed.ok) return { ok: false, code: parsed.error };
@@ -17,19 +20,19 @@ export async function payoutAction(formData: FormData): Promise<{ ok: boolean; c
   let res: { data?: unknown; error: { message: string } | null };
   if (v.kind === "draft") res = await supabase.rpc("hc_create_payout_draft", { p_partner_id: v.partnerId });
   else if (v.kind === "approve") res = await supabase.rpc("hc_approve_payout", { p_payout_id: v.payoutId });
-  else if (v.kind === "paid") res = await supabase.rpc("hc_mark_payout_paid", { p_payout_id: v.payoutId, p_external_ref: v.externalRef });
+  else if (v.kind === "paid") res = await supabase.rpc("hc_record_external_payment", { p_payout_id: v.payoutId, p_external_ref: v.externalRef, p_paid_on: v.paidOn, p_method: v.method, p_confirm_external_payment: true });
+  else if (v.kind === "reverse") res = await supabase.rpc("hc_reverse_recorded_payment", { p_payout_id: v.payoutId, p_reason: v.reason });
   else res = await supabase.rpc("hc_void_payout", { p_payout_id: v.payoutId, p_reason: v.reason });
-  if (res.error) return { ok: false, code: KNOWN.exec(res.error.message)?.[0] ?? "failed" };
-  // hc_create_payout_draft reports business outcomes (for example below_minimum) as data, not as an error.
-  if (v.kind === "draft") {
-    const status = (res.data as { status?: unknown } | null)?.status;
-    if (status !== "draft") return { ok: false, code: typeof status === "string" && KNOWN.test(status) ? status : "failed" };
-  }
+  if (res.error) return { ok: false, code: knownCode(res.error.message) };
+  // The database reports business outcomes (below_minimum, paid_referrals_not_active ...) as data, not as an error. Anything that is not the success status is shown as a refusal.
+  const status = (res.data as { status?: unknown } | null)?.status;
+  const GOOD: Record<string, string[]> = { draft: ["draft"], approve: ["approved", "already_approved"], paid: ["paid_recorded", "already_recorded"], reverse: ["reversed", "already_reversed"], void: ["void", "already_void"] };
+  if (typeof status === "string" && !GOOD[v.kind].includes(status)) return { ok: false, code: knownCode(status) };
   revalidatePath(PATH);
   return { ok: true, code: "saved" };
 }
 
-export async function addTermsVersion(formData: FormData): Promise<{ ok: boolean; code: string }> {
+export async function addTermsVersion(formData: FormData): Promise<State> {
   const { supabase } = await requireStaff("hc.payout", PATH);
   const parsed = parseTermsForm(formData, new Date());
   if (!parsed.ok) return { ok: false, code: parsed.error };
@@ -37,7 +40,21 @@ export async function addTermsVersion(formData: FormData): Promise<{ ok: boolean
   const { error } = await supabase.rpc("hc_add_terms_version", {
     p_amounts: v.amounts, p_validation_days: v.validationDays, p_min_payout_cents: v.minPayoutCents, p_effective_from: v.effectiveFrom, p_note: v.note,
   });
-  if (error) return { ok: false, code: KNOWN.exec(error.message)?.[0] ?? "failed" };
+  if (error) return { ok: false, code: knownCode(error.message) };
+  revalidatePath(PATH); revalidatePath("/command-center/hosting-collective/tiers");
+  return { ok: true, code: "saved" };
+}
+
+// Paid-referrals switch (owner only). Activation needs the typed phrase and a reason; both are re-checked in the database. Local code never turns it on by itself.
+export async function paidReferralsSwitch(formData: FormData): Promise<{ ok: boolean; code: string }> {
+  const { supabase } = await requireStaff("hc.payout", PATH);
+  const parsed = parsePaidSwitchForm(formData);
+  if (!parsed.ok) return { ok: false, code: parsed.error };
+  const v = parsed.value;
+  const res = v.on ? await supabase.rpc("hc_activate_paid_referrals", { p_confirm: v.phrase, p_reason: v.reason }) : await supabase.rpc("hc_deactivate_paid_referrals", { p_reason: v.reason });
+  if (res.error) return { ok: false, code: knownCode(res.error.message) };
+  const status = (res.data as { status?: unknown } | null)?.status;
+  if (status !== "activated" && status !== "deactivated" && status !== "already_active" && status !== "already_inactive") return { ok: false, code: typeof status === "string" ? knownCode(status) : "failed" };
   revalidatePath(PATH);
   return { ok: true, code: "saved" };
 }

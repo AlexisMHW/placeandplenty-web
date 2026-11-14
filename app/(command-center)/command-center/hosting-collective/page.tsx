@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ActionForm } from "../_components/action-form";
 import { requireStaff } from "@/lib/admin/server";
 import { hcCapabilities, notificationLabel, parseNotifications } from "@/lib/admin/hc";
 import { acknowledgeNotification } from "./actions";
@@ -35,10 +36,9 @@ export default async function HostingCollectiveHome() {
               <li key={n.id} className="flex items-center justify-between gap-3 rounded-lg border border-forest/15 bg-parchment p-3">
                 <span>{notificationLabel(n.kind)}{n.severity === "action" ? " (action needed)" : ""}</span>
                 {caps.canManage ? (
-                  <form action={async (fd) => { "use server"; await acknowledgeNotification(fd); }}>
+                  <ActionForm action={acknowledgeNotification} submitLabel="Mark seen" submitClassName="rounded border border-forest/30 px-2 py-1 text-xs text-forest" successText="Marked seen.">
                     <input type="hidden" name="id" value={n.id} />
-                    <button className="rounded border border-forest/30 px-2 py-1 text-xs text-forest">Mark seen</button>
-                  </form>
+                  </ActionForm>
                 ) : null}
               </li>
             ))}

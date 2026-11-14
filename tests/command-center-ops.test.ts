@@ -129,10 +129,10 @@ test("payout forms: every action is validated; 'paid' needs a reference AND expl
   const bad = (o: Record<string, string>) => { const r = parsePayoutActionForm(fd(o)); return r.ok ? "ok" : r.error; };
   assert.equal(bad({ kind: "draft", partner_id: "x" }), "invalid_id");
   assert.equal(bad({ kind: "approve" }), "invalid_id");
-  assert.equal(bad({ kind: "paid", payout_id: UUID, external_ref: "ab", confirm: "yes" }), "invalid_reference");
-  assert.equal(bad({ kind: "paid", payout_id: UUID, external_ref: "<script>", confirm: "yes" }), "invalid_reference");
-  assert.equal(bad({ kind: "paid", payout_id: UUID, external_ref: "bank-ref-1" }), "confirmation_required");
-  assert.equal(bad({ kind: "paid", payout_id: UUID, external_ref: "bank-ref-1", confirm: "yes" }), "ok");
+  assert.equal(bad({ kind: "paid", payout_id: UUID, external_ref: "abc", method: "bank", paid_on: "2026-11-01", confirm: "yes" }), "invalid_reference");
+  assert.equal(bad({ kind: "paid", payout_id: UUID, external_ref: "<script>", method: "bank", paid_on: "2026-11-01", confirm: "yes" }), "invalid_reference");
+  assert.equal(bad({ kind: "paid", payout_id: UUID, external_ref: "bank-ref-1", method: "bank", paid_on: "2026-11-01" }), "confirmation_required");
+  assert.equal(bad({ kind: "paid", payout_id: UUID, external_ref: "bank-ref-1", method: "bank", paid_on: "2026-11-01", confirm: "yes" }), "ok");
   assert.equal(bad({ kind: "void", payout_id: UUID, reason: "" }), "invalid_reason");
   assert.equal(bad({ kind: "void", payout_id: UUID, reason: "disputed order" }), "ok");
   assert.equal(bad({ kind: "refund", payout_id: UUID }), "invalid_kind");
@@ -172,7 +172,7 @@ test("customer lookup never puts the query in a URL: no searchParams.q anywhere,
 });
 
 test("no Command Center file calls a write RPC outside the reviewed list, and money-moving verbs appear nowhere", () => {
-  const WRITE_RPCS = new Set(["hc_review_application", "hc_admin_review_submission", "hc_admin_ack_notification", "hc_create_payout_draft", "hc_approve_payout", "hc_mark_payout_paid", "hc_void_payout", "hc_add_terms_version", "hc_admin_create_campaign", "hc_admin_assign_campaign", "hc_admin_close_campaign", "admin_grant_staff_role", "admin_revoke_staff_role"]);
+  const WRITE_RPCS = new Set(["hc_review_application", "hc_admin_review_submission", "hc_admin_ack_notification", "hc_create_payout_draft", "hc_approve_payout", "hc_record_external_payment", "hc_reverse_recorded_payment", "hc_void_payout", "hc_add_terms_version", "hc_activate_paid_referrals", "hc_deactivate_paid_referrals", "hc_upsert_tier", "hc_admin_set_tier_benefits", "hc_admin_assign_tier", "hc_admin_set_partner_status", "admin_set_notification_state", "admin_set_notification_destination", "admin_verify_notification_destination", "admin_set_notification_email_enabled", "admin_set_notification_thresholds", "admin_retry_notification_delivery", "hc_admin_create_campaign", "hc_admin_assign_campaign", "hc_admin_close_campaign", "admin_grant_staff_role", "admin_revoke_staff_role"]);
   const READ_ONLY_OK = /^(get_my_staff_context|admin_[a-z_]+|hc_admin_[a-z_]+|growth_funnel_summary|creator_portal_summary|claim_my_membership)$/;
   for (const f of cc) {
     const src = readFileSync(f, "utf8");
@@ -196,7 +196,8 @@ test("every RPC the Command Center calls is defined in the migration set shipped
 
 test("payout and terms actions are owner-gated (hc.payout) and the page shows their controls only for hc.payout", () => {
   const act = readFileSync(join(root, "app/(command-center)/command-center/hosting-collective/payouts/actions.ts"), "utf8");
-  assert.equal((act.match(/requireStaff\("hc\.payout"/g) ?? []).length, 2);
+  assert.equal((act.match(/requireStaff\("hc\.payout"/g) ?? []).length, 3); // payoutAction, addTermsVersion, paidReferralsSwitch
+  assert.ok(!/hc_mark_payout_paid/.test(act), "the retired entry point must not be called");
   const page = readFileSync(join(root, "app/(command-center)/command-center/hosting-collective/payouts/page.tsx"), "utf8");
   assert.ok((page.match(/caps\.canSeePayoutActions/g) ?? []).length >= 5);
 });

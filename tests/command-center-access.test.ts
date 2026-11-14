@@ -96,7 +96,11 @@ test("no Command Center file is a client component or uses the service-role key"
     // Phase 2: a client component is allowed ONLY for a form that posts to a server action. It may not touch Supabase or any key.
     if (/^\s*["']use client["']/m.test(src)) {
       assert.ok(!/supabase|createClient|process\.env/i.test(src.replace(/\/\/.*$/gm, "")), `${f}: a client file must not touch Supabase or env`);
-      assert.match(src, /from "\.\/actions"/, `${f}: a client file may only call its sibling server action`);
+      // Reviewed exception: the shared ActionForm wrapper. It receives the server action as a PROP (it imports no server code), only shows a mapped message.
+      if (/_components[\\/]action-form\.tsx$/.test(f)) {
+        const imports = [...src.matchAll(/^import .* from "([^"]+)"/gm)].map((m) => m[1]);
+        assert.deepEqual(imports.sort(), ["@/lib/admin/messages", "react-dom"], `${f}: ActionForm may import only react-dom and the message map`);
+      } else assert.match(src, /from "\.\/actions"/, `${f}: a client file may only call its sibling server action`);
     }
     assert.ok(!/service_role|SERVICE_ROLE/.test(src.replace(/\/\/.*$/gm, "")), `${f} must not use the service role`);
   }
