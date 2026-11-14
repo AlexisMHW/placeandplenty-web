@@ -120,5 +120,6 @@ test("static: HC forms show feedback (no discarded server-action result) and the
   assert.doesNotMatch(portal, /\d+\s?%|per sale|per referral|\$\d/, "no rates or amounts in portal copy");
   assert.match(portal, /paidLive/, "money is gated on paid referrals being live");
   // the tier page never offers a commission rate field
-  assert.doesNotMatch(read(`${base}/tiers/page.tsx`), /commission_rate|rate_percent|cents/i);
+  // read-only terms history may show minimum payout; no input may edit a commission rate
+  assert.doesNotMatch(read(`${base}/tiers/page.tsx`), /name="(commission|rate)[a-z_]*"|commission_rate|rate_percent/i);
 });

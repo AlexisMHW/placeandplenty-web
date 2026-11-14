@@ -159,7 +159,7 @@ describe("D2: completed/cancelled/archived gatherings block invitations and gues
       for (const rpc of rpcs) {
         const at = src.indexOf(`"${rpc}"`); assert.ok(at > 0, `${rpc} present`);
         const before = src.slice(Math.max(0, at - 700), at);
-        assert.match(before, /commsReadOnlyBlock/, `${f}: ${rpc} is guarded`);
+        assert.match(before, /commsReadOnlyBlock|gatheringWriteBlock/, `${f}: ${rpc} is guarded`);
       }
     }
   });
