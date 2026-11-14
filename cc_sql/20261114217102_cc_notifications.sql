@@ -1,4 +1,4 @@
--- 217002: FOUNDER NOTIFICATIONS, TWO CHANNELS (founder decision D5).
+-- 217102 (A3's cc_sql/217002, RENUMBERED by A1b; 217002 is A1's tier-reconcile number): FOUNDER NOTIFICATIONS, TWO CHANNELS (founder decision D5).
 --   (A) Command Center inbox: persistent, permission-filtered per row (cc_notifications.required_permission), dedup'd, acknowledge/resolve.
 --   (B) Business email: destination is CONFIGURABLE (never hardcoded), starts UNSET, must be verified by a code before email can be enabled
 --       (table CHECK enforces it). This file only QUEUES email rows; it sends nothing. The dispatcher (comms owner) claims rows through
@@ -6,7 +6,8 @@
 --   Bodies carry no applicant names, emails or amounts: titles are generic, details live behind the Command Center login.
 -- Depends on: 215000 (staff_has_permission, get_my_staff_context, admin_audit_log), 212001 (hc_require_service), 214000 (hc_owner_notifications,
 --   creator_applications), 212000 (payouts). Optional sources (communication_deliveries, entitlement_events) are read only if they exist.
--- Rollback: rollback/ROLLBACK_217002.sql
+-- A1b: this is the CANONICAL D5 inbox (the Command Center UI calls it). A1's founder_notifications (218000) is SUPERSEDED; 217110 adds a service-only founder_notify_upsert compatibility wrapper.
+-- Rollback: rollback/ROLLBACK_217102.sql
 
 create table if not exists public.cc_notification_settings (
   singleton boolean primary key default true check (singleton),

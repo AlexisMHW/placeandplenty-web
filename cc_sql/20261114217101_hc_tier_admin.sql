@@ -1,12 +1,13 @@
--- 217001: TIER BENEFITS, MEMBER TIER ASSIGNMENT, SUSPENSION, TERMS HISTORY (read) - founder decision D4.
+-- 217101 (A3's cc_sql/217001, RENUMBERED by A1b): TIER BENEFITS, MEMBER TIER ASSIGNMENT, SUSPENSION, TERMS HISTORY (read) - founder decision D4.
 --   Tier create/edit, the paid-referrals switch and tier paid-eligibility are AGENT 7's 216100 (hc_upsert_tier, hc_activate_paid_referrals ...).
 --   Their audit trail is the append-only hc_config_audit (triggers on hc_tiers, hc_terms_*, hc_settings, partners tier/status) read via hc_admin_config_audit.
 --   This file adds what 216100 does not have: tier benefits text, assigning a member to a tier, suspending/reinstating a member, a tier list, and terms history.
 --   No rate, benefit or tier is invented: everything is entered by staff. Nothing here turns on paid referrals or changes any commission.
--- Depends on: 216100. Rollback: rollback/ROLLBACK_217001.sql
+-- Depends on: 215003 (A2: benefits column, hc_tier_audit) and 216100 (A7). A1b: hc_admin_list_tiers returns the UNION of A2's and A3's keys (both UIs call it).
+-- Tier WRITERS are consolidated by 217110 (A1b). Rollback: rollback/ROLLBACK_217101.sql
 
 do $$ begin
-  if to_regclass('public.hc_config_audit') is null or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='hc_tiers' and column_name='paid_referrals_eligible') then
+  if to_regclass('public.hc_config_audit') is null or to_regclass('public.hc_tier_audit') is null or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='hc_tiers' and column_name='paid_referrals_eligible') then
     raise exception 'dependency_missing: apply 216100 first';
   end if;
 end $$;
@@ -21,6 +22,8 @@ begin
   return coalesce((select jsonb_agg(jsonb_build_object('slug', t.slug, 'label', t.label, 'description', t.description,
       'eligibility_notes', t.eligibility_notes, 'sort_order', t.sort_order, 'active', t.active, 'benefits', t.benefits,
       'paid_referrals_eligible', t.paid_referrals_eligible,
+      'referral_eligible', t.referral_eligible, 'assignments_enabled', t.assignments_enabled,   -- A2's keys (A2's UI reads them)
+      'members', (select count(*) from public.partners p where p.tier = t.slug),                -- A2 semantics: every partner on the tier
       'member_count', (select count(*) from public.partners p where p.tier = t.slug and p.status in ('approved','suspended')))
       order by t.sort_order, t.slug) from public.hc_tiers t), '[]'::jsonb);
 end $function$;

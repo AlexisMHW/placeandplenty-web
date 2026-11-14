@@ -1,4 +1,4 @@
--- Rollback of 217002 (notifications). DESTROYS inbox rows, settings (incl. verified destination) and delivery history: export first if needed.
+-- Rollback of 217102 (A3 217002, notifications). Run AFTER ROLLBACK_217110. DESTROYS inbox rows, settings (incl. verified destination) and delivery history: export first if needed.
 drop trigger if exists cc_owner_event_notify on public.hc_owner_notifications;
 drop trigger if exists cc_application_status_notify on public.creator_applications;
 drop trigger if exists cc_payout_notify on public.payouts;

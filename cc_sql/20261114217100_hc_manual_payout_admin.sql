@@ -1,9 +1,10 @@
--- 217000: PAYOUT LEDGER + PAYOUT LIST (read-only views for the manual-payout screen; founder decision D3).
+-- 217100 (A3's cc_sql/217000, RENUMBERED by A1b to avoid the 217000 number used by A1's retired SUPERSEDED_ file): PAYOUT LEDGER + PAYOUT LIST (read-only views for the manual-payout screen; founder decision D3).
 --   The write side of manual payouts (approve, record external payment with reference+date+confirmation, void, reverse, clawback settlement,
 --   paid-referrals switch) is AGENT 7's migration 216100 (supabase/proposed_a7/20261114216100_hc_manual_payouts_and_terms_governance.sql).
 --   This file only ADDS read functions on top of it, so there is ONE source of truth for payout state transitions. Nothing here moves money or writes data.
 --   pending / validated / in draft / approved / paid are reported as separate numbers and never summed.
--- Depends on: 216100 (payouts.paid_on, external_method, reversed_*). Rollback: rollback/ROLLBACK_217000.sql
+-- Depends on: 216100 (payouts.paid_on, external_method, reversed_*). Order: after 216100 and A1's 217002. NOTE: redefines hc_admin_list_payouts(integer) from 215000 with the SAME signature and a SUPERSET of columns (intentional; rollback restores 215000's).
+-- Rollback: rollback/ROLLBACK_217100.sql
 
 do $$ begin
   if to_regclass('public.payout_events') is null or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='payouts' and column_name='paid_on') then

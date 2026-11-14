@@ -1,4 +1,4 @@
--- Rollback of 217000: drops the ledger function and restores the original hc_admin_list_payouts from 215000. No data is touched.
+-- Rollback of 217100 (A3 217000): drops the ledger function and restores the original hc_admin_list_payouts from 215000. No data is touched.
 drop function if exists public.hc_admin_payout_ledger();
 create or replace function public.hc_admin_list_payouts(p_limit integer default 50)
  returns jsonb language plpgsql stable security definer set search_path to '' as $function$
