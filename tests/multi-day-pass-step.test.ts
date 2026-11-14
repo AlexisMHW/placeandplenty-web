@@ -14,7 +14,8 @@ import {
   parseMultiDayGateMode,
 } from "../lib/multi-day-pass.ts";
 import { MULTI_DAY_PRICING } from "../lib/pricing.ts";
-import { WEB_CHECKOUT_LIVE, type Entitlement } from "../lib/entitlements.ts";
+import { type Entitlement } from "../lib/entitlements.ts";
+import { isWebSellable } from "../lib/checkout-gate.ts";
 
 const G = "11111111-1111-1111-1111-111111111111";
 const NOW = new Date("2026-11-13T12:00:00Z");
@@ -108,7 +109,11 @@ describe("price and routes", () => {
     assert.equal(multiDayPassStepPath(G), `/host/create/pass?gatheringId=${G}`);
     assert.equal(multiDayCheckoutReturnPath(G), `/host/create/pass?gatheringId=${G}&purchase=success`);
   });
-  test("web checkout still not live (no payment change)", () => assert.equal(WEB_CHECKOUT_LIVE, false));
+  // INTEGRATION FIX: main now has WEB_CHECKOUT_LIVE=true for Gathering Pass + Plus only; the invariant that matters is Multi-Day stays closed on web.
+  test("Multi-Day products are not web-sellable (Multi-Day stays closed on web)", () => {
+    assert.equal(isWebSellable("multi_day_pass"), false);
+    assert.equal(isWebSellable("multi_day_extension"), false);
+  });
 });
 
 describe("wiring (source contracts)", () => {
