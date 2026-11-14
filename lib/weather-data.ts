@@ -1,3 +1,4 @@
+import { isReadOnlyStatus } from "@/lib/gathering-readonly";
 import { createClient } from "@/lib/supabase-server";
 
 export type WeatherEnvironment = "indoors" | "outdoors" | "indoor_outdoor" | "unknown";
@@ -55,6 +56,6 @@ export async function getWeatherWorkspace(gatheringId: string): Promise<WeatherW
     checkedAt: gathering.weather_checked_at ?? null,
     forecastForDate: gathering.weather_forecast_for_date ?? null,
     premium: premium === true,
-    readOnly: ["completed", "cancelled", "archived"].includes(String(effectiveStatus)),
+    readOnly: isReadOnlyStatus(effectiveStatus),
   };
 }

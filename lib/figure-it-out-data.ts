@@ -1,3 +1,4 @@
+import { isReadOnlyStatus } from "@/lib/gathering-readonly";
 import { createClient } from "@/lib/supabase-server";
 
 export interface FigureItOutOverviewState {
@@ -34,6 +35,6 @@ export async function getFigureItOutOverviewState(
     dietaryNotes: gathering.dietary_notes ?? "",
     accessibilityNotes: gathering.accessibility_notes ?? "",
     hasPlan: Boolean(gathering.last_plan_input_hash),
-    readOnly: ["completed", "cancelled", "archived"].includes(String(status)),
+    readOnly: isReadOnlyStatus(status),
   };
 }
