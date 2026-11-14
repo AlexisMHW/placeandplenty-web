@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 export type NextUpKey =
   | "overdue_critical"
   | "weather_risk"
+  | "set_guest_count"
   | "invite_people"
   | "confirm_rsvps"
   | "category_gap"

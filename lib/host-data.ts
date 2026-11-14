@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
+import { supportsGuestCountUnknown } from "@/lib/guest-count-support";
 import {
   INVITATION_ARTWORK_BUCKET,
   isRenderableArtwork,
@@ -33,7 +34,10 @@ export interface GatheringSummary {
   arrival_time: string;
   readiness_state: string | null;
   current_hostready_score: number | null;
-  expected_guest_count: number;
+  /** NULL when the host chose "I'm Not Sure Yet" — never treat as 0. See lib/guest-count-state.ts. */
+  expected_guest_count: number | null;
+  /** Only present on a schema that has the column; undefined means known. */
+  guest_count_unknown?: boolean | null;
   adult_count: number;
   child_count: number;
   location_name: string | null;
@@ -136,6 +140,20 @@ export async function getGathering(
   const gathering = (data as GatheringSummary) ?? null;
   if (!gathering) return null;
 
+  // The lifecycle RPC does not project guest_count_unknown. Read the flag
+  // from the table (same RLS) only on a schema that has it; if the read
+  // fails the NULL expected_guest_count still marks the count unknown.
+  if (await supportsGuestCountUnknown()) {
+    const { data: flag } = await supabase
+      .from("gatherings")
+      .select("guest_count_unknown")
+      .eq("id", id)
+      .maybeSingle();
+    if (flag && typeof flag.guest_count_unknown === "boolean") {
+      gathering.guest_count_unknown = flag.guest_count_unknown;
+    }
+  }
+
   // HostReady's stored columns are a cache/snapshot, not a second source of
   // truth. Read the canonical backend computation for every gathering
   // workspace render so web cannot show a stale score after an edit made on
@@ -186,6 +204,9 @@ export interface GatheringDraftFields {
   location_name: string | null;
   adult_count: number;
   child_count: number;
+  /** Present only on a schema that has the column (see lib/guest-count-support.ts). */
+  expected_guest_count?: number | null;
+  guest_count_unknown?: boolean | null;
   budget_target: number | null;
   food_style: string | null;
   notes: string | null;
@@ -198,16 +219,19 @@ export async function getGatheringDraftFields(
   id: string
 ): Promise<GatheringDraftFields | null> {
   const supabase = createClient();
+  const withFlag = await supportsGuestCountUnknown();
   const { data, error } = await supabase
     .from("gatherings")
     .select(
-      "id, name, gathering_type, gathering_date, gathering_end_date, duration_type, arrival_time, location_name, adult_count, child_count, budget_target, food_style, notes, invitation_mode, invitation_status, invitation_style"
+      "id, name, gathering_type, gathering_date, gathering_end_date, duration_type, arrival_time, location_name, adult_count, child_count, expected_guest_count, " +
+        (withFlag ? "guest_count_unknown, " : "") +
+        "budget_target, food_style, notes, invitation_mode, invitation_status, invitation_style"
     )
     .eq("id", id)
     .maybeSingle();
 
   if (error) throw error;
-  return (data as GatheringDraftFields) ?? null;
+  return (data as unknown as GatheringDraftFields) ?? null;
 }
 
 /* ------------------------------------------------------------------ */

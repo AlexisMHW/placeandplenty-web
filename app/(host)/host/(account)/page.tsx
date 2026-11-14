@@ -1,3 +1,4 @@
+import { formatGuestCount } from "@/lib/guest-count-state";
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
 import GatheringIdentity from "@/components/host/GatheringIdentity";
@@ -154,7 +155,7 @@ function GatheringRow({
             )}
             <span className="flex items-center gap-1.5">
               <Icon name="users" size={13} />
-              {gathering.expected_guest_count}
+              {formatGuestCount(gathering)}
             </span>
           </p>
 
