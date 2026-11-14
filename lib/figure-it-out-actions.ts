@@ -1,5 +1,6 @@
 "use server";
 
+import { isGuestCountUnknown } from "@/lib/guest-count-state";
 import { createHash } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
@@ -49,8 +50,11 @@ function buildInput(
       gatheringEnvironment: gathering.gathering_environment,
     },
     guests: {
-      adults: gathering.adult_count,
-      children: gathering.child_count,
+      // Same contract as native (buildFigureItOutInput): an unknown count is
+      // sent as unknown with no numbers, never as zero guests.
+      countState: isGuestCountUnknown(gathering as { expected_guest_count?: number | null; guest_count_unknown?: boolean | null }) ? "unknown" : "estimated",
+      adults: isGuestCountUnknown(gathering as { expected_guest_count?: number | null }) ? null : gathering.adult_count,
+      children: isGuestCountUnknown(gathering as { expected_guest_count?: number | null }) ? null : gathering.child_count,
       dietaryNeeds: splitNotes((gathering.dietary_notes as string | null) ?? null),
       accessibilityNeeds: splitNotes((gathering.accessibility_notes as string | null) ?? null),
     },
@@ -128,7 +132,7 @@ export async function runFigureItOutWeb(
 
   const { data: gathering, error: gatheringError } = await supabase
     .from("gatherings")
-    .select("id,name,gathering_type,gathering_date,arrival_time,timezone,location_type,gathering_environment,adult_count,child_count,dietary_notes,accessibility_notes,budget_target,food_style,notes,weather_city,last_plan_input_hash,last_plan_output")
+    .select("id,name,gathering_type,gathering_date,arrival_time,timezone,location_type,gathering_environment,adult_count,child_count,expected_guest_count,dietary_notes,accessibility_notes,budget_target,food_style,notes,weather_city,last_plan_input_hash,last_plan_output")
     .eq("id", gatheringId)
     .maybeSingle();
   if (gatheringError || !gathering) return { ok: false, message: "That gathering is no longer available." };

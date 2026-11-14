@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase-server";
-import { mergeGuestCounts } from "@/lib/guest-counts";
+import { mergeGuestCounts, planGuestCountWrite } from "@/lib/guest-counts";
+import { supportsGuestCountUnknown } from "@/lib/guest-count-support";
+import { GUEST_COUNT_COPY, isGuestCountUnknown } from "@/lib/guest-count-state";
 import {
   GATHERING_LIMIT_CODES,
   type GatheringLimitCode,
@@ -1079,13 +1081,23 @@ export async function updateGatheringDetails(
 
   const adults = optionalNumber(formData.get("adult_count"));
   const children = optionalNumber(formData.get("child_count"));
+  const stateField = formData.get("guest_count_state");
+  const submittedUnknown =
+    stateField === "unknown" ? true : stateField === "known" ? false : null;
 
-  if (adults !== null || children !== null) {
+  if (adults !== null || children !== null || submittedUnknown !== null) {
+    const supportsUnknown = await supportsGuestCountUnknown();
+
     // Read the persisted counts so a partial edit cannot zero the field
-    // that was not submitted. See mergeGuestCounts().
+    // that was not submitted. See mergeGuestCounts(). The unknown flag is
+    // only selected on a schema that has it.
     const { data: current, error: readError } = await supabase
       .from("gatherings")
-      .select("adult_count, child_count")
+      .select(
+        supportsUnknown
+          ? "adult_count, child_count, expected_guest_count, guest_count_unknown"
+          : "adult_count, child_count, expected_guest_count"
+      )
       .eq("id", gatheringId)
       .maybeSingle();
 
@@ -1093,17 +1105,32 @@ export async function updateGatheringDetails(
     if (!current) {
       return { ok: false, message: "That gathering is no longer here." };
     }
+    const row = current as unknown as {
+      adult_count: number | null;
+      child_count: number | null;
+      expected_guest_count: number | null;
+      guest_count_unknown?: boolean | null;
+    };
 
-    Object.assign(
-      patch,
-      mergeGuestCounts(
-        { adults, children },
-        {
-          adults: current.adult_count ?? 0,
-          children: current.child_count ?? 0,
-        }
-      )
+    const plan = planGuestCountWrite(
+      { unknown: submittedUnknown, adults, children },
+      {
+        adults: row.adult_count ?? 0,
+        children: row.child_count ?? 0,
+        unknown: isGuestCountUnknown(row),
+      },
+      supportsUnknown
     );
+    if (!plan.ok) {
+      return {
+        ok: false,
+        message:
+          plan.reason === "unsupported"
+            ? GUEST_COUNT_COPY.en.unsupported
+            : GUEST_COUNT_COPY.en.headcountRequired,
+      };
+    }
+    Object.assign(patch, plan.columns);
   }
 
   const result = await supabase
@@ -1167,7 +1194,10 @@ function count(value: number): number {
  * transition, timezone is set once at insert, and invitations go through
  * their RPCs.
  */
-function gatheringPatch(input: CreateGatheringInput) {
+function gatheringPatch(
+  input: CreateGatheringInput,
+  guestCountColumns?: Record<string, unknown>
+) {
   return {
     name: input.name.trim().slice(0, 120),
     gathering_type: input.gatheringType,
@@ -1185,11 +1215,13 @@ function gatheringPatch(input: CreateGatheringInput) {
     // expected_guest_count is derived, never submitted separately. Both
     // fields are always present here, so the merge is against zero and
     // the shared helper does the arithmetic rather than it being
-    // repeated in a third place.
-    ...mergeGuestCounts(
-      { adults: count(input.adultCount), children: count(input.childCount) },
-      { adults: 0, children: 0 }
-    ),
+    // repeated in a third place. An unknown count is planned separately
+    // (planGuestCountWrite) because it needs the schema feature-detected.
+    ...(guestCountColumns ??
+      mergeGuestCounts(
+        { adults: count(input.adultCount), children: count(input.childCount) },
+        { adults: 0, children: 0 }
+      )),
   };
 }
 
@@ -1222,7 +1254,28 @@ export async function saveGatheringDraft(
   }
 
   const supabase = createClient();
-  const patch = gatheringPatch(input);
+  // The headcount columns are planned on their own so an unknown count is
+  // written exactly as native writes it, and never as zero.
+  const supportsUnknown = await supportsGuestCountUnknown();
+  const countPlan = planGuestCountWrite(
+    {
+      unknown: input.guestCountUnknown === true,
+      adults: count(input.adultCount),
+      children: count(input.childCount),
+    },
+    { adults: 0, children: 0, unknown: false },
+    supportsUnknown
+  );
+  if (!countPlan.ok) {
+    return {
+      ok: false,
+      message:
+        countPlan.reason === "unsupported"
+          ? GUEST_COUNT_COPY.en.unsupported
+          : GUEST_COUNT_COPY.en.headcountRequired,
+    };
+  }
+  const patch = gatheringPatch(input, countPlan.columns);
 
   if (gatheringId) {
     const result = await supabase

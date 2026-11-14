@@ -106,6 +106,8 @@ export interface CreateGatheringInput {
   locationName: string;
   adultCount: number;
   childCount: number;
+  /** The host chose "I'm Not Sure Yet". Unknown is not zero; counts are ignored while true. */
+  guestCountUnknown?: boolean;
   /** null means the host skipped it, which is a real answer. */
   budgetTarget: number | null;
   foodStyle: FoodStyle | null;
@@ -128,6 +130,7 @@ export const EMPTY_GATHERING_INPUT: CreateGatheringInput = {
   locationName: "",
   adultCount: 0,
   childCount: 0,
+  guestCountUnknown: false,
   budgetTarget: null,
   foodStyle: null,
   notes: "",
@@ -190,7 +193,7 @@ export function validateGatheringInput(
   }
   // A headcount of zero may be *entered* as a starting point. It may not
   // be saved: a gathering needs someone coming.
-  if (input.adultCount + input.childCount <= 0) {
+  if (input.guestCountUnknown !== true && input.adultCount + input.childCount <= 0) {
     errors.push({ code: "headcount_required", field: "adultCount" });
   }
 
