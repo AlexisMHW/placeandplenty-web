@@ -50,7 +50,15 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/host") && !user) {
+  // The Command Center shows business data and the creator portal shows a creator's own referral data: never cache either.
+  if (pathname.startsWith("/command-center") || pathname === "/creator" || pathname.startsWith("/creator/")) {
+    response.headers.set("Cache-Control", "private, no-store");
+  }
+
+  if (
+    (pathname === "/host" || pathname.startsWith("/host/") || pathname.startsWith("/command-center") || pathname === "/creator" || pathname.startsWith("/creator/")) &&
+    !user
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     // Come back to where they were trying to go. Only a path is carried,

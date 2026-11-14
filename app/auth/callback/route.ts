@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { safeNext, RESET_PASSWORD_PATH } from "@/lib/auth-redirects";
+import { REFERRAL_COOKIE } from "@/lib/referral";
+import { claimReferralFromCookie } from "@/lib/claimReferral";
 
 // Exchanges a magic-link, OAuth or password-recovery credential for a session.
 //
@@ -64,5 +66,19 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code!);
   if (error) return failure("link_expired");
 
-  return NextResponse.redirect(`${origin}${next}`);
+  const response = NextResponse.redirect(`${origin}${next}`);
+  // Hosting Collective referral claim. Inert unless NEXT_PUBLIC_HC_REFERRALS === "true". It can never block or change a sign-in: any
+  // failure is swallowed, the outcome is never shown to the user, and the database decides everything (first touch, window, self-referral).
+  if (process.env.NEXT_PUBLIC_HC_REFERRALS === "true") {
+    try {
+      const cookie = request.cookies.get(REFERRAL_COOKIE)?.value;
+      if (cookie) {
+        const result = await claimReferralFromCookie(cookie, (fn, args) => supabase.rpc(fn, args) as unknown as Promise<{ data: unknown; error: unknown }>);
+        if (result.clear) response.cookies.set(REFERRAL_COOKIE, "", { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 0 });
+      }
+    } catch {
+      /* attribution must never affect sign-in */
+    }
+  }
+  return response;
 }

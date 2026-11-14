@@ -1,0 +1,50 @@
+import Link from "next/link";
+import { requireStaff } from "@/lib/admin/server";
+import { hcCapabilities, notificationLabel, parseNotifications } from "@/lib/admin/hc";
+import { acknowledgeNotification } from "./actions";
+
+// HOSTING COLLECTIVE HOME. Requires hc.read. Open notifications come from hc_admin_notifications(), which re-checks hc.read.
+export default async function HostingCollectiveHome() {
+  const { context, supabase } = await requireStaff("hc.read", "/command-center/hosting-collective");
+  const caps = hcCapabilities(context);
+  const { data, error } = await supabase.rpc("hc_admin_notifications", { p_only_open: true });
+  const notes = error ? null : parseNotifications(data);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl text-forest">Hosting Collective</h1>
+        <p className="text-sm text-charcoal/70">Creator applications, members, content and referral results. No payouts are made from this screen.</p>
+      </div>
+      <nav aria-label="Hosting Collective sections" className="flex flex-wrap gap-2 text-sm">
+        {[["applications", "Applications"], ["members", "Members"], ["content", "Content"], ["payouts", "Referrals and payout eligibility"]].map(([slug, label]) => (
+          <Link key={slug} href={`/command-center/hosting-collective/${slug}`} className="rounded-full border border-forest/30 px-3 py-1 text-forest">{label}</Link>
+        ))}
+      </nav>
+      <section aria-labelledby="open-notes">
+        <h2 id="open-notes" className="mb-2 font-display text-xl text-forest">Needs attention</h2>
+        {notes === null ? (
+          <p role="status" className="rounded-lg border border-forest/20 bg-cream p-4 text-sm">
+            Not available. This is expected until the Hosting Collective database package has been applied to this environment.
+          </p>
+        ) : notes.length === 0 ? (
+          <p className="text-sm text-charcoal/70">Nothing open.</p>
+        ) : (
+          <ul className="space-y-2 text-sm">
+            {notes.map((n) => (
+              <li key={n.id} className="flex items-center justify-between gap-3 rounded-lg border border-forest/15 bg-parchment p-3">
+                <span>{notificationLabel(n.kind)}{n.severity === "action" ? " (action needed)" : ""}</span>
+                {caps.canManage ? (
+                  <form action={async (fd) => { "use server"; await acknowledgeNotification(fd); }}>
+                    <input type="hidden" name="id" value={n.id} />
+                    <button className="rounded border border-forest/30 px-2 py-1 text-xs text-forest">Mark seen</button>
+                  </form>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
