@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getUser } from "@/lib/supabase-server";
 import { getGathering } from "@/lib/host-data";
-import { getCoHostWorkspace } from "@/lib/cohost-data";
+import { getCoHostWorkspace, getCoHostWorkspaceWithLevels, getMyCapabilities } from "@/lib/cohost-data";
+import { LEVEL_DESCRIPTION, LEVEL_LABEL } from "@/lib/cohost-permissions";
 import { WorkspaceHeader } from "@/components/host/Workspace";
 import CoHostManager from "@/components/host/CoHostManager";
 
@@ -14,15 +15,15 @@ const LABELS: Record<string, string> = {
 };
 
 export default async function CoHostsPage({ params }: { params: { id: string } }) {
-  const [gathering, members, user] = await Promise.all([
-    getGathering(params.id),
-    getCoHostWorkspace(params.id),
-    getUser(),
-  ]);
+  const [gathering, user] = await Promise.all([getGathering(params.id), getUser()]);
 
   if (!gathering) notFound();
 
   const isOwner = Boolean(user && user.id === gathering.owner_user_id);
+  const [members, myCaps] = await Promise.all([
+    isOwner ? getCoHostWorkspaceWithLevels(params.id) : getCoHostWorkspace(params.id),
+    isOwner ? Promise.resolve(null) : getMyCapabilities(params.id),
+  ]);
   const isReadOnly = ["completed", "cancelled", "archived"].includes(gathering.effective_status);
 
   return (
@@ -35,7 +36,7 @@ export default async function CoHostsPage({ params }: { params: { id: string } }
       {isOwner && !isReadOnly ? (
         <CoHostManager gatheringId={params.id} members={members} />
       ) : (
-        <ReadOnlyList members={members} isReadOnly={isReadOnly} />
+        <ReadOnlyList members={members} isReadOnly={isReadOnly} myAccess={myCaps?.known && myCaps.level && myCaps.level !== "owner" ? `${LEVEL_LABEL[myCaps.level]}. ${LEVEL_DESCRIPTION[myCaps.level]}` : null} />
       )}
     </div>
   );
@@ -44,9 +45,11 @@ export default async function CoHostsPage({ params }: { params: { id: string } }
 function ReadOnlyList({
   members,
   isReadOnly,
+  myAccess,
 }: {
   members: Awaited<ReturnType<typeof getCoHostWorkspace>>;
   isReadOnly: boolean;
+  myAccess: string | null;
 }) {
   const active = members.filter((m) => m.status !== "removed");
 
@@ -73,7 +76,8 @@ function ReadOnlyList({
       <p className="mt-6 rounded-card border border-sage/30 bg-cream px-4 py-3 font-body text-sm leading-relaxed text-forest/75">
         {isReadOnly
           ? "This gathering is finished, so co-host access is preserved as part of the gathering record and can no longer be changed."
-          : "Only the host who created this gathering can invite or remove co-hosts."}
+          : "Only the host who created this gathering can invite or remove co-hosts or change permissions."}
+        {!isReadOnly && myAccess ? ` Your access: ${myAccess}` : ""}
       </p>
     </>
   );

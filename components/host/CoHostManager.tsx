@@ -6,7 +6,9 @@ import {
   inviteCoHost,
   reissueCoHostInvitation,
   removeCoHost,
+  setCoHostPermission,
 } from "@/lib/host-actions";
+import { ASSIGNABLE_LEVELS, DEFAULT_INVITE_LEVEL, LEVEL_LABEL } from "@/lib/cohost-permissions";
 
 const LABELS: Record<string, string> = {
   invited: "Invited — waiting for them to accept",
@@ -89,6 +91,9 @@ export default function CoHostManager({
           </label>
 
           <p className="mt-2 font-body text-sm leading-relaxed text-forest/60">
+            New co-hosts start as {LEVEL_LABEL[DEFAULT_INVITE_LEVEL]}s; you can make them a Manager after they join. Co-hosts can see the guest list either way — only Managers can change it.
+          </p>
+          <p className="mt-2 font-body text-sm leading-relaxed text-forest/60">
             They&rsquo;ll need to accept while signed in with this exact address — an invitation can&rsquo;t be forwarded to someone else.
           </p>
 
@@ -106,7 +111,26 @@ export default function CoHostManager({
             <li key={m.id} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 py-3.5">
               <div className="min-w-0">
                 <p className="font-body text-base text-forest">{m.invited_email}</p>
-                <p className="font-body text-sm text-forest/65">{LABELS[m.status] ?? m.status}</p>
+                <p className="font-body text-sm text-forest/65">
+                  {LABELS[m.status] ?? m.status}
+                  {m.permission_level && m.status !== "declined" ? ` · ${LEVEL_LABEL[m.permission_level]}` : ""}
+                </p>
+                {m.permission_level && m.status !== "declined" && (
+                  <div className="mt-1.5 flex gap-2" role="group" aria-label={`Permission level for ${m.invited_email}`}>
+                    {ASSIGNABLE_LEVELS.map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        disabled={pending || m.permission_level === lvl}
+                        aria-pressed={m.permission_level === lvl}
+                        onClick={() => run(() => setCoHostPermission(gatheringId, m.id, lvl))}
+                        className={`rounded-full border px-3 py-1 font-body text-xs transition-colors duration-400 ${m.permission_level === lvl ? "border-forest bg-forest text-offwhite" : "border-sage/50 text-forest/70 hover:bg-forest/5"} disabled:opacity-90`}
+                      >
+                        {LEVEL_LABEL[lvl]}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-4">
