@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase-server";
+import { commsReadOnlyBlock } from "@/lib/comms/readonly-guard";
 import { mergeGuestCounts, planGuestCountWrite } from "@/lib/guest-counts";
 import { supportsGuestCountUnknown } from "@/lib/guest-count-support";
 import { GUEST_COUNT_COPY, isGuestCountUnknown } from "@/lib/guest-count-state";
@@ -613,6 +614,8 @@ export async function inviteCoHost(
   }
 
   const supabase = createClient();
+  const blockedInvite = await commsReadOnlyBlock(supabase, gatheringId); // D2: no co-host invitations on finished gatherings
+  if (blockedInvite) return { ok: false, message: blockedInvite };
   const { data, error } = await supabase.rpc("create_gathering_invitation", {
     p_gathering_id: gatheringId,
     p_invited_email: email,
@@ -1556,6 +1559,8 @@ export async function saveInvitationArtwork(
   }
 
   const supabase = createClient();
+  const blockedArtwork = await commsReadOnlyBlock(supabase, gatheringId); // D2: artwork is frozen on finished gatherings
+  if (blockedArtwork) return { ok: false, message: blockedArtwork };
   const { error } = await supabase.rpc("save_invitation_artwork", {
     p_gathering_id: gatheringId,
     p_storage_path: storagePath,

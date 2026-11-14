@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase-server";
+import { commsReadOnlyBlock } from "@/lib/comms/readonly-guard";
 
 /**
  * Best-effort audit that the host opened a messaging/share hand-off for one
@@ -17,6 +18,7 @@ export async function recordShareInitiatedWeb(
 ): Promise<boolean> {
   try {
     const supabase = createClient();
+    if (await commsReadOnlyBlock(supabase, gatheringId)) return false; // D2: no new invitations on finished gatherings
     const { error } = await supabase.rpc("record_invitation_share_initiated", {
       p_gathering_id: gatheringId,
       p_invitation_party_id: invitationPartyId,
