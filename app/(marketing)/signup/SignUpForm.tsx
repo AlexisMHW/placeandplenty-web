@@ -6,6 +6,8 @@ import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import ResendConfirmation from "@/components/auth/ResendConfirmation";
+import { authEmailErrorMessage, classifyAuthEmailError } from "@/lib/resend-cooldown";
 
 // WEB ACCOUNT CREATION. Founder requirement, 28 Aug 2026: a person must
 // be able to create an account on the website and use Place & Plenty
@@ -58,6 +60,7 @@ export default function SignUpForm({ next }: { next?: string }) {
     "idle" | "submitting" | "check-inbox" | "error"
   >("idle");
   const [message, setMessage] = useState("");
+  const [sentAt, setSentAt] = useState<number | null>(null);
 
   const destination = safeNext(next) || "/host";
 
@@ -88,7 +91,10 @@ export default function SignUpForm({ next }: { next?: string }) {
     });
 
     if (error) {
-      setMessage(error.message);
+      // Rate limits and outages get plain wording; real validation text (weak password, bad email) is kept.
+      setMessage(
+        classifyAuthEmailError(error) === "unknown" ? error.message : authEmailErrorMessage(error)
+      );
       setStatus("error");
       return;
     }
@@ -100,6 +106,7 @@ export default function SignUpForm({ next }: { next?: string }) {
       return;
     }
 
+    setSentAt(Date.now());
     setStatus("check-inbox");
   }
 
@@ -115,13 +122,24 @@ export default function SignUpForm({ next }: { next?: string }) {
           it and you’ll land straight in your account.
         </p>
         <p className="mt-4 font-body text-sm leading-relaxed text-forest/65">
-          Nothing there after a minute or two? Check the spam folder — and if
-          it still hasn’t arrived,{" "}
+          Nothing there after a minute or two? Check the spam folder, or send
+          it again below. Already have an account? You can{" "}
+          <Link
+            href="/login"
+            className="underline decoration-gold underline-offset-4"
+          >
+            sign in
+          </Link>{" "}
+          or reset your password instead.
+        </p>
+        <ResendConfirmation email={email} next={destination} justSentAt={sentAt} />
+        <p className="mt-4 font-body text-sm leading-relaxed text-forest/65">
+          Still nothing?{" "}
           <Link
             href="/support"
             className="underline decoration-gold underline-offset-4"
           >
-            let us know
+            Let us know
           </Link>
           .
         </p>
