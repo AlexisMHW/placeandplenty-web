@@ -365,7 +365,7 @@ export async function getMultiDayPassStep(gatheringId: string): Promise<MultiDay
     ok: true,
     status,
     tier: typeof tier === "string" ? tier : null,
-    // INTEGRATION FIX: main sells only Gathering Pass + Plus on web. isCheckoutConfigured() is true there, which would show a
+    // INTEGRATION FIX: main sells only Gathering Pass + Plus on web. the generic processor check is true there, which would show a
     // "Continue to payment" button for Multi-Day that /api/checkout refuses with a bare 503. Ask the per-product gate instead.
     checkoutConfigured: (() => {
       const p = findWebProduct("multi-day");
