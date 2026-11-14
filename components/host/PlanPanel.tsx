@@ -18,6 +18,7 @@ import {
   PURCHASE_AVAILABILITY_NOTE,
 } from "@/lib/pricing";
 import { REFUND_POLICY } from "@/lib/refund-policy";
+import { refundRequestMailto } from "@/lib/refund-request";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -132,9 +133,34 @@ export default async function PlanPanel() {
                       type="submit"
                       className="rounded-lg border border-forest/30 px-4 py-2.5 font-body text-sm font-semibold text-forest transition-colors duration-400 hover:bg-forest/5"
                     >
-                      Manage billing &amp; renewal
+                      Manage payment method &amp; subscription
                     </button>
+                    <p className="mt-1.5 font-body text-xs text-forest/60">
+                      Update your card, cancel renewal and view your payment history. Cancelling renewal does not automatically refund a previous payment.
+                    </p>
                   </form>
+                )}
+
+                {channel === "web" && (
+                  <div className="mt-4 max-w-3xl rounded-lg border border-sage/25 px-4 py-3">
+                    <p className="font-body text-sm font-semibold text-forest">Need a refund?</p>
+                    <p className="mt-1 font-body text-sm leading-relaxed text-forest/70">
+                      {isPlus
+                        ? "Cancelling renewal and requesting a refund are separate. Cancelling stops the next charge; it does not ask for a refund. To ask Support to review a purchase under our refund policy, send a request. Sending one does not guarantee a refund."
+                        : "To ask Support to review this purchase under our refund policy, send a request. Sending one does not guarantee a refund."}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-body text-sm">
+                      <a
+                        href={refundRequestMailto(isPlus ? "plus" : "gathering_pass", e.purchased_at, e.id)}
+                        className="font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4"
+                      >
+                        Request a refund or billing assistance
+                      </a>
+                      <Link href="/terms" className="text-forest/70 underline decoration-gold decoration-2 underline-offset-4 hover:text-forest">
+                        Read the refund policy
+                      </Link>
+                    </div>
+                  </div>
                 )}
               </li>
             );

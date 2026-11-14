@@ -59,6 +59,10 @@ const billingQuestions = [
     a: `${REFUND_POLICY.gatheringPass.short} ${REFUND_POLICY.initialPlusRefund}`,
   },
   {
+    q: "How do I request a refund?",
+    a: "Cancelling Plus stops the next renewal; it is separate from a refund request. For purchases made on placeandplenty.com, open your account's Your plan section and choose Request a refund, or email support@placeandplenty.com with the email on your account and what you bought. Support reviews each request under the refund policy above, and sending one does not guarantee a refund. Apple and Google purchases are refunded through that store. Never send card numbers or passwords.",
+  },
+  {
     q: "Where do I manage what I bought?",
     a: "Apple and Google purchases are managed in the store where you bought them. Purchases made directly on placeandplenty.com are managed through your Place & Plenty account.",
   },
