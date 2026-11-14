@@ -172,12 +172,14 @@ test("customer lookup never puts the query in a URL: no searchParams.q anywhere,
 });
 
 test("no Command Center file calls a write RPC outside the reviewed list, and money-moving verbs appear nowhere", () => {
-  const WRITE_RPCS = new Set(["hc_review_application", "hc_admin_review_submission", "hc_admin_ack_notification", "hc_create_payout_draft", "hc_approve_payout", "hc_mark_payout_paid", "hc_void_payout", "hc_add_terms_version"]);
+  const WRITE_RPCS = new Set(["hc_review_application", "hc_admin_review_submission", "hc_admin_ack_notification", "hc_create_payout_draft", "hc_approve_payout", "hc_mark_payout_paid", "hc_void_payout", "hc_add_terms_version", "hc_admin_create_campaign", "hc_admin_assign_campaign", "hc_admin_close_campaign", "admin_grant_staff_role", "admin_revoke_staff_role"]);
   const READ_ONLY_OK = /^(get_my_staff_context|admin_[a-z_]+|hc_admin_[a-z_]+|growth_funnel_summary|creator_portal_summary|claim_my_membership)$/;
   for (const f of cc) {
     const src = readFileSync(f, "utf8");
     for (const m of src.matchAll(/\.rpc\(\s*"([a-z_0-9]+)"/g)) assert.ok(WRITE_RPCS.has(m[1]) || READ_ONLY_OK.test(m[1]), `${f}: unexpected rpc ${m[1]}`);
-    assert.ok(!/admin_grant_staff_role|admin_revoke_staff_role/.test(src), `${f}: staff grants are not a web action`);
+    // Staff grant/revoke is allowed ONLY in the staff.manage-gated action file (reviewed, audited in the database, last owner protected).
+    if (!/ops[\\/]staff[\\/]actions\.ts$/.test(f)) assert.ok(!/admin_grant_staff_role|admin_revoke_staff_role/.test(src), `${f}: staff grants are only allowed in ops/staff/actions.ts`);
+    else assert.match(src, /requireStaff\("staff\.manage"/);
     assert.ok(!/stripe\.(refunds|payouts|transfers)|\/v1\/(refunds|transfers|payouts)/i.test(src), `${f}: must not move money`);
   }
 });
