@@ -1,0 +1,1262 @@
+[
+ {
+  "kind": "rpc",
+  "name": "accept_gathering_invitation",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "activate_communication_plan",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "add_gathering_photo",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "add_space_mode_plan_action",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_alerts",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_business_overview",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_comms_monitor",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_entitlement_lookup",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_financial_summary",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_grant_staff_role",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_integration_health",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_list_staff",
+  "clients": 2,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_purchase_events",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_recent_audit",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "admin_revoke_staff_role",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "apply_figure_it_out_plan",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "archive_gathering",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "archive_space_plan",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "assert_gathering_not_archived",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "assign_contribution",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "authorize_soundtrack_suggestion",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "authorize_style_suggestion",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "cancel_contribution_assignment",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "cancel_gathering",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "check_ai_generation_quota",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "check_ai_rate_limit",
+  "clients": 3,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "check_space_mode_rate_limit",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "claim_ai_generation",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "claim_my_membership",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "claim_my_paper_order_fulfillment",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "claim_space_mode_analysis",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "clear_space_plan_after_photo",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "closet_entitlement_tier",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "complete_expired_gathering_lifecycles",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "confirm_gathering_attendance",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "consume_push_dispatch_nonce",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "create_gathering_invitation",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "create_purchase_intent",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "creator_portal_summary",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "decline_gathering_invitation",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "delete_gathering_photo",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "delete_guest_update",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "delete_user_account_data",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "effective_gathering_status",
+  "clients": 11,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "email_reconcile_orphan_events",
+  "clients": 1,
+  "side": "native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "email_record_provider_event",
+  "clients": 1,
+  "side": "native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "email_suppress_manual",
+  "clients": 1,
+  "side": "native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "finalize_ai_generation_claim",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "finalize_successful_space_plan",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gather_again",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_attendance_status",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_can_access_smart_closet",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_has_established_planning_data",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_has_multi_day_access",
+  "clients": 4,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_has_multi_day_extension",
+  "clients": 4,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_has_premium_entitlement",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_lifecycle_ends_at",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_photo_expiry",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_photo_workspace",
+  "clients": 3,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "gathering_photos_are_editable",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "get_budget_summary",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "get_guest_page_settings",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "get_invitation_delivery_summary",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "get_invitation_email",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "get_multi_day_entitlement_state",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "get_multi_day_lock_in_gate",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "get_my_gathering_capabilities",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "get_my_staff_context",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "growth_funnel_summary",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "guest_book_profile_avatars",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "guest_gallery_by_token",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "guest_registry_links",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_add_terms_version",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_ack_notification",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_assign_campaign",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_close_campaign",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_commission_report",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_create_campaign",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_current_terms",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_list_applications",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_list_campaigns",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_list_members",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_list_payouts",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_list_submissions",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_notifications",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_payout_eligibility",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_admin_review_submission",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_approve_payout",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_create_payout_draft",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_mark_payout_paid",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_review_application",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "hc_void_payout",
+  "clients": 1,
+  "side": "web",
+  "cls": "proposed_only"
+ },
+ {
+  "kind": "rpc",
+  "name": "host_mode_complete_task",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "host_mode_workspace",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "hostready_read",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "hostready_recalculate",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "invitation_artwork_cleanup_allowed",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "is_contact_suppressed",
+  "clients": 1,
+  "side": "native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "list_expired_gathering_photos",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "list_gathering_members_shared",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "list_gathering_members_with_permissions",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "list_gatherings_with_effective_status",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "list_my_gatherings_with_lifecycle",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "mark_gathering_complete",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "mark_my_paper_order_checkout_pending",
+  "clients": 1,
+  "side": "web",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "mark_my_paper_order_submitted",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "match_hosting_closet",
+  "clients": 3,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "match_hosting_closet_batch",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "menu_add_item",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "menu_apply_recipe_source",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "menu_assign_bringing_person",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "menu_create_recipe_and_apply",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "menu_delete_item",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "menu_recalculate_category",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "menu_seed_from_last_plan",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "menu_set_leftover_preference",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "menu_update_servings",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "move_gathering_activity_day",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "music_media_upsert",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "music_media_workspace",
+  "clients": 3,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "next_up_compute",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "people_add_existing_to_gathering",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "people_create_and_add_to_gathering",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "people_create_household",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "people_remove_from_gathering",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "people_set_guest_saved",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "people_update_gathering_details",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "people_update_gathering_person",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "propose_communication_plan",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "publish_guest_update",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "purge_gathering_photos",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "record_invitation_share_initiated",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "register_push_device",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "release_my_paper_order_fulfillment",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "release_space_mode_claim",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "remove_gathering_member",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "remove_invitation_artwork",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "resolve_gathering_is_premium",
+  "clients": 9,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "resolve_multi_day_purchase_tier",
+  "clients": 4,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "resolve_need_from_closet",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "respond_to_contribution",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "save_invitation_artwork",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "select_invitation_style",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "send_gathering_invitation",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "send_guest_message",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "set_cohost_permission_level",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "missing"
+ },
+ {
+  "kind": "rpc",
+  "name": "set_contribution_assignment",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "set_gathering_photo_hidden",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "set_guest_list_visibility",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "set_guest_page_content",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "set_guest_page_settings",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "set_invitation_mode",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "set_invitation_status",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "set_space_plan_after_photo",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "shopping_add_item",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "shopping_apply_recipe_quantity_sync",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "shopping_assign_borrow",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "shopping_delete_item",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "shopping_seed_from_last_plan",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "shopping_set_provider",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "shopping_set_returned",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "shopping_set_status",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "unarchive_gathering",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "unregister_push_device",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "user_has_plus",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "weather_recalculate_status",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "rpc",
+  "name": "weather_store_forecast",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "analyze-space",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "analyze-style-images",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "delete-account",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "figure-it-out",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "guest-living-page-lookup",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "guest-update-acknowledge",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "help-me-build-my-soundtrack",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "help-me-style-it",
+  "clients": 1,
+  "side": "native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "my-invited-gatherings",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "missing"
+ },
+ {
+  "kind": "edge",
+  "name": "public-form-submit",
+  "clients": 2,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "suggest-recipe",
+  "clients": 2,
+  "side": "web+native",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "sync-paper-order-status",
+  "clients": 1,
+  "side": "web",
+  "cls": "in_repo"
+ },
+ {
+  "kind": "edge",
+  "name": "weather-forecast",
+  "clients": 3,
+  "side": "web+native",
+  "cls": "in_repo"
+ }
+]
