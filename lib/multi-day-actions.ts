@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, getUser } from "@/lib/supabase-server";
-import { isCheckoutConfigured } from "@/lib/checkout";
+import { findWebProduct, isCheckoutAvailableFor } from "@/lib/checkout";
 import type { Entitlement } from "@/lib/entitlements";
 import { finaliseGatheringCreation } from "@/lib/host-actions";
 import {
@@ -365,7 +365,12 @@ export async function getMultiDayPassStep(gatheringId: string): Promise<MultiDay
     ok: true,
     status,
     tier: typeof tier === "string" ? tier : null,
-    checkoutConfigured: isCheckoutConfigured(),
+    // INTEGRATION FIX: main sells only Gathering Pass + Plus on web. isCheckoutConfigured() is true there, which would show a
+    // "Continue to payment" button for Multi-Day that /api/checkout refuses with a bare 503. Ask the per-product gate instead.
+    checkoutConfigured: (() => {
+      const p = findWebProduct("multi-day");
+      return p ? isCheckoutAvailableFor(p, user.id) : false;
+    })(),
     historyState,
   };
 }

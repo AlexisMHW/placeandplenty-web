@@ -162,3 +162,11 @@ describe("interim gate (203003) awareness", () => {
     assert.equal(parseMultiDayGateMode({ mode: "ENFORCE " }), "absent");
   });
 });
+
+describe("integration: pass step must not offer Multi-Day checkout the web refuses", () => {
+  const src = readFileSync("lib/multi-day-actions.ts", "utf8");
+  test("pass step asks the per-product gate, not the generic processor check", () => {
+    assert.ok(src.includes('isCheckoutAvailableFor(p, user.id)'));
+    assert.ok(!src.includes("isCheckoutConfigured()"));
+  });
+});
