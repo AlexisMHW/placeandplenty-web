@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getUser } from "@/lib/supabase-server";
 import { findWebProduct, isCheckoutAvailableFor } from "@/lib/checkout";
+import { multiDayCheckoutReturnPath } from "@/lib/multi-day-pass";
 
 export const runtime = "nodejs";
 
@@ -171,7 +172,12 @@ export async function POST(req: NextRequest) {
   }
 
   const mode = product.canonicalProductId === "plus_annual" ? "subscription" : "payment";
-  const success = `${siteUrl()}/host/account?purchase=success`;
+  // A multi-day pass is bought mid-creation: return to the pass step so the
+  // host can finish locking in, rather than the account page.
+  const success =
+    product.canonicalProductId === "multi_day_pass" && gatheringId
+      ? `${siteUrl()}${multiDayCheckoutReturnPath(gatheringId)}`
+      : `${siteUrl()}/host/account?purchase=success`;
   const cancel = `${siteUrl()}/checkout/${product.slug}?purchase=cancelled`;
 
   const stripe = new URLSearchParams();

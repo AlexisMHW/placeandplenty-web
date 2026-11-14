@@ -106,7 +106,7 @@ function limitCodeOf(
  */
 export type ActionResult =
   | { ok: true }
-  | { ok: false; message: string; limit?: GatheringLimitCode };
+  | { ok: false; message: string; limit?: GatheringLimitCode; passRequired?: boolean };
 
 /** A result that hands something back — an invite link, an id. */
 export type ActionValue<T> =
@@ -141,6 +141,13 @@ function translate(error: { message?: string; code?: string } | null): string {
     return "You've used this term's 12 Plus lock-ins. Your Plus account features stay active and this draft is saved.";
   }
 
+  // 203001 (optional, QA-first): the database refuses lock-in of a multi-day
+  // gathering that has no valid Multi-Day Pass. Matched before the generic
+  // 42501 branch below so it never reads as "no access".
+  if (raw.includes("multi_day_pass_required")) {
+    return "A Multi-Day Pass is needed to start this gathering. Your draft is saved.";
+  }
+
   if (raw.includes("free_gathering_slot") || raw.includes("slot_available")) {
     return "Free covers one active gathering at a time. Finish or close the current one first.";
   }
@@ -168,7 +175,13 @@ function translate(error: { message?: string; code?: string } | null): string {
 function fail(error: unknown): ActionResult {
   const e = error as { message?: string; code?: string } | null;
   const limit = limitCodeOf(e);
-  return { ok: false, message: translate(e), ...(limit ? { limit } : {}) };
+  const passRequired = (e?.message ?? "").includes("multi_day_pass_required");
+  return {
+    ok: false,
+    message: translate(e),
+    ...(limit ? { limit } : {}),
+    ...(passRequired ? { passRequired: true } : {}),
+  };
 }
 
 /**

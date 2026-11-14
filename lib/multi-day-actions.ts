@@ -1,7 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getUser } from "@/lib/supabase-server";
+import { isCheckoutConfigured } from "@/lib/checkout";
+import type { Entitlement } from "@/lib/entitlements";
+import { finaliseGatheringCreation } from "@/lib/host-actions";
+import {
+  classifyMultiDayPass,
+  isMultiDayPassRequired,
+  LOCK_IN_REFUSED_MESSAGE,
+  type MultiDayPassStatus,
+} from "@/lib/multi-day-pass";
 
 type Result = { ok: true } | { ok: false; message: string };
 
@@ -283,4 +292,91 @@ export async function extendMultiDayDuration(gatheringId: string, totalDays: 5 |
   if (!initialized.ok) return initialized;
   refresh(gatheringId);
   return { ok: true };
+}
+
+export type MultiDayPassStep =
+  | {
+      ok: true;
+      status: MultiDayPassStatus;
+      tier: string | null;
+      checkoutConfigured: boolean;
+      /** From get_multi_day_entitlement_state (203002) when it exists; null otherwise. */
+      historyState: string | null;
+    }
+  | { ok: false; message: string };
+
+/**
+ * Everything the pass step shows. The RPC `gathering_has_multi_day_access`
+ * is authoritative for "valid"; the entitlement rows only explain WHY not.
+ * 203002 is feature-detected: if the function is absent the call errors and
+ * is ignored, so this works before and after 203002 is applied.
+ */
+export async function getMultiDayPassStep(gatheringId: string): Promise<MultiDayPassStep> {
+  const user = await getUser();
+  if (!user) return { ok: false, message: "Please sign in to continue." };
+  const supabase = createClient();
+
+  const { data: hasPass, error: passError } = await supabase.rpc("gathering_has_multi_day_access", {
+    p_gathering_id: gatheringId,
+  });
+  if (passError) {
+    return { ok: false, message: "We couldn’t verify Multi-Day access. Your draft is saved. Please try again." };
+  }
+
+  let status: MultiDayPassStatus = "valid";
+  if (hasPass !== true) {
+    const { data: rows, error } = await supabase
+      .from("gathering_entitlements")
+      .select(
+        "id, entitlement_type, canonical_product_id, scope, gathering_id, active, purchased_at, expires_at, consumed_at, refunded_at, revoked_at, provider, source, provider_customer_id"
+      )
+      .eq("gathering_id", gatheringId)
+      .eq("scope", "gathering");
+    status = error ? "none" : classifyMultiDayPass((rows ?? []) as Entitlement[], gatheringId);
+    // The RPC said no; never display "valid" on a row read that disagrees.
+    if (status === "valid") status = "inactive";
+  }
+
+  const { data: tier } = await supabase.rpc("resolve_multi_day_purchase_tier", { p_gathering_id: gatheringId });
+
+  let historyState: string | null = null;
+  const { data: history, error: historyError } = await supabase.rpc("get_multi_day_entitlement_state", {
+    p_gathering_id: gatheringId,
+  });
+  if (!historyError && history && typeof history === "object") {
+    historyState = String((history as { state?: unknown }).state ?? "") || null;
+  }
+
+  return {
+    ok: true,
+    status,
+    tier: typeof tier === "string" ? tier : null,
+    checkoutConfigured: isCheckoutConfigured(),
+    historyState,
+  };
+}
+
+/**
+ * Lock the gathering in, but only after re-verifying the pass. The database
+ * (203001, when active) is the real gate; this check just avoids a refused
+ * write and gives the host the right sentence if the pass vanished meanwhile.
+ */
+export async function finishMultiDayGathering(
+  gatheringId: string
+): Promise<{ ok: true } | { ok: false; message: string; passRequired?: boolean }> {
+  const supabase = createClient();
+  const { data: hasPass, error } = await supabase.rpc("gathering_has_multi_day_access", {
+    p_gathering_id: gatheringId,
+  });
+  if (error) {
+    return { ok: false, message: "We couldn’t verify Multi-Day access. Your draft is saved. Please try again." };
+  }
+  if (hasPass !== true) return { ok: false, message: LOCK_IN_REFUSED_MESSAGE, passRequired: true };
+
+  const result = await finaliseGatheringCreation(gatheringId);
+  if (result.ok) return { ok: true };
+  if (isMultiDayPassRequired(result.message)) {
+    return { ok: false, message: LOCK_IN_REFUSED_MESSAGE, passRequired: true };
+  }
+  return { ok: false, message: result.message };
 }
