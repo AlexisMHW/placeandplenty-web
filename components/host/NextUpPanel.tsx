@@ -29,6 +29,8 @@ function labelFor(action: CanonicalNextUpAction): string {
       return `${action.count ?? 1} critical ${action.count === 1 ? "task is" : "tasks are"} overdue`;
     case "weather_risk":
       return "Review the weather plan";
+    case "set_guest_count":
+      return "Add your guest count";
     case "invite_people":
       return "Add your people";
     case "confirm_rsvps":

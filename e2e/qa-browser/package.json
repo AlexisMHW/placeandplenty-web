@@ -1,0 +1,17 @@
+{
+  "name": "pp-qa-browser-suite",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Browser tests against QA. These do NOT prove the released native apps work.",
+  "scripts": {
+    "list": "playwright test --list",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}

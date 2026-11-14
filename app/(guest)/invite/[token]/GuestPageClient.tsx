@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   lookupGuestPage,
   submitRsvp,
@@ -56,6 +56,10 @@ export default function GuestPageClient({
   const [rsvpSubmitted, setRsvpSubmitted] = useState(false);
   const [rsvpError, setRsvpError] = useState<string | null>(null);
   const [readOnly, setReadOnly] = useState(false);
+  // RSVP-only closure (deadline, host closed, not published, completed). Never locks the rest of the page.
+  const [rsvpClosedNotice, setRsvpClosedNotice] = useState<string | null>(null);
+  // Stable identity for this page's plus-one so retries are idempotent instead of name-matched.
+  const plusOneKeyRef = useRef<string | null>(null);
   const [activityBusy, setActivityBusy] = useState<string | null>(null);
   const [activityErrors, setActivityErrors] = useState<Record<string, string>>({});
 
@@ -179,15 +183,40 @@ export default function GuestPageClient({
       return;
     }
 
+    if (data.plusOneAllowed && plusOneName && !plusOneKeyRef.current) {
+      plusOneKeyRef.current =
+        typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : null;
+    }
     setRsvpSubmitting(true);
     const result = await submitRsvp(
       token,
       responses,
       data.plusOneAllowed ? plusOneName || undefined : undefined,
-      !data.contactEmail.has ? contactEmail || undefined : undefined
+      !data.contactEmail.has ? contactEmail || undefined : undefined,
+      plusOneKeyRef.current ?? undefined
     );
     setRsvpSubmitting(false);
 
+    // Key behavior on the body's stable error code, never on HTTP status alone.
+    const body = result.data as
+      | { error?: string; message?: string; rsvpClosed?: boolean }
+      | null;
+    if (result.status === 429 || body?.error === "rate_limited") {
+      setRsvpError(
+        body?.message ||
+          "You've made several updates. Please wait a little while before trying again."
+      );
+      return;
+    }
+    if (body?.rsvpClosed === true) {
+      const wholePageClosed =
+        body.error === "gathering_archived_read_only" || body.error === "gathering_cancelled";
+      const msg = body.message || "RSVPs are closed for this gathering.";
+      if (wholePageClosed) setReadOnly(true);
+      else setRsvpClosedNotice(msg);
+      setRsvpError(msg);
+      return;
+    }
     if (result.status === 409) {
       setReadOnly(true);
       setRsvpError((result.data as any)?.message || ARCHIVED_NOTICE);
@@ -498,7 +527,7 @@ export default function GuestPageClient({
         </div>
       )}
 
-      {data.rsvpDeadline && !isCancelled && (
+      {data.rsvpDeadline && !isCancelled && data.rsvpOpen !== false && !rsvpClosedNotice && (
         <p className="mt-6 font-body text-sm text-forest/60">
           Please respond by{" "}
           {new Date(`${data.rsvpDeadline}T00:00:00`).toLocaleDateString(
@@ -517,6 +546,10 @@ export default function GuestPageClient({
           {rsvpSubmitted ? (
             <p className="mt-4 font-body text-forest/80">
               Thanks — your response has been recorded.
+            </p>
+          ) : rsvpClosedNotice || (data.rsvpOpen === false && !data.isArchived && !isCancelled) ? (
+            <p role="status" className="mt-4 font-body text-forest/80">
+              {rsvpClosedNotice || data.rsvpClosedMessage || "RSVPs are closed for this gathering."}
             </p>
           ) : (
             <div className="mt-5 space-y-6">

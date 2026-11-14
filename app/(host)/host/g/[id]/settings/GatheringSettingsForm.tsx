@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Field } from "@/components/host/Editable";
 import { updateGatheringDetails } from "@/lib/host-actions";
 import type { GatheringSummary } from "@/lib/host-data";
+import { GUEST_COUNT_COPY, isGuestCountUnknown } from "@/lib/guest-count-state";
 
 // Always-visible form rather than the AddForm disclosure: this page exists
 // to edit these fields, so hiding them behind a button would put a click in
@@ -16,9 +17,13 @@ import type { GatheringSummary } from "@/lib/host-data";
 
 export default function GatheringSettingsForm({
   gathering,
+  allowUnknownGuestCount = false,
 }: {
   gathering: GatheringSummary;
+  /** Only true when the database can store an unknown count. */
+  allowUnknownGuestCount?: boolean;
 }) {
+  const [unknown, setUnknown] = useState(isGuestCountUnknown(gathering));
   const [pending, start] = useTransition();
   const [message, setMessage] = useState<
     { kind: "ok" | "error"; text: string } | null
@@ -67,22 +72,38 @@ export default function GatheringSettingsForm({
             placeholder="Home"
             className="sm:col-span-2"
           />
-          <Field
-            name="adult_count"
-            label="Adults"
-            type="number"
-            defaultValue={gathering.adult_count}
-          />
-          <Field
-            name="child_count"
-            label="Children"
-            type="number"
-            defaultValue={gathering.child_count}
-          />
+          {(allowUnknownGuestCount || unknown) && (
+            <label className="flex items-center gap-3 font-body text-forest sm:col-span-2">
+              <input
+                type="checkbox"
+                checked={unknown}
+                onChange={(e) => setUnknown(e.target.checked)}
+                className="h-5 w-5 accent-forest"
+              />
+              <span>{GUEST_COUNT_COPY.en.notSureYet}</span>
+            </label>
+          )}
+          <input type="hidden" name="guest_count_state" value={unknown ? "unknown" : "known"} />
+          {!unknown && (
+            <>
+              <Field
+                name="adult_count"
+                label="Adults"
+                type="number"
+                defaultValue={gathering.adult_count}
+              />
+              <Field
+                name="child_count"
+                label="Children"
+                type="number"
+                defaultValue={gathering.child_count}
+              />
+            </>
+          )}
         </div>
 
         <p className="mt-2 font-body text-sm text-forest/60">
-          Expected guests is worked out from these two.
+          {unknown ? GUEST_COUNT_COPY.en.unknownHelp : GUEST_COUNT_COPY.en.derivedHelp}
         </p>
 
         {message && (

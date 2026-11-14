@@ -6,6 +6,8 @@ import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import ResendConfirmation from "@/components/auth/ResendConfirmation";
+import { loginNotice } from "@/lib/auth-messages";
 
 // Sign-in for the host web app. Same Supabase Auth identity as the
 // native app (§11) — this creates no separate web account model.
@@ -35,8 +37,17 @@ import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 // /login?next=https://evil.example could bounce a freshly authenticated
 // host straight off the site.
 
-export default function LoginForm({ next }: { next?: string }) {
+export default function LoginForm({
+  next,
+  authError,
+}: {
+  next?: string;
+  authError?: string;
+}) {
   const router = useRouter();
+  // Written by /auth/callback when a link could not be exchanged. Mapped to
+  // fixed copy only, so a crafted ?error= value can never put its own text here.
+  const notice = loginNotice(authError);
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -114,6 +125,25 @@ export default function LoginForm({ next }: { next?: string }) {
       onSubmit={handleSubmit}
       className="rounded-card border border-sage/30 bg-offwhite p-8 shadow-soft"
     >
+      {notice && (
+        <div
+          role="status"
+          className={`mb-6 rounded-lg border px-4 py-3 ${
+            notice.tone === "warning"
+              ? "border-gold/50 bg-gold/10"
+              : "border-sage/40 bg-parchment"
+          }`}
+        >
+          <p className="font-body text-sm font-semibold text-forest">
+            {notice.title}
+          </p>
+          <p className="mt-1 font-body text-sm leading-relaxed text-forest/80">
+            {notice.body}
+          </p>
+          {notice.offerResend && <ResendConfirmation next={destination} />}
+        </div>
+      )}
+
       <SocialAuthButtons next={destination} context="login" />
 
       <div className="flex gap-1 rounded-full border border-sage/30 p-1">

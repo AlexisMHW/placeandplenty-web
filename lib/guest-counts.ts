@@ -58,3 +58,84 @@ function normalise(value: number): number {
   if (!Number.isFinite(value) || value < 0) return 0;
   return Math.round(value);
 }
+
+// ---------------------------------------------------------------------------
+// "I'M NOT SURE YET" — the write side.
+//
+// Native writes an unknown count as:
+//   adult_count 0, child_count 0, expected_guest_count NULL, guest_count_unknown true
+// (features/gatherings/services/gatheringService.ts). The web writes the
+// same four columns so either client reads the other's gathering correctly.
+//
+// Two guards keep "unknown" from silently becoming "zero":
+//   1. Leaving unknown with no people entered is refused, not stored as 0.
+//   2. A database that predates the column (production today) cannot store
+//      unknown at all — expected_guest_count is NOT NULL there — so the
+//      request is refused with an honest message instead of writing 0.
+// ---------------------------------------------------------------------------
+
+export interface GuestCountSubmission {
+  /** true = chose "I'm Not Sure Yet"; false = chose to enter numbers; null = field absent, leave alone. */
+  unknown: boolean | null;
+  adults: number | null;
+  children: number | null;
+}
+
+export interface GuestCountCurrent {
+  adults: number;
+  children: number;
+  unknown: boolean;
+}
+
+export type GuestCountWritePlan =
+  | { ok: true; columns: Record<string, unknown> }
+  | { ok: false; reason: "unsupported" | "headcount_required" };
+
+export function planGuestCountWrite(
+  submitted: GuestCountSubmission,
+  current: GuestCountCurrent,
+  supportsUnknown: boolean
+): GuestCountWritePlan {
+  if (submitted.unknown === true) {
+    if (!supportsUnknown) return { ok: false, reason: "unsupported" };
+    return {
+      ok: true,
+      columns: {
+        adult_count: 0,
+        child_count: 0,
+        expected_guest_count: null,
+        guest_count_unknown: true,
+      },
+    };
+  }
+
+  const touchedNumbers = submitted.adults !== null || submitted.children !== null;
+  const leavingUnknown = current.unknown && (submitted.unknown === false || touchedNumbers);
+
+  if (!touchedNumbers && !current.unknown) {
+    // Nothing about the headcount changed: leave every column alone.
+    return { ok: true, columns: {} };
+  }
+  if (!touchedNumbers && current.unknown && submitted.unknown === null) {
+    return { ok: true, columns: {} };
+  }
+
+  // Leaving unknown starts from nothing, never from the stored zeros.
+  const base = current.unknown ? { adults: 0, children: 0 } : { adults: current.adults, children: current.children };
+  const merged = mergeGuestCounts(
+    { adults: submitted.adults, children: submitted.children },
+    base
+  );
+
+  if (leavingUnknown && merged.expected_guest_count <= 0) {
+    return { ok: false, reason: "headcount_required" };
+  }
+
+  return {
+    ok: true,
+    columns: {
+      ...merged,
+      ...(supportsUnknown ? { guest_count_unknown: false } : {}),
+    },
+  };
+}
