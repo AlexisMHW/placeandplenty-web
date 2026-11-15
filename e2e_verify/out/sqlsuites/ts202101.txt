@@ -1,0 +1,48 @@
+PASS G0.1 effective statuses: active / completed (photo window open, event 29d ago) / completed (window closed, event 31d ago) / cancelled
+PASS G0.2 202101 objects: the strict trigger on guest_update_receipts uses the dedicated function
+PASS G0.3 guest_update_receipts has no gathering_id column (the root cause of the 202100 defect) but links to guest_updates and invitation_parties
+PASS G0.4 shared 202100 function untouched by 202101 (class photos logic present, no receipts logic)
+PASS G0.5 every OTHER 202100 trigger still uses the shared function (only the receipts trigger differs)
+PASS G0.6 seeded: 4 receipts (one per gathering)
+PASS G1.1 active: service-role (edge function) INSERT of a new receipt (second party) works
+PASS G1.2 active: service-role UPDATE (acknowledge) works
+PASS G1.3 active: guest-update-acknowledge upsert (ON CONFLICT DO UPDATE) works, existing and new row
+PASS G1.4 active: guest-living-page-lookup upsert (ON CONFLICT DO NOTHING) works
+PASS G1.5 active: INSERT and UPDATE by a signed-in owner identity (DB level) work
+PASS G1.6 active: real role switch service_role INSERT/UPDATE (privileges + trigger)
+PASS G1.7 random uuids: no 42703 any more - the foreign key answers (23503), not the trigger
+PASS G2.C29.a service-role INSERT (new receipt for a fresh party) refused gathering_read_only
+PASS G2.C29.b service-role UPDATE (acknowledge) refused gathering_read_only
+PASS G2.C29.c guest-update-acknowledge upsert refused
+PASS G2.C29.d guest-living-page-lookup ON CONFLICT DO NOTHING upsert refused (the edge function ignores that error: no new seen receipt after completion)
+PASS G2.C29.e signed-in owner identity INSERT/UPDATE refused
+PASS G2.C29.f real role switch service_role UPDATE refused
+PASS G2.C29.h DELETE of a receipt is not blocked (retention purge / account deletion path; guard is insert/update only)
+PASS G2.C31.a service-role INSERT (new receipt for a fresh party) refused gathering_read_only
+PASS G2.C31.b service-role UPDATE (acknowledge) refused gathering_read_only
+PASS G2.C31.c guest-update-acknowledge upsert refused
+PASS G2.C31.d guest-living-page-lookup ON CONFLICT DO NOTHING upsert refused (the edge function ignores that error: no new seen receipt after completion)
+PASS G2.C31.e signed-in owner identity INSERT/UPDATE refused
+PASS G2.C31.f real role switch service_role UPDATE refused
+PASS G2.C31.h DELETE of a receipt is not blocked (retention purge / account deletion path; guard is insert/update only)
+PASS G2.X.a service-role INSERT (new receipt for a fresh party) refused gathering_read_only
+PASS G2.X.b service-role UPDATE (acknowledge) refused gathering_read_only
+PASS G2.X.c guest-update-acknowledge upsert refused
+PASS G2.X.d guest-living-page-lookup ON CONFLICT DO NOTHING upsert refused (the edge function ignores that error: no new seen receipt after completion)
+PASS G2.X.e signed-in owner identity INSERT/UPDATE refused
+PASS G2.X.f real role switch service_role UPDATE refused
+PASS G2.X.h DELETE of a receipt is not blocked (retention purge / account deletion path; guard is insert/update only)
+PASS G2.9 refusal detail carries the status: completed => completed, cancelled => cancelled
+PASS G2.10 completed inside the 30-day photo window is STILL refused for receipts (the window exception is gathering_photos only)
+PASS G3.1 receipt whose update is on an ACTIVE gathering but whose party is on a COMPLETED one: refused
+PASS G3.2 receipt whose party is on an ACTIVE gathering but whose update is on a CANCELLED one: refused
+PASS G3.3 UPDATE cannot move an active receipt onto a completed gathering (new row)
+PASS G3.4 UPDATE cannot move a completed gathering's receipt back onto an active one (old row)
+PASS G4.1 kill switch off: completed and cancelled receipts writable again (prior behaviour)
+PASS G4.2 level cancelled: completed allowed, cancelled refused
+PASS G4.3 level terminal again: both refused
+PASS G4.4 canonical lifecycle-transition marker bypasses (cancel/complete/archive flows)
+PASS G4.5 marker cleared: refused again
+PASS G4.6 enforcement config restored to the default (terminal)
+TOTAL pass=46 fail=0
+TOTAL pass=46 fail=0 aborted_blocks=0

@@ -1,0 +1,80 @@
+
+
+
+PASS H0.1 defaults: paid referrals OFF; approved economics untouched (Pass 50c, Plus 1200c, hold 45d, min 5000c)
+PASS H0.2 owner activates paid referrals (switch is ON only inside this scratch DB)
+PASS D1.0 purchase reconciled: pending 50c (Gathering Pass first qualifying purchase)
+PASS D1.1 ledger: dispute opened -> entitlement revoked with reason dispute_open (access paused)
+PASS D1.2 sweep right after the dispute event: commission HELD / dispute_open (NOT reversed)
+PASS D1.3 repeated sweeps are idempotent: still held, exactly one held event
+PASS D1.4 an open dispute never validates, even 46 days later
+PASS D1.5 no reversal event, no clawback
+PASS D1.6 ledger: dispute won -> access restored
+PASS D1.7 sweep after WON: released to pending / dispute_won (45-day hold still running, nothing validated early)
+PASS D1.8 day 44: still pending
+PASS D1.9 day 46: validated (payable by the normal owner-only draft, amount unchanged 50c)
+PASS D1.10 event trail: held -> pending(dispute_won) -> validated, never reversed
+PASS D2.1 open + sweep: held
+PASS D2.2 dispute LOST: access revoked (dispute_lost) and the commission is REVERSED (refund_or_dispute)
+PASS D2.3 reversal is terminal: never validates later
+PASS D3.1 refund after an open dispute: reversed
+PASS D4.1 full refund: reversed exactly as before
+PASS D5.1 facts say none but the entitlement is revoked for dispute_open: held (not reversed, not validated)
+PASS D5.2 ... even 46 days later
+PASS D5.3 ledger-only WON: released to pending
+PASS D6.1 reconcile while the dispute is open creates the commission HELD / dispute_open
+PASS D6.2 won: released to pending, validates on day 45+
+PASS D6.3 validated
+PASS D7.1 subscription_deleted: not reversed (as before)
+PASS D7.2 another revocation reason (admin_revoked): reversed (as before)
+PASS D8.1 paid commission + OPEN dispute: stays paid, no clawback (a hold, not a reversal)
+PASS D8.2 then the dispute is LOST: reversed with the clawback recorded (existing model)
+PASS D9.1 draft of six validated Plus commissions = 7200
+PASS D9.2 a dispute opened after the draft BLOCKS approval (payout_contains_reversed_commission), nothing changed
+PASS D9.3 sweep: batch voided (contains_disputed_commission); disputed commission held, the other five validated (not reversed)
+PASS D9.4 dispute won: the held commission is released and (hold elapsed) validated again; amount intact; the owner can draft again = 7200
+PASS R1.0 ledger: partial refund keeps access
+PASS R1.1 record_purchase_partial_refund -> held_for_review, commission held / partial_refund_review
+PASS R1.2 sweeps never validate it (day 0 and day 46)
+PASS R1.3 facts record the refunded amount and the flag; access kept
+PASS R1.4 replay is idempotent (greatest amount kept, still one held event)
+PASS R2.1 no commission yet: recorded_no_commission
+PASS R2.2 reconcile afterwards creates it HELD / partial_refund_review
+PASS R2.3 never validates
+PASS R3.0 validated first
+PASS R3.1 partial refund on a validated commission -> held_for_review
+PASS R4.1 dispute opened on a commission already held for a partial refund: stays held (partial_refund_review)
+PASS R4.2 dispute won does NOT release a commission whose partial refund is unresolved
+PASS R5.1 held for the dispute
+PASS R5.2 partial refund while held: flagged (state unchanged)
+PASS R5.3 dispute won: released, then held for the unresolved partial refund; not validated
+PASS R6.1 a later full refund reverses the held commission
+PASS R7.1 draft = 7200
+PASS R7.2 commission inside the draft is only flagged by the function (still payable)
+PASS R7.3 approval of a payout containing it is refused, nothing changed
+PASS R7.4 sweep: batch voided (contains_partially_refunded_commission), that commission held, the other five validated
+PASS R7.5 a new draft excludes the held one: 5 x 1200 = 6000
+PASS R8.1 paid + partial refund: flagged only
+PASS R8.2 still paid after a sweep, no clawback
+PASS R9.1 day 44 pending
+PASS R9.2 day 46 validated (normal path unchanged)
+PASS L0 role map: hc.payout is held by the owner only (business_admin has none)
+PASS L1 without hc.payout a non-owner cannot even draft
+PASS L2 DATABASE: a non-owner holding hc.payout CAN create a draft (hc.payout-only rule, documented)
+PASS L3 ... but approve is owner_required
+PASS L4 ... void is owner_required
+PASS L5 ... record is owner_required
+PASS L6 ... reverse is owner_required
+PASS L7 ... settle is owner_required
+PASS L8 the draft is untouched by those refusals
+PASS L9 scratch permission removed: role map back to owner only
+PASS G1 internal helpers still not callable by API roles
+PASS G2 sweep_commissions / reconcile keep service-only: authenticated refused
+PASS G3 bodies contain no URL / credential / http call
+PASS G4 economics unchanged: Pass 50c, Plus 1200c, 45-day hold, 5000c minimum (terms v1 frozen on the new commissions)
+PASS G5 no commission was ever created for a purchase made while paid referrals were OFF, and none auto-reversed by a dispute hold (reversed rows are only D2/D3/D4/D7b/D8/R6)
+PASS M3.1 anon / authenticated / PUBLIC have no EXECUTE on the 202100 trigger function
+PASS M3.2 the trigger is still attached to the terminal tables (guard intact; behaviour is covered by ts202101 / ts217400 on this same chain)
+PASS M3.3 sibling trigger functions keep their revoked state (202101 receipts, 217450 photo window)
+TOTAL pass=75 fail=0
+TOTAL pass=75 fail=0 aborted_blocks=0

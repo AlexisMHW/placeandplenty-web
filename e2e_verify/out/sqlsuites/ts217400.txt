@@ -1,0 +1,304 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{"held": 0, "status": "ok", "released": 0, "reversed": 0, "validated": 7}
+
+
+
+
+PASS Z0.1 start state: paid referrals OFF, no window rows, approved economics (Pass 50c, Plus 1200c, hold 45d, min 5000c)
+PASS W1.1 while OFF (before the first activation): reconcile reports paid_referrals_disabled and creates nothing
+PASS W1.2 while OFF: maintenance is a complete no-op
+PASS W1.3 owner activates paid referrals (first activation)
+PASS W1.4 exactly one open window, started at the activation instant, with actor and reason
+PASS W1.5 purchase made while OFF, reconciled after activation: NOT accrued, clear reason (Plus)
+PASS W1.6 same for the Gathering Pass
+PASS W1.7 maintenance after activation: those purchases are not even candidates (skipped_off_at_purchase = 2), zero commissions
+PASS W1.8 sweep (even 46 days later) creates nothing
+PASS W2.1 purchase made while ON: Plus annual first qualifying purchase accrues $12.00 pending
+PASS W2.1b the commission froze terms version 1 (Plus 1200c, 45-day hold, 5000c minimum, 30-day window)
+PASS W2.2 Gathering Pass first qualifying purchase accrues $0.50 pending
+PASS W2.3 replay is idempotent (already_recorded), still exactly 2 rows
+PASS W3.1 purchase EXACTLY at the activation instant is inside the window (start included): accrues 1200
+PASS W3.2 purchase one microsecond BEFORE the activation instant is outside: not accrued
+PASS W4.1 owner deactivates (OFF2)
+PASS W4.2 window 1 is sealed at the deactivation instant with actor and reason; nothing else changed
+PASS W4.3 already-created commissions untouched by the deactivation: 3 rows pending/validated unchanged amounts
+PASS W5.1 owner re-activates (ON2)
+PASS W5.2 purchase made in the OFF gap, reconciled after ON2: NOT accrued
+PASS W5.3 purchase EXACTLY at the deactivation instant: outside (end excluded), not accrued
+PASS W5.4 purchase one microsecond BEFORE the deactivation instant is inside window 1: accrues even though reconciled during window 2
+PASS W5.5 purchase EXACTLY at the second activation instant: accrues
+PASS W5.6 purchase one microsecond before the second activation: not accrued
+PASS W5.7 purchase made inside window 1 but reconciled only now (after OFF + ON): accrues
+PASS W6.1 direct service-role flip of the switch is recorded too (window 2 sealed)
+PASS W6.2 after the direct flip: 2 windows, none open
+PASS W6.3 ON3
+PASS W6.4 purchase made in the second OFF gap, reconciled after ON3: not accrued
+PASS W7.1 maintenance after all toggles: reconciles only ON-time purchases (e_on3 accrues); every OFF-time purchase is skipped
+PASS W7.2 final commission set = exactly the ON-time purchases (on_plus, on_pass, s1, e1-1us, s2, w1_late, on3); NO off / gap / boundary-outside purchase has a row
+PASS W7.3 not one commission exists for an off-time purchase (off x2, s1-1us, gap, e1, s2-1us, gap2)
+PASS W7.4 amounts exactly as approved: Plus 1200c (x6), Pass 50c (x1); validated after the 45-day hold
+PASS W7.5 three windows: closed, closed, open
+PASS W8.1 cannot rewrite a window start (tamper-proof)
+PASS W8.2 cannot move the end of a sealed window
+PASS W8.3 cannot delete windows
+PASS W8.4 cannot truncate windows
+PASS W8.5 at most one open window (unique)
+PASS W8.6 an open window cannot be sealed before it started (check / guard)
+FAIL W8.7 API roles have no access to the table or the helper  got=[true/true] want=[false/true]
+PASS W8.8 helper boundary semantics: before first start false, at start true, inside true, at end false, null false
+FAIL W8.9 service role may read the windows (audit), cannot write  got=[3/ERR 23505] want=[3/ERR 42501]
+PASS D1.0 capability map unchanged: start_purchase is held ONLY by legacy_full (owner implicit)
+PASS D1.1 owner may start a Gathering Pass purchase
+PASS D1.2 legacy_full co-host may
+PASS D1.3 manager co-host is DENIED
+PASS D1.4 planner co-host is DENIED
+PASS D1.5 stranger is DENIED
+PASS D1.6 anon is DENIED (no EXECUTE or no identity)
+PASS D1.7 Pass without a gathering is refused
+PASS D1.8 only after an EXPLICIT capability change may a manager purchase
+PASS D1.9 restored: manager denied again
+PASS D1.10 capability map restored (legacy_full only)
+PASS D2.0 fixture: 6 validated commissions of 1200c (Plus annual, first qualifying purchase)
+PASS D2.1 owner can read public.hc_admin_payout_ledger()
+PASS D2.2 creator_program_manager (hc.read only) CANNOT read public.hc_admin_payout_ledger()
+PASS D2.3 business_admin (hc.read only) CANNOT read public.hc_admin_payout_ledger()
+PASS D2.4 non-staff / anon cannot read public.hc_admin_payout_ledger()
+PASS D2.1 owner can read public.hc_admin_list_payouts(10)
+PASS D2.2 creator_program_manager (hc.read only) CANNOT read public.hc_admin_list_payouts(10)
+PASS D2.3 business_admin (hc.read only) CANNOT read public.hc_admin_list_payouts(10)
+PASS D2.4 non-staff / anon cannot read public.hc_admin_list_payouts(10)
+PASS D2.1 owner can read public.hc_admin_payout_history(null,10)
+PASS D2.2 creator_program_manager (hc.read only) CANNOT read public.hc_admin_payout_history(null,10)
+PASS D2.3 business_admin (hc.read only) CANNOT read public.hc_admin_payout_history(null,10)
+PASS D2.4 non-staff / anon cannot read public.hc_admin_payout_history(null,10)
+PASS D2.1 owner can read public.hc_admin_payout_eligibility()
+PASS D2.2 creator_program_manager (hc.read only) CANNOT read public.hc_admin_payout_eligibility()
+PASS D2.3 business_admin (hc.read only) CANNOT read public.hc_admin_payout_eligibility()
+PASS D2.4 non-staff / anon cannot read public.hc_admin_payout_eligibility()
+PASS D2.5 owner report has clawback keys and the validated bucket
+PASS D2.6 manager (hc.read) still reads the report (counts / pending / validated)
+PASS D2.7 manager report carries NO clawback keys
+PASS D2.8 owner draft = 7200
+PASS D2.9 non-owner holding hc.payout can now READ the ledger, list, history, eligibility
+PASS D2.10 ... and then also sees the payout-side keys in the commission report
+PASS D2.11 non-owner with hc.payout CANNOT approve (owner_required), payout untouched
+PASS D2.12 non-owner with hc.payout CANNOT void a draft, payout untouched
+PASS D2.13 owner approves (approval is not payment)
+PASS D2.14 non-owner with hc.payout CANNOT record an externally completed payment, payout still approved
+PASS D2.15 non-owner with hc.payout CANNOT void an approved payout
+PASS D2.16 owner records the externally completed payment
+PASS D2.17 non-owner with hc.payout CANNOT reverse a recorded payment, payout still paid
+PASS D2.18 non-owner with hc.payout CANNOT settle a clawback (owner gate runs before any lookup)
+PASS D2.19 control: the owner passes the owner gate (reaches the business rule no_clawback)
+PASS D2.20 service_role / no identity is not the owner
+PASS D2.21 the owner reverses the recorded payment (reason required, audit row written)
+PASS D2.22 scratch permission removed again: business_admin back to hc.read only, reads denied
+PASS D2.23 role map unchanged: hc.payout is held by owner only
+PASS D2.24 no automated money movement: no payout/commission function calls net.http / stripe / transfer, no new cron job
+PASS P0.1 fixtures: Plus A/B/C 1200c, Pass 50c, all pending
+PASS P0.2 helper is internal: not callable by anon / authenticated, callable by service_role; record_purchase_dispute keeps service-only + void
+PASS P1.1 resolver: PaymentIntent of the Plus charge -> A
+PASS P1.2 resolver: invoice / charge / subscription ids of A all resolve to A
+PASS P1.3 resolver: renewal-invoice PaymentIntent / charge -> B (subscription_invoice_payments)
+PASS P1.4 resolver: payment_linked event payload (PaymentIntent, charge) and its invoice -> C
+PASS P1.5 resolver: Pass PaymentIntent = exact facts key -> G; unknown / null / blank -> nothing
+PASS P2.1 dispute OPEN by the charge PaymentIntent updates the PLUS facts (A) and nothing else
+PASS P2.2 sweep holds the Plus commission while the dispute is open (dispute_open), others untouched
+PASS P2.3 dispute WON releases and (45-day hold elapsed) validates the commission again
+PASS P2.4 dispute on a RENEWAL charge (B) resolves through subscription_invoice_payments
+PASS P2.5 dispute by CHARGE id on a payment_linked Plus (C) resolves
+PASS P2.6 and by INVOICE id (back to none)
+PASS P2.7 dispute LOST on the Plus charge: sweep reverses the commission
+PASS P3.1 Gathering Pass: exact PaymentIntent match still works exactly as before (held, dispute_open)
+PASS P4.1 unknown reference is a silent no-op (returns, changes nothing)
+PASS P4.2 invalid status still rejected; anon / authenticated still cannot call
+PASS P5.1 partial refund by the Plus PaymentIntent: facts.refunded_cents recorded, commission held for review
+PASS P5.2 partial refund by the exact (subscription) key still works; unknown -> no_facts
+PASS P5.3 partial refund validation unchanged (amount > 0)
+PASS P6.1 FULL refund of a Plus charge: ledger marks the entitlement refunded, sweep reverses the commission
+PASS P7.1 draft of six Plus commissions = 7200
+PASS P7.2 a dispute opened on a PLUS charge after the draft BLOCKS approval (payout_contains_reversed_commission), nothing changed
+PASS P8.1 fail-safe: with a linkage table missing, exact-match recording still works
+PASS P8.2 fail-safe: linked reference degrades to a no-op instead of raising
+PASS P8.3 linkage restored: resolves again
+PASS P9.1 terms unchanged by this migration (v1: Pass 50, Plus 1200, 45d, 5000)
+PASS V0.1 statuses: A active, 29/30m/30/30p/gDone completed, gCan cancelled
+PASS V0.2 existing window definition: gathering_photos_are_editable (as service, no identity) agrees: open for A/g29/g30m/gDone, closed for g30 (boundary closed), g30p, gCan
+PASS V0.3 lifecycle_ends_at of g30 is exactly now(), of g29 now()+1 day (event end + 30 days)
+PASS V1.A.a DB-level INSERT by the owner: allowed
+PASS V1.A.b DB-level hide (moderation columns): allowed
+PASS V1.A.c DB-level edit of any OTHER photo column (caption): allowed (active)
+PASS V1.A.d DB-level delete by the owner: allowed
+PASS V2.A.a client INSERT (RLS) by the owner
+PASS V2.A.b add_gathering_photo RPC by the owner
+PASS V2.A.c set_gathering_photo_hidden RPC by the owner
+PASS V2.A.d delete_gathering_photo RPC by the owner
+PASS V3.A.a legacy_full co-host add_gathering_photo
+PASS V3.A.b planner co-host direct INSERT (RLS)
+PASS V3.A.c stranger INSERT is always refused
+PASS V4.A.a service-role (guest upload) INSERT: allowed
+PASS V4.A.b service-role DELETE (retention purge / account deletion) always allowed
+PASS V4.A.c service-role UPDATE: allowed
+PASS V1.g29.a DB-level INSERT by the owner: allowed
+PASS V1.g29.b DB-level hide (moderation columns): allowed
+PASS V1.g29.c DB-level edit of any OTHER photo column (caption): refused
+PASS V1.g29.d DB-level delete by the owner: allowed
+PASS V2.g29.a client INSERT (RLS) by the owner
+PASS V2.g29.b add_gathering_photo RPC by the owner
+PASS V2.g29.c set_gathering_photo_hidden RPC by the owner
+PASS V2.g29.d delete_gathering_photo RPC by the owner
+PASS V3.g29.a legacy_full co-host add_gathering_photo
+PASS V3.g29.b planner co-host direct INSERT (RLS)
+PASS V3.g29.c stranger INSERT is always refused
+PASS V4.g29.a service-role (guest upload) INSERT: allowed
+PASS V4.g29.b service-role DELETE (retention purge / account deletion) always allowed
+PASS V4.g29.c service-role UPDATE: allowed
+PASS V1.g30m.a DB-level INSERT by the owner: allowed
+PASS V1.g30m.b DB-level hide (moderation columns): allowed
+PASS V1.g30m.c DB-level edit of any OTHER photo column (caption): refused
+PASS V1.g30m.d DB-level delete by the owner: allowed
+PASS V2.g30m.a client INSERT (RLS) by the owner
+PASS V2.g30m.b add_gathering_photo RPC by the owner
+PASS V2.g30m.c set_gathering_photo_hidden RPC by the owner
+PASS V2.g30m.d delete_gathering_photo RPC by the owner
+PASS V3.g30m.a legacy_full co-host add_gathering_photo
+PASS V3.g30m.b planner co-host direct INSERT (RLS)
+PASS V3.g30m.c stranger INSERT is always refused
+PASS V4.g30m.a service-role (guest upload) INSERT: allowed
+PASS V4.g30m.b service-role DELETE (retention purge / account deletion) always allowed
+PASS V4.g30m.c service-role UPDATE: allowed
+PASS V1.g30.a DB-level INSERT by the owner: refused gathering_read_only
+PASS V1.g30.b DB-level hide (moderation columns): refused
+PASS V1.g30.c DB-level edit of any OTHER photo column (caption): refused
+PASS V1.g30.d DB-level delete by the owner: refused
+PASS V2.g30.a client INSERT (RLS) by the owner
+PASS V2.g30.b add_gathering_photo RPC by the owner
+PASS V2.g30.c set_gathering_photo_hidden RPC by the owner
+PASS V2.g30.d delete_gathering_photo RPC by the owner
+PASS V3.g30.a legacy_full co-host add_gathering_photo
+PASS V3.g30.b planner co-host direct INSERT (RLS)
+PASS V3.g30.c stranger INSERT is always refused
+PASS V4.g30.a service-role (guest upload) INSERT: refused
+PASS V4.g30.b service-role DELETE (retention purge / account deletion) always allowed
+PASS V4.g30.c service-role UPDATE: refused
+PASS V1.g30p.a DB-level INSERT by the owner: refused gathering_read_only
+PASS V1.g30p.b DB-level hide (moderation columns): refused
+PASS V1.g30p.c DB-level edit of any OTHER photo column (caption): refused
+PASS V1.g30p.d DB-level delete by the owner: refused
+PASS V2.g30p.a client INSERT (RLS) by the owner
+PASS V2.g30p.b add_gathering_photo RPC by the owner
+PASS V2.g30p.c set_gathering_photo_hidden RPC by the owner
+PASS V2.g30p.d delete_gathering_photo RPC by the owner
+PASS V3.g30p.a legacy_full co-host add_gathering_photo
+PASS V3.g30p.b planner co-host direct INSERT (RLS)
+PASS V3.g30p.c stranger INSERT is always refused
+PASS V4.g30p.a service-role (guest upload) INSERT: refused
+PASS V4.g30p.b service-role DELETE (retention purge / account deletion) always allowed
+PASS V4.g30p.c service-role UPDATE: refused
+PASS V1.gCan.a DB-level INSERT by the owner: refused gathering_read_only
+PASS V1.gCan.b DB-level hide (moderation columns): refused
+PASS V1.gCan.c DB-level edit of any OTHER photo column (caption): refused
+PASS V1.gCan.d DB-level delete by the owner: refused
+PASS V2.gCan.a client INSERT (RLS) by the owner
+PASS V2.gCan.b add_gathering_photo RPC by the owner
+PASS V2.gCan.c set_gathering_photo_hidden RPC by the owner
+PASS V2.gCan.d delete_gathering_photo RPC by the owner
+PASS V3.gCan.a legacy_full co-host add_gathering_photo
+PASS V3.gCan.b planner co-host direct INSERT (RLS)
+PASS V3.gCan.c stranger INSERT is always refused
+PASS V4.gCan.a service-role (guest upload) INSERT: refused
+PASS V4.gCan.b service-role DELETE (retention purge / account deletion) always allowed
+PASS V4.gCan.c service-role UPDATE: refused
+PASS V1.gDone.a DB-level INSERT by the owner: allowed
+PASS V1.gDone.b DB-level hide (moderation columns): allowed
+PASS V1.gDone.c DB-level edit of any OTHER photo column (caption): refused
+PASS V1.gDone.d DB-level delete by the owner: allowed
+PASS V2.gDone.a client INSERT (RLS) by the owner
+PASS V2.gDone.b add_gathering_photo RPC by the owner
+PASS V2.gDone.c set_gathering_photo_hidden RPC by the owner
+PASS V2.gDone.d delete_gathering_photo RPC by the owner
+PASS V3.gDone.a legacy_full co-host add_gathering_photo
+PASS V3.gDone.b planner co-host direct INSERT (RLS)
+PASS V3.gDone.c stranger INSERT is always refused
+PASS V4.gDone.a service-role (guest upload) INSERT: allowed
+PASS V4.gDone.b service-role DELETE (retention purge / account deletion) always allowed
+PASS V4.gDone.c service-role UPDATE: allowed
+PASS V5.1 kill switch off: closed-window insert is allowed again (prior behaviour)
+PASS V5.2 level cancelled: completed not enforced, cancelled still refused
+PASS V5.3 level terminal again: refused
+PASS V5.4 canonical lifecycle-transition marker bypasses (cancel/complete/archive flows): with the marker set, the insert passes, the insert passes
+PASS V6.0 sweep covers the 202100 table list (>= 25 child tables incl. gathering_photos and, since 202101, guest_update_receipts; gathering_days handled separately)
+PASS V6.A sweep over 27 tables, owner: tables NOT refused with gathering_read_only = [photos/active]
+PASS V6.g29 sweep over 27 tables, owner: tables NOT refused with gathering_read_only = [photos/active]
+PASS V6.g30m sweep over 27 tables, owner: tables NOT refused with gathering_read_only = [photos/active]
+PASS V6.gDone sweep over 27 tables, owner: tables NOT refused with gathering_read_only = [photos/active]
+PASS V6.g30 sweep over 27 tables, owner: tables NOT refused with gathering_read_only = [none]
+PASS V6.g30p sweep over 27 tables, owner: tables NOT refused with gathering_read_only = [none]
+PASS V6.gCan sweep over 27 tables, owner: tables NOT refused with gathering_read_only = [none]
+PASS V6.9 on the active gathering no table is refused with gathering_read_only
+PASS V6.8 guest_update_receipts (202101): service-role insert is no longer a 42703 - it is NOT refused for an active gathering and IS refused gathering_read_only for a completed one
+PASS V8.0 multi-day: effective status completed both; photos window open (last day 29 days ago) / closed (31 days ago)
+PASS V8.1 multi-day inside window: photo INSERT allowed (owner)
+PASS V8.2 multi-day after the window: photo INSERT refused gathering_read_only
+PASS V8.3 gathering_days (multi-day schedule) read-only on a completed multi-day gathering, window open or closed (no exception)
+PASS V7.1 gatherings row itself: owner update on completed (inside window) and cancelled still refused (never OK; 202100 unchanged)
+PASS V7.2 202100 enforcement function body untouched by 217450 (still the 202100 text: photos class defers completed)
+PASS V7.3 both triggers present on gathering_photos (202100 + 217450); 202100 is still the LAST migration of the order
+TOTAL pass=238 fail=2
+stderr: NOTICE:  sweep g29 unexpected not-blocked: gathering_photos, ; sample: ERR P0001:schedule_requires_multi_day_gathering | ERR P0001:gathering_read_only | ERR 23514:new row for relation "gathering_photos" violates check constraint "gathering_photos_uploader_check"
+NOTICE:  sweep g30m unexpected not-blocked: gathering_photos, ; sample: ERR P0001:schedule_requires_multi_day_gathering | ERR P0001:gathering_read_only | ERR 23514:new row for relation "gathering_photos" violates check constraint "gathering_photos_uploader_check"
+NOTICE:  sweep gDone unexpected not-blocked: gathering_photos, ; sample: ERR P0001:schedule_requires_multi_day_gathering | ERR P0001:gathering_read_only | ERR 23514:new row for relation "gathering_photos" violates check constraint "gathering_photos_uploader_check"
+TOTAL pass=238 fail=2 aborted_blocks=0

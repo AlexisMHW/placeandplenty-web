@@ -1,0 +1,14 @@
+(node:17299) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/pp-work/EXEC/e4-verify/web/lib/hc/ledger.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/claude/pp-work/EXEC/e4-verify/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS    N-D1 [DB via PostgREST (service)] open dispute -> sweep -> commission HELD (dispute_open); repeated sweeps, even 60 days later, keep it held (never reversed, never validated)
+PASS    N-D2 [DB via PostgREST (service)] dispute WON -> released to pending/dispute_won at once; NOT payable early (still pending at day 44); validated after the normal 45-day hold (validate_after stays purchased_at+45d)
+PASS    N-D3 [DB via PostgREST] the won-dispute commission becomes payable (state payable in the Draft), the owner approves and records payment; it ends paid
+PASS    N-D4 [DB via PostgREST (service)] dispute LOST -> reversed (held while open, reversed on loss); a later 'won' event cannot resurrect it
+PASS    N-P1 [DB via PostgREST (service)] partial refund -> HELD with reason partial_refund_review; stays held after the 45-day hold and repeated sweeps (no automatic release)
+PASS    N-P2 [DB via PostgREST] a partial-refund-held commission is never drafted into a payout
+PASS    N-P3 [DB via PostgREST] partial refund flagged on a commission already in a DRAFT payout: the draft is voided / cannot be approved by the owner
+PASS    N-P4 [DB via PostgREST] partial refund flagged on a commission inside an APPROVED payout (no sweep yet): the owner cannot record the payment
+PASS    N-P5 [DB] none of the refunded/disputed-lost/partial-refund-held commissions was ever paid
+SUMMARY {"PASS":9}

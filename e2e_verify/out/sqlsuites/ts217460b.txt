@@ -1,0 +1,18 @@
+PASS Y0.1 proposed SMS functions present in the audit DB (sms_claim_message, sms_due_messages, sms_queue_prepared)
+PASS Y1.1 real sms_is_suppressed present: is_contact_suppressed(sms, unknown hash) = false
+PASS Y1.2 opted-out hash => true
+PASS Y2.1 sms_cfg_bool defaults fail-closed with rows deleted: enabled=false, kill_switch=true
+PASS Y3.1 (d) sms_queue_prepared with defaults: sms_unavailable
+PASS Y3.2 (d) sms_queue_prepared with sms_config rows deleted: sms_unavailable
+PASS Y3.3 sms_queue_prepared with sms_config table missing: error, never queues
+PASS Y4.1 (d) sms_claim_message after config rows deleted: refused (no row returned as work)
+PASS Y4.2 sms_claim_message with defaults (a queued row cannot even exist): row stays unclaimed
+PASS Y4.3 sms_claim_message after kill switch ON: refused
+PASS Y4.4 positive control (rolled back): enabled + healthy suppression => claim returns 1 row
+PASS Y4.5 FINDING (informational): sms_due_messages is not config-gated and lists queued ids even when OFF; harmless because claim is refused
+PASS Y5.1 sms_dispatch_context flags with config rows deleted read dbEnabled=false, killSwitchOn=true
+PASS Y6.1 get_sms_usage_summary reports unavailable with defaults and with rows deleted
+PASS Y7.1 INSERT of deliverable row with rows deleted AND the suppression function dropped: refused
+PASS Y8.1 (e) defaults: zero deliverable rows, sms_config untouched
+TOTAL pass=16 fail=0
+TOTAL pass=16 fail=0 aborted_blocks=0

@@ -1,0 +1,508 @@
+PASS B1 cpm creates a tier WITHOUT paid eligibility
+PASS B2 only the owner may make a tier paid-eligible
+PASS B3 support cannot manage tiers
+PASS B4 cpm sets benefits (<=12 short lines)
+PASS B5 13 benefits refused
+PASS B6 tier list shows benefits, paid eligibility and member counts
+PASS B7 assign tier
+PASS B8 unknown tier, missing reason, support all refused
+PASS B9 suspend member with reason
+PASS B10 bogus status refused; support cannot suspend
+PASS B11 reinstated
+PASS B12 append-only config audit carries the reasons I gave for this member
+PASS B13 config audit readable by hc.read, denied to support
+PASS B14 terms history shows version 1 (45 days, 5000 minimum) to hc.read
+PASS B15 cpm cannot add a terms version (owner only)
+PASS C0 destination starts UNSET, email disabled, nothing hardcoded
+PASS C1 application raises exactly one open inbox item
+PASS C2 inbox text carries no applicant name or email
+PASS C3 cpm (hc.read) sees it
+PASS C4 support does NOT see HC notifications (row-level permission)
+PASS C5 non-staff denied the inbox
+PASS C6 anon denied the inbox
+PASS C7 repeat raises dedup into ONE row with occurrences=3 and escalated severity
+PASS C8 system_failure visible to ops.read only (support no, owner yes)
+PASS C9 counts reflect critical
+PASS C10 support cannot acknowledge an item it cannot see
+PASS C11 owner acknowledges
+PASS C12 acknowledge is audited
+PASS C13 owner resolves; resolving again refused
+PASS C14 after resolve a recurrence opens a NEW item (partial unique index)
+PASS C15 decision resolves the "received" item and raises "declined"
+PASS C16 email cannot be enabled before the destination is verified
+PASS C17 table CHECK blocks enabling an unverified destination (defence in depth)
+PASS C18 cpm cannot set destination
+PASS C19 invalid email refused
+PASS C20 destination pending; response contains NO code
+PASS C21 destination stored lower-case, pending, email still disabled
+PASS C22 settings: second change within 60s refused
+PASS C23 verification mail is queued for the dispatcher (queued, not sent)
+PASS C24 staff CANNOT read delivery payload via RPC (no code/address keys)
+PASS C25 wrong code refused
+PASS C25b failed attempt is COUNTED (survives)
+PASS C25c after 5 wrong tries even the RIGHT code is locked out
+PASS C26 cpm cannot verify
+PASS C27 right code verifies
+PASS C28 verified, code hash cleared, payload cleared
+PASS C29 owner enables email at warning+
+PASS C30 only >= threshold severities queue email; dedup repeat does not queue twice
+PASS C31 info below threshold queued nothing
+PASS C32 severity ESCALATION queues one more email
+PASS C33 authenticated users cannot claim deliveries
+PASS C34 service claims queued rows with destination only for dispatcher
+PASS C35 claimed rows are "sending" with attempts=1 (queued != sent)
+PASS C36 failure recorded with short reason, retry scheduled in the future
+PASS C37 list shows failed as retryable to ops.read (owner)
+PASS C38 cpm cannot retry
+PASS C39 owner retry requeues
+PASS C40 delivered stamps delivered_at and provider id
+PASS C40b provider statuses delayed/bounced are accepted and unknown ones refused
+PASS C41 changing destination disables email and requires re-verification
+PASS C43 thresholds validated and audited
+PASS C44 sweep is service-only
+PASS C45 sweep raises "applications awaiting review" once (re-sweep dedups)
+PASS D public.admin_alerts() as owner
+PASS D public.admin_alerts() as business_admin
+PASS D public.admin_alerts() as marketing_pr
+PASS D public.admin_alerts() as creator_program_manager
+PASS D public.admin_alerts() as support
+PASS D public.admin_alerts() as limited_contributor
+PASS D public.admin_alerts() as non-staff user is denied
+PASS D public.admin_alerts() as anon is denied
+PASS D public.admin_business_overview(7) as owner
+PASS D public.admin_business_overview(7) as business_admin
+PASS D public.admin_business_overview(7) as marketing_pr
+PASS D public.admin_business_overview(7) as creator_program_manager
+PASS D public.admin_business_overview(7) as support
+PASS D public.admin_business_overview(7) as limited_contributor
+PASS D public.admin_business_overview(7) as non-staff user is denied
+PASS D public.admin_business_overview(7) as anon is denied
+PASS D public.admin_financial_summary(7) as owner
+PASS D public.admin_financial_summary(7) as business_admin
+PASS D public.admin_financial_summary(7) as marketing_pr
+PASS D public.admin_financial_summary(7) as creator_program_manager
+PASS D public.admin_financial_summary(7) as support
+PASS D public.admin_financial_summary(7) as limited_contributor
+PASS D public.admin_financial_summary(7) as non-staff user is denied
+PASS D public.admin_financial_summary(7) as anon is denied
+PASS D public.admin_comms_monitor() as owner
+PASS D public.admin_comms_monitor() as business_admin
+PASS D public.admin_comms_monitor() as marketing_pr
+PASS D public.admin_comms_monitor() as creator_program_manager
+PASS D public.admin_comms_monitor() as support
+PASS D public.admin_comms_monitor() as limited_contributor
+PASS D public.admin_comms_monitor() as non-staff user is denied
+PASS D public.admin_comms_monitor() as anon is denied
+PASS D public.admin_integration_health() as owner
+PASS D public.admin_integration_health() as business_admin
+PASS D public.admin_integration_health() as marketing_pr
+PASS D public.admin_integration_health() as creator_program_manager
+PASS D public.admin_integration_health() as support
+PASS D public.admin_integration_health() as limited_contributor
+PASS D public.admin_integration_health() as non-staff user is denied
+PASS D public.admin_integration_health() as anon is denied
+PASS D public.admin_entitlement_lookup('zz') as owner
+PASS D public.admin_entitlement_lookup('zz') as business_admin
+PASS D public.admin_entitlement_lookup('zz') as marketing_pr
+PASS D public.admin_entitlement_lookup('zz') as creator_program_manager
+PASS D public.admin_entitlement_lookup('zz') as support
+PASS D public.admin_entitlement_lookup('zz') as limited_contributor
+PASS D public.admin_entitlement_lookup('zz') as non-staff user is denied
+PASS D public.admin_entitlement_lookup('zz') as anon is denied
+PASS D public.admin_purchase_events(null,5) as owner
+PASS D public.admin_purchase_events(null,5) as business_admin
+PASS D public.admin_purchase_events(null,5) as marketing_pr
+PASS D public.admin_purchase_events(null,5) as creator_program_manager
+PASS D public.admin_purchase_events(null,5) as support
+PASS D public.admin_purchase_events(null,5) as limited_contributor
+PASS D public.admin_purchase_events(null,5) as non-staff user is denied
+PASS D public.admin_purchase_events(null,5) as anon is denied
+PASS D public.admin_recent_audit(5) as owner
+PASS D public.admin_recent_audit(5) as business_admin
+PASS D public.admin_recent_audit(5) as marketing_pr
+PASS D public.admin_recent_audit(5) as creator_program_manager
+PASS D public.admin_recent_audit(5) as support
+PASS D public.admin_recent_audit(5) as limited_contributor
+PASS D public.admin_recent_audit(5) as non-staff user is denied
+PASS D public.admin_recent_audit(5) as anon is denied
+PASS D public.admin_list_staff() as owner
+PASS D public.admin_list_staff() as business_admin
+PASS D public.admin_list_staff() as marketing_pr
+PASS D public.admin_list_staff() as creator_program_manager
+PASS D public.admin_list_staff() as support
+PASS D public.admin_list_staff() as limited_contributor
+PASS D public.admin_list_staff() as non-staff user is denied
+PASS D public.admin_list_staff() as anon is denied
+PASS D public.admin_grant_staff_role(gen_random_uuid(),'zzz') as owner
+PASS D public.admin_grant_staff_role(gen_random_uuid(),'zzz') as business_admin
+PASS D public.admin_grant_staff_role(gen_random_uuid(),'zzz') as marketing_pr
+PASS D public.admin_grant_staff_role(gen_random_uuid(),'zzz') as creator_program_manager
+PASS D public.admin_grant_staff_role(gen_random_uuid(),'zzz') as support
+PASS D public.admin_grant_staff_role(gen_random_uuid(),'zzz') as limited_contributor
+PASS D public.admin_grant_staff_role(gen_random_uuid(),'zzz') as non-staff user is denied
+PASS D public.admin_grant_staff_role(gen_random_uuid(),'zzz') as anon is denied
+PASS D public.admin_revoke_staff_role(gen_random_uuid()) as owner
+PASS D public.admin_revoke_staff_role(gen_random_uuid()) as business_admin
+PASS D public.admin_revoke_staff_role(gen_random_uuid()) as marketing_pr
+PASS D public.admin_revoke_staff_role(gen_random_uuid()) as creator_program_manager
+PASS D public.admin_revoke_staff_role(gen_random_uuid()) as support
+PASS D public.admin_revoke_staff_role(gen_random_uuid()) as limited_contributor
+PASS D public.admin_revoke_staff_role(gen_random_uuid()) as non-staff user is denied
+PASS D public.admin_revoke_staff_role(gen_random_uuid()) as anon is denied
+PASS D public.hc_admin_commission_report() as owner
+PASS D public.hc_admin_commission_report() as business_admin
+PASS D public.hc_admin_commission_report() as marketing_pr
+PASS D public.hc_admin_commission_report() as creator_program_manager
+PASS D public.hc_admin_commission_report() as support
+PASS D public.hc_admin_commission_report() as limited_contributor
+PASS D public.hc_admin_commission_report() as non-staff user is denied
+PASS D public.hc_admin_commission_report() as anon is denied
+PASS D public.hc_admin_current_terms() as owner
+PASS D public.hc_admin_current_terms() as business_admin
+PASS D public.hc_admin_current_terms() as marketing_pr
+PASS D public.hc_admin_current_terms() as creator_program_manager
+PASS D public.hc_admin_current_terms() as support
+PASS D public.hc_admin_current_terms() as limited_contributor
+PASS D public.hc_admin_current_terms() as non-staff user is denied
+PASS D public.hc_admin_current_terms() as anon is denied
+PASS D public.hc_admin_list_applications(null,5) as owner
+PASS D public.hc_admin_list_applications(null,5) as business_admin
+PASS D public.hc_admin_list_applications(null,5) as marketing_pr
+PASS D public.hc_admin_list_applications(null,5) as creator_program_manager
+PASS D public.hc_admin_list_applications(null,5) as support
+PASS D public.hc_admin_list_applications(null,5) as limited_contributor
+PASS D public.hc_admin_list_applications(null,5) as non-staff user is denied
+PASS D public.hc_admin_list_applications(null,5) as anon is denied
+PASS D public.hc_admin_list_campaigns() as owner
+PASS D public.hc_admin_list_campaigns() as business_admin
+PASS D public.hc_admin_list_campaigns() as marketing_pr
+PASS D public.hc_admin_list_campaigns() as creator_program_manager
+PASS D public.hc_admin_list_campaigns() as support
+PASS D public.hc_admin_list_campaigns() as limited_contributor
+PASS D public.hc_admin_list_campaigns() as non-staff user is denied
+PASS D public.hc_admin_list_campaigns() as anon is denied
+PASS D public.hc_admin_list_members() as owner
+PASS D public.hc_admin_list_members() as business_admin
+PASS D public.hc_admin_list_members() as marketing_pr
+PASS D public.hc_admin_list_members() as creator_program_manager
+PASS D public.hc_admin_list_members() as support
+PASS D public.hc_admin_list_members() as limited_contributor
+PASS D public.hc_admin_list_members() as non-staff user is denied
+PASS D public.hc_admin_list_members() as anon is denied
+PASS D public.hc_admin_list_payouts(5) as owner
+PASS D public.hc_admin_list_payouts(5) as business_admin
+PASS D public.hc_admin_list_payouts(5) as marketing_pr
+PASS D public.hc_admin_list_payouts(5) as creator_program_manager
+PASS D public.hc_admin_list_payouts(5) as support
+PASS D public.hc_admin_list_payouts(5) as limited_contributor
+PASS D public.hc_admin_list_payouts(5) as non-staff user is denied
+PASS D public.hc_admin_list_payouts(5) as anon is denied
+PASS D public.hc_admin_list_submissions(null) as owner
+PASS D public.hc_admin_list_submissions(null) as business_admin
+PASS D public.hc_admin_list_submissions(null) as marketing_pr
+PASS D public.hc_admin_list_submissions(null) as creator_program_manager
+PASS D public.hc_admin_list_submissions(null) as support
+PASS D public.hc_admin_list_submissions(null) as limited_contributor
+PASS D public.hc_admin_list_submissions(null) as non-staff user is denied
+PASS D public.hc_admin_list_submissions(null) as anon is denied
+PASS D public.hc_admin_list_tiers() as owner
+PASS D public.hc_admin_list_tiers() as business_admin
+PASS D public.hc_admin_list_tiers() as marketing_pr
+PASS D public.hc_admin_list_tiers() as creator_program_manager
+PASS D public.hc_admin_list_tiers() as support
+PASS D public.hc_admin_list_tiers() as limited_contributor
+PASS D public.hc_admin_list_tiers() as non-staff user is denied
+PASS D public.hc_admin_list_tiers() as anon is denied
+PASS D public.hc_admin_notifications(true) as owner
+PASS D public.hc_admin_notifications(true) as business_admin
+PASS D public.hc_admin_notifications(true) as marketing_pr
+PASS D public.hc_admin_notifications(true) as creator_program_manager
+PASS D public.hc_admin_notifications(true) as support
+PASS D public.hc_admin_notifications(true) as limited_contributor
+PASS D public.hc_admin_notifications(true) as non-staff user is denied
+PASS D public.hc_admin_notifications(true) as anon is denied
+PASS D public.hc_admin_payout_eligibility() as owner
+PASS D public.hc_admin_payout_eligibility() as business_admin
+PASS D public.hc_admin_payout_eligibility() as marketing_pr
+PASS D public.hc_admin_payout_eligibility() as creator_program_manager
+PASS D public.hc_admin_payout_eligibility() as support
+PASS D public.hc_admin_payout_eligibility() as limited_contributor
+PASS D public.hc_admin_payout_eligibility() as non-staff user is denied
+PASS D public.hc_admin_payout_eligibility() as anon is denied
+PASS D public.hc_admin_payout_history(null,5) as owner
+PASS D public.hc_admin_payout_history(null,5) as business_admin
+PASS D public.hc_admin_payout_history(null,5) as marketing_pr
+PASS D public.hc_admin_payout_history(null,5) as creator_program_manager
+PASS D public.hc_admin_payout_history(null,5) as support
+PASS D public.hc_admin_payout_history(null,5) as limited_contributor
+PASS D public.hc_admin_payout_history(null,5) as non-staff user is denied
+PASS D public.hc_admin_payout_history(null,5) as anon is denied
+PASS D public.hc_admin_payout_ledger() as owner
+PASS D public.hc_admin_payout_ledger() as business_admin
+PASS D public.hc_admin_payout_ledger() as marketing_pr
+PASS D public.hc_admin_payout_ledger() as creator_program_manager
+PASS D public.hc_admin_payout_ledger() as support
+PASS D public.hc_admin_payout_ledger() as limited_contributor
+PASS D public.hc_admin_payout_ledger() as non-staff user is denied
+PASS D public.hc_admin_payout_ledger() as anon is denied
+PASS D public.hc_admin_terms_history() as owner
+PASS D public.hc_admin_terms_history() as business_admin
+PASS D public.hc_admin_terms_history() as marketing_pr
+PASS D public.hc_admin_terms_history() as creator_program_manager
+PASS D public.hc_admin_terms_history() as support
+PASS D public.hc_admin_terms_history() as limited_contributor
+PASS D public.hc_admin_terms_history() as non-staff user is denied
+PASS D public.hc_admin_terms_history() as anon is denied
+PASS D public.hc_upsert_tier('','x',null,null,1,true,false,'why') as owner
+PASS D public.hc_upsert_tier('','x',null,null,1,true,false,'why') as business_admin
+PASS D public.hc_upsert_tier('','x',null,null,1,true,false,'why') as marketing_pr
+PASS D public.hc_upsert_tier('','x',null,null,1,true,false,'why') as creator_program_manager
+PASS D public.hc_upsert_tier('','x',null,null,1,true,false,'why') as support
+PASS D public.hc_upsert_tier('','x',null,null,1,true,false,'why') as limited_contributor
+PASS D public.hc_upsert_tier('','x',null,null,1,true,false,'why') as non-staff user is denied
+PASS D public.hc_upsert_tier('','x',null,null,1,true,false,'why') as anon is denied
+PASS D public.hc_admin_set_tier_benefits('zz','[]'::jsonb,'why') as owner
+PASS D public.hc_admin_set_tier_benefits('zz','[]'::jsonb,'why') as business_admin
+PASS D public.hc_admin_set_tier_benefits('zz','[]'::jsonb,'why') as marketing_pr
+PASS D public.hc_admin_set_tier_benefits('zz','[]'::jsonb,'why') as creator_program_manager
+PASS D public.hc_admin_set_tier_benefits('zz','[]'::jsonb,'why') as support
+PASS D public.hc_admin_set_tier_benefits('zz','[]'::jsonb,'why') as limited_contributor
+PASS D public.hc_admin_set_tier_benefits('zz','[]'::jsonb,'why') as non-staff user is denied
+PASS D public.hc_admin_set_tier_benefits('zz','[]'::jsonb,'why') as anon is denied
+PASS D public.hc_admin_config_audit(null,5) as owner
+PASS D public.hc_admin_config_audit(null,5) as business_admin
+PASS D public.hc_admin_config_audit(null,5) as marketing_pr
+PASS D public.hc_admin_config_audit(null,5) as creator_program_manager
+PASS D public.hc_admin_config_audit(null,5) as support
+PASS D public.hc_admin_config_audit(null,5) as limited_contributor
+PASS D public.hc_admin_config_audit(null,5) as non-staff user is denied
+PASS D public.hc_admin_config_audit(null,5) as anon is denied
+PASS D public.hc_activate_paid_referrals('x','why') as owner
+PASS D public.hc_activate_paid_referrals('x','why') as business_admin
+PASS D public.hc_activate_paid_referrals('x','why') as marketing_pr
+PASS D public.hc_activate_paid_referrals('x','why') as creator_program_manager
+PASS D public.hc_activate_paid_referrals('x','why') as support
+PASS D public.hc_activate_paid_referrals('x','why') as limited_contributor
+PASS D public.hc_activate_paid_referrals('x','why') as non-staff user is denied
+PASS D public.hc_activate_paid_referrals('x','why') as anon is denied
+PASS D public.hc_deactivate_paid_referrals('why') as owner
+PASS D public.hc_deactivate_paid_referrals('why') as business_admin
+PASS D public.hc_deactivate_paid_referrals('why') as marketing_pr
+PASS D public.hc_deactivate_paid_referrals('why') as creator_program_manager
+PASS D public.hc_deactivate_paid_referrals('why') as support
+PASS D public.hc_deactivate_paid_referrals('why') as limited_contributor
+PASS D public.hc_deactivate_paid_referrals('why') as non-staff user is denied
+PASS D public.hc_deactivate_paid_referrals('why') as anon is denied
+PASS D public.hc_settle_clawback(gen_random_uuid(),'waived',null,'note',true) as owner
+PASS D public.hc_settle_clawback(gen_random_uuid(),'waived',null,'note',true) as business_admin
+PASS D public.hc_settle_clawback(gen_random_uuid(),'waived',null,'note',true) as marketing_pr
+PASS D public.hc_settle_clawback(gen_random_uuid(),'waived',null,'note',true) as creator_program_manager
+PASS D public.hc_settle_clawback(gen_random_uuid(),'waived',null,'note',true) as support
+PASS D public.hc_settle_clawback(gen_random_uuid(),'waived',null,'note',true) as limited_contributor
+PASS D public.hc_settle_clawback(gen_random_uuid(),'waived',null,'note',true) as non-staff user is denied
+PASS D public.hc_settle_clawback(gen_random_uuid(),'waived',null,'note',true) as anon is denied
+PASS D public.hc_admin_assign_tier(gen_random_uuid(),'zz','why') as owner
+PASS D public.hc_admin_assign_tier(gen_random_uuid(),'zz','why') as business_admin
+PASS D public.hc_admin_assign_tier(gen_random_uuid(),'zz','why') as marketing_pr
+PASS D public.hc_admin_assign_tier(gen_random_uuid(),'zz','why') as creator_program_manager
+PASS D public.hc_admin_assign_tier(gen_random_uuid(),'zz','why') as support
+PASS D public.hc_admin_assign_tier(gen_random_uuid(),'zz','why') as limited_contributor
+PASS D public.hc_admin_assign_tier(gen_random_uuid(),'zz','why') as non-staff user is denied
+PASS D public.hc_admin_assign_tier(gen_random_uuid(),'zz','why') as anon is denied
+PASS D public.hc_admin_set_partner_status(gen_random_uuid(),'suspended','because') as owner
+PASS D public.hc_admin_set_partner_status(gen_random_uuid(),'suspended','because') as business_admin
+PASS D public.hc_admin_set_partner_status(gen_random_uuid(),'suspended','because') as marketing_pr
+PASS D public.hc_admin_set_partner_status(gen_random_uuid(),'suspended','because') as creator_program_manager
+PASS D public.hc_admin_set_partner_status(gen_random_uuid(),'suspended','because') as support
+PASS D public.hc_admin_set_partner_status(gen_random_uuid(),'suspended','because') as limited_contributor
+PASS D public.hc_admin_set_partner_status(gen_random_uuid(),'suspended','because') as non-staff user is denied
+PASS D public.hc_admin_set_partner_status(gen_random_uuid(),'suspended','because') as anon is denied
+PASS D public.hc_admin_create_campaign('',null,null,null) as owner
+PASS D public.hc_admin_create_campaign('',null,null,null) as business_admin
+PASS D public.hc_admin_create_campaign('',null,null,null) as marketing_pr
+PASS D public.hc_admin_create_campaign('',null,null,null) as creator_program_manager
+PASS D public.hc_admin_create_campaign('',null,null,null) as support
+PASS D public.hc_admin_create_campaign('',null,null,null) as limited_contributor
+PASS D public.hc_admin_create_campaign('',null,null,null) as non-staff user is denied
+PASS D public.hc_admin_create_campaign('',null,null,null) as anon is denied
+PASS D public.hc_admin_assign_campaign(gen_random_uuid(),gen_random_uuid()) as owner
+PASS D public.hc_admin_assign_campaign(gen_random_uuid(),gen_random_uuid()) as business_admin
+PASS D public.hc_admin_assign_campaign(gen_random_uuid(),gen_random_uuid()) as marketing_pr
+PASS D public.hc_admin_assign_campaign(gen_random_uuid(),gen_random_uuid()) as creator_program_manager
+PASS D public.hc_admin_assign_campaign(gen_random_uuid(),gen_random_uuid()) as support
+PASS D public.hc_admin_assign_campaign(gen_random_uuid(),gen_random_uuid()) as limited_contributor
+PASS D public.hc_admin_assign_campaign(gen_random_uuid(),gen_random_uuid()) as non-staff user is denied
+PASS D public.hc_admin_assign_campaign(gen_random_uuid(),gen_random_uuid()) as anon is denied
+PASS D public.hc_admin_close_campaign(gen_random_uuid()) as owner
+PASS D public.hc_admin_close_campaign(gen_random_uuid()) as business_admin
+PASS D public.hc_admin_close_campaign(gen_random_uuid()) as marketing_pr
+PASS D public.hc_admin_close_campaign(gen_random_uuid()) as creator_program_manager
+PASS D public.hc_admin_close_campaign(gen_random_uuid()) as support
+PASS D public.hc_admin_close_campaign(gen_random_uuid()) as limited_contributor
+PASS D public.hc_admin_close_campaign(gen_random_uuid()) as non-staff user is denied
+PASS D public.hc_admin_close_campaign(gen_random_uuid()) as anon is denied
+PASS D public.hc_admin_publish_announcement('',null,null) as owner
+PASS D public.hc_admin_publish_announcement('',null,null) as business_admin
+PASS D public.hc_admin_publish_announcement('',null,null) as marketing_pr
+PASS D public.hc_admin_publish_announcement('',null,null) as creator_program_manager
+PASS D public.hc_admin_publish_announcement('',null,null) as support
+PASS D public.hc_admin_publish_announcement('',null,null) as limited_contributor
+PASS D public.hc_admin_publish_announcement('',null,null) as non-staff user is denied
+PASS D public.hc_admin_publish_announcement('',null,null) as anon is denied
+PASS D public.hc_admin_review_submission(gen_random_uuid(),'approved',null) as owner
+PASS D public.hc_admin_review_submission(gen_random_uuid(),'approved',null) as business_admin
+PASS D public.hc_admin_review_submission(gen_random_uuid(),'approved',null) as marketing_pr
+PASS D public.hc_admin_review_submission(gen_random_uuid(),'approved',null) as creator_program_manager
+PASS D public.hc_admin_review_submission(gen_random_uuid(),'approved',null) as support
+PASS D public.hc_admin_review_submission(gen_random_uuid(),'approved',null) as limited_contributor
+PASS D public.hc_admin_review_submission(gen_random_uuid(),'approved',null) as non-staff user is denied
+PASS D public.hc_admin_review_submission(gen_random_uuid(),'approved',null) as anon is denied
+PASS D public.hc_review_application(gen_random_uuid(),'approved',null,null,null) as owner
+PASS D public.hc_review_application(gen_random_uuid(),'approved',null,null,null) as business_admin
+PASS D public.hc_review_application(gen_random_uuid(),'approved',null,null,null) as marketing_pr
+PASS D public.hc_review_application(gen_random_uuid(),'approved',null,null,null) as creator_program_manager
+PASS D public.hc_review_application(gen_random_uuid(),'approved',null,null,null) as support
+PASS D public.hc_review_application(gen_random_uuid(),'approved',null,null,null) as limited_contributor
+PASS D public.hc_review_application(gen_random_uuid(),'approved',null,null,null) as non-staff user is denied
+PASS D public.hc_review_application(gen_random_uuid(),'approved',null,null,null) as anon is denied
+PASS D public.hc_create_payout_draft(gen_random_uuid()) as owner
+PASS D public.hc_create_payout_draft(gen_random_uuid()) as business_admin
+PASS D public.hc_create_payout_draft(gen_random_uuid()) as marketing_pr
+PASS D public.hc_create_payout_draft(gen_random_uuid()) as creator_program_manager
+PASS D public.hc_create_payout_draft(gen_random_uuid()) as support
+PASS D public.hc_create_payout_draft(gen_random_uuid()) as limited_contributor
+PASS D public.hc_create_payout_draft(gen_random_uuid()) as non-staff user is denied
+PASS D public.hc_create_payout_draft(gen_random_uuid()) as anon is denied
+PASS D public.hc_approve_payout(gen_random_uuid()) as owner
+PASS D public.hc_approve_payout(gen_random_uuid()) as business_admin
+PASS D public.hc_approve_payout(gen_random_uuid()) as marketing_pr
+PASS D public.hc_approve_payout(gen_random_uuid()) as creator_program_manager
+PASS D public.hc_approve_payout(gen_random_uuid()) as support
+PASS D public.hc_approve_payout(gen_random_uuid()) as limited_contributor
+PASS D public.hc_approve_payout(gen_random_uuid()) as non-staff user is denied
+PASS D public.hc_approve_payout(gen_random_uuid()) as anon is denied
+PASS D public.hc_void_payout(gen_random_uuid(),'x') as owner
+PASS D public.hc_void_payout(gen_random_uuid(),'x') as business_admin
+PASS D public.hc_void_payout(gen_random_uuid(),'x') as marketing_pr
+PASS D public.hc_void_payout(gen_random_uuid(),'x') as creator_program_manager
+PASS D public.hc_void_payout(gen_random_uuid(),'x') as support
+PASS D public.hc_void_payout(gen_random_uuid(),'x') as limited_contributor
+PASS D public.hc_void_payout(gen_random_uuid(),'x') as non-staff user is denied
+PASS D public.hc_void_payout(gen_random_uuid(),'x') as anon is denied
+PASS D public.hc_record_external_payment(gen_random_uuid(),'ref-1234',current_date,'bank',true) as owner
+PASS D public.hc_record_external_payment(gen_random_uuid(),'ref-1234',current_date,'bank',true) as business_admin
+PASS D public.hc_record_external_payment(gen_random_uuid(),'ref-1234',current_date,'bank',true) as marketing_pr
+PASS D public.hc_record_external_payment(gen_random_uuid(),'ref-1234',current_date,'bank',true) as creator_program_manager
+PASS D public.hc_record_external_payment(gen_random_uuid(),'ref-1234',current_date,'bank',true) as support
+PASS D public.hc_record_external_payment(gen_random_uuid(),'ref-1234',current_date,'bank',true) as limited_contributor
+PASS D public.hc_record_external_payment(gen_random_uuid(),'ref-1234',current_date,'bank',true) as non-staff user is denied
+PASS D public.hc_record_external_payment(gen_random_uuid(),'ref-1234',current_date,'bank',true) as anon is denied
+PASS D public.hc_reverse_recorded_payment(gen_random_uuid(),'because') as owner
+PASS D public.hc_reverse_recorded_payment(gen_random_uuid(),'because') as business_admin
+PASS D public.hc_reverse_recorded_payment(gen_random_uuid(),'because') as marketing_pr
+PASS D public.hc_reverse_recorded_payment(gen_random_uuid(),'because') as creator_program_manager
+PASS D public.hc_reverse_recorded_payment(gen_random_uuid(),'because') as support
+PASS D public.hc_reverse_recorded_payment(gen_random_uuid(),'because') as limited_contributor
+PASS D public.hc_reverse_recorded_payment(gen_random_uuid(),'because') as non-staff user is denied
+PASS D public.hc_reverse_recorded_payment(gen_random_uuid(),'because') as anon is denied
+PASS D public.admin_get_notification_settings() as owner
+PASS D public.admin_get_notification_settings() as business_admin
+PASS D public.admin_get_notification_settings() as marketing_pr
+PASS D public.admin_get_notification_settings() as creator_program_manager
+PASS D public.admin_get_notification_settings() as support
+PASS D public.admin_get_notification_settings() as limited_contributor
+PASS D public.admin_get_notification_settings() as non-staff user is denied
+PASS D public.admin_get_notification_settings() as anon is denied
+PASS D public.admin_list_notification_deliveries(null,5) as owner
+PASS D public.admin_list_notification_deliveries(null,5) as business_admin
+PASS D public.admin_list_notification_deliveries(null,5) as marketing_pr
+PASS D public.admin_list_notification_deliveries(null,5) as creator_program_manager
+PASS D public.admin_list_notification_deliveries(null,5) as support
+PASS D public.admin_list_notification_deliveries(null,5) as limited_contributor
+PASS D public.admin_list_notification_deliveries(null,5) as non-staff user is denied
+PASS D public.admin_list_notification_deliveries(null,5) as anon is denied
+PASS D public.admin_set_notification_destination('bad') as owner
+PASS D public.admin_set_notification_destination('bad') as business_admin
+PASS D public.admin_set_notification_destination('bad') as marketing_pr
+PASS D public.admin_set_notification_destination('bad') as creator_program_manager
+PASS D public.admin_set_notification_destination('bad') as support
+PASS D public.admin_set_notification_destination('bad') as limited_contributor
+PASS D public.admin_set_notification_destination('bad') as non-staff user is denied
+PASS D public.admin_set_notification_destination('bad') as anon is denied
+PASS D public.admin_verify_notification_destination('x') as owner
+PASS D public.admin_verify_notification_destination('x') as business_admin
+PASS D public.admin_verify_notification_destination('x') as marketing_pr
+PASS D public.admin_verify_notification_destination('x') as creator_program_manager
+PASS D public.admin_verify_notification_destination('x') as support
+PASS D public.admin_verify_notification_destination('x') as limited_contributor
+PASS D public.admin_verify_notification_destination('x') as non-staff user is denied
+PASS D public.admin_verify_notification_destination('x') as anon is denied
+PASS D public.admin_set_notification_email_enabled(false,null) as owner
+PASS D public.admin_set_notification_email_enabled(false,null) as business_admin
+PASS D public.admin_set_notification_email_enabled(false,null) as marketing_pr
+PASS D public.admin_set_notification_email_enabled(false,null) as creator_program_manager
+PASS D public.admin_set_notification_email_enabled(false,null) as support
+PASS D public.admin_set_notification_email_enabled(false,null) as limited_contributor
+PASS D public.admin_set_notification_email_enabled(false,null) as non-staff user is denied
+PASS D public.admin_set_notification_email_enabled(false,null) as anon is denied
+PASS D public.admin_set_notification_thresholds(0,0) as owner
+PASS D public.admin_set_notification_thresholds(0,0) as business_admin
+PASS D public.admin_set_notification_thresholds(0,0) as marketing_pr
+PASS D public.admin_set_notification_thresholds(0,0) as creator_program_manager
+PASS D public.admin_set_notification_thresholds(0,0) as support
+PASS D public.admin_set_notification_thresholds(0,0) as limited_contributor
+PASS D public.admin_set_notification_thresholds(0,0) as non-staff user is denied
+PASS D public.admin_set_notification_thresholds(0,0) as anon is denied
+PASS D public.admin_retry_notification_delivery(0) as owner
+PASS D public.admin_retry_notification_delivery(0) as business_admin
+PASS D public.admin_retry_notification_delivery(0) as marketing_pr
+PASS D public.admin_retry_notification_delivery(0) as creator_program_manager
+PASS D public.admin_retry_notification_delivery(0) as support
+PASS D public.admin_retry_notification_delivery(0) as limited_contributor
+PASS D public.admin_retry_notification_delivery(0) as non-staff user is denied
+PASS D public.admin_retry_notification_delivery(0) as anon is denied
+PASS D public.admin_list_notifications('open',5) as owner
+PASS D public.admin_list_notifications('open',5) as business_admin
+PASS D public.admin_list_notifications('open',5) as marketing_pr
+PASS D public.admin_list_notifications('open',5) as creator_program_manager
+PASS D public.admin_list_notifications('open',5) as support
+PASS D public.admin_list_notifications('open',5) as limited_contributor
+PASS D public.admin_list_notifications('open',5) as non-staff user is denied
+PASS D public.admin_list_notifications('open',5) as anon is denied
+PASS D public.admin_notification_counts() as owner
+PASS D public.admin_notification_counts() as business_admin
+PASS D public.admin_notification_counts() as marketing_pr
+PASS D public.admin_notification_counts() as creator_program_manager
+PASS D public.admin_notification_counts() as support
+PASS D public.admin_notification_counts() as limited_contributor
+PASS D public.admin_notification_counts() as non-staff user is denied
+PASS D public.admin_notification_counts() as anon is denied
+PASS D public.admin_get_notification(0) as owner
+PASS D public.admin_get_notification(0) as business_admin
+PASS D public.admin_get_notification(0) as marketing_pr
+PASS D public.admin_get_notification(0) as creator_program_manager
+PASS D public.admin_get_notification(0) as support
+PASS D public.admin_get_notification(0) as limited_contributor
+PASS D public.admin_get_notification(0) as non-staff user is denied
+PASS D public.admin_get_notification(0) as anon is denied
+PASS D-X matrix probing granted no roles and created no tiers
+PASS D-Y limited_contributor cannot see HC or finance or ops RPCs
+PASS D-Z authenticated has no direct table privileges on notification/payout/audit/staff tables
+PASS D-Z2 service-only functions are not executable by authenticated or anon
+PASS D-Z3 direct table read via client role is refused
+PASS D-Z4 notification settings masked for non-staff.manage (business_admin has ops.read)
+PASS E1 business_admin (ops.read, no staff.manage) sees MASKED destination
+PASS E2 masked value contains no full address
+PASS E3 owner (staff.manage) sees the full destination
+PASS E4 settings never expose code hash/expiry/attempts
+PASS E5 inbox rows expose no dedup_key, refs, or actor ids
+PASS E6 audit rows for destination changes store a MASKED address only
+PASS E7 payout ledger and history expose no bank/provider identifiers (key names)
+PASS E8 get_my_staff_context returns only role and permissions (no email)
+TOTAL pass=501 fail=0
+stderr: ERROR:  new row for relation "gathering_entitlements" violates check constraint "entitlements_scope_consistency"
+DETAIL:  Failing row contains (560a07cc-b7c6-4a10-9ba4-4028d0e524a9, f02d701a-c767-4c9c-a9a5-25360aaab336, null, plus, t, 2026-11-15 03:33:54.063361+00, null, gathering, null, plus_annual, web, ta-1, null, null, production, null, null, null, null, null, null, null, null, null).
+CONTEXT:  SQL statement "insert into public.gathering_entitlements(user_id,entitlement_type,canonical_product_id,provider,provider_transaction_id,environment,purchased_at) values (uu,'plus','plus_annual','web',p_prefix||i,'production',now()) returning id"
+PL/pgSQL function t.fixture_payable(text,integer,text) line 6 at SQL statement
+SQL statement "SELECT t.fixture_payable('p-one', 5, 'ta-')"
+TOTAL pass=501 fail=0 aborted_blocks=1

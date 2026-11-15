@@ -1,0 +1,28 @@
+(node:11975) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/pp-work/EXEC/e4-verify/web/lib/hc/ledger.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/claude/pp-work/EXEC/e4-verify/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS    D1a [web action] manager cannot draft a payout (web)
+PASS    D1b [web action + DB] owner drafts: payout draft total = sum of validated (5000c); commissions -> payable; events+audit written
+PASS    D2a [DB via PostgREST] cannot record payment on a DRAFT (no Draft->Paid skip) via RPC
+PASS    D2b [DB (direct SQL as table owner)] cannot skip Draft->Paid even with direct SQL (transition guard trigger)
+PASS    D2c [DB via PostgREST] legacy hc_mark_payout_paid can no longer mark paid
+PASS    D3a [web action + DB via PostgREST] manager cannot approve (web + direct RPC)
+PASS    D3b [web action + DB] owner approves: status approved, approver recorded; approval != paid (commissions still payable, paid_at null); replay is idempotent
+PASS    D4 [web action + DB via PostgREST] every incomplete/invalid 'mark paid' attempt is refused (no confirm, short/null ref, blank/null/'unknown' method, future/null date, null confirm, manager) and the payout stays approved
+PASS    D5 [web action + DB] valid recorded payment: paid with reference, paid_on, method, confirmer, approver; commissions paid; payout_events + admin_audit_log rows; says no money moved here
+PASS    D6a [DB via PostgREST] replay with the same reference is idempotent; a different reference on a paid payout is refused
+PASS    D6b [web action + DB] an external reference already used by another paid payout cannot be reused (case-insensitive)
+PASS    D7 [DB (direct SQL) + PostgREST] no editing after paid: ref/date/method/total edits and status rollbacks are refused even for direct SQL; void of a paid payout refused
+PASS    D7b [DB via PostgREST] owner cannot DELETE/PATCH/INSERT payouts directly over the REST API (only the RPCs write)
+PASS    D8 [DB (service_role)] a PAID payout row with NULL reference cannot even be inserted by the service role (no bypass of 'no null payout references')
+PASS    D9a [web action + DB] approved payout can be voided with a reason; its commissions return to validated (re-draftable)
+PASS    D9b [web action] void/reverse require a reason (>=3 chars) and reverse an explicit confirmation
+PASS    D10a [DB via PostgREST (service)] refund AFTER payout: the paid commission is reversed with a clawback record (1200c, pending_contract_language); the paid payout row is untouched
+PASS    D10b [DB via PostgREST] outstanding clawback is reported on the next draft but NOT netted (netting off by default): the owner must settle it separately
+PASS    D10c [DB via PostgREST] clawback settlement RPC: manager denied, no-confirm refused, owner with ref+note+confirm settles; audit row
+PASS    D10d [code scan (web)] KNOWN GAP: hc_settle_clawback has a database function but no Command Center action/screen calls it
+PASS    D11 [web action + DB] reversing a recorded payment (owner, reason + confirmation): payout -> reversed, audit event; commissions state observed
+PASS    D12 [DB via PostgREST] payout history/ledger visible to owner; manager (no hc.payout) denied
+PASS    D13 [code scan] nothing moves money: no Stripe transfer/payout/PayPal call anywhere in web or edge-function code
+SUMMARY {"PASS":23}

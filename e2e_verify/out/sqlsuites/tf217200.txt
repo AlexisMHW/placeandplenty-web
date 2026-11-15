@@ -1,0 +1,116 @@
+PASS T1 paper_orders exists with 36 columns
+PASS T2 RLS enabled
+PASS T3 anon has no privilege on paper_orders
+PASS T4 authenticated: select+insert only (no update/delete)
+PASS T5 exactly 2 policies (select-own, insert-own-quoted), production names
+PASS T6 6 indexes as production (pkey, 3 unique, 2 lookup)
+PASS T7 status check lists all 10 states
+PASS T8 owner can insert own quoted order
+PASS T9 client cannot insert a paid order (RLS)
+PASS T10 client cannot insert an order for another user (RLS)
+PASS T11 client cannot update orders (no grant)
+PASS T12 owner sees only own orders; other user sees none
+PASS T13 anon cannot read paper_orders
+PASS R1 claim body == production md5
+PASS R2 release body == production md5
+PASS R3 mark_submitted body == production md5
+PASS R4 mark_checkout_pending body == production md5
+PASS R5 grants: authenticated+service_role execute; anon and PUBLIC not (4 functions)
+PASS R6 all four SECURITY DEFINER with search_path=public
+PASS R7 anon denied on all four
+PASS R8 no auth.uid() (service_role without sub) -> not_authenticated
+PASS R9 other user cannot mark my order checkout_pending (false)
+PASS R10 blank session id rejected
+PASS R11 null session id rejected
+PASS R12 quoted -> checkout_pending true
+PASS R13 idempotent with same session id
+PASS R14 different session id refused (false)
+PASS R15 status checkout_pending with session recorded
+PASS R16 cannot claim before paid (false)
+PASS R17 cannot submit before paid (false)
+PASS R18 other user cannot claim (false)
+PASS R19 paid -> fulfilling true
+PASS R20 second claim refused (false), single claim
+PASS R21 other user cannot release (false)
+PASS R22 release fulfilling -> paid true, reason trimmed/stored
+PASS R23 release when not fulfilling refused (false)
+PASS R24 reclaim clears failure_reason
+PASS R25 invalid gelato type
+PASS R26 blank gelato id
+PASS R27 other user cannot mark submitted (false)
+PASS R28 fulfilling -> submitted true
+PASS R29 submit is idempotent with same gelato id
+PASS R30 different gelato id refused (false)
+PASS R31 submitted order cannot be claimed or released
+PASS R32 final row: submitted, gelato id/type, submitted_at set
+PASS R33 service_role with a uid can call (webhook-style identity)
+PASS M1 SECURITY DEFINER STABLE, search_path empty, returns jsonb
+PASS M2 anon cannot execute
+PASS M3 authenticated + service_role can execute, PUBLIC cannot
+PASS M4 anon call denied
+PASS M5 authenticated without uid -> 42501 not_authorized
+PASS M6 unrelated user -> 42501 not_authorized (fail closed)
+PASS M7 owner, no days, no pass -> none
+PASS M8 accepted co-host may read the state
+PASS M9 history exists, no pass -> read_only, canEdit false, canViewHistory true
+PASS M10 bound active pass -> active
+PASS M11 returns only state/canEdit/canViewHistory (no ids/payment data)
+PASS M12 refunded pass -> read_only again (history kept)
+PASS M13 function does not write (entitlement count unchanged = 1, no events)
+PASS G1 authenticated gets {"mode":"off"}
+PASS G2 service_role gets {"mode":"off"}
+PASS G3 anon denied
+PASS G4 PUBLIC has no execute
+PASS G5 constant function: SECURITY DEFINER, search_path empty, body reads no table
+PASS G6 NO mode table, NO event table, NO setter, NO mode function
+PASS G7 NO enforcement trigger on gatherings (203001/203003 not installed)
+PASS G8 enforcement absent: only the pre-existing baseline function mentions multi_day_pass_required (not the 203001/203003 enforcement functions)
+PASS G9 owner can still lock in / create a multi-day gathering with no pass (behaviour unchanged)
+PASS S1 table is RLS-enabled, append-only for clients (select only)
+PASS S2 function grants: authenticated+service_role, not anon/PUBLIC
+PASS S3 SECURITY DEFINER, search_path empty
+PASS S4 anon denied
+PASS S5 no uid -> not_authorized
+PASS S6 stranger -> not_authorized
+PASS S7 co-host WITHOUT manage_invitations (planner) -> not_authorized (fail closed)
+PASS S8 denied callers wrote nothing
+PASS S9 invalid channel
+PASS S10 null channel
+PASS S11 party of another gathering
+PASS S12 unknown party
+PASS S13 owner records (uuid returned), locale es stored
+PASS S14 idempotent within 60 s: same id, still one row
+PASS S15 other channel = new row; unknown locale falls back to en
+PASS S16 co-host with manage_invitations (manager) can record
+PASS S17 reads: owner and manager see rows; planner, stranger see none
+PASS S18 anon cannot read
+PASS S19 append-only: owner cannot insert directly
+PASS S20 append-only: owner cannot update or delete
+PASS S21 no first_share_initiated_at side effect
+PASS S22 old 208000 policy name absent, only manager policy
+PASS S23 archived gathering rejected (read-only), no row added
+PASS F1 invitations_published_at: timestamptz, nullable, no default
+PASS F2 no backfill: no gathering has a value
+PASS F3 SECURITY DEFINER STABLE, search_path empty
+PASS F4 grants: authenticated+service_role, not anon/PUBLIC
+PASS F5 anon denied
+PASS F6 plain authenticated non-staff -> not_authorized
+PASS F7 authenticated without uid -> not_authorized
+PASS F8 staff WITHOUT growth.read (support) -> not_authorized
+PASS F10 revoked growth.read staff -> not_authorized
+PASS F11 staff with growth.read (owner) allowed
+PASS F12 service_role allowed
+PASS F13 invalid windows (null / to<=from / >400 days) -> invalid_window
+PASS F14 registered counts the cohort users only (11 created in window incl. staff/fixtures)
+PASS F15 invitation_activity counts the published-invitations host (1), metric definition not redefined
+PASS F16 gathering_created = distinct cohort owners (independent recount); repeat_host=1 (only u2 has two)
+PASS F17 counts only: no ids/emails in output
+PASS F18 all keys the Command Center page reads are present
+PASS F19 invitation_activity predicates intact (published_at OR first_share_initiated_at OR sent communication_events)
+PASS F20 read-only: function wrote nothing (still exactly 1 gathering with invitations_published_at)
+PASS F21 paid_conversion 0 with no entitlements
+PASS X1 no function from this package is executable by anon or PUBLIC
+PASS X2 all 8 previously-missing RPCs now defined
+PASS X3 SMS stays disabled: no sms_* send function/table added by this package
+TOTAL pass=114 fail=0
+TOTAL pass=114 fail=0 aborted_blocks=0

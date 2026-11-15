@@ -1,0 +1,27 @@
+PASS D3.0 paid referrals start DISABLED (no rates invented, default off)
+PASS D3.1 fixture tier created by manager, not paid-eligible
+PASS D3.1b owner creates a paid-eligible fixture tier
+PASS D3.2 manager sets benefits, same return shape
+PASS D3.3 the edit went THROUGH hc_tier_write (xact call counter +1)
+PASS D3.4 hc_config_audit row written with the given reason
+PASS D3.5 config audit +1 and tier audit +1 for the edit
+PASS D3.6 benefits stored; every other field unchanged
+PASS D3.7 paid-eligible tier: manager benefits edit keeps eligibility (no owner escalation, no flip)
+PASS D3.8 13 benefits refused
+PASS D3.9 non-string / over-long benefit refused
+PASS D3.10 reason required (3-200)
+PASS D3.11 unknown tier
+PASS D3.12 non-staff and anon denied
+PASS D3.13 failed attempts did not change benefits
+PASS D3.14 hc_tier_write is not callable by API roles
+PASS D3.15 hc_tier_write is the only function that writes public.hc_tiers
+PASS D3.16 hc_admin_set_tier_benefits body calls hc_tier_write
+PASS D3.17 paid referrals still globally off after all of the above
+PASS D3.18 tier defaults: a tier created without eligibility is NOT paid-eligible
+TOTAL pass=20 fail=0
+stderr: ERROR:  new row for relation "gathering_entitlements" violates check constraint "entitlements_scope_consistency"
+DETAIL:  Failing row contains (18616a81-918b-49dc-a2ad-e4489e7f08de, 16196f87-03ed-45e5-94cd-5a22c7f0bd16, null, plus, t, 2026-11-15 03:33:54.628501+00, null, gathering, null, plus_annual, web, tb-1, null, null, production, null, null, null, null, null, null, null, null, null).
+CONTEXT:  SQL statement "insert into public.gathering_entitlements(user_id,entitlement_type,canonical_product_id,provider,provider_transaction_id,environment,purchased_at) values (uu,'plus','plus_annual','web',p_prefix||i,'production',now()) returning id"
+PL/pgSQL function t.fixture_payable(text,integer,text) line 6 at SQL statement
+SQL statement "SELECT t.fixture_payable('p-one', 5, 'tb-')"
+TOTAL pass=20 fail=0 aborted_blocks=1

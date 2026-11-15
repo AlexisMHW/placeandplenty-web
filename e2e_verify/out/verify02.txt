@@ -1,0 +1,48 @@
+cohost capability table + fn|PASS
+payment ledger tables|PASS
+email provider events + suppressions|PASS
+staff rbac|PASS
+hc tiers + terms versions|PASS
+payouts manual columns (216100)|PASS
+payout transition guard trigger|PASS
+payout_events append-only|PASS
+config audit table + triggers|PASS
+hc_mark_payout_paid no longer pays (stub)|PASS
+tier benefits (215003) + referral_paused (217002)|PASS
+hc event outbox tables (215003)|PASS
+eligibility flag sync trigger|PASS
+eligibility flags aligned|PASS
+notification destinations start inactive|PASS
+cc inbox tables exist + rls (217102, canonical D5 inbox)|PASS
+cc inbox: no client table grants|PASS
+founder email: destination unset, disabled by default (config only)|PASS
+retired founder_notifications (218000) NOT applied|PASS
+cc writer/dispatcher functions service_role only|PASS
+tier writers consolidated (217110): public writers delegate to hc_tier_write|PASS
+one tier writer (217120): only hc_tier_write writes public.hc_tiers|PASS
+payment method validated in DB (217120): record fn + transition guard raise invalid_method|PASS
+tier assignment writers consolidated: set_member_tier delegates to hc_admin_assign_tier|PASS
+no hardcoded founder address in any function body|PASS
+paid_referrals_eligible defaults false|PASS
+lifecycle gate default terminal|PASS
+lifecycle triggers >= 27 tables|PASS
+prod-parity entitlement trigger|PASS
+no auto payout: no pg_cron/net calls in HC fns|PASS
+program and paid referrals both disabled by default|PASS
+missing functions closed (217200-217240): the 8 web-called RPCs exist; paper_orders has RLS; no anon/PUBLIC execute|PASS
+multi-day lock-in gate is inert (217220): constant off, no enforcement trigger/table/setter|PASS
+share audit + growth (217230/217240): managers-only policy, nullable invitations_published_at|PASS
+anon has no execute on admin/hc rpcs|PASS
+commission reversal guard (217300): draft/approve/record use the blocked-commission predicate; sweep core is internal only|PASS
+commission maintenance (217310): service-role only, no URL/credential/http in body; cron job (if pg_cron exists) is pure SQL and unique|PASS
+paid payout needs its external record (217320): CHECK + BEFORE INSERT guard|PASS
+tier writer: NULL eligibility = unchanged (217330)|PASS
+current_plus_term service-role guard restored (217340)|PASS
+paid-referral ON windows append-only (217400): table + guard triggers + settings trigger|PASS
+reconcile + maintenance require ON window at purchase (217410)|PASS
+payout reads gated by hc.payout (217420)|PASS
+payout writes owner-only (217430): hc_is_owner() + 5 writers|PASS
+purchase facts resolve Plus via invoice/payment linkage (217440)|PASS
+gathering photo window guard (217450): trigger present, 202100 trigger function untouched|PASS
+SMS fail-closed (217460): is_contact_suppressed sms branch + sms_messages trigger; SMS still disabled by default|PASS
+guest_update_receipts read-only trigger (202101): dedicated function derives the gathering via guest_updates/invitation_parties; shared 202100 function unchanged|PASS

@@ -1,0 +1,44 @@
+PASS Z0.1 shipped defaults untouched: sms_enabled=false, kill_switch=true
+PASS Z0.2 in this chain sms_is_suppressed does not exist (SMS functions are proposed-only)
+PASS Za.1 (a) sms_is_suppressed missing: is_contact_suppressed(sms) = true (was false = fail-open)
+PASS Za.2 (a) after explicit DROP FUNCTION sms_is_suppressed: still true
+PASS Zb.1 (b) sms_is_suppressed raises: true
+PASS Zb.2 (b) sms_is_suppressed returns NULL: true
+PASS Zb.3 healthy function returning false: false (provably not suppressed)
+PASS Zb.4 healthy function returning true: true
+PASS Zb.5 NULL hash: true (unevaluable)
+PASS Zc.1 (c) email: unsuppressed hash -> false (same as email_is_suppressed)
+PASS Zc.2 (c) email: suppressed hash -> true
+PASS Zc.3 (c) email result equals email_is_suppressed for both
+PASS Zc.4 unknown channel still invalid_channel
+PASS Zc.5 non service_role still not_authorized
+PASS Zc.6 helpers are not callable by API roles
+PASS Zd.1 defaults => sms_config_allows_delivery false
+PASS Zd.2 enabled=true kill_switch=false => true (only combination that opens it; rolled back)
+PASS Zd.3 enabled=true kill_switch=true => false
+PASS Zd.4 enabled=false kill_switch=false => false
+PASS Zd.5 (d) sms_config rows deleted => false
+PASS Zd.6 only kill_switch row deleted (enabled=true) => false (missing kill switch = ON)
+PASS Zd.7 only sms_enabled row deleted => false
+PASS Zd.8 unparseable value => false, no exception
+PASS Zd.9 sms_config table dropped => false, no exception
+PASS Ze.1 (e) defaults: INSERT queued refused sms_unavailable
+PASS Ze.2 (e) defaults: INSERT sending refused
+PASS Ze.3 defaults: blocked_* rows (non-deliverable audit rows) may still be recorded
+PASS Ze.4 (d) sms_config rows deleted: INSERT queued refused
+PASS Ze.5 (d) enabled but suppression function missing: INSERT queued refused sms_recipient_suppressed
+PASS Ze.6 (d) enabled, suppression raises: refused
+PASS Ze.7 (d) enabled, suppression NULL: refused
+PASS Ze.8 enabled, recipient opted out: refused
+PASS Ze.9 positive control (rolled back): enabled + healthy suppression + not opted out => queued row accepted
+PASS Zf.1 (d) CLAIM after the config rows are deleted: queued -> sending refused (zero deliverable work)
+PASS Zf.2 CLAIM after kill switch flipped ON: refused
+PASS Zf.3 CLAIM when suppression function disappears after queueing: refused
+PASS Zf.4 positive control: enabled + healthy: claim works (rolled back)
+PASS Zf.5 provider callbacks / retries of an already-sending message stay possible while OFF (no stuck rows): sending -> submitted/failed and sending -> queued
+PASS Zf.6 INSERT as authenticated/anon has no table privilege anyway (RLS-protected, service-role only)
+PASS Zg.1 (e) defaults: zero queued/sending rows exist
+PASS Zg.2 trigger present exactly once on sms_messages
+PASS Zg.3 config unchanged after the whole suite (still disabled, kill switch on)
+TOTAL pass=42 fail=0
+TOTAL pass=42 fail=0 aborted_blocks=0

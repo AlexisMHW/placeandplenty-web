@@ -1,0 +1,17 @@
+(node:16149) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/pp-work/EXEC/e4-verify/web/lib/hc/ledger.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/claude/pp-work/EXEC/e4-verify/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS    C-R1 [DB via PostgREST] payout lists/history/ledger/eligibility READ: owner allowed; non-owner holding hc.payout allowed (read-only); hc.read-only manager and support DENIED (not_authorized)
+PASS    C-D1 [DB via PostgREST] draft creation: owner creates Draft (5000c); hc.read-only denied
+PASS    C-A1 [DB via PostgREST] approve: non-owner with hc.payout -> owner_required; hc.read-only -> not_authorized; payout still Draft
+PASS    C-A2 [DB via PostgREST] owner approves: status Approved with approver recorded; no money moved (commissions payable, not paid)
+PASS    C-P1 [DB via PostgREST] record payment: non-owner hc.payout -> owner_required; hc.read-only denied; owner with missing confirmation/ref/method/date refused; payout stays Approved
+PASS    C-P2 [DB via PostgREST] owner records external payment: Paid with reference, payment date, method, confirmer; commissions paid; payout_events + admin_audit_log written
+PASS    C-V1 [DB via PostgREST] void / reverse / settle by a non-owner holding hc.payout -> owner_required; a Paid payout is final (no edit)
+PASS    C-W1 [web action] web payout actions: manager (even holding hc.payout) cannot reach owner-only actions (NOT_FOUND gate)
+PASS    C-W2 [web action] every payout web action (draft/approve/paid/void/reverse/settle/paid-switch/terms) returns NOT_FOUND for a non-owner staff member even though he holds hc.payout in the DB
+PARTIAL C-O1 [DB via PostgREST] OBSERVATION: paid-referral switch + draft creation are NOT owner-only (they use plain hc.payout); a role holding hc.payout (not granted by default; only owner has it) could switch paid referrals
+         expected: documented: hc.payout rule
+         observed: non-owner hc.payout deactivate=OK (paid after=f); non-owner activate=OK; hc.read-only=not_authorized; non-owner draft=OK
+SUMMARY {"PASS":9,"PARTIAL":1}

@@ -1,0 +1,68 @@
+(node:3257) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/pp-work/EXEC/e4-verify/native/supabase/functions_proposed_a7/web-purchase-webhook/handler.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/claude/pp-work/EXEC/e4-verify/native/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+world W0_off_paidoff: 28 steps, commissions=0, max ms=83
+world W1_on_paidoff: 28 steps, commissions=0, max ms=81
+world W2_off_paidon: 28 steps, commissions=0, max ms=65
+world W3_on_paidon: 28 steps, commissions=7, max ms=101
+world WF_error: 28 steps, commissions=0, max ms=77
+world WF_throw: 28 steps, commissions=0, max ms=71
+world WF_hang: 28 steps, commissions=0, max ms=4067
+world WF_missing: 28 steps, commissions=0, max ms=82
+world WF_malformed: 28 steps, commissions=0, max ms=89
+world WF_lookup_throw: 28 steps, commissions=2, max ms=87
+world WF_lookup_hang: 28 steps, commissions=2, max ms=4090
+world W_flagfalse: 28 steps, commissions=0, max ms=63
+PASS    F1 [webhook handler + DB (Stripe mocked)] baseline (wiring off): purchases granted, replays are duplicates, refunds/disputes handled
+PASS    F2 [webhook handler + DB] Plus (subscription) flow works through the webhook: grant, invoice.paid link, dispute open/won, partial refund keeps access
+PASS    F3 [DB] entitlement end-state per purchase is correct (refunded pass3, lost-dispute pass4 revoked, won pass5 active, partially refunded pass1 active, Plus2 active after won dispute + partial refund, Plus6 refunded)
+PASS    F4 [DB row comparison (normalised: uuids/timestamps masked)] entitlement + purchase + refund + dispute ROWS are identical with wiring off vs on (paid referrals off, default)
+PASS    F5 [DB] wiring ON with paid referrals OFF (default) records NO commission, NO facts/events
+PASS    F6 [DB row comparison] wiring ON vs OFF with paid referrals ON: purchase/refund/dispute/entitlement rows and HTTP results identical; only commission tables differ
+PASS    F6b [DB row comparison] core rows identical across ALL paid/wiring combinations (paid referrals flag cannot change purchase state)
+PASS    F7 [DB (commissions)] wiring ON + paid ON commission lifecycle (FINAL code): partial refund -> held/partial_refund_review; full refund -> reversed; open then LOST dispute -> reversed; open then WON dispute -> released to pending (dispute_won); Plus partial refund -> held/partial_refund_review; Plus refund -> reversed; untouched purchase -> pending
+PASS    F8-error [webhook handler + DB] commission step fault 'error': HTTP results and every purchase/refund/dispute/entitlement row identical to a healthy wiring-on run; no extra rows; no stall
+PASS    F8-throw [webhook handler + DB] commission step fault 'throw': HTTP results and every purchase/refund/dispute/entitlement row identical to a healthy wiring-on run; no extra rows; no stall
+PASS    F8-hang [webhook handler + DB] commission step fault 'hang': HTTP results and every purchase/refund/dispute/entitlement row identical to a healthy wiring-on run; no extra rows; no stall
+PASS    F8-missing [webhook handler + DB] commission step fault 'missing': HTTP results and every purchase/refund/dispute/entitlement row identical to a healthy wiring-on run; no extra rows; no stall
+PASS    F8-malformed [webhook handler + DB] commission step fault 'malformed': HTTP results and every purchase/refund/dispute/entitlement row identical to a healthy wiring-on run; no extra rows; no stall
+PASS    F8-lookup_throw [webhook handler + DB] commission step fault 'lookup_throw': HTTP results and every purchase/refund/dispute/entitlement row identical to a healthy wiring-on run; no extra rows; no stall
+PASS    F8-lookup_hang [webhook handler + DB] commission step fault 'lookup_hang': HTTP results and every purchase/refund/dispute/entitlement row identical to a healthy wiring-on run; no extra rows; no stall
+PASS    F9 [webhook handler timing (healthy W3 run as baseline)] TOTAL commission-hook budget is bounded: with a hung commission RPC or a hung entitlement lookup, the time added to the webhook response is <= 4000 ms (+150 ms scheduling tolerance) for EVERY event, including refund/dispute paths that make 2 hook calls
+PASS    F10 [DB] replaying the same event id several times never duplicates entitlements/ledger rows, with wiring on (healthy and faulted)
+PASS    F11 [webhook handler] flag value other than the exact string 'true' (e.g. 'false') behaves as OFF: zero commission RPC calls
+web-purchase-webhook: invalid Stripe signature
+PASS    F12 [webhook handler] Stripe signature enforced (bad signature -> 400, nothing written)
+STEPS(W3):
+  pass1 grant: 200 {"received":true,"granted":true} 101ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  pass1 replay 1: 200 {"received":true,"duplicate":true} 63ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  pass1 replay 2: 200 {"received":true,"duplicate":true} 65ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  pass1 replay 3: 200 {"received":true,"duplicate":true} 51ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  plus2 grant: 200 {"received":true,"granted":true} 70ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  plus2 replay: 200 {"received":true,"duplicate":true} 53ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  plus2 invoice.paid (links PI): 200 {"received":true,"extended":true} 7ms hc=[]
+  pass1 partial refund: 200 {"received":true,"partial_refund_flagged":true} 23ms hc=[reconcile_commission_for_entitlement,record_purchase_partial_refund,sweep_commissions]
+  pass1 partial refund replay: 200 {"received":true,"duplicate":true} 18ms hc=[reconcile_commission_for_entitlement,record_purchase_partial_refund,sweep_commissions]
+  pass3 grant: 200 {"received":true,"granted":true} 70ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  pass3 FULL refund: 200 {"received":true,"refunded":true} 13ms hc=[reconcile_commission_for_entitlement,sweep_commissions]
+  pass3 full refund replay: 200 {"received":true,"duplicate":true} 22ms hc=[reconcile_commission_for_entitlement,sweep_commissions]
+  pass4 grant: 200 {"received":true,"granted":true} 67ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  pass4 dispute opened: 200 {"received":true,"disputed":true} 13ms hc=[record_purchase_dispute,sweep_commissions]
+  pass4 dispute opened replay: 200 {"received":true,"duplicate":true} 11ms hc=[record_purchase_dispute,sweep_commissions]
+  pass4 dispute LOST: 200 {"received":true,"dispute_lost":true} 10ms hc=[record_purchase_dispute,sweep_commissions]
+  pass5 grant: 200 {"received":true,"granted":true} 62ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  pass5 dispute opened: 200 {"received":true,"disputed":true} 10ms hc=[record_purchase_dispute,sweep_commissions]
+  pass5 dispute WON: 200 {"received":true,"restored":true} 9ms hc=[record_purchase_dispute,sweep_commissions]
+  plus2 dispute opened (on invoice PI): 200 {"received":true,"disputed":true} 10ms hc=[record_purchase_dispute,sweep_commissions]
+  plus2 dispute WON: 200 {"received":true,"restored":true} 9ms hc=[record_purchase_dispute,sweep_commissions]
+  plus2 PARTIAL refund (invoice PI): 200 {"received":true,"partial_refund_flagged":true} 11ms hc=[record_purchase_partial_refund,sweep_commissions]
+  plus6 grant: 200 {"received":true,"granted":true} 60ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  plus6 invoice.paid: 200 {"received":true,"extended":true} 6ms hc=[]
+  plus6 FULL refund (invoice PI): 200 {"received":true,"refunded":true} 10ms hc=[sweep_commissions]
+  plus6 dispute lost after refund: 200 {"received":true,"dispute_lost":true} 9ms hc=[record_purchase_dispute,sweep_commissions]
+  pass7 grant: 200 {"received":true,"granted":true} 68ms hc=[record_purchase_facts,reconcile_commission_for_entitlement]
+  bad signature: 200 {"received":true,"duplicate_purchase":true} 48ms hc=[]
+ENT(W0): gathering_pass:gathering:true:false:false:partially_refunded | gathering_pass:gathering:false:true:false:refunded | gathering_pass:gathering:false:false:true:dispute_lost | gathering_pass:gathering:true:false:false:paid | gathering_pass:gathering:true:false:false:paid | plus:account:true:false:false:partially_refunded | plus:account:false:true:true:dispute_lost
+SUMMARY {"PASS":19}
+done

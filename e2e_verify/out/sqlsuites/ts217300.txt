@@ -1,0 +1,103 @@
+PASS S0.1 defaults: program off, paid referrals OFF
+PASS S0.2 approved terms untouched: Pass 50c, Plus 1200c, hold 45d, min 5000c
+PASS S2.0 maintenance function exists, signature (integer,integer)
+PASS S2.1 master switch off: status disabled, nothing swept
+PASS S2.2 paid referrals OFF: complete no-op, reports paid_referrals_disabled
+PASS S2.3 ... and accrued nothing (no commission rows, no events)
+PASS S2.4 same with custom window / batch
+PASS S2.5 authenticated owner cannot call (EXECUTE revoked)
+PASS S2.6 anon cannot call
+PASS S2.7 no API role has EXECUTE (anon, authenticated, PUBLIC); service_role has
+PASS S2.8 in-body guard: a JWT with a non-service role is refused even with EXECUTE
+PASS S2.9 internal helpers (sweep core, blocked predicates) are not callable by API roles
+PASS S2.10 sweep_commissions keeps service-only behaviour (signature, grants)
+PASS S2.11 body has no URL / credential / http call
+PASS S2.12 exactly one cron job under the fixed name (idempotent apply)
+PASS S2.13 job is pure SQL (calls only the maintenance function; no URL, no credential)
+PASS S2.14 no other new cron job was created (only the pre-existing reminder job + ours)
+PASS S2.15 scratch: paid referrals still OFF at the end of this block
+PASS S1.0 owner activated paid referrals on the scratch DB (the only way it turns on)
+PASS S1.1 fixtures: 36 validated commissions of 1200c, Plus first purchase
+PASS S1.2 precondition: refunded purchase still shows validated (no sweep has run)
+PASS S1.3 C9b: draft EXCLUDES the refunded commission (6 x 1200 - 1 = 6000, not 7200)
+PASS S1.4 payout total = 6000, 5 payable commissions, by_product plus_annual 6000
+PASS S1.5 refunded commission is reversed (sweep ran inside the draft) and NOT in any payout
+PASS S1.6 payable commissions of the payout are all non-refunded
+PASS S1.7 economics unchanged: every payable commission is the approved 1200c
+PASS S1.8 dispute open + dispute lost excluded: 4 x 1200 = 4800 is below the $50 minimum (min unchanged, 5000)
+PASS S1.9 open dispute is held (dispute_open), lost dispute is reversed; neither payable
+PASS S1.10 no payout row was created for B
+PASS S1.11 dispute won releases the hold, then validates again (rules unchanged)
+PASS S1.12 sweep is a no-op here (master switch off) but the filter still excludes the refunded commission: 6000
+PASS S1.13 the refunded commission was left validated (not payable, not in the payout)
+PASS S1.14 clean draft for D: 7200
+PASS S1.15 approve REFUSES a batch that now contains a refunded commission
+PASS S1.16 refusal changed nothing: payout still draft, all 6 commissions still payable
+PASS S1.17 maintenance (sweep) voids the batch: payout void, refunded reversed, other 5 back to validated
+PASS S1.18 re-draft after the void: 5 x 1200 = 6000
+PASS S1.19 approve works for a clean batch (approval is not payment)
+PASS S1.20 record_external_payment REFUSES an approved batch containing a disputed commission
+PASS S1.21 nothing recorded: still approved, no paid commissions, no payment event
+PASS S1.22 once the blocker is gone the same payment records normally (earlier checks and order unchanged)
+PASS S1.23 replay still idempotent
+PASS S1.24 revoked for another reason excluded, ordinary cancellation still included: 5 x 1200 = 6000
+PASS S1.25 states: cancellation payable, fraud_review reversed
+PASS S1.26 manager still cannot draft / approve / record (owner only)
+PASS S1.27 anon denied
+PASS S1.28 (superseded by S2 founder decision D-2, 217420) payout ledger: a manager with only hc.read is now DENIED, the owner (hc.payout) is allowed
+PASS S1.29 retroactive accrual untouched (E-C3 owner decision): reconcile still takes a purchase regardless of when paid referrals were switched on
+PASS S1.30 no payout is ever paid automatically: no payout is paid except the one recorded by the owner above
+PASS S2.20 paid referrals ON: maintenance reconciles the referred purchase (1 pending commission, 1200c) and sweeps
+PASS S2.21 commission: Plus first purchase = 1200c, pending, terms v1 snapshot (45d hold, 30d window)
+PASS S2.22 non-referred buyer accrued nothing
+PASS S2.23 second run is idempotent: reconciles nothing new, no duplicate commission
+PASS S2.25 ... maintenance validated it
+PASS S2.26 ... and reverses it after a refund
+PASS S2.27 claims setting restored after a run (no lingering service role in the session)
+PASS S2.28 a purchase older than the 30-day look-back is not reconciled by the job
+PASS S2.29 maintenance never creates, approves, pays or changes a payout (payout table identical before/after a run)
+PASS S3.1 CHECK exists and is validated
+PASS S3.2 insert trigger exists (BEFORE INSERT)
+PASS S3.3 paid row with NO reference / date / method / confirmer is refused (D8)
+PASS S3.4 paid row with NULL reference refused
+PASS S3.5 paid row with a 2-char reference refused
+PASS S3.6 paid row with NULL / placeholder method refused
+PASS S3.7 paid row without a confirmer refused
+PASS S3.8 CHECK alone (guard off): paid row with nothing refused (23514)
+PASS S3.9 CHECK alone: 2-char reference refused (23514)
+PASS S3.10 CHECK alone: missing paid_on refused (23514)
+PASS S3.11 CHECK alone: blank method refused (23514)
+PASS S3.12 CHECK alone: missing confirmer refused (23514)
+PASS S3.13 nothing was inserted by any refused attempt
+PASS S3.14 a COMPLETE paid record is still insertable (restore / import path), constraint satisfied
+PASS S3.15 normal draft insert unaffected
+PASS S4.0 fixture: founding is paid-eligible, label Founding creator
+PASS S4.1 B8: manager renames a paid-eligible tier with NULL eligibility: allowed, eligibility untouched
+PASS S4.2 audit row written with the reason and the manager as actor
+PASS S4.3 the eligibility argument may be OMITTED entirely (default NULL)
+PASS S4.4 manager EXPLICIT true->false is still refused
+PASS S4.5 manager EXPLICIT false->true is still refused
+PASS S4.6 B9: owner re-saving with NULL leaves a paid-eligible tier eligible
+PASS S4.7 NULL leaves an ineligible tier ineligible
+PASS S4.8 only an EXPLICIT owner value changes eligibility (true->false)
+PASS S4.9 ... audited with before/after and reason
+PASS S4.10 ... and back (false->true)
+PASS S4.11 a NEW tier with NULL starts NOT eligible (manager may create it)
+PASS S4.12 reason still required (null / short)
+PASS S4.13 support-less callers still denied (anon, non-staff)
+PASS S4.14 legacy hc_admin_upsert_tier: manager with NULL referral flag keeps eligibility
+PASS S4.15 legacy: manager explicit change still owner_required
+PASS S4.16 legacy: owner explicit false still works
+PASS S4.17 benefits writer still keeps eligibility (D3.7)
+PASS S4.18 grants: hc_tier_write service-only; hc_upsert_tier authenticated+service_role, not anon
+PASS S4.19 still ONE tier writer: only hc_tier_write writes public.hc_tiers
+PASS S5.1 service role: any user (permitted caller, same result)
+PASS S5.2 signed-in user: own id (permitted caller, same result)
+PASS S5.3 signed-in user: someone else refused
+PASS S5.4 E-G2: NO identity at all is refused (previously passed)
+PASS S5.5 anon role without uid refused
+PASS S5.6 refund-safe filter (205004) kept: refunded Plus no longer a term
+PASS S5.7 EXECUTE grants unchanged: service_role only (no anon / authenticated / PUBLIC)
+PASS S5.8 the callers of current_plus_term keep working: plus_gatherings_used_this_term for the service role and (as the user) for the signed-in owner
+TOTAL pass=101 fail=0
+TOTAL pass=101 fail=0 aborted_blocks=0

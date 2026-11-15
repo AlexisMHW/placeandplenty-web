@@ -1,0 +1,30 @@
+(node:11366) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/pp-work/EXEC/e4-verify/web/app/(command-center)/command-center/hosting-collective/tiers/actions.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/claude/pp-work/EXEC/e4-verify/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS    B0 [DB] defaults: NO tiers pre-created, paid referrals OFF, program master switch OFF, terms v1 = approved economics only (no invented rates)
+PASS    B1 [web action + DB] owner defines a tier (saveTier: hc_upsert_tier + hc_admin_set_tier_benefits)
+PASS    B2 [DB] audit rows written for the create + benefits update, each with the reason, actor = owner
+PASS    B3 [web action + DB] manager edits label/benefits of a NON-paid tier
+PASS    B4 [web action + DB via PostgREST] manager CANNOT enable paid-referral eligibility on any writer path (web saveTier (ignored field), setTierEligibility action, direct hc_upsert_tier, legacy hc_admin_upsert_tier)
+PASS    B5 [web action + DB via PostgREST] support staff / anon cannot write tiers (RPC + web)
+PASS    B6 [DB via PostgREST] hc_tier_write itself is not exposed to API callers (even the owner)
+PASS    B7 [web action + DB] owner enables paid eligibility via explicit setTierEligibility (yes/no + reason + confirmation): allowed; audit row shows before/after + reason; no confirm / non yes-no refused
+PASS    B8 [web action + DB] manager renames a tier that the owner already made paid-eligible (form sends NULL = unchanged)
+PASS    B9 [web action + DB] owner re-saves the tier form WITHOUT ticking the box: eligibility must not change silently
+PASS    B10 [web action + DB via PostgREST] legacy members-page writer (hc_admin_upsert_tier) and set_tier_benefits both go through hc_tier_write and are audited with a reason
+PASS    B11a [DB (pg_proc scan)] only ONE function body in the schema writes public.hc_tiers
+PASS    B11b [DB via PostgREST] direct PATCH on hc_tiers over the REST API is refused for owner, manager and anon (RLS/grants)
+PASS    B12 [web action + DB] slug accepted by the web validator (hyphen allowed) is accepted by the DB, or fails with a clear code
+PASS    B13 [web action] manager cannot add commission terms (owner-only)
+PASS    B14 [DB via PostgREST] terms writes refused for manager (direct RPC), past effective date, and non-commissionable product
+PASS    B15 [web action + DB] owner adds a FUTURE version: v2 created, plus_annual carried over, v1 untouched, audit rows
+PASS    B16 [DB] versioning: terms in force NOW stay v1; v2 applies only from its effective date
+PASS    B17 [DB] terms history is append-only (UPDATE/DELETE blocked even for the table owner)
+PASS    B18 [web action] manager cannot flip the paid-referrals switch
+PASS    B19 [DB via PostgREST] direct hc_activate_paid_referrals by manager -> not_authorized; by owner with wrong phrase -> confirmation_required
+PASS    B20 [web action + DB] owner activation with the program master switch (hc_settings.enabled) OFF is refused; no Command Center control exists to turn that master switch on
+PASS    B21 [web action + DB] with the master switch on (via SQL), owner activation succeeds; audit rows in hc_config_audit(settings) and admin_audit_log
+PASS    B22 [DB via PostgREST] owner can switch paid referrals back off (audited)
+PASS    B23 [DB via PostgREST] audit history readable by manager (hc.read), refused for support
+SUMMARY {"PASS":25}

@@ -1,0 +1,1 @@
+FAIL src/20261113202003_qa_cohost_capability_enforcement_policies.sql :: psql:/home/claude/pp-work/EXEC/e4-verify/native/supabase/qa_package/src/20261113202003_qa_cohost_capability_enforcement_policies.sql:27: ERROR:  policy "invitat
