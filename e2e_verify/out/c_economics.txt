@@ -1,0 +1,38 @@
+(node:4815) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/pp-work/EXEC/e3-verify/web/lib/hc/ledger.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/claude/pp-work/EXEC/e3-verify/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS    C1 [DB via PostgREST (service)] paid referrals OFF (default): a referred first purchase accrues NOTHING (no commission row, reconcile says disabled); payout draft refused
+PASS    C1b [web action + DB] owner activates paid referrals (typed phrase + reason); economics now computed from hc_terms only
+PARTIAL C1c [DB] OBSERVATION: a purchase made while OFF can still be reconciled AFTER activation (retroactive accrual if the wiring re-runs reconcile)
+         expected: informational
+         observed: {"reason":"paid_referrals_off_at_purchase","status":"not_qualifying_paid_referrals_off_at_purchase"}
+PASS    C2a [DB] Plus annual first qualifying purchase = $12.00 (1200c), state pending, snapshot of terms v1
+PASS    C2b [DB] Gathering Pass first qualifying purchase = $0.50 (50c)
+PASS    C2c [DB] commission is a FIXED amount (independent of the price paid): a discounted/odd subtotal does not change it; rate_bps null
+PASS    C2d [DB] …verify: Plus bought at a different subtotal still pays 1200
+PASS    C3a [DB] 45-day validation hold stored on the row (validate_after = purchased_at + 45d)
+PASS    C3b [DB] hold edge: day 44 (+23:59) and 44d23:59:59 stay pending; exactly 45d -> validated
+PARTIAL C4a [DB via PostgREST] claim rules: a touch just inside 30 days is accepted only while the claim grace (24h after signup) still holds
+         expected: claim_too_late for old accounts (grace 24h) — see C4b
+         observed: inside=claim_too_late; outside=expired_touch
+PASS    C4b [DB via PostgREST] record_referral_claim: day-30 inside / outside; claim within 24h of signup ok, after 24h refused
+PASS    C5 [DB via PostgREST (service)] 30-day attribution at PURCHASE time: day 29 and exactly day 30 qualify; 30d+1h and day 31 are outside_window
+PASS    C6a [DB via PostgREST] below $50: draft refused as below_minimum with the eligible amount reported
+PASS    C6b [DB via PostgREST] 4950c (one pass short of $50): still below_minimum
+PASS    C6c [DB via PostgREST] exactly $50.00 (5000c): draft created for the owner; manager cannot create it
+PASS    C7a [DB via PostgREST (service)] UPGRADE: Gathering Pass first, then Plus -> only the first purchase earns; Plus earns nothing
+PASS    C7b [DB via PostgREST (service)] RENEWAL: Plus then a second Plus purchase row (renewal/new txn) -> second earns nothing
+PASS    C7c [DB via PostgREST (service)] RENEWAL EVENT on the same subscription (grant event, same transaction): commission count unchanged
+PASS    C8a [DB via PostgREST] self-referral: partner using own code is not attributed (self_referral); same-mailbox alias (gmail-style) treated the same
+PASS    C8b [DB via PostgREST (service)] defence in depth: even if a self-claim row existed, the commission is BLOCKED (self_referral_user)
+PASS    C9a [DB via PostgREST (service)] refund during the hold: the web ledger plan for 'refund' (reconcile only) does NOT reverse the commission; the next sweep does
+PASS    C9b [DB via PostgREST] REFUND RACE: purchase refunded after it validated but before any sweep: a payout draft must not include it
+PASS    C10 [DB via PostgREST (service)] dispute: open -> held (excluded); won -> released to pending; lost -> reversed
+PASS    C11 [DB via PostgREST (service)] duplicate transaction replay (same event id; reconcile twice; same txn with a new event id): exactly one commission
+PASS    C12 [DB via PostgREST (service)] non-qualifying: Multi-Day Pass, sandbox purchase, $0 (100% coupon), Apple/Google purchase never earn
+PASS    C13 [DB via PostgREST (service)] members without paid terms never accrue silently: tier-less member -> HELD basic_membership_no_tier; non-eligible tier -> HELD; suspended partner's code is invalid
+PASS    C14 [DB] versioned terms: a purchase dated after v2 takes v2's amount; earlier rows keep v1 (frozen); frozen rows cannot be edited
+PASS    C15 [DB via PostgREST (service)] partial refund: commission is HELD for staff review (not auto-reversed, not auto-paid)
+PASS    C16 [code scan (web)] no automatic discount: referral attribution does not feed any coupon/discount/promotion in the checkout code
+SUMMARY {"PASS":27,"PARTIAL":2}

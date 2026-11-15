@@ -1,0 +1,15 @@
+(node:6809) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/pp-work/EXEC/e3-verify/web/lib/hc/ledger.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/claude/pp-work/EXEC/e3-verify/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS    B-W0 [DB] default: paid referrals OFF, no window rows, master switch off
+PASS    B-W1 [DB via PostgREST (service)] purchase made while paid referrals are OFF (default) accrues nothing
+PASS    B-W2 [web action + DB] owner turns paid referrals ON: one open window recorded with start instant
+PASS    B-W3 [DB via PostgREST (service)] NO retroactive accrual: after turning ON, reconcile AND the maintenance job do not create a commission for the purchase made while OFF
+PASS    B-W4 [DB via PostgREST (service)] start boundary: 1us before start = no commission; exactly at start = commission; 1us after = commission
+PASS    B-W5 [DB via PostgREST (service)] end boundary while the switch is OFF: nothing accrues immediately for any of the three (reconcile answers paid_referrals_disabled even for the in-window purchase 1us before the end: DEFERRED, see B-W9)
+PASS    B-W6 [DB via PostgREST (service)] second ON period: purchase in the OFF gap (before re-activation) = none; 1us before re-activation = none; at re-activation and after = commission; windows are separate append-only rows
+PASS    B-W9 [DB via PostgREST (service)] after the NEXT activation, maintenance picks up the purchase made 1us before the first window ended (was inside window 1) but still NOT the ones at/after the end
+PASS    B-W7 [DB] after a late maintenance + sweep run, STILL no commission exists for any purchase made while OFF (7 OFF-time purchases)
+PASS    B-W8 [DB] windows are append-only (cannot edit/delete a window to back-date accrual)
+SUMMARY {"PASS":10}

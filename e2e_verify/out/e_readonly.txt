@@ -1,0 +1,21 @@
+PASS    E0 [DB] fixtures: effective status live=active, done=completed, cancelled=cancelled; level=terminal
+PASS    E1 [DB (authenticated role, simulated JWT)] DB sweep: INSERT into every gathering-scoped table carrying the 202100 trigger is refused (gathering_read_only) for owner and co-host on completed AND cancelled gatherings; a non-member is refused too (not_authorized from the status check); the same insert on a LIVE gathering is never refused by that trigger
+PARTIAL E1b [DB (authenticated owner)] gathering_photos: writable on COMPLETED gatherings (documented 'photos' class exception, open founder item) but blocked on CANCELLED
+         expected: D2 says no exceptions; observed exception for completed only
+         observed: completed: gathering_photos:ERROR:  null value in column "storage_path" of rel; cancelled: blocked
+PASS    E2 [DB (authenticated role)] UPDATE and DELETE of real rows (menu, shopping, the gathering row itself): READ_ONLY for owner and co-host on completed/cancelled; allowed on the live control
+PASS    E3 [DB (service_role)] service role (edge functions / jobs, no auth.uid): non-strict tables remain writable by design; STRICT guest tables (gathering_guests, contributions, rsvps, song requests...) still refuse
+PASS    E4 [DB via PostgREST] RPCs used by web+native (menu_add_item, shopping_add_item) over PostgREST: refused on completed/cancelled for owner and co-host, accepted on live
+(node:5532) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/pp-work/EXEC/e3-verify/web/lib/host-actions.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/claude/pp-work/EXEC/e3-verify/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS    E5 [web action + DB (PostgREST)] REAL web host actions on completed + cancelled gatherings for owner / co-host / direct non-member: every write refused and the database snapshot is byte-identical afterwards
+E5 messages seen: ["This gathering is finished or archived, ","That permission level can't be assigned.","That doesn't look like an email address.","We couldn’t confirm this gathering’s sta"]
+PASS    E5b [web action + DB (PostgREST)] sweep of ALL 77 exported gathering-scoped web actions (menu, shopping, people, guest-experience, budget, contributions, photos, music, style, multi-day, recipe, host) against the real DB for owner and co-host on completed + cancelled
+PASS    E5c [web action + DB] control: the same actions on a LIVE gathering succeed for owner and co-host (so E5 refusals are due to read-only, not a broken harness)
+PASS    E6 [DB via PostgREST (supabase-js)] guard bypassed: supabase-js writes straight to tables on completed/cancelled gatherings are still refused by the DB (gathering_read_only) for owner and co-host
+PARTIAL E7 [DB (authenticated owner)] OBSERVATION: owner cancel_gathering on a COMPLETED gathering (lifecycle op)
+         expected: documented: lifecycle ops are not blocked by the trigger marker
+         observed: ERROR:  gathering_cannot_be_cancelled
+SUMMARY {"PASS":9,"PARTIAL":2}

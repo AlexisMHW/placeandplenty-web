@@ -1,0 +1,46 @@
+(node:4384) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/pp-work/EXEC/e3-verify/web/app/api/hosting-collective/apply/route.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/claude/pp-work/EXEC/e3-verify/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS    A1 [web route + DB] intake closed by default (kill switch): apply returns closed, nothing stored
+PASS    A2 [web route + DB] apply (open): stored once, status received, linked to confirmed account
+PASS    A3 [DB] apply fan-out: one hc_owner_notification, ONE cc_notifications inbox row (hc_application_received), one hc_events row, no applicant email yet
+PASS    A4 [web route + DB] duplicate apply (same email) is neutral and creates no second row/notification
+PASS    A4b [web route] cross-origin / non-JSON apply is rejected before the DB
+PASS    A5a [web action] anonymous caller reviewing: redirected to login (action gate)
+PASS    A5b [web action] signed-in non-staff reviewing: 404 (action gate)
+PASS    A5c [web action] staff WITHOUT hc.applications.review (support): 404
+PASS    A5d [DB via PostgREST] same RPC called DIRECTLY over PostgREST (bypassing the web gate): support/non-staff -> not_authorized; anon -> permission denied
+PASS    A5e [DB] failed attempts changed nothing
+PASS    A6 [web action + DB] manager (creator_program_manager) moves to in_review
+PASS    A6b [DB] in_review does not resolve the inbox row nor email the applicant
+PASS    A7 [web action + DB] approve (no tier = BASIC member): application approved; partner approved with tier NULL; code issued
+PASS    A8 [DB] approval notification fan-out is exactly once: 1 cc_notifications 'hc_application_approved'; 1 hc_event; inbox delivery delivered; ONE applicant_email delivery queued; 0 staff_email; received-row resolved
+PASS    A9 [web action + DB] approval replay (double click / retry) does not duplicate inbox row, event, or applicant email
+PASS    A10 [web action + DB] approved application cannot be declined afterwards
+PASS    A11 [web action + DB] decline: application declined, NO partner, one inbox row (hc_application_declined), ONE applicant email queued
+PASS    A12 [web action] declined application cannot be re-approved (closed)
+PARTIAL A13 [web action + DB] approve an applicant who has NO account yet: records a partner without a user (observed behaviour)
+         expected: ok saved; documented behaviour = partner row with NULL user until claimed
+         observed: {"ok":true,"code":"saved"}; null-user partners 1/approved/NULL
+PASS    A14a [web action] support staff cannot suspend a member
+PASS    A14b [web action + DB] manager suspends member: partner suspended; tier audit row 'member_status_changed'; hc_event member_suspended; config audit row with reason
+PARTIAL A14c [DB] member suspension raises NO cc_notifications inbox row (only hc_events)
+         expected: observation (decision D5 category list has no member-status category)
+         observed: 0
+PASS    A14d [web action + DB] reinstate: status approved, event member_reinstated
+PASS    A15 [DB] founder email default: unset / disabled / no destination; no cc_notification_deliveries rows were created by any event above
+PASS    A16 [DB via PostgREST] founder controls owner-gated: manager/support denied; owner cannot enable before verification
+PASS    A17 [DB via PostgREST] owner sets a (test) destination: becomes pending_verification, email stays DISABLED, code never returned; a verification delivery is queued (not sent)
+direct anon apply: {"status":"received","duplicate":false}
+PASS    A18 [DB] with a pending/unverified destination, new events still create inbox rows but NO founder email delivery rows (only the verification one)
+PASS    A19 [web lib + DB] dispatch default OFF; flag on but no mailer -> nothing claimed; flag+send on but DISABLED provider -> nothing delivered, rows not burned
+PASS    A20 [web route] dispatch route requires its shared secret (none configured -> 401)
+PASS    A21 [web lib + DB (mock provider)] MOCK provider (no network): one email per queued applicant delivery, statuses move queued->sent, a re-run sends nothing more (no duplicates)
+MOCK MESSAGE SHAPE: [{"to":"a***@e2e.test","subject":"Welcome to the Place & Plenty Hosting Collective","bodyChars":238,"hasAmount":false},{"to":"a***@e2e.test","subject":"About your Hosting Collective application","bodyChars":175,"hasAmount":false},{"to":"a***@e2e.test","subject":"Welcome to the Place & Plenty Hosting Collective","bodyChars":238,"hasAmount":false}]
+PASS    A22a [DB via PostgREST] owner verifies destination (wrong code rejected, right code accepted) then enables founder email
+PASS    A22b [DB] with verified+enabled founder email a new application queues exactly ONE founder email delivery (queued, not sent)
+PASS    A22c [DB via PostgREST (service)] what the founder-email worker is handed is minimal: generic title/body + link; NO applicant name, email, handle, or money
+PASS    A22d [DB via PostgREST (service)] queued != delivered: delivery row becomes delivered only after the (mock) provider result is recorded
+PASS    A22e [DB via PostgREST] owner (authenticated) cannot call the service-only delivery claim RPC
+SUMMARY {"PASS":33,"PARTIAL":2}

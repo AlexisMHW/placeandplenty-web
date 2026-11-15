@@ -1,0 +1,16 @@
+PASS    D-1 [DB via PostgREST (create_purchase_intent)] Gathering Pass purchase start requires start_purchase: owner + legacy_full allowed; manager, planner, stranger denied
+PASS    D-2 [DB via PostgREST] account-level Plus purchase intent is not gated by gathering capability (any signed-in user)
+PASS    E-0 [DB] fixtures: completed (10 days ago), cancelled, active
+PASS    E-1 [DB (authenticated role, JWT simulated)] completed and cancelled gatherings: menus, shopping, budget (expenses) and invitations are READ-ONLY for owner and co-host; the same writes are not refused by the guard on an active gathering
+PASS    E-1b [DB via PostgREST] RPC path (menu_add_item) refused with gathering_read_only on completed and cancelled
+PASS    E-2 [DB via PostgREST (add_gathering_photo)] guest-photo window: authorised member uploads are accepted on a completed gathering inside the 30-day window (day 10, day 29); refused after it (day 31) and on a cancelled gathering; a non-member is refused inside the window
+PASS    E-3 [DB] inside the photo window ONLY photos are writable; menus and budget on the same completed gathering stay read-only
+PASS    E-4 [DB (trigger, single transaction)] 30-day boundary at the microsecond: window end = start+30d. 1us before end = still open? no: now() < end is required: end-1us... (cases are end = now()+d)
+PASS    E-5 [DB] guest_update_receipts: insert/update WORK on an active gathering (owner and service role); refused gathering_read_only on completed and cancelled
+PASS    G-1 [DB] defaults (sms_enabled=false, kill_switch=true; sms_is_suppressed does not exist): queued/sending inserts refused; is_contact_suppressed('sms') = true; email = false
+PASS    G-2 [DB (scratch-only config flip)] config says ENABLED but suppression function is missing / raises / returns NULL: SMS still fully suppressed (queue refused, is_contact_suppressed('sms') = true)
+PASS    G-3 [DB] sms_config rows deleted: queue/claim refused, still suppressed
+PASS    G-4 [DB] unparseable config value is OFF; claim (queued->sending) is refused once SMS is off; scratch contrast: with every gate explicitly open a row can queue (guard is not a blanket block)
+PASS    G-5 [DB] after all manipulations: deliverable SMS rows = 1 only from the explicit contrast case (queued under all-gates-open) -> then defaults restored and claim refused; email suppression result unchanged throughout
+deliverable now 1
+SUMMARY {"PASS":14}
