@@ -397,3 +397,46 @@ export type GalleryResult =
 export async function lookupGallery(token: string) {
   return call<GalleryResult>("guest-gallery-lookup", { token });
 }
+
+/* ------------------------------------------------------------------ */
+/* Gathering-wide share link (/i/[token])                              */
+/* ------------------------------------------------------------------ */
+
+export interface ShareInviteData {
+  displayName: string;
+  hostDisplayName: string | null;
+  displayDate: string | null;
+  displayEndDate: string | null;
+  displayTime: string | null;
+  /** Present only when the host chose to show the location. */
+  displayLocation: string | null;
+  displayDescription: string | null;
+  rsvpDeadline: string | null;
+  artwork: { url: string; mimeType: string } | null;
+  gatheringStatus: string;
+  isArchived: boolean;
+  cancellationMessage: string | null;
+  canRsvp: boolean;
+}
+
+export async function lookupShareInvite(token: string) {
+  return call<ShareInviteData>("share-invite-lookup", { token });
+}
+
+export interface ShareRsvpInput {
+  name: string;
+  email: string;
+  status: "yes" | "no" | "maybe";
+  adults: number;
+  children: number;
+  note?: string;
+}
+
+/**
+ * Records a REQUEST for the host to review; never edits an existing
+ * guest's RSVP. The response is the same whether or not the email is
+ * already on the guest list.
+ */
+export async function submitShareRsvp(token: string, input: ShareRsvpInput) {
+  return call<{ success: boolean; error?: string }>("share-invite-rsvp", { token, ...input });
+}
