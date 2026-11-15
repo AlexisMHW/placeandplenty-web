@@ -1,0 +1,31 @@
+PASS R1.1 same dedup key = same row
+PASS R1.2 occurrences=2 and severity escalated to critical
+PASS R1.3 authenticated users cannot call the writer
+PASS R1.4 unknown category rejected by CHECK
+PASS R1.5 unknown severity rejected by CHECK
+PASS R1.6 owner lists the row; support (no ops.read) sees none; non-staff denied
+PASS R1.7 owner resolves, audit row written, second resolve refused
+PASS R1.8 recurrence after resolve opens a NEW row
+PASS R2.1 destination unset, email disabled by default
+PASS R2.2 default settings queued no email for the notifications above
+PASS R2.3 no hardcoded founder address anywhere in function bodies
+PASS R3.0 hc_tier_write is not callable by clients
+PASS R3.1 A3 writer creates a tier, paid referrals NOT eligible by default
+PASS R3.2 A2 writer creates a tier through the same core (benefits kept, eligibility false)
+PASS R3.3 neither writer lets a non-owner turn paid eligibility on
+PASS R3.4 owner via A2 writer: BOTH eligibility flags move together (sync trigger)
+PASS R3.4b manager may edit an already paid-eligible tier (label) via A3 writer without the owner (no false owner_required)
+PASS R3.5 owner via A3 writer turns it off: flags move together, benefits + assignments untouched
+PASS R3.6 A3 writer still requires a reason; support cannot write tiers
+PASS R3.7 both writers audited at table level with their reason (hc_config_audit) and in hc_tier_audit
+PASS R3.8 tier list returns the union of A2 and A3 keys
+PASS R3.9 members start with NO tier (no paid terms)
+PASS R3.10 A2 member-tier action delegates to the A3 assignment writer
+PASS R3.11 A3 assignment writer: change recorded, unknown tier refused
+PASS R3.12 A2 action keeps its own error codes
+PASS R4.1 paid referrals globally DISABLED by default
+PASS R4.2 a partner on an eligible tier is still not paid-active while the global switch is off
+PASS R5.1 founder channel OFF: A2 behavior unchanged (inbox + applicant_email + staff_email)
+PASS R5.2 founder channel ON: fan-out = inbox + applicant_email only (no second founder email)
+PASS R5.3 duplicate emission is a no-op
+TOTAL pass=30 fail=0

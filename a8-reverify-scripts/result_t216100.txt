@@ -1,0 +1,71 @@
+PASS D1 paid_referrals_enabled defaults FALSE
+PASS G1 paid referrals off -> reconcile paid_referrals_disabled (x5 replays)
+PASS G2 no commission created while off
+PASS G3 creator summary hides amounts/terms while off
+PASS G3b summary says paid_referrals_active false
+PASS A1 support staff cannot activate
+PASS A2 wrong confirmation rejected
+PASS A3 anon cannot call
+PASS T1 hc.manage-only staff cannot set eligibility
+PASS T2 owner creates tier (ineligible)
+PASS A4 owner activates
+PASS A5 re-activate idempotent
+PASS T3 tier not eligible -> held
+PASS T3b replays create exactly one commission
+PASS T3c summary still hides amounts for ineligible member
+PASS T4 after owner releases hold -> pending
+PASS T4b summary now active for eligible member
+PASS V1 frozen terms on existing commission
+PASS P1 below minimum -> not eligible for draft
+PASS P2 draft created
+PASS P3 draft event logged
+PASS P4 re-draft does not double-count (already payable)
+PASS P5 support cannot approve
+PASS P6 cannot record payment on a draft
+PASS P7 approve
+PASS P8 approve replay idempotent
+PASS P9 approved payout is NOT paid; commissions remain payable
+PASS P10 old 2-arg mark_paid cannot mark paid
+PASS P11 no confirmation flag -> refused
+PASS P12 missing reference refused
+PASS P13 future date refused
+PASS P14 support cannot record payment
+PASS P15 still approved after all refusals
+PASS P16 direct SQL approved->paid without confirmation blocked by trigger
+PASS P18 amount immutable
+PASS P19 replay returns already_recorded
+PASS P20 paid state, one payment_recorded event
+PASS P21 commissions flipped to paid exactly once
+PASS P22 different reference on paid payout refused
+PASS P23 paid record final (ref cannot change)
+PASS P24 cannot void a paid payout
+PASS P25 external ref cannot be reused on another payout
+PASS P26 void approved payout
+PASS P27 void replay idempotent
+PASS P17 void payout cannot be re-approved by direct SQL
+PASS H1 history lists events in order
+PASS H2 audit log has recorded-payment entry flagged moved_money_here=false
+PASS R1 reverse recorded payment
+PASS R2 reverse replay idempotent
+PASS R3 commissions back to validated, unlinked
+PASS R4 reversed payout cannot be paid again
+PASS R5 reversed ref no longer blocks reuse (unique only for paid)
+PASS C1 refund of PAID commission -> reversed with clawback recorded
+PASS C2 clawback does NOT auto-reduce eligibility when netting off
+PASS C3 settle requires confirmation
+PASS C4 settle recovered externally
+PASS C5 settle replay idempotent
+PASS C6 conflicting second resolution refused
+PASS C7 settled clawback no longer outstanding
+PASS V2 terms version added (call succeeded)
+PASS V3 new version appended, old untouched
+PASS V4 audit row for terms version
+PASS V5 terms versions are append-only
+PASS V6 config audit append-only
+PASS V7 tier changes audited with reason
+PASS V8 settings activation audited
+PASS V9 partner tier change audited
+PASS V10 audit readable by owner, denied to anon
+PASS X1 deactivate
+PASS X2 draft refused when inactive
+TOTAL pass=70 fail=0

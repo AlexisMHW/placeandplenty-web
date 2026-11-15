@@ -1,0 +1,29 @@
+OK   ROLLBACK_20261114202100_lifecycle_terminal_read_only_enforced.sql
+OK   ROLLBACK_217110.sql
+OK   ROLLBACK_217102.sql
+OK   ROLLBACK_217101.sql
+OK   ROLLBACK_217100.sql
+OK   ROLLBACK_20261114217002_hc_tier_reconcile.sql
+OK   ROLLBACK_216100.sql
+OK   ROLLBACK_215003.sql
+OK   ROLLBACK_215002_hc_campaign_admin_rpcs.sql
+OK   ROLLBACK_215001_hc_basic_membership.sql
+OK   ROLLBACK_215000_cc_ops_staff_rpcs.sql
+OK   ROLLBACK_214003_r1_pre_state.sql
+OK   ROLLBACK_214000_214002.sql
+OK   ROLLBACK_212002_212003.sql
+OK   ROLLBACK_212000_212001.sql
+OK   ROLLBACK_213003.sql
+OK   ROLLBACK_213002.sql
+OK   ROLLBACK_213000_213001.sql
+OK   ROLLBACK_205006_b7_20261114.sql
+OK   ROLLBACK_205005_b5_20261114.sql
+OK   ROLLBACK_205004_b3_QA_20261114.sql
+OK   ROLLBACK_205003_r1_20261114.sql
+OK   ROLLBACK_205002.sql
+OK   ROLLBACK_205000_205001.sql
+OK   ROLLBACK_210000.sql
+OK   ROLLBACK_209000.sql
+FAIL ROLLBACK_202000_202004.sql :: psql:/home/claude/pp-work/a8/native/supabase/qa_package/rollback/ROLLBACK_202000_202004.sql:155: ERROR:  rollback: create_purchase_intent md5 e2235a9517d2 <> captured pre-state 70ee79abce76
+FAIL ROLLBACK_207000.sql :: psql:/home/claude/pp-work/a8/native/supabase/qa_package/rollback/ROLLBACK_207000.sql:21: ERROR:  cannot drop function can_manage_invitations(uuid) because other objects depend on it
+OK   ROLLBACK_20261114145911.sql
