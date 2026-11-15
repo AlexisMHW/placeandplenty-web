@@ -375,6 +375,9 @@ end $f$;
 create or replace function t.mkins(p_tbl text, p_gid uuid) returns text language plpgsql as $f$
 declare cols text := ''; vals text := ''; c record; v text;
 begin
+ if p_tbl = 'guest_update_receipts' then   -- no gathering_id column: link through the gathering's seeded guest_update + invitation_party (202101)
+   return format('insert into public.guest_update_receipts(guest_update_id, invitation_party_id) values ((select id from public.guest_updates where gathering_id=%L limit 1), (select id from public.invitation_parties where gathering_id=%L limit 1))', p_gid, p_gid);
+ end if;
  for c in select a.attname, format_type(a.atttypid,a.atttypmod) ft, ty.typtype, ty.oid toid
             from pg_attribute a join pg_type ty on ty.oid=a.atttypid
            where a.attrelid=('public.'||p_tbl)::regclass and a.attnum>0 and not a.attisdropped
@@ -474,9 +477,14 @@ begin
  -- ---- the 202100 sweep: every OTHER guarded table stays read-only on completed gatherings, window open or not; only gathering_photos differs, and only inside the window ----
  declare tbls text[]; tb text; bad text; cases text[] := array['A','g29','g30m','gDone','g30','g30p','gCan']; cs text; ntot int; notblocked text;
  begin
-   select array_agg(distinct c.relname order by c.relname) into tbls from pg_trigger tg join pg_class c on c.oid=tg.tgrelid where tg.tgname in ('trg_terminal_read_only','trg_terminal_read_only_strict') and not tg.tgisinternal and c.relname not in ('gatherings','gathering_days','guest_update_receipts');   -- gathering_days: multi-day only (own test below); guest_update_receipts: 202100 defect, see V6.8
+   select array_agg(distinct c.relname order by c.relname) into tbls from pg_trigger tg join pg_class c on c.oid=tg.tgrelid where tg.tgname in ('trg_terminal_read_only','trg_terminal_read_only_strict') and not tg.tgisinternal and c.relname not in ('gatherings','gathering_days');   -- gathering_days: multi-day only (own test below); guest_update_receipts IS in the sweep since 202101 (real guest_updates/invitation_parties links, seeded below)
    ntot := cardinality(tbls);
-   perform t.eq('V6.0 sweep covers the 202100 table list (>= 25 child tables incl. gathering_photos; gathering_days and guest_update_receipts handled separately)', (ntot >= 25 and 'gathering_photos' = any(tbls))::text, 'true');
+   -- seed one guest_update + one invitation_party per sweep gathering (superuser, no claims: auth.uid() null => the non-strict triggers pass) so guest_update_receipts can be exercised through its real links
+   foreach cs in array cases loop
+     insert into public.guest_updates(gathering_id, author_user_id, title, body) values ((gids->>cs)::uuid, (owners->>cs)::uuid, 'sweep', 'sweep');
+     insert into public.invitation_parties(gathering_id, party_name) values ((gids->>cs)::uuid, 'sweep');
+   end loop;
+   perform t.eq('V6.0 sweep covers the 202100 table list (>= 25 child tables incl. gathering_photos and, since 202101, guest_update_receipts; gathering_days handled separately)', (ntot >= 25 and 'gathering_photos' = any(tbls) and 'guest_update_receipts' = any(tbls))::text, 'true');
    foreach cs in array cases loop
      g := (gids->>cs)::uuid; notblocked := '';
      foreach tb in array tbls loop
@@ -492,9 +500,9 @@ begin
    -- sanity: the sweep must really reach the triggers on the ACTIVE gathering (inserts are not refused there for read-only reasons)
    perform t.eq('V6.9 on the active gathering no table is refused with gathering_read_only', (select count(*) from unnest(tbls) zz where t.ro(t.tryn((owners->>'A')::uuid,null,t.mkins(zz,(gids->>'A')::uuid))))::text, '0');
  end;
- -- guest_update_receipts: INFO (pre-existing 202100 defect, NOT touched here): the strict trigger reads gathering_id from a table that has no such column, so every write raises 42703
- perform t.eq('V6.8 INFO guest_update_receipts: 202100 strict trigger raises 42703 on ANY write (table has no gathering_id) - reported to the coordinator, not changed by S2 (202100 stays last and untouched)',
-   left(t.tryn(null,'service_role','insert into public.guest_update_receipts(guest_update_id, invitation_party_id) values (gen_random_uuid(), gen_random_uuid())'),42), 'ERR 42703:record "old" has no field "gathe');
+ -- guest_update_receipts: the 202100 defect (strict trigger read a gathering_id column this table does not have => 42703 on every write) is fixed by 202101; full coverage in ts202101.sql
+ perform t.eq('V6.8 guest_update_receipts (202101): service-role insert is no longer a 42703 - it is NOT refused for an active gathering and IS refused gathering_read_only for a completed one',
+   t.tryn(null,'service_role',t.mkins('guest_update_receipts',(gids->>'A')::uuid))||'/'||t.tryn(null,'service_role',t.mkins('guest_update_receipts',(gids->>'g30')::uuid)), 'OK:1/ERR P0001:gathering_read_only');
  -- multi-day gatherings: same window rule (last day 23:59:59 + 30 days); gathering_days (multi-day schedule) stays read-only with no exception
  declare mo uuid:=t.mkuser(); mc uuid:=t.mkuser(); gmo uuid; gmc uuid; rr text;
  begin
