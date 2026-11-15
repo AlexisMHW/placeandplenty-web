@@ -173,13 +173,35 @@ describe("page wiring and package integrity", () => {
     assert.match(fn, /requirePayoutOwner\(PATH\)/); assert.ok(fn.indexOf("requirePayoutOwner") < fn.indexOf("resolvePartialRefundHoldWith"));
   });
   test("web cc_sql/followup checksums match FOLLOWUP_ORDER.tsv and every migration has a rollback and a test", () => {
-    const tsv = read("cc_sql/followup/FOLLOWUP_ORDER.tsv").trim().split("\n").slice(1).map((l) => l.split("\t"));
-    assert.ok(tsv.length >= 2);
-    for (const [, file, sha, , rb] of tsv) {
-      assert.equal(createHash("sha256").update(readFileSync(new URL(`../cc_sql/followup/${file}`, import.meta.url))).digest("hex").slice(0, 12), sha, file);
+    const sha12 = (rel: string) => createHash("sha256").update(readFileSync(new URL(`../cc_sql/followup/${rel}`, import.meta.url))).digest("hex").slice(0, 12);
+    const rows = read("cc_sql/followup/FOLLOWUP_ORDER.tsv").trim().split("\n").slice(1).map((l) => l.split("\t"));
+    const migrations = rows.filter((r) => /^\d+$/.test(r[0]));
+    const replacements = rows.filter((r) => /^R\d+$/.test(r[0]));
+    assert.equal(migrations.length + replacements.length, rows.length, "every row is a numbered migration or an R<n> replacement");
+    assert.deepEqual(migrations.map((r) => r[1].replace(/^src\/(\d+)_.*$/, "$1")), ["20261114217490", "20261114217491"]);
+    for (const [, file, sha, , rb] of migrations) {
+      assert.equal(sha12(file), sha, file);
       assert.ok(existsSync(new URL(`../cc_sql/followup/rollback/${rb}`, import.meta.url)), rb);
     }
     assert.ok(existsSync(new URL("../cc_sql/followup/tests/ts217490.sql", import.meta.url)) && existsSync(new URL("../cc_sql/followup/tests/ts217491.sql", import.meta.url)));
+    // Replacement rows (corrected rollbacks / verify): file exists, checksum matches, not a forward step (rollback column "-"), and the replacement maps to a shipped file in ROLLBACK_REPLACEMENTS.tsv.
+    assert.equal(replacements.length, 5);
+    const map = read("cc_sql/followup/ROLLBACK_REPLACEMENTS.tsv").trim().split("\n").slice(1).map((l) => l.split("\t"));
+    for (const [, file, sha, phase, rb] of replacements) {
+      assert.ok(existsSync(new URL(`../cc_sql/followup/${file}`, import.meta.url)), file);
+      assert.equal(sha12(file), sha, file);
+      assert.equal(rb, "-", `${file} is not a forward step`);
+      assert.match(file, /^(rollback|verify)\/.+_CORRECTED\.sql$/, file);
+      const m = /^replaces (\S+\.sql)/.exec(phase); assert.ok(m, `${file}: phase names the shipped file it replaces`);
+      if (file.startsWith("rollback/")) {
+        const row = map.find((r) => r[1] === file.slice("rollback/".length));
+        assert.ok(row, `${file} is listed in ROLLBACK_REPLACEMENTS.tsv`);
+        assert.equal(row[0], m[1], "shipped file named in both lists");
+        assert.match(row[0], /^ROLLBACK_.+\.sql$/);
+        assert.equal(row[3], sha, "same checksum in both lists");
+      } else assert.equal(m[1], "verify/01_pre_apply_readonly.sql");
+    }
+    assert.equal(map.length, 4, "every corrected rollback is mapped to its shipped file");
   });
   test("the follow-up SQL does not touch approved economics, SMS or paid-referral defaults", () => {
     const sql = (read("cc_sql/followup/src/20261114217490_hc_partial_refund_hold_resolution.sql") + read("cc_sql/followup/src/20261114217491_hc_payout_draft_owner_only.sql")).split("\n").filter((l) => !l.trim().startsWith("--")).join("\n");
