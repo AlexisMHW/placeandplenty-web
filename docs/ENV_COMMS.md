@@ -1,15 +1,20 @@
 # Communications / founder notification configuration
 
-Config only. Never hardcode these in source (a test enforces it).
+Config only. No founder address is hardcoded anywhere in source, tests or these docs (a test enforces it).
 
+## Founder notifications: ONE canonical path
+- Inbox: `cc_notifications` (Command Center, `/command-center/inbox`). Always recorded, permission controlled.
+- Email configuration: `cc_notification_settings` (database), set and verified by the owner in Command Center, Inbox and notification settings. Starts unset, disabled and unverified.
+- The Hosting Collective inbox page has no destination form. The earlier `hc_notification_destinations` UI and the env-based `lib/comms/founder-notify.ts` module were removed; there is no second config source in web code.
+- Deployment values (operator reference, used only when entering the setting; the web app does not read them): `FOUNDER_NOTIFICATION_EMAIL` = the designated address, set per environment, never committed; `FOUNDER_NOTIFICATION_EMAIL_VERIFIED` = `false` until delivery has been verified.
+
+## Send switches (all default OFF)
 | Variable | Default | Meaning |
 |---|---|---|
 | COMMS_SEND_ENABLED | unset (off) | Exactly `true` allows real provider sends. |
-| FOUNDER_NOTIFY_ENABLED | unset (off) | Enables the founder email channel (inbox is always recorded). |
-| FOUNDER_NOTIFICATION_EMAIL | documented default: alexis@placeandplenty.com (founder-confirmed 2026-11-14) | Destination. Set per environment; not read from source. |
-| FOUNDER_NOTIFICATION_EMAIL_VERIFIED | `false` | Must be exactly `true` before any founder email is sent. Set only after destination + delivery are verified. |
-| FOUNDER_NOTIFY_RETRY_SECONDS | 60,300,1800 | Retry backoff. |
-| FOUNDER_NOTIFY_MAX_ATTEMPTS | 4 (cap 10) | Max delivery attempts. |
-| SITE_URL | none | Base for the inbox link `/command-center/inbox/{id}`. |
+| HC_NOTIFY_DISPATCH_ENABLED | unset (off) | Exactly `true` lets `/api/hosting-collective/dispatch` (and the post-decision hook) drain queued applicant approval/decline emails. |
+| HC_DISPATCH_SECRET | unset | Bearer secret (16+ chars) required by the dispatch route. |
+| SUPABASE_SERVICE_ROLE_KEY | unset | Read only by `lib/hc/dispatch-server.ts` and only when the dispatch flag is on. |
+| SITE_URL | none | Base for links in messages. |
 
-Recommended initial values: `FOUNDER_NOTIFICATION_EMAIL=alexis@placeandplenty.com`, `FOUNDER_NOTIFICATION_EMAIL_VERIFIED=false`.
+Approval/decline enqueue happens once, atomically, in the database (`hc_review_application`). Web never enqueues a second time. No real mail provider exists in this repo: the disabled provider refuses every send. SMS stays disabled.

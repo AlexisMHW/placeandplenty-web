@@ -55,20 +55,3 @@ export async function ackEventForm(_p: ActionResult | null, fd: FormData): Promi
   revalidatePath(`${BASE}/inbox`); return { ok: true, code: "saved" };
 }
 
-export async function addDestinationForm(_p: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  const { supabase } = await requireStaff("hc.payout", `${BASE}/inbox`);
-  const a = typeof fd.get("address") === "string" ? (fd.get("address") as string).trim() : "";
-  const label = typeof fd.get("label") === "string" ? (fd.get("label") as string).trim() : "";
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a) || a.length > 254) return { ok: false, code: "invalid_address" };
-  const { error } = await supabase.rpc("hc_admin_add_destination", { p_address: a, p_label: label || null });
-  if (error) return { ok: false, code: codeFrom(error.message) };
-  revalidatePath(`${BASE}/inbox`); return { ok: true, code: "saved" };
-}
-
-export async function setDestinationActiveForm(_p: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  const { supabase } = await requireStaff("hc.payout", `${BASE}/inbox`);
-  const id = String(fd.get("id") ?? ""); if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, code: "invalid_id" };
-  const { error } = await supabase.rpc("hc_admin_set_destination_active", { p_id: id, p_active: fd.get("active") === "true" });
-  if (error) return { ok: false, code: codeFrom(error.message) };
-  revalidatePath(`${BASE}/inbox`); return { ok: true, code: "saved" };
-}

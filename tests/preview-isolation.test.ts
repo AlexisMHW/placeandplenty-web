@@ -99,7 +99,7 @@ test("guard script is plain JS (no TS type stripping needed on the build host) a
 
 test("preview fails unless analytics mode is exactly off", () => {
   const base = { vercelEnv: "preview", supabaseUrl: `https://${QA}.supabase.co`, anonKey: jwt(QA) };
-  for (const m of [undefined, "", "consent", "legacy", "OFF", "on"]) assert.equal(checkPreviewIsolation({ ...base, analyticsMode: m }).ok, false, String(m));
+  for (const m of [undefined, "", "consent", "legacy", "OFF", "on", " off ", "off ", " off", "off\n", "\toff"]) assert.equal(checkPreviewIsolation({ ...base, analyticsMode: m }).ok, false, String(m));
   assert.equal(checkPreviewIsolation({ ...base, analyticsMode: "off" }).ok, true);
 });
 
