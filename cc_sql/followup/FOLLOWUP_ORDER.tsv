@@ -1,3 +1,8 @@
 step	file	sha256_12	phase	rollback
 1	src/20261114217490_hc_partial_refund_hold_resolution.sql	4cb689d5fc7a	F1 follow-up J (owner-controlled partial-refund hold resolution: release|reverse, sweep respects it; Gate 8 prerequisite)	ROLLBACK_217490.sql
 2	src/20261114217491_hc_payout_draft_owner_only.sql	506023783990	F2 follow-up J (hc_create_payout_draft owner-only at the database; hc.payout stays view-only)	ROLLBACK_217491.sql
+R1	rollback/ROLLBACK_20261114145911_CORRECTED.sql	440fd9a3853b	replaces ROLLBACK_20261114145911.sql (D4 orphan normalize_entitlement_event_source)	-
+R2	rollback/ROLLBACK_207000_CORRECTED.sql	965bb74c38b9	replaces ROLLBACK_207000.sql (D5 exact QA bodies of save/remove_invitation_artwork)	-
+R3	rollback/ROLLBACK_202000_202004_CORRECTED.sql	cd090dadf067	replaces ROLLBACK_202000_202004.sql (D1 QA create_gathering_invitation body f840f1f4e6b8, D2 policy count, D4 orphan cohost_gathering_column_capability)	-
+R4	rollback/ROLLBACK_217201_CORRECTED.sql	79d741efa5f9	replaces ROLLBACK_217201.sql (D3 QA bodies of the paper-order functions)	-
+R5	verify/01_pre_apply_readonly_CORRECTED.sql	4757637022a0	replaces verify/01_pre_apply_readonly.sql (D6 section C only checks functions that exist on QA)	-

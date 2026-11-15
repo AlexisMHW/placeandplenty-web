@@ -1,0 +1,45 @@
+apply main: 61 ok, 0 fail
+followup forward: ok=2 fail=0
+rollback units: 53 ok, 0 fail
+PASS 1 full rollback == baseline [fp] identical (1646 lines)
+PASS 1 full rollback == baseline [nonfn] identical (1362 lines)
+PASS 1 full rollback == baseline [tbl] identical (58 lines)
+PASS 1 full rollback == baseline [fn] identical (208 lines)
+PASS 1c ROLLBACK_20261114145911_CORRECTED can be run again
+PASS 1c ROLLBACK_207000_CORRECTED can be run again
+PASS 1c ROLLBACK_217201_CORRECTED can be run again
+PASS 1d second run of the three leaves the baseline untouched [fp] identical (1646 lines)
+PASS 1d second run of the three leaves the baseline untouched [nonfn] identical (1362 lines)
+PASS 1d second run of the three leaves the baseline untouched [tbl] identical (58 lines)
+PASS 1d second run of the three leaves the baseline untouched [fn] identical (208 lines)
+PASS 1e negative control: shipped ROLLBACK_202000_202004 fails with the D1 md5 mismatch
+followup forward: ok=2 fail=0
+PASS 1b re-apply after full rollback == first apply [tbl, the 58 pre-existing tables, strict] identical
+PASS 1b re-apply after full rollback == first apply [fp] identical (2944 lines)
+PASS 1b re-apply after full rollback == first apply [nonfn] identical (2479 lines)
+PASS 1b re-apply after full rollback == first apply [tblx] identical (113 lines)
+PASS 1b re-apply after full rollback == first apply [fn] identical (389 lines)
+followup forward: ok=2 fail=0
+PASS 2 rollback of steps >= 40 + follow-up == apply of steps 1..39 [tbl, the 58 pre-existing tables, strict] identical
+PASS 2 rollback of steps >= 40 + follow-up == apply of steps 1..39 [fp] identical (2818 lines)
+PASS 2 rollback of steps >= 40 + follow-up == apply of steps 1..39 [nonfn] identical (2377 lines)
+PASS 2 rollback of steps >= 40 + follow-up == apply of steps 1..39 [tblx] identical (109 lines)
+PASS 2 rollback of steps >= 40 + follow-up == apply of steps 1..39 [fn] identical (365 lines)
+followup forward: ok=2 fail=0
+PASS 2b re-apply 40..61 + follow-up == first full apply [tbl, the 58 pre-existing tables, strict] identical
+PASS 2b re-apply 40..61 + follow-up == first full apply [fp] identical (2944 lines)
+PASS 2b re-apply 40..61 + follow-up == first full apply [nonfn] identical (2479 lines)
+PASS 2b re-apply 40..61 + follow-up == first full apply [tblx] identical (113 lines)
+PASS 2b re-apply 40..61 + follow-up == first full apply [fn] identical (389 lines)
+followup forward: ok=2 fail=0
+PASS 3 rollback of steps >= 2 + follow-up == apply of step 1 only [fp] identical (1648 lines)
+PASS 3 rollback of steps >= 2 + follow-up == apply of step 1 only [nonfn] identical (1363 lines)
+PASS 3 rollback of steps >= 2 + follow-up == apply of step 1 only [tbl] identical (58 lines)
+PASS 3 rollback of steps >= 2 + follow-up == apply of step 1 only [fn] identical (209 lines)
+followup forward: ok=2 fail=0
+PASS 3b re-apply 2..61 + follow-up == first full apply [tbl, the 58 pre-existing tables, strict] identical
+PASS 3b re-apply 2..61 + follow-up == first full apply [fp] identical (2944 lines)
+PASS 3b re-apply 2..61 + follow-up == first full apply [nonfn] identical (2479 lines)
+PASS 3b re-apply 2..61 + follow-up == first full apply [tblx] identical (113 lines)
+PASS 3b re-apply 2..61 + follow-up == first full apply [fn] identical (389 lines)
+ROUNDTRIP pass=36 fail=0
