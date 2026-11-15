@@ -1,10 +1,13 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/admin/server";
+import { submitApplicationReview } from "@/lib/hc/review-flow";
+import { afterApplicationDecision } from "@/lib/hc/dispatch-runner";
+import { runConfiguredHcDispatch } from "@/lib/hc/dispatch-server";
 import { parseReviewForm, parseSubmissionReviewForm } from "@/lib/admin/hc";
 
 // SERVER ACTIONS. Each one (1) re-checks the staff permission on the server, (2) validates the form, (3) calls ONE database
-// function that checks the permission again and writes the audit log. No service-role key; no direct table writes.
+// function that checks the permission again and writes the audit log. No direct table writes. The service-role key is touched only by lib/hc/dispatch-server.ts, and only when HC_NOTIFY_DISPATCH_ENABLED is on (default off).
 // Return value is only a short code the page may show; database error text is never forwarded to the browser.
 
 export async function reviewApplication(formData: FormData): Promise<{ ok: boolean; code: string }> {
@@ -12,12 +15,10 @@ export async function reviewApplication(formData: FormData): Promise<{ ok: boole
   const parsed = parseReviewForm(formData);
   if (!parsed.ok) return { ok: false, code: parsed.error };
   const v = parsed.value;
-  const { error } = await supabase.rpc("hc_review_application", {
-    p_id: v.id, p_decision: v.decision, p_tier: v.tier, p_note: v.note, p_code: v.code,
-  });
-  if (error) return { ok: false, code: /tier_not_configured|already_approved|application_closed|invalid_code_format/.exec(error.message)?.[0] ?? "failed" };
+  const result = await submitApplicationReview(supabase, v, (decision) => afterApplicationDecision(decision, runConfiguredHcDispatch));
+  if (!result.ok) return result;
   revalidatePath("/command-center/hosting-collective/applications");
-  return { ok: true, code: "saved" };
+  return result;
 }
 
 export async function reviewSubmission(formData: FormData): Promise<{ ok: boolean; code: string }> {

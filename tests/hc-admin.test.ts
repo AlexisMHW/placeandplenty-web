@@ -125,7 +125,7 @@ test("every HC page requires hc.read and every server action requires its own pe
   const actions = readFileSync(join(HC_DIR, "actions.ts"), "utf8");
   const fns = actions.split(/export async function /).slice(1);
   assert.equal(fns.length, 3);
-  for (const fn of fns) assert.ok(fn.indexOf("requireStaff(") > -1 && fn.indexOf("requireStaff(") < fn.indexOf(".rpc("), fn.slice(0, 40));
+  for (const fn of fns) assert.ok(fn.indexOf("requireStaff(") > -1 && fn.indexOf("requireStaff(") < Math.min(...[".rpc(", "submitApplicationReview("].map((t) => fn.indexOf(t) < 0 ? Infinity : fn.indexOf(t))), fn.slice(0, 40)); // reviewApplication reaches its single rpc through lib/hc/review-flow.ts
   assert.match(actions, /requireStaff\("hc\.applications\.review"/);
   assert.match(actions, /requireStaff\("hc\.content\.review"/);
   assert.match(actions, /requireStaff\("hc\.manage"/);

@@ -74,7 +74,7 @@ export function checkPreviewIsolation(input) {
     reasons.push("NEXT_PUBLIC_SUPABASE_ANON_KEY is not an anon key of the approved QA Supabase project");
   }
   // Analytics must be explicitly off (default "consent" would load GA4/PostHog after consent).
-  if ((input.analyticsMode ?? "").trim() !== "off") {
+  if (input.analyticsMode !== "off") {
     reasons.push('NEXT_PUBLIC_ANALYTICS_MODE must be explicitly "off" for Preview builds');
   }
   return { ok: reasons.length === 0, applies: true, reasons };

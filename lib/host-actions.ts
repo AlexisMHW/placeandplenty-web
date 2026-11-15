@@ -18,6 +18,7 @@ import {
   type CreateGatheringInput,
 } from "@/lib/gathering-creation";
 import { LEVEL_ERROR_MESSAGES, NOT_ALLOWED_MESSAGE, ASSIGNABLE_LEVELS, type AssignableLevel } from "@/lib/cohost-permissions";
+import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
 import {
   ALLOWED_ARTWORK_MIME_TYPES,
   ARTWORK_REJECTION_MESSAGES,
@@ -121,6 +122,10 @@ function translate(error: { message?: string; code?: string } | null): string {
 
   if (raw.includes("gathering_archived_read_only")) {
     return "This gathering is archived, so it can't be changed. Unarchive it in the app first.";
+  }
+  // D2: completed and cancelled gatherings are read-only (database trigger, P0001). No exceptions.
+  if (raw.includes("gathering_read_only")) {
+    return "This gathering is finished or cancelled, so it can't be changed.";
   }
 
   // THE THREE PLAN LIMITS COME FIRST, before the older `free_gathering_slot`
@@ -276,6 +281,8 @@ export async function addMenuItem(
   if (!name) return { ok: false, message: "Give the dish a name." };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.from("menu_items").insert({
     gathering_id: gatheringId,
     name,
@@ -295,6 +302,8 @@ export async function updateMenuServings(
   servings: number | null
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("menu_items")
     // user_override marks this as the host's decision rather than the
@@ -317,6 +326,8 @@ export async function deleteMenuItem(
   itemId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("menu_items")
     .delete()
@@ -353,6 +364,8 @@ export async function addShoppingItem(
   if (!name) return { ok: false, message: "Give the item a name." };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.from("shopping_items").insert({
     gathering_id: gatheringId,
     name,
@@ -381,6 +394,8 @@ export async function setShoppingStatus(
   }
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("shopping_items")
     .update({ status })
@@ -400,6 +415,8 @@ export async function deleteShoppingItem(
   itemId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("shopping_items")
     .delete()
@@ -436,6 +453,8 @@ export async function addContribution(
   if (!itemName) return { ok: false, message: "Say what you need someone to bring." };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.from("contributions").insert({
     gathering_id: gatheringId,
     item_name: itemName,
@@ -468,6 +487,8 @@ export async function setContributionStatus(
   }
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("contributions")
     .update({
@@ -495,6 +516,8 @@ export async function deleteContribution(
   contributionId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("contributions")
     .delete()
@@ -533,6 +556,8 @@ export async function setRsvpStatus(
   }
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("gathering_guests")
     .update({ rsvp_status: status })
@@ -553,6 +578,8 @@ export async function updateGuestNotes(
   formData: FormData
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const result = await supabase
     .from("gathering_guests")
     .update({
@@ -652,6 +679,8 @@ export async function removeCoHost(
   memberId: string
 ): Promise<ActionResult> {
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { data, error } = await supabase.rpc("remove_gathering_member", {
     p_member_id: memberId,
   });
@@ -679,6 +708,8 @@ export async function setCoHostPermission(
     return { ok: false, message: LEVEL_ERROR_MESSAGES.invalid_permission_level };
   }
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("set_cohost_permission_level", {
     p_member_id: memberId,
     p_level: level as AssignableLevel,
@@ -1111,6 +1142,8 @@ export async function updateGatheringDetails(
   if (!name) return { ok: false, message: "The gathering needs a name." };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
 
   const patch: Record<string, unknown> = {
     name,
@@ -1390,6 +1423,8 @@ export async function recordInvitationDecision(
   if (decision === "later") return { ok: true };
 
   const supabase = createClient();
+  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  if (__writeBlock) return __writeBlock;
 
   if (decision === "already_invited") {
     const { error } = await supabase.rpc("set_invitation_status", {

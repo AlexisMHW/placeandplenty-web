@@ -64,3 +64,34 @@ export const dollars = (cents: number | null | undefined) => (typeof cents === "
 export function referralsLive(env: { NEXT_PUBLIC_HC_REFERRALS_LIVE?: string }): boolean {
   return env.NEXT_PUBLIC_HC_REFERRALS_LIVE === "1";
 }
+
+// ---- Read-only earnings/referrals view + assignment expiry (existing creator_portal_summary data only; no new RPC) ----
+const STATUS_LABEL: Record<string, string> = { pending: "Pending", validated: "Validated", approved: "Approved for payout", paid: "Paid (recorded manually)", reversed: "Reversed", voided: "Voided" };
+const label = (k: string) => STATUS_LABEL[k] ?? k.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+
+/** Rows for the read-only results section. Returns null when nothing may be shown (referrals not live / not eligible): no numbers, no estimates. */
+export function earningsView(d: Pick<PortalData, "signups" | "commissionCents" | "conversions" | "minPayoutCents">, paidLive: boolean):
+  { signups: string; conversions: { label: string; value: string }[]; commissions: { label: string; value: string }[]; minPayout: string | null } | null {
+  if (!paidLive) return null;
+  return {
+    signups: d.signups === null ? "n/a" : String(d.signups),
+    conversions: Object.entries(d.conversions).map(([k, v]) => ({ label: label(k), value: String(v) })),
+    commissions: Object.entries(d.commissionCents).map(([k, v]) => ({ label: label(k), value: dollars(v) })),
+    minPayout: d.minPayoutCents === null ? null : dollars(d.minPayoutCents),
+  };
+}
+
+const CLOSED_ASSIGNMENT: Record<string, string> = {
+  expired: "This offer has expired. It can no longer be accepted or submitted to. Contact Place & Plenty if you would like it reopened.",
+  cancelled: "This campaign was closed by Place & Plenty. No further action is needed.",
+  closed: "This campaign is closed. No further action is needed.",
+  declined: "You declined this campaign.",
+  completed: "This campaign is complete.",
+};
+/** Read-only copy for an assignment that can no longer be acted on, else null. Only statuses the database itself reports are mapped. */
+export const closedAssignmentCopy = (status: string): string | null => CLOSED_ASSIGNMENT[status] ?? null;
+export const assignmentActionable = (status: string): "respond" | "submit" | null => (status === "offered" ? "respond" : status === "accepted" || status === "submitted" ? "submit" : null);
+
+/** A sign-in that has lapsed: Supabase reports an expired JWT / missing session. Used to say "session expired" instead of a silent bounce. */
+export const sessionExpired = (error: { message?: string; status?: number } | null | undefined): boolean =>
+  !!error && (error.status === 401 || /expired|invalid.*(jwt|token)|session.*(missing|not found)/i.test(error.message ?? ""));

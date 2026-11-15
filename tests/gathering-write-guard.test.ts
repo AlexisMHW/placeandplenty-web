@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { register } from "node:module";
 import { readFileSync, readdirSync } from "node:fs";
 import { gatheringWriteBlock, GATHERING_READ_ONLY_MESSAGE, GATHERING_STATUS_UNKNOWN_MESSAGE } from "../lib/gathering-write-guard.ts";
+import { READ_ONLY_COMMS_MESSAGE } from "../lib/comms/readonly-guard.ts";
 import { makeFakeSupabase } from "./helpers/fake-supabase.ts";
 
 register("./helpers/alias-loader.mjs", import.meta.url);
@@ -46,6 +47,12 @@ describe("gatheringWriteBlock (server-side D2 guard)", () => {
 });
 
 // ---- Behavioural: the REAL server actions, run against a fake client ---------------------------------
+// host-actions.ts: every gathering-scoped write action, run for real (D1). Non-scoped / lifecycle / read helpers excluded.
+const HOST_ACTIONS_SKIP = ["saveGatheringDraft", "finaliseGatheringCreation", "countGatheringInvitees", "recordShareInitiatedWeb", "acceptCoHostInvitation", "declineCoHostInvitation", "createGatheringWithDetails",
+  // user-scoped (guest book / closet belong to the user, not a gathering):
+  "addGuestBookPerson", "updateGuestBookPerson", "setGuestSaved", "deleteGuestBookPerson", "addClosetItem", "updateClosetItem", "archiveClosetItem", "restoreClosetItem",
+  // validate their arguments before touching the database; exercised with valid arguments in the explicit test below:
+  "inviteCoHost", "reissueCoHostInvitation", "saveInvitationArtwork", "setCoHostPermission", "setContributionStatus", "setRsvpStatus", "setShoppingStatus"];
 const MODULES: Record<string, string[]> = {
   "../lib/menu-actions.ts": [],
   "../lib/shopping-actions.ts": [],
@@ -59,9 +66,11 @@ const MODULES: Record<string, string[]> = {
   "../lib/multi-day-actions.ts": ["getMultiDayAccessState", "getMultiDayLockInGate", "getMultiDayPassStep", "finishMultiDayGathering"],
   "../lib/closet-smart-actions.ts": ["checkSmartClosetWeb"],
   "../lib/recipe-source-actions.ts": [],
+  "../lib/host-actions.ts": HOST_ACTIONS_SKIP,
 };
 
 // Pre-existing, stricter-or-equal refusals that fire before the shared guard (photo workspace already refuses).
+const COMMS_GUARDED = new Set(["inviteCoHost", "reissueCoHostInvitation", "saveInvitationArtwork"]); // guarded via commsReadOnlyBlock (same status RPC, comms wording)
 const OWN_REFUSAL_OK = new Set(["uploadGatheringPhotoWeb", "saveStyleBoardWeb", "uploadStyleImageWeb", "deleteStyleImageWeb"]);
 function formFor(): FormData {
   const f = new FormData();
@@ -129,12 +138,37 @@ describe("every mutating web action refuses read-only gatherings (no exceptions,
           else if (writes.length) failures.push(`${a.name}: WROTE ${writes.map((w: any) => w.name).join(",")}`);
           else if (OWN_REFUSAL_OK.has(a.name)) continue;
           else if (!fake.calls.some((c: any) => c.kind === "status")) failures.push(`${a.name}: never checked effective status (message=${res?.message})`);
-          else if (res?.message !== GATHERING_READ_ONLY_MESSAGE) failures.push(`${a.name}: wrong message "${res?.message}"`);
+          else if (res?.message !== GATHERING_READ_ONLY_MESSAGE && !(COMMS_GUARDED.has(a.name) && res?.message === READ_ONLY_COMMS_MESSAGE)) failures.push(`${a.name}: wrong message "${res?.message}"`);
         }
         assert.deepEqual(failures, []);
       });
     }
   }
+
+  test("host-actions with validated arguments: refused on read-only, zero writes (D1)", async () => {
+    const m: any = await import("../lib/host-actions.ts");
+    const form = new FormData(); form.set("invited_email", "a@b.test");
+    const calls: [string, unknown[]][] = [
+      ["inviteCoHost", ["g-1", form]], ["reissueCoHostInvitation", ["g-1", "a@b.test"]],
+      ["saveInvitationArtwork", ["g-1", "g-1/a.png", "image/png", "a.png"]], ["removeCoHost", ["g-1", "m-1"]],
+      ["setCoHostPermission", ["g-1", "m-1", "planner"]], ["setContributionStatus", ["g-1", "c-1", "confirmed"]],
+      ["setRsvpStatus", ["g-1", "guest-1", "yes"]], ["setShoppingStatus", ["g-1", "s-1", "bought"]],
+    ];
+    const failures: string[] = [];
+    for (const status of READ_ONLY) for (const [name, args] of calls) {
+      const fake = makeFakeSupabase({ status, userId: "u-cohost" });
+      (globalThis as any).__fakeSupabase = fake;
+      const res: any = await m[name](...args);
+      if (res?.ok !== false || fake.calls.some(isWrite) || !fake.calls.some((c: any) => c.kind === "status")) failures.push(`${status}:${name}:${res?.message}`);
+    }
+    assert.deepEqual(failures, []);
+  });
+
+  test("host-actions translate() maps the database gathering_read_only error to a clear message", async () => {
+    const src = readFileSync(new URL("../lib/host-actions.ts", import.meta.url), "utf8");
+    assert.match(src, /raw\.includes\("gathering_read_only"\)/);
+    assert.match(src, /finished or cancelled, so it can't be changed/);
+  });
 
   test("unknown/unreadable status fails closed for every action (no writes)", async () => {
     const failures: string[] = [];
@@ -167,7 +201,11 @@ describe("every mutating web action refuses read-only gatherings (no exceptions,
 const LIFECYCLE_OR_READ = new Set(["createHouseholdWeb", "finishGathering", "cancelGathering", "gatherAgain", "finishMultiDayGathering",
   "getMultiDayAccessState", "getMultiDayLockInGate", "getMultiDayPassStep", "checkSmartClosetWeb", "countGatheringInvitees",
   "recordShareInitiatedWeb", "acceptCoHostInvitation", "declineCoHostInvitation", "reissueCoHostInvitation"]);
-const PENDING_OWNER_FILES = new Set(["host-actions.ts"]);
+// host-actions.ts is fully guarded now; no file is allowed to be "pending".
+// Draft-only creation steps are not read-only-gated: saveGatheringDraft edits a draft the caller is composing and
+// finaliseGatheringCreation only flips status draft->active (it is a lifecycle step and has .eq("status","draft")).
+LIFECYCLE_OR_READ.add("saveGatheringDraft");
+LIFECYCLE_OR_READ.add("finaliseGatheringCreation");
 
 describe("weather actions keep their own read-only guard (pre-existing message)", () => {
   for (const status of READ_ONLY) {
@@ -187,8 +225,8 @@ describe("weather actions keep their own read-only guard (pre-existing message)"
 describe("static coverage of server-action files", () => {
   const dir = new URL("../lib/", import.meta.url);
   const files = readdirSync(dir).filter((f) => f.endsWith("-actions.ts") || f === "cohost-permissions.ts");
-  test("every gathering-scoped export is guarded, lifecycle/read-only, or tracked pending", () => {
-    const unguarded: string[] = []; const pending: string[] = [];
+  test("every gathering-scoped export is guarded or lifecycle/read-only (no pending allowance)", () => {
+    const unguarded: string[] = [];
     for (const f of files) {
       const src = readFileSync(new URL(f, dir), "utf8");
       if (!/^["']use server["']/m.test(src)) continue;
@@ -199,13 +237,12 @@ describe("static coverage of server-action files", () => {
         const [, name, params] = m;
         const scoped = /^\s*(\{[^}]*)?gatheringId\b/.test(params) || /\bgatheringId\s*:/.test(params.split(",")[0] ?? "");
         if (!scoped || LIFECYCLE_OR_READ.has(name)) continue;
-        const guarded = /gatheringWriteBlock\(/.test(p) || /effective_gathering_status/.test(p) || /assertWritable|ensureWritable|ensureEditable|readOnlyBlock/.test(p);
+        const guarded = /gatheringWriteBlock\(/.test(p) || /effective_gathering_status/.test(p) || /assertWritable|ensureWritable|ensureEditable|readOnlyBlock|commsReadOnlyBlock/.test(p);
         if (guarded) continue;
-        (PENDING_OWNER_FILES.has(f) ? pending : unguarded).push(`${f}:${name}`);
+        unguarded.push(`${f}:${name}`);
       }
     }
     assert.deepEqual(unguarded, [], "unguarded gathering-scoped actions");
-    assert.ok(pending.every((p) => p.startsWith("host-actions.ts:")), "only host-actions may be pending");
   });
   test("lifecycle operations are NOT routed through the write guard (archive/finish/cancel/gather-again preserved)", () => {
     const src = readFileSync(new URL("host-lifecycle-actions.ts", dir), "utf8");

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
-import { dollars, parsePortal, referralUrl, referralsLive } from "@/lib/creator-portal";
+import { assignmentActionable, closedAssignmentCopy, dollars, earningsView, parsePortal, referralUrl, referralsLive, sessionExpired } from "@/lib/creator-portal";
 import { applicationCopy, canWithdraw, memberStatusCopy, parseProgramStatus, REFERRAL_REASON_COPY } from "@/lib/hc/lifecycle";
 import { PLATFORMS } from "@/lib/hc/creator-forms";
 import { ActionForm } from "@/components/hc/ActionForm";
@@ -13,7 +13,15 @@ const Note = ({ children }: { children: React.ReactNode }) => <p role="status" c
 
 export default async function CreatorPortal() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (!user && sessionExpired(authError)) {
+    return (
+      <div className="space-y-3">
+        <Note>Your session has expired. Please sign in again to see your creator page.</Note>
+        <a href="/login?next=%2Fcreator" className="text-sm underline">Sign in</a>
+      </div>
+    );
+  }
   if (!user) redirect("/login?next=%2Fcreator");
 
   let { data } = await supabase.rpc("creator_portal_summary");
@@ -48,6 +56,7 @@ export default async function CreatorPortal() {
   const member = program.member;
   const live = referralsLive({ NEXT_PUBLIC_HC_REFERRALS_LIVE: process.env.NEXT_PUBLIC_HC_REFERRALS_LIVE });
   const paidLive = live && member?.referral?.eligible === true;
+  const ev = earningsView(d, paidLive);
   const tier = member?.tier ?? null;
   const campaignsOn = member?.assignmentsEnabled !== false;
   const refReason = member?.referral && !member.referral.eligible ? REFERRAL_REASON_COPY[member.referral.reason] ?? "" : "";
@@ -75,13 +84,16 @@ export default async function CreatorPortal() {
           <p className="mt-2 text-sm text-charcoal/70">Always disclose near your link that you may earn a commission.</p>)}
       </section>
 
-      {paidLive ? (
-        <section aria-labelledby="res">
-          <h2 id="res" className="mb-2 font-display text-xl text-forest">Referral results</h2>
-          <p className="text-sm">Referred sign-ups: {d.signups ?? "n/a"}</p>
-          <p className="text-sm">Pending commissions: {dollars(d.commissionCents.pending ?? 0)} · Validated: {dollars(d.commissionCents.validated ?? 0)}</p>
-          <p className="mt-1 text-sm text-charcoal/70">These are tracked amounts, not earnings and not payments. Nothing is paid automatically; payouts are reviewed and made manually{d.minPayoutCents !== null ? `, once validated commissions reach ${dollars(d.minPayoutCents)}` : ""}. You never see customer names or emails.</p>
-        </section>) : null}
+      <section aria-labelledby="res">
+        <h2 id="res" className="mb-2 font-display text-xl text-forest">Referrals and earnings</h2>
+        {!ev ? <p className="text-sm text-charcoal/70">Nothing is being tracked for your account yet, so there are no amounts to show. When referral tracking is switched on for you, your sign-ups and tracked amounts will appear here (read only).</p> : (
+          <div className="space-y-1 text-sm">
+            <p>Referred sign-ups: {ev.signups}</p>
+            {ev.conversions.length ? <p>Conversions: {ev.conversions.map((c) => `${c.label} ${c.value}`).join(" · ")}</p> : null}
+            <p>Tracked commissions: {ev.commissions.length ? ev.commissions.map((c) => `${c.label} ${c.value}`).join(" · ") : "none yet"}</p>
+            <p className="mt-1 text-charcoal/70">These are tracked amounts, not earnings and not payments. Nothing is paid automatically; payouts are reviewed and made manually{ev.minPayout ? `, once validated commissions reach ${ev.minPayout}` : ""}. This view is read only.</p>
+          </div>)}
+      </section>
 
       <section aria-labelledby="onb">
         <h2 id="onb" className="mb-2 font-display text-xl text-forest">Getting started</h2>
@@ -102,12 +114,13 @@ export default async function CreatorPortal() {
               <p className="font-medium">{a.title} <span className="text-charcoal/70">({a.status.replace(/_/g, " ")})</span></p>
               <p className="mt-1 whitespace-pre-line">{a.brief}</p>
               {a.compensationTerms ? <p className="mt-1 text-charcoal/70">Compensation: {a.compensationTerms}</p> : <p className="mt-1 text-charcoal/70">No compensation is offered for this campaign.</p>}
-              {a.status === "offered" ? (
+              {closedAssignmentCopy(a.status) ? <p className="mt-2 text-charcoal/70" role="status">{closedAssignmentCopy(a.status)}</p> : null}
+              {assignmentActionable(a.status) === "respond" ? (
                 <div className="mt-2 flex flex-wrap gap-2">
                   <ActionForm action={respondToAssignment} buttons={[{ label: "Accept" }]}><input type="hidden" name="assignment_id" value={a.id} /><input type="hidden" name="decision" value="accept" /></ActionForm>
                   <ActionForm action={respondToAssignment} buttons={[{ label: "Decline", secondary: true }]}><input type="hidden" name="assignment_id" value={a.id} /><input type="hidden" name="decision" value="decline" /></ActionForm>
                 </div>) : null}
-              {a.status === "accepted" || a.status === "submitted" ? (
+              {assignmentActionable(a.status) === "submit" ? (
                 <ActionForm action={submitContent} buttons={[{ label: "Submit content" }]} className="mt-3 space-y-2">
                   <input type="hidden" name="assignment_id" value={a.id} />
                   <label className="block text-xs">Link to your post (https://)<input name="url" type="url" required minLength={12} maxLength={508} className="mt-1 w-full rounded border border-forest/30 px-2 py-1" /></label>

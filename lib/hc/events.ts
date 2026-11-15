@@ -112,11 +112,11 @@ export async function dispatchDeliveries(deps: DispatchDeps, limit = 20): Promis
  * a scheduled job that A4/A1 own). The Next.js app does not hold a service-role key and does not run this.
  */
 export interface RpcClient { rpc(fn: string, args?: Record<string, unknown>): PromiseLike<{ data: unknown; error: { message: string } | null }>; }
-export function rpcDeps(client: RpcClient, cfg: { enabled: boolean; siteUrl: string; mailer: Mailer | null }): DispatchDeps {
+export function rpcDeps(client: RpcClient, cfg: { enabled: boolean; siteUrl: string; mailer: Mailer | null; channel?: "staff_email" | "applicant_email" | null }): DispatchDeps {
   return {
-    ...cfg,
+    enabled: cfg.enabled, siteUrl: cfg.siteUrl, mailer: cfg.mailer,
     async claim(limit) {
-      const { data, error } = await client.rpc("hc_claim_deliveries", { p_limit: limit, p_channel: null });
+      const { data, error } = await client.rpc("hc_claim_deliveries", { p_limit: limit, p_channel: cfg.channel ?? null });
       if (error || !Array.isArray(data)) return [];
       return data.filter((d: any) => d && typeof d.id === "number" && (d.channel === "staff_email" || d.channel === "applicant_email")) as ClaimedDelivery[];
     },
