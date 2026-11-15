@@ -15,6 +15,7 @@ const MESSAGES: Record<string, string> = {
   external_ref_already_used: "That payment reference is already recorded on another payout.",
   payout_not_draft: "This payout is no longer a draft.",
   payout_not_approved: "Approve the payout first. Approved does not mean paid; record the payment only after you have sent it.",
+  payout_contains_reversed_commission: "A refund or dispute affects this payout. Void it and draft a new one.",
   payout_not_voidable: "A paid payout cannot be voided. Reverse it instead.",
   payout_not_paid: "Only a paid payout can be reversed.",
   below_minimum: "The balance is below the minimum payout.",
