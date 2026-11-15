@@ -10,7 +10,10 @@ export const PRODUCTION_SUPABASE_REF = "iyvdxvotthwrerirdzwd";
 // anything else (missing, malformed, another project) is rejected, not just "not production".
 export const QA_SUPABASE_REF = "gpzlytukyvshrrxrmooo";
 
-// Input: { vercelEnv, supabaseUrl, anonKey, analyticsMode } (all optional strings).
+// Input: { vercelEnv, supabaseUrl, anonKey, analyticsMode } (all optional strings) plus the SERVER-SIDE secret checks added by agent H (A8 M2), all optional:
+//   paymentSecretKeys (object: variable NAME -> value, e.g. { PAYMENT_PROCESSOR_SECRET_KEY, STRIPE_SECRET_KEY }), thirdPartyKeys (object NAME -> value for
+//   GELATO_API_KEY / MAILERLITE_API_KEY / BREVO_API_KEY), qaThirdPartyOverride (value of PREVIEW_QA_ALLOW_THIRD_PARTY_KEYS), serviceRoleKey, checkoutTesterIds.
+// Reasons only ever name the VARIABLE, never a value or a part of one.
 // Result: { ok, applies, reasons } where applies=false means the guard is a no-op and
 // reasons never contain key material. There is deliberately no "allow production in preview" override.
 
@@ -39,6 +42,10 @@ export function refFromJwt(token) {
     return null;
   }
 }
+
+/** Explicit, clearly named QA-only override: lets a Preview keep Gelato / MailerLite / Brevo keys ONLY when they are sandbox/QA keys. Must be exactly "true". */
+export const QA_THIRD_PARTY_OVERRIDE_VAR = "PREVIEW_QA_ALLOW_THIRD_PARTY_KEYS";
+const LIVE_PAYMENT_KEY = /^\s*(sk|rk)_live_/i;
 
 export function checkPreviewIsolation(input) {
   // Only Vercel Preview builds are constrained. Production builds (VERCEL_ENV=production),
@@ -76,6 +83,26 @@ export function checkPreviewIsolation(input) {
   // Analytics must be explicitly off (default "consent" would load GA4/PostHog after consent).
   if (input.analyticsMode !== "off") {
     reasons.push('NEXT_PUBLIC_ANALYTICS_MODE must be explicitly "off" for Preview builds');
+  }
+  // ---- server-side secrets (A8 M2). A Preview that talks to QA must not hold anything that can spend real money or reach real customers.
+  for (const [name, value] of Object.entries(input.paymentSecretKeys ?? {})) {
+    if (typeof value === "string" && LIVE_PAYMENT_KEY.test(value)) {
+      reasons.push(`${name} is a LIVE payment key (sk_live_/rk_live_); a Preview may only hold a test key or none`);
+    }
+  }
+  const override = input.qaThirdPartyOverride === "true"; // exact compare, like analytics: "TRUE", "1", " true" do not count
+  for (const [name, value] of Object.entries(input.thirdPartyKeys ?? {})) {
+    if (typeof value === "string" && value !== "" && !override) {
+      reasons.push(`${name} is set for this Preview build (real print orders / subscriptions / emails); remove it, or set ${QA_THIRD_PARTY_OVERRIDE_VAR}=true only if it is a sandbox/QA key`);
+    }
+  }
+  if (typeof input.serviceRoleKey === "string" && input.serviceRoleKey !== "") {
+    if (refFromJwt(input.serviceRoleKey) !== QA_SUPABASE_REF) {
+      reasons.push("SUPABASE_SERVICE_ROLE_KEY is set but is not verifiably a service key of the approved QA Supabase project");
+    }
+  }
+  if (typeof input.checkoutTesterIds === "string" && input.checkoutTesterIds !== "") {
+    reasons.push("WEB_CHECKOUT_TESTER_USER_IDS must be empty for Preview builds");
   }
   return { ok: reasons.length === 0, applies: true, reasons };
 }

@@ -8,6 +8,8 @@ export type PurchaseEvent =
   | { kind: "purchase"; entitlementId: string; providerTransactionId: string; product: string; currency: string; subtotalCents: number; taxCents: number; feeCents: number; stripeCustomerId: string | null; paymentFingerprintHash: string | null }
   | { kind: "dispute"; providerTransactionId: string; status: "open" | "won" | "lost" | "none" }
   | { kind: "refund"; entitlementId: string; providerTransactionId: string; partial: boolean }
+  // H (DEF-2): partial refund; mirrors the planner in the proposed webhook (native supabase/functions_proposed_a7/web-purchase-webhook/hcLedger.ts).
+  | { kind: "partial_refund"; entitlementId?: string | null; providerTransactionId: string; refundedCents: number }
   | { kind: "sweep" };
 
 export type LedgerCall = { rpc: string; args: Record<string, unknown> };
@@ -35,6 +37,15 @@ export function planLedgerCalls(ev: PurchaseEvent): LedgerPlan {
       // and the commission is HELD for staff review (owner decision), so we only reconcile and never reverse automatically.
       if (!ev.entitlementId) return { ok: false, reason: "missing_ids" };
       return { ok: true, calls: [{ rpc: "reconcile_commission_for_entitlement", args: { p_entitlement_id: ev.entitlementId } }] };
+    case "partial_refund": {
+      // Partial refund keeps access; record_purchase_partial_refund holds the commission for review (refunded purchases are excluded). Reconcile first only when the entitlement is known.
+      if (!ev.providerTransactionId) return { ok: false, reason: "missing_ids" };
+      if (!Number.isInteger(ev.refundedCents) || ev.refundedCents <= 0) return { ok: false, reason: "invalid_amounts" };
+      const calls: LedgerCall[] = [];
+      if (ev.entitlementId) calls.push({ rpc: "reconcile_commission_for_entitlement", args: { p_entitlement_id: ev.entitlementId } });
+      calls.push({ rpc: "record_purchase_partial_refund", args: { p_provider_transaction_id: ev.providerTransactionId, p_refunded_cents: ev.refundedCents } });
+      return { ok: true, calls };
+    }
     case "sweep":
       return { ok: true, calls: [{ rpc: "sweep_commissions", args: {} }] };
   }

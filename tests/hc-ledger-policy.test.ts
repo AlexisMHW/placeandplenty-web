@@ -77,3 +77,11 @@ test("A7: canonical web product id plus_annual qualifies (was silently skipped b
   assert.equal(planLedgerCalls({ ...purchase, product: "plus_annual" }).ok, true);
   assert.equal(planLedgerCalls({ ...purchase, product: "multi_day_pass" }).ok, false);
 });
+
+test("H DEF-2: a partial refund plan calls record_purchase_partial_refund (after reconcile when the entitlement is known); invalid input is refused before any call", () => {
+  assert.deepEqual(planLedgerCalls({ kind: "partial_refund", entitlementId: "e1", providerTransactionId: "pi_1", refundedCents: 300 }), { ok: true, calls: [
+    { rpc: "reconcile_commission_for_entitlement", args: { p_entitlement_id: "e1" } }, { rpc: "record_purchase_partial_refund", args: { p_provider_transaction_id: "pi_1", p_refunded_cents: 300 } }] });
+  assert.deepEqual(planLedgerCalls({ kind: "partial_refund", providerTransactionId: "pi_1", refundedCents: 5 }), { ok: true, calls: [{ rpc: "record_purchase_partial_refund", args: { p_provider_transaction_id: "pi_1", p_refunded_cents: 5 } }] });
+  for (const bad of [0, -1, 2.5, Number.NaN]) assert.deepEqual(planLedgerCalls({ kind: "partial_refund", providerTransactionId: "pi_1", refundedCents: bad }), { ok: false, reason: "invalid_amounts" });
+  assert.deepEqual(planLedgerCalls({ kind: "partial_refund", providerTransactionId: "", refundedCents: 5 }), { ok: false, reason: "missing_ids" });
+});
