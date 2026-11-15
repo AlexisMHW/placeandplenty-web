@@ -161,7 +161,7 @@ begin
  -- ---- permissions / state machine unchanged ----
  perform t.eq('S1.26 manager still cannot draft / approve / record (owner only)', t.q(cpm,'authenticated','public.hc_create_payout_draft('''||pA||'''::uuid)')||'/'||t.q(cpm,'authenticated','public.hc_approve_payout('''||pay||'''::uuid)'), 'ERR P0001:not_authorized/ERR P0001:not_authorized');
  perform t.eq('S1.27 anon denied', left(t.q(null,'anon','public.hc_create_payout_draft('''||pA||'''::uuid)'),10), 'ERR 42501:');
- perform t.eq('S1.28 payout ledger visibility for managers untouched (E-D2 owner decision): hc_admin_payout_ledger still allows hc.read', (t.q(cpm,'authenticated','public.hc_admin_payout_ledger(10)') not like 'ERR P0001:not_authorized')::text, 'true');
+ perform t.eq('S1.28 (superseded by S2 founder decision D-2, 217420) payout ledger: a manager with only hc.read is now DENIED, the owner (hc.payout) is allowed', (t.q(cpm,'authenticated','public.hc_admin_payout_ledger()')||'/'||(t.q(own,'authenticated','public.hc_admin_payout_ledger()') not like 'ERR%')::text), 'ERR P0001:not_authorized/true');
  perform t.eq('S1.29 retroactive accrual untouched (E-C3 owner decision): reconcile still takes a purchase regardless of when paid referrals were switched on', (select (pg_get_functiondef('public.reconcile_commission_for_entitlement(uuid)'::regprocedure) !~* 'activated_at')::text), 'true');
  perform t.eq('S1.30 no payout is ever paid automatically: no payout is paid except the one recorded by the owner above', (select count(*) from public.payouts where status='paid')::text, '1');
 end $$;

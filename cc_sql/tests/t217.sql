@@ -27,10 +27,10 @@ begin
  perform t.eq('A1d owner activates (local scratch only)', ((t.q(own,'authenticated','public.hc_activate_paid_referrals(''ACTIVATE PAID REFERRALS'',''scratch test'')'))::jsonb)->>'status', 'activated');
  perform t.fixture_payable('p-one', 5, 'ta-');
  perform t.q(null,'service_role','public.sweep_commissions(now()+interval ''46 days'')');
- j := t.q(cpm,'authenticated','public.hc_admin_payout_eligibility()');
+ j := t.q(own,'authenticated','public.hc_admin_payout_eligibility()');   -- S2 (D-2): payout reads need hc.payout (owner), was cpm
  perform t.eq('A2 eligibility exposes the paid_referrals_enabled switch state', ((j::jsonb)->>'paid_referrals_enabled'), 'true');
- led := (t.q(cpm,'authenticated','public.hc_admin_payout_ledger()'))::jsonb;
- perform t.eq('A3 ledger readable by hc.read staff, five separate buckets per member', (select bool_and(p ? 'pending_cents' and p ? 'validated_cents' and p ? 'draft_cents' and p ? 'approved_cents' and p ? 'paid_cents') from jsonb_array_elements(led->'partners') p)::text, 'true');
+ led := (t.q(own,'authenticated','public.hc_admin_payout_ledger()'))::jsonb;
+ perform t.eq('A3 ledger readable by the financial permission (hc.payout), five separate buckets per member', (select bool_and(p ? 'pending_cents' and p ? 'validated_cents' and p ? 'draft_cents' and p ? 'approved_cents' and p ? 'paid_cents') from jsonb_array_elements(led->'partners') p)::text, 'true');
  perform t.eq('A3b nothing drafted/approved/paid yet', (led->'totals'->>'draft_cents')||'/'||(led->'totals'->>'approved_cents')||'/'||(led->'totals'->>'paid_cents'), '0/0/0');
  j := t.q(own,'authenticated','public.hc_create_payout_draft('''||pid||'''::uuid)'); pay := ((j::jsonb)->>'payout_id')::uuid;
  led := (t.q(own,'authenticated','public.hc_admin_payout_ledger()'))::jsonb;
@@ -50,8 +50,8 @@ begin
  perform t.eq('A14 recorded as paid with reference, date, method, confirmer', (select status||'/'||external_ref||'/'||(paid_on=current_date)||'/'||external_method||'/'||(confirmed_by=own) from public.payouts where id=pay), 'paid/BANK-REF-001/true/bank transfer/true');
  led := (t.q(own,'authenticated','public.hc_admin_payout_ledger()'))::jsonb;
  perform t.eq('A15 ledger now shows paid>0 and approved=0 (buckets stay separate)', (case when (led->'totals'->>'paid_cents')::int > 0 then 'paid>0' else 'paid=0' end)||'/'||(led->'totals'->>'approved_cents'), 'paid>0/0');
- perform t.eq('A16 list_payouts exposes paid_on and method fields to the screen', (select (x ? 'paid_on' and x ? 'external_method' and x ? 'reversed_reason')::text from jsonb_array_elements((t.q(cpm,'authenticated','public.hc_admin_list_payouts(10)'))::jsonb) x where x->>'id'=pay::text), 'true');
- perform t.eq('A17 history lists the payout events (drafted/approved/payment_recorded)', (select count(*)::text from jsonb_array_elements((t.q(cpm,'authenticated','public.hc_admin_payout_history(null,10)'))::jsonb) h, jsonb_array_elements(h->'events') e where h->>'payout_id'=pay::text), '3');
+ perform t.eq('A16 list_payouts exposes paid_on and method fields to the screen', (select (x ? 'paid_on' and x ? 'external_method' and x ? 'reversed_reason')::text from jsonb_array_elements((t.q(own,'authenticated','public.hc_admin_list_payouts(10)'))::jsonb) x where x->>'id'=pay::text), 'true');
+ perform t.eq('A17 history lists the payout events (drafted/approved/payment_recorded)', (select count(*)::text from jsonb_array_elements((t.q(own,'authenticated','public.hc_admin_payout_history(null,10)'))::jsonb) h, jsonb_array_elements(h->'events') e where h->>'payout_id'=pay::text), '3');
  perform t.eq('A18 history denied to non-staff', t.q(bad,'authenticated','public.hc_admin_payout_history(null,10)'), 'ERR P0001:not_authorized');
  perform t.eq('A20 reverse needs a reason; cpm cannot reverse', t.q(own,'authenticated','public.hc_reverse_recorded_payment('''||pay||'''::uuid,'' '')')||'/'||t.q(cpm,'authenticated','public.hc_reverse_recorded_payment('''||pay||'''::uuid,''returned'')'), 'ERR P0001:reason_required/ERR P0001:not_authorized');
  j := t.q(own,'authenticated','public.hc_reverse_recorded_payment('''||pay||'''::uuid,''bank returned the transfer'')');
@@ -201,13 +201,13 @@ begin
    ('public.hc_admin_list_applications(null,5)', array['hc.read','hc.manage'], 'any'),
    ('public.hc_admin_list_campaigns()', array['hc.read'], 'all'),
    ('public.hc_admin_list_members()', array['hc.read'], 'all'),
-   ('public.hc_admin_list_payouts(5)', array['hc.read'], 'all'),
+   ('public.hc_admin_list_payouts(5)', array['hc.payout'], 'all'),   -- S2 D-2: was hc.read
    ('public.hc_admin_list_submissions(null)', array['hc.read'], 'all'),
    ('public.hc_admin_list_tiers()', array['hc.read'], 'all'),
    ('public.hc_admin_notifications(true)', array['hc.read'], 'all'),
-   ('public.hc_admin_payout_eligibility()', array['hc.read'], 'all'),
-   ('public.hc_admin_payout_history(null,5)', array['hc.read'], 'all'),
-   ('public.hc_admin_payout_ledger()', array['hc.read'], 'all'),
+   ('public.hc_admin_payout_eligibility()', array['hc.payout'], 'all'),   -- S2 D-2: was hc.read
+   ('public.hc_admin_payout_history(null,5)', array['hc.payout'], 'all'),   -- S2 D-2: was hc.read
+   ('public.hc_admin_payout_ledger()', array['hc.payout'], 'all'),   -- S2 D-2: was hc.read
    ('public.hc_admin_terms_history()', array['hc.read'], 'all'),
    ('public.hc_upsert_tier('''',''x'',null,null,1,true,false,''why'')', array['hc.manage'], 'all'),
    ('public.hc_admin_set_tier_benefits(''zz'',''[]''::jsonb,''why'')', array['hc.manage'], 'all'),
