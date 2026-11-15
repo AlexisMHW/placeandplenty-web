@@ -2,7 +2,7 @@ import { requireStaff } from "@/lib/admin/server";
 import { dollars, hcCapabilities, parseMembers } from "@/lib/admin/hc";
 import { parseConfigAudit, parseTermsHistory, parseTiers } from "@/lib/admin/tiers";
 import { ActionForm } from "../../_components/action-form";
-import { assignTier, saveTier, setPartnerStatus } from "./actions";
+import { assignTier, saveTier, setPartnerStatus, setTierEligibility } from "./actions";
 
 // TIERS, MEMBER STATUS, REFERRAL ELIGIBILITY AND COMMISSION VERSIONS (founder decision D4). Read: hc.read. Changes: hc.manage (re-checked in the database).
 // No tier names, benefits or rates are pre-filled: the owner defines them. Paid referrals stay OFF; nothing on this page turns them on.
@@ -32,6 +32,13 @@ export default async function TiersPage() {
               {t.description ? <p className="mt-1 text-charcoal/80">{t.description}</p> : null}
               {t.benefits.length ? <ul className="mt-1 list-disc pl-5 text-charcoal/80">{t.benefits.map((b, i) => <li key={i}>{b}</li>)}</ul> : <p className="mt-1 text-xs text-charcoal/60">No benefits listed.</p>}
               {t.eligibilityNotes ? <p className="mt-1 text-xs text-charcoal/70">Eligibility: {t.eligibilityNotes}</p> : null}
+              {context.permissions.includes("hc.payout") ? (
+                <ActionForm action={setTierEligibility} submitLabel="Change paid-referral eligibility" submitClassName="rounded border border-forest/30 px-3 py-1 text-forest" className="mt-2 flex flex-wrap items-end gap-2 text-xs" successText="Eligibility saved and recorded in the history below.">
+                  <input type="hidden" name="slug" value={t.slug} />
+                  <label>Paid-referral eligible (owner only; no effect until the paid referrals switch is on)<select name="eligible" defaultValue={t.paidReferralsEligible ? "yes" : "no"} className={field}><option value="yes">yes</option><option value="no">no</option></select></label>
+                  <label>Reason<input name="reason" required minLength={3} maxLength={200} className={field} /></label>
+                  <label><input type="checkbox" name="confirm" value="yes" required /> I confirm I am changing whether this tier can earn paid referrals.</label>
+                </ActionForm>) : null}
             </li>))}</ul>)}
         {caps.canManage ? (
           <ActionForm action={saveTier} submitLabel="Save tier" className="mt-4 space-y-2 rounded-lg border border-forest/15 p-4 text-sm" successText="Tier saved and recorded in the history below.">
@@ -43,7 +50,7 @@ export default async function TiersPage() {
             <label className="block">Who qualifies (notes for you and reviewers)<textarea name="eligibility_notes" maxLength={400} rows={2} className={`${field} w-full`} /></label>
             <label className="inline-block">Order<input name="sort_order" inputMode="numeric" defaultValue="0" className={`${field} w-16`} /></label>
             <label className="ml-4"><input type="checkbox" name="active" value="yes" defaultChecked /> Active</label>
-            {context.permissions.includes("hc.payout") ? <label className="ml-4"><input type="checkbox" name="paid_referrals_eligible" value="yes" /> Members on this tier may earn paid referrals (owner only; has no effect until the paid referrals switch is on)</label> : <p className="text-xs text-charcoal/70">Only the owner can make a tier eligible for paid referrals.</p>}
+            <p className="text-xs text-charcoal/70">Saving this form never changes whether a tier may earn paid referrals. The owner changes that separately, per tier, in the list above.</p>
             <label className="block">Reason for this change (kept in the history)<input name="reason" required minLength={3} maxLength={200} className={`${field} w-full`} /></label>
           </ActionForm>) : null}
       </section>

@@ -54,6 +54,10 @@ const MESSAGES: Record<string, string> = {
   invalid_sort: "Order must be a whole number from 0 to 999.",
   already_active: "Paid referrals are already switched on.",
   already_inactive: "Paid referrals are already switched off.",
+  no_clawback: "That commission has no clawback to settle.",
+  clawback_already_settled_differently: "That clawback was already settled with a different outcome.",
+  clawback_already_netted: "That clawback was already netted into a payout.",
+  invalid_resolution: "Choose recovered outside the app, or waived.",
   below_minimum_payout: "The balance is below the minimum payout.",
   failed: "That did not work. Nothing was changed. Try again, or ask the person who runs the site.",
 };

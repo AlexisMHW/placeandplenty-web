@@ -70,8 +70,7 @@ test("tier forms: key/name/benefit limits, reasons required, paid eligibility is
   assert.equal(r({ description: "<script>" }), "invalid_text");
   assert.equal(r({ sort_order: "x" }), "invalid_sort");
   const v = parseTierForm(fd({ ...ok, paid_referrals_eligible: "yes" }));
-  assert.ok(v.ok && v.value.paidReferralsEligible && v.value.benefits.length === 2);
-  assert.equal((parseTierForm(fd(ok)) as { value: { paidReferralsEligible: boolean } }).value.paidReferralsEligible, false);   // default OFF
+  assert.ok(v.ok && v.value.benefits.length === 2 && !("paidReferralsEligible" in v.value), "tier form never carries eligibility");
   assert.equal(parseAssignTierForm(fd({ partner_id: UUID, tier: "", reason: "welcome" })).ok, true);
   assert.equal((parseAssignTierForm(fd({ partner_id: "x", tier: "", reason: "welcome" })) as { error: string }).error, "invalid_id");
   assert.equal((parseAssignTierForm(fd({ partner_id: UUID, tier: "a b", reason: "welcome" })) as { error: string }).error, "invalid_slug");

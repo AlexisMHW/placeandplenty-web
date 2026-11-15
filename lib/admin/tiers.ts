@@ -16,7 +16,7 @@ export function parseTiers(raw: unknown): TierRow[] | null {
 const SLUG = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 const reasonOf = (form: { get(name: string): unknown }) => g(form, "reason");
 const badReason = (r: string) => r.length < 3 || r.length > 200 || /[<>]/.test(r);
-export interface TierInput { slug: string; label: string; description: string | null; eligibilityNotes: string | null; sortOrder: number; active: boolean; paidReferralsEligible: boolean; reason: string; benefits: string[] }
+export interface TierInput { slug: string; label: string; description: string | null; eligibilityNotes: string | null; sortOrder: number; active: boolean; reason: string; benefits: string[] }
 export function parseTierForm(form: { get(name: string): unknown }): { ok: true; value: TierInput } | { ok: false; error: string } {
   const slug = g(form, "slug"), label = g(form, "label");
   if (!SLUG.test(slug)) return { ok: false, error: "invalid_slug" };
@@ -28,8 +28,17 @@ export function parseTierForm(form: { get(name: string): unknown }): { ok: true;
   const sort = g(form, "sort_order") === "" ? 100 : Number(g(form, "sort_order"));
   if (!Number.isInteger(sort) || sort < 0 || sort > 999) return { ok: false, error: "invalid_sort" };
   const reason = reasonOf(form); if (badReason(reason)) return { ok: false, error: "invalid_reason" };
-  // Only the owner can change paid eligibility; the checkbox is rendered only for the owner and the database refuses anyone else.
-  return { ok: true, value: { slug, label, description: description || null, eligibilityNotes: notes || null, sortOrder: sort, active: g(form, "active") === "yes", paidReferralsEligible: g(form, "paid_referrals_eligible") === "yes", reason, benefits } };
+  // This form NEVER carries paid-referral eligibility (E-B1/E-B2): a missing field must not mean false. Eligibility changes only through parseTierEligibilityForm.
+  return { ok: true, value: { slug, label, description: description || null, eligibilityNotes: notes || null, sortOrder: sort, active: g(form, "active") === "yes", reason, benefits } };
+}
+/** Owner-only, explicit eligibility change: needs the tier key, an explicit yes/no (anything else is refused, never read as false), a reason and a confirmation. */
+export function parseTierEligibilityForm(form: { get(name: string): unknown }): { ok: true; value: { slug: string; eligible: boolean; reason: string } } | { ok: false; error: string } {
+  const slug = g(form, "slug"), eligible = g(form, "eligible"), reason = reasonOf(form);
+  if (!SLUG.test(slug)) return { ok: false, error: "invalid_slug" };
+  if (eligible !== "yes" && eligible !== "no") return { ok: false, error: "invalid_state" };
+  if (badReason(reason)) return { ok: false, error: "invalid_reason" };
+  if (g(form, "confirm") !== "yes") return { ok: false, error: "confirmation_required" };
+  return { ok: true, value: { slug, eligible: eligible === "yes", reason } };
 }
 export function parseAssignTierForm(form: { get(name: string): unknown }): { ok: true; value: { partnerId: string; tier: string | null; reason: string } } | { ok: false; error: string } {
   const partnerId = g(form, "partner_id"), tier = g(form, "tier"), reason = reasonOf(form);
