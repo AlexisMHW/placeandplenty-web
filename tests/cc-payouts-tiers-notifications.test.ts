@@ -153,6 +153,25 @@ test("error text: only mapped codes reach people; unknown database text becomes 
   assert.match(messageFor("paid_referrals_not_active"), /switched off/);
 });
 
+test("payout_contains_reversed_commission (approve / record payment refused after a refund or dispute) has a friendly message", () => {
+  const want = "A refund or dispute affects this payout. Void it and draft a new one.";
+  assert.equal(messageFor("payout_contains_reversed_commission"), want);
+  // as raised by hc_approve_payout / hc_record_external_payment (P0001), with and without database decoration
+  assert.equal(knownCode("payout_contains_reversed_commission"), "payout_contains_reversed_commission");
+  assert.equal(knownCode("ERROR: payout_contains_reversed_commission (SQLSTATE P0001)"), "payout_contains_reversed_commission");
+  assert.equal(messageFor(knownCode('{"code":"P0001","message":"payout_contains_reversed_commission"}')), want);
+  assert.doesNotMatch(want, /P0001|ERROR|sql/i);
+  // it is a refusal, never the generic failure line and never "saved"
+  assert.notEqual(messageFor("payout_contains_reversed_commission"), messageFor("failed"));
+  assert.notEqual(messageFor("payout_contains_reversed_commission"), messageFor("saved"));
+});
+
+test("payouts actions route approve / record-payment database errors through knownCode, so the new code reaches the owner", () => {
+  const src = readFileSync(join(root, "app", "(command-center)", "command-center", "hosting-collective", "payouts", "actions.ts"), "utf8");
+  assert.match(src, /import \{ knownCode \} from "@\/lib\/admin\/messages"/);
+  assert.match(src, /if \(res\.error\) return \{ ok: false, code: knownCode\(res\.error\.message\) \}/);
+});
+
 const ccApp = walk(join(root, "app", "(command-center)")).filter((f) => /\.(ts|tsx)$/.test(f));
 const ownSources = [...ccApp, ...walk(join(root, "lib", "admin")).filter((f) => f.endsWith(".ts"))];
 
