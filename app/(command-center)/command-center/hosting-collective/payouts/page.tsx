@@ -3,7 +3,7 @@ import { dollars, hcCapabilities, parseCommissionReport, parsePayoutEligibility 
 import { parsePayouts } from "@/lib/admin/cc";
 import { BUCKET_LABEL, LEDGER_BUCKETS, eventLabel, parseHistory, parseLedger, payoutStatusLabel } from "@/lib/admin/payout-ledger";
 import { ActionForm } from "../../_components/action-form";
-import { addTermsVersion, paidReferralsSwitch, payoutAction } from "./actions";
+import { addTermsVersion, paidReferralsSwitch, payoutAction, settleClawback } from "./actions";
 
 // MANUAL PAYOUTS (founder decision D3). Read views need hc.read; every button renders ONLY for the owner (hc.payout) and is re-checked in the database.
 // The five money buckets (pending, validated, in a draft, approved, paid) are shown separately and never summed. APPROVED IS NOT PAID.
@@ -111,6 +111,18 @@ export default async function PayoutsPage() {
                   {h.events.length ? <ol className="mt-1 list-decimal pl-5 text-xs text-charcoal/70">{h.events.map((a, i) => <li key={i}>{eventLabel(a.event)}{a.at ? ` — ${a.at.slice(0, 16).replace("T", " ")} UTC` : ""}</li>)}</ol> : null}
                 </li>))}</ul>)}
           </section>
+          {caps.canSeePayoutActions ? (
+            <section aria-labelledby="claw">
+              <h2 id="claw" className="mb-1 font-display text-xl text-forest">Settle a clawback</h2>
+              <p className="mb-2 text-sm text-charcoal/70">A clawback is the amount of a commission that was already paid and then reversed (refund or dispute). Settlement is recorded here only. No money moves in this app and nothing is netted automatically: you recover or waive the amount outside the app, then record it here.</p>
+              <ActionForm action={settleClawback} submitLabel="Record clawback settlement" className="flex flex-wrap items-end gap-2 text-xs" successText="Settlement recorded. No money was moved by this system.">
+                <label>Commission id<input name="commission_id" required pattern="[0-9a-fA-F-]{36}" className={`${input} w-80`} /></label>
+                <label>Outcome<select name="resolution" defaultValue="" required className={input}><option value="" disabled>choose</option><option value="recovered_externally">Recovered outside the app</option><option value="waived">Waived</option></select></label>
+                <label>Reference (needed if recovered)<input name="external_ref" maxLength={120} className={input} /></label>
+                <label>Note<input name="note" required minLength={3} maxLength={300} className={input} /></label>
+                <label><input type="checkbox" name="confirm" value="yes" required /> I confirm this settlement happened outside the app. This only records it.</label>
+              </ActionForm>
+            </section>) : null}
           {caps.canSeePayoutActions ? (
             <section aria-labelledby="terms">
               <h2 id="terms" className="mb-1 font-display text-xl text-forest">Commission terms</h2>

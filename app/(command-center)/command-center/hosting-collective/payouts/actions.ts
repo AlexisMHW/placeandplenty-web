@@ -4,6 +4,7 @@ import { requireStaff } from "@/lib/admin/server";
 import { parsePayoutActionForm, parseTermsForm } from "@/lib/admin/cc";
 import { knownCode } from "@/lib/admin/messages";
 import { parsePaidSwitchForm } from "@/lib/admin/tiers";
+import { settleClawbackWith } from "@/lib/hc/clawback";
 
 // MANUAL PAYOUT ACTIONS (founder decision D3). Owner only: hc.payout is checked here AND inside every database function, each of which writes an audit row.
 // NOTHING HERE MOVES MONEY, EVER. "Record external payment" only RECORDS a transfer the owner already made elsewhere (bank, PayPal, etc.),
@@ -57,4 +58,12 @@ export async function paidReferralsSwitch(formData: FormData): Promise<{ ok: boo
   if (status !== "activated" && status !== "deactivated" && status !== "already_active" && status !== "already_inactive") return { ok: false, code: typeof status === "string" ? knownCode(status) : "failed" };
   revalidatePath(PATH);
   return { ok: true, code: "saved" };
+}
+
+// Clawback settlement (owner only). RECORDS that a clawback was recovered outside this system or waived. Moves no money and nets nothing automatically.
+export async function settleClawback(formData: FormData): Promise<State> {
+  const { supabase } = await requireStaff("hc.payout", PATH);
+  const r = await settleClawbackWith(supabase, formData);
+  if (r.ok) revalidatePath(PATH);
+  return r;
 }

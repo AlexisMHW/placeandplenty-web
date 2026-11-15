@@ -196,7 +196,7 @@ test("every RPC the Command Center calls is defined in the migration set shipped
 
 test("payout and terms actions are owner-gated (hc.payout) and the page shows their controls only for hc.payout", () => {
   const act = readFileSync(join(root, "app/(command-center)/command-center/hosting-collective/payouts/actions.ts"), "utf8");
-  assert.equal((act.match(/requireStaff\("hc\.payout"/g) ?? []).length, 3); // payoutAction, addTermsVersion, paidReferralsSwitch
+  assert.equal((act.match(/requireStaff\("hc\.payout"/g) ?? []).length, 4); // payoutAction, addTermsVersion, paidReferralsSwitch, settleClawback
   assert.ok(!/hc_mark_payout_paid/.test(act), "the retired entry point must not be called");
   const page = readFileSync(join(root, "app/(command-center)/command-center/hosting-collective/payouts/page.tsx"), "utf8");
   assert.ok((page.match(/caps\.canSeePayoutActions/g) ?? []).length >= 5);
