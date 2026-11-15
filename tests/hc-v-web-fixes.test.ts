@@ -57,7 +57,7 @@ test("owner re-confirming the current value writes nothing; unknown tier is refu
 test("tiers page: manager sees no eligibility control; owner form is preloaded from the current value", () => {
   const page = readFileSync(new URL("../app/(command-center)/command-center/hosting-collective/tiers/page.tsx", import.meta.url), "utf8");
   assert.match(page, /defaultValue=\{t\.paidReferralsEligible \? "yes" : "no"\}/);
-  assert.match(page, /context\.permissions\.includes\("hc\.payout"\) \? \(\s*<ActionForm action=\{setTierEligibility\}/);
+  assert.match(page, /caps\.canSeePayoutActions \? \(\s*<ActionForm action=\{setTierEligibility\}/);
   assert.doesNotMatch(page, /name="paid_referrals_eligible"/);
 });
 
@@ -85,7 +85,7 @@ test("payouts page: clawback form is owner-only, says money moves outside the ap
   assert.match(page, /caps\.canSeePayoutActions \? \(\s*<section aria-labelledby="claw">/);
   assert.match(page, /No money moves in this app and nothing is netted automatically/);
   const act = readFileSync(new URL("../app/(command-center)/command-center/hosting-collective/payouts/actions.ts", import.meta.url), "utf8");
-  assert.match(act, /export async function settleClawback[\s\S]*?requireStaff\("hc\.payout"/);
+  assert.match(act, /export async function settleClawback[\s\S]*?requirePayoutOwner\(PATH\)/);
 });
 
 // ---- E-C2

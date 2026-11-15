@@ -14,12 +14,14 @@ export default async function InboxPage() {
   const [evRes, healthRes] = await Promise.all([
     supabase.rpc("hc_admin_list_events", { p_only_open: true, p_limit: 100 }), supabase.rpc("hc_admin_delivery_health"),
   ]);
-  const events = evRes.error ? null : parseEvents(evRes.data);
+  // Payout notifications are payout data: only owner and authorized financial staff (hc.payout) see them (founder decision A).
+  const events = evRes.error ? [] : (parseEvents(evRes.data) ?? []).filter((e) => caps.canViewPayouts || e.refType !== "payout");
+  const eventsAvailable = !evRes.error && parseEvents(evRes.data) !== null;
   const health = healthRes.error ? null : parseHealth(healthRes.data);
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl text-forest">Inbox and delivery</h1>
-      {events === null ? (
+      {!eventsAvailable ? (
         <p role="status" className="rounded-lg border border-forest/20 bg-cream p-4 text-sm">Not available until the Hosting Collective database package has been applied to this environment.</p>
       ) : events.length === 0 ? <p className="text-sm text-charcoal/70">Nothing open.</p> : (
         <ul className="space-y-2 text-sm">{events.map((e) => (

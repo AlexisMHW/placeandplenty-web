@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, getUser } from "@/lib/supabase-server";
 import { findWebProduct, isCheckoutAvailableFor } from "@/lib/checkout";
 import { multiDayCheckoutReturnPath } from "@/lib/multi-day-pass";
+import { canStartPurchase, isPurchaseRefusal, myPurchaseCapabilities } from "@/lib/purchase-permission";
 
 export const runtime = "nodejs";
 
@@ -88,6 +89,11 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient();
 
+  // Founder decision C: only the owner and a full-access (legacy_full) co-host may start a purchase for a gathering. Planner and manager co-hosts are
+  // sent back to the checkout page with a clear message BEFORE anything is created. The database (create_purchase_intent) enforces the same rule below.
+  const notAllowedBack = () => NextResponse.redirect(new URL(`/checkout/${product.slug}?${new URLSearchParams({ ...(gatheringId ? { gatheringId } : {}), purchase: "not-allowed" })}`, siteUrl()), 303);
+  if (product.requiresGathering && gatheringId && !canStartPurchase(await myPurchaseCapabilities(supabase, gatheringId))) return notAllowedBack();
+
   // Never sell an entitlement the account/gathering already owns.
   if (product.canonicalProductId === "plus_annual") {
     const { data: hasPlus, error } = await supabase.rpc("user_has_plus");
@@ -128,6 +134,7 @@ export async function POST(req: NextRequest) {
     p_canonical_product_id: product.canonicalProductId,
     p_gathering_id: gatheringId,
   });
+  if (isPurchaseRefusal(intentError)) return notAllowedBack();
   if (intentError || !purchaseIntentId) {
     console.error("Could not create purchase intent", intentError?.message);
     return NextResponse.json({ error: "purchase_intent_failed" }, { status: 400 });

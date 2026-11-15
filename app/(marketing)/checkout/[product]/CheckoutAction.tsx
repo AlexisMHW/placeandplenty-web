@@ -5,6 +5,7 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import type { WebProduct } from "@/lib/checkout";
 import { REFUND_POLICY } from "@/lib/refund-policy";
+import { PURCHASE_NOT_ALLOWED_MESSAGE } from "@/lib/purchase-permission";
 
 interface GatheringOption {
   id: string;
@@ -22,6 +23,7 @@ export default function CheckoutAction({
   pendingNote,
   gatherings,
   notice = null,
+  notPurchasable = [],
 }: {
   product: WebProduct;
   signedIn: boolean;
@@ -30,7 +32,9 @@ export default function CheckoutAction({
   checkoutConfigured: boolean;
   pendingNote: string;
   gatherings: GatheringOption[];
-  notice?: "cancelled" | "error" | null;
+  notice?: "cancelled" | "error" | "not-allowed" | null;
+  /** Gatherings where the signed-in person is a planner or manager co-host: they cannot start a purchase. */
+  notPurchasable?: { id: string; name: string }[];
 }) {
   const [gatheringId, setGatheringId] = useState(gatherings[0]?.id ?? "");
   const selectedGathering = gatherings.find((g) => g.id === gatheringId);
@@ -81,6 +85,18 @@ export default function CheckoutAction({
     );
   }
 
+  // Founder decision C: a co-host without the start_purchase capability sees no purchase control at all, only who can buy.
+  if (product.requiresGathering && gatherings.length === 0 && (notPurchasable.length > 0 || notice === "not-allowed")) {
+    return (
+      <div className={panel}>
+        <h2 className="font-display text-xl text-forest">Ask the host to buy this</h2>
+        <p role="alert" className="mt-3 font-body text-sm leading-relaxed text-forest/75">{PURCHASE_NOT_ALLOWED_MESSAGE}</p>
+        {notPurchasable.length > 0 && <p className="mt-3 font-body text-xs text-forest/65">Your co-host access: {notPurchasable.map((g) => g.name).join(", ")}.</p>}
+        <Link href="/host" className="mt-6 block w-full rounded-lg bg-forest px-5 py-3 text-center font-body text-sm font-semibold text-offwhite transition-colors duration-400 hover:bg-forest/90">Back to My Gatherings</Link>
+      </div>
+    );
+  }
+
   if (product.requiresGathering && gatherings.length === 0) {
     return (
       <div className={panel}>
@@ -103,6 +119,9 @@ export default function CheckoutAction({
       {notice === "error" && (
         <p role="alert" className="mb-5 rounded-lg border border-gold/50 bg-cream px-4 py-3 font-body text-sm text-forest/80">We could not open secure checkout just now. You have not been charged. Please try again in a moment.</p>
       )}
+      {notice === "not-allowed" && (
+        <p role="alert" className="mb-5 rounded-lg border border-gold/50 bg-cream px-4 py-3 font-body text-sm text-forest/80">{PURCHASE_NOT_ALLOWED_MESSAGE}</p>
+      )}
       <h2 className="font-display text-xl text-forest">{product.name}</h2>
       <p className="mt-1.5 font-display text-lg text-forest/85">{displayedPrice}</p>
 
@@ -122,6 +141,7 @@ export default function CheckoutAction({
                 ? "The extension stays bound to this Multi-Day gathering."
                 : "A Pass is bound to the gathering you choose and stays with it."}
           </p>
+          {notPurchasable.length > 0 && <p className="mt-2 font-body text-xs leading-relaxed text-forest/65">Not listed: {notPurchasable.map((g) => g.name).join(", ")}. Only the host or a full-access co-host can buy for those.</p>}
           <select id="checkout-gathering" value={gatheringId} onChange={(e) => setGatheringId(e.target.value)} className="mt-2 w-full rounded-lg border border-sage/40 bg-parchment px-3.5 py-2.5 font-body text-base text-forest">
             {gatherings.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>

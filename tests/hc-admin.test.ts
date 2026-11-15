@@ -50,8 +50,13 @@ test("program manager and owner can review; capability flags follow permissions 
     assert.equal(decideAccess({ signedIn: true, rawContext: c }, "hc.content.review").kind, "allow");
   }
   const biz = hcCapabilities({ role: "business_admin", permissions: ["hc.read"] });
-  assert.deepEqual(biz, { canView: true, canManage: false, canReviewApplications: false, canReviewContent: false, canSeePayoutActions: false });
+  assert.deepEqual(biz, { canView: true, canManage: false, canReviewApplications: false, canReviewContent: false, canViewPayouts: false, canSeePayoutActions: false });
   assert.equal(hcCapabilities({ role: "owner", permissions: ["hc.payout"] }).canSeePayoutActions, true);
+  // Decision A: hc.payout without the owner role = read-only payout history; the owner role without hc.payout = nothing.
+  const fin = hcCapabilities({ role: "business_admin", permissions: ["hc.read", "hc.payout"] });
+  assert.equal(fin.canViewPayouts, true); assert.equal(fin.canSeePayoutActions, false);
+  const ownerNoPerm = hcCapabilities({ role: "owner", permissions: ["hc.read"] });
+  assert.equal(ownerNoPerm.canViewPayouts, false); assert.equal(ownerNoPerm.canSeePayoutActions, false);
 });
 
 test("review form: valid approve, decline, and every rejection path", () => {
@@ -121,7 +126,7 @@ const HC_DIR = "app/(command-center)/command-center/hosting-collective";
 test("every HC page requires hc.read and every server action requires its own permission BEFORE any rpc", () => {
   const pages = walk(HC_DIR).filter((f) => f.endsWith("page.tsx"));
   assert.equal(pages.length, 8); // applications, content, members, overview, payouts, campaigns, tiers, inbox
-  for (const f of pages) assert.match(readFileSync(f, "utf8"), /requireStaff\("hc\.read"/, f);
+  for (const f of pages) assert.match(readFileSync(f, "utf8"), /payouts[\\/]page\.tsx$/.test(f) ? /requireStaff\("hc\.payout"/ : /requireStaff\("hc\.read"/, f); // payouts needs hc.payout (decision A)
   const actions = readFileSync(join(HC_DIR, "actions.ts"), "utf8");
   const fns = actions.split(/export async function /).slice(1);
   assert.equal(fns.length, 3);

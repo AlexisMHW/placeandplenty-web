@@ -32,7 +32,7 @@ export default async function TiersPage() {
               {t.description ? <p className="mt-1 text-charcoal/80">{t.description}</p> : null}
               {t.benefits.length ? <ul className="mt-1 list-disc pl-5 text-charcoal/80">{t.benefits.map((b, i) => <li key={i}>{b}</li>)}</ul> : <p className="mt-1 text-xs text-charcoal/60">No benefits listed.</p>}
               {t.eligibilityNotes ? <p className="mt-1 text-xs text-charcoal/70">Eligibility: {t.eligibilityNotes}</p> : null}
-              {context.permissions.includes("hc.payout") ? (
+              {caps.canSeePayoutActions ? (
                 <ActionForm action={setTierEligibility} submitLabel="Change paid-referral eligibility" submitClassName="rounded border border-forest/30 px-3 py-1 text-forest" className="mt-2 flex flex-wrap items-end gap-2 text-xs" successText="Eligibility saved and recorded in the history below.">
                   <input type="hidden" name="slug" value={t.slug} />
                   <label>Paid-referral eligible (owner only; no effect until the paid referrals switch is on)<select name="eligible" defaultValue={t.paidReferralsEligible ? "yes" : "no"} className={field}><option value="yes">yes</option><option value="no">no</option></select></label>
@@ -87,7 +87,7 @@ export default async function TiersPage() {
               <tr key={v.version} className="border-t border-forest/10"><td className="px-3 py-2">{v.version}{v.inForce ? " (in force)" : ""}</td><td className="px-3 py-2">{v.effectiveFrom ? v.effectiveFrom.slice(0, 16).replace("T", " ") + " UTC" : "n/a"}</td>
                 <td className="px-3 py-2 tabular-nums">{v.validationDays ?? "n/a"}</td><td className="px-3 py-2 tabular-nums">{dollars(v.minPayoutCents)}</td>
                 <td className="px-3 py-2">{Object.entries(v.amounts).map(([k, c]) => `${k.replace(/_/g, " ")}: ${dollars(c)}`).join(", ") || "none"}</td><td className="px-3 py-2">{v.note ?? ""}</td></tr>))}</tbody></table></div>)}
-        {context.permissions.includes("hc.payout") ? <p className="mt-2 text-sm">Add a new version on the <a className="text-forest underline" href="/command-center/hosting-collective/payouts">Payouts page</a>.</p> : null}
+        {caps.canViewPayouts ? <p className="mt-2 text-sm">{caps.canSeePayoutActions ? "Add a new version" : "See the current terms"} on the <a className="text-forest underline" href="/command-center/hosting-collective/payouts">Payouts page</a>{caps.canSeePayoutActions ? "." : " (read only)."}</p> : null}
       </section>
 
       <section aria-labelledby="hist">

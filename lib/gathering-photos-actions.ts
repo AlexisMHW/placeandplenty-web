@@ -3,7 +3,7 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
-import { gatheringWriteBlock } from "@/lib/gathering-write-guard";
+import { photoWriteBlock } from "@/lib/gathering-write-guard";
 
 export type PhotoActionResult = { ok: true } | { ok: false; message: string };
 
@@ -24,7 +24,11 @@ async function ensurePhotoEditable(gatheringId: string): Promise<PhotoActionResu
   return { ok: true };
 }
 
+// Founder decision B: these three actions are the ONLY write actions allowed on a COMPLETED gathering, and only inside the photo-sharing window
+// (photoWriteBlock). Cancelled, archived and after-window are refused with the standard read-only message.
 export async function uploadGatheringPhotoWeb(gatheringId: string, formData: FormData): Promise<PhotoActionResult> {
+  const windowBlock = await photoWriteBlock(createClient(), gatheringId);
+  if (windowBlock) return windowBlock;
   const allowed = await ensurePhotoEditable(gatheringId);
   if (!allowed.ok) return allowed;
 
@@ -42,7 +46,7 @@ export async function uploadGatheringPhotoWeb(gatheringId: string, formData: For
   if (!extension) return { ok: false, message: "Use a JPG, PNG, or WebP image." };
 
   const supabase = createClient();
-  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  const __writeBlock = await photoWriteBlock(supabase, gatheringId);
   if (__writeBlock) return __writeBlock;
   const path = `${gatheringId}/${randomUUID()}.${extension}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -68,7 +72,7 @@ export async function uploadGatheringPhotoWeb(gatheringId: string, formData: For
 
 export async function setGatheringPhotoHiddenWeb(gatheringId: string, photoId: string, hidden: boolean): Promise<PhotoActionResult> {
   const supabase = createClient();
-  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  const __writeBlock = await photoWriteBlock(supabase, gatheringId);
   if (__writeBlock) return __writeBlock;
   const { error } = await supabase.rpc("set_gathering_photo_hidden", { p_photo_id: photoId, p_hidden: hidden });
   if (error) return { ok: false, message: photoError(error.message ?? "") };
@@ -78,7 +82,7 @@ export async function setGatheringPhotoHiddenWeb(gatheringId: string, photoId: s
 
 export async function deleteGatheringPhotoWeb(gatheringId: string, photoId: string): Promise<PhotoActionResult> {
   const supabase = createClient();
-  const __writeBlock = await gatheringWriteBlock(supabase, gatheringId);
+  const __writeBlock = await photoWriteBlock(supabase, gatheringId);
   if (__writeBlock) return __writeBlock;
   const { data: path, error } = await supabase.rpc("delete_gathering_photo", { p_photo_id: photoId });
   if (error) return { ok: false, message: photoError(error.message ?? "") };

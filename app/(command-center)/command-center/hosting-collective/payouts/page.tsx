@@ -5,11 +5,12 @@ import { BUCKET_LABEL, LEDGER_BUCKETS, eventLabel, parseHistory, parseLedger, pa
 import { ActionForm } from "../../_components/action-form";
 import { addTermsVersion, paidReferralsSwitch, payoutAction, settleClawback } from "./actions";
 
-// MANUAL PAYOUTS (founder decision D3). Read views need hc.read; every button renders ONLY for the owner (hc.payout) and is re-checked in the database.
+// MANUAL PAYOUTS (founder decisions D3 and A). The page needs hc.payout: the owner and authorized financial staff read the history and ledger; a manager with only hc.read gets a 404 and no data.
+// Every form and button renders ONLY for the OWNER (caps.canSeePayoutActions) and is re-checked on the server and in the database. Financial staff who are not the owner see a read-only view.
 // The five money buckets (pending, validated, in a draft, approved, paid) are shown separately and never summed. APPROVED IS NOT PAID.
 // Nothing here or in the database moves money: "Record external payment" records a payment the owner already made outside this system.
 export default async function PayoutsPage() {
-  const { context, supabase } = await requireStaff("hc.read", "/command-center/hosting-collective/payouts");
+  const { context, supabase } = await requireStaff("hc.payout", "/command-center/hosting-collective/payouts");
   const caps = hcCapabilities(context);
   const [elig, report, payoutsRes, termsRes, ledgerRes, histRes] = await Promise.all([
     supabase.rpc("hc_admin_payout_eligibility"),
@@ -31,7 +32,8 @@ export default async function PayoutsPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl text-forest">Manual payouts</h1>
-      <p className="text-sm text-charcoal/80">Payouts are manual. This page never sends money. You draft, approve, send the payment yourself outside this system, then record it here with its reference. Approved does not mean paid.</p>
+      <p className="text-sm text-charcoal/80">Payouts are manual. This page never sends money. You draft, approve, send the payment yourself outside this system, then record it here with its reference. Approved does not mean paid. Payments happen outside the app; the app never moves money.</p>
+      {!caps.canSeePayoutActions ? <p role="note" className="rounded-lg border border-forest/20 bg-cream p-3 text-sm">Read only. You can view the payout history and ledger. Only the owner can draft, approve, void, reverse or record a payment, or settle a clawback.</p> : null}
       {!e || !r ? (
         <p role="status" className="rounded-lg border border-forest/20 bg-cream p-4 text-sm">Not available until the referral and Hosting Collective database packages are applied.</p>
       ) : (

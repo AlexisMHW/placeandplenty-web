@@ -44,7 +44,7 @@ test("every server action file re-checks the permission before each exported act
   for (const f of ccFiles.filter((f) => /actions\.ts$/.test(f))) {
     const src = readFileSync(f, "utf8");
     const exported = (src.match(/export async function \w+/g) ?? []).length;
-    const gated = (src.match(/requireStaff\(\s*"[a-z_.]+"/g) ?? []).length;
+    const gated = (src.match(/requireStaff\(\s*"[a-z_.]+"|requirePayoutOwner\(/g) ?? []).length; // requirePayoutOwner = hc.payout + owner role
     // Reviewed exception: setNotificationState in inbox/actions.ts uses the any-staff gate; the database lets it touch only rows the caller's role may see.
     const anyStaff = /inbox[\\/]actions\.ts$/.test(f) ? (src.match(/requireStaff\(\s*undefined/g) ?? []).length : 0;
     if (/inbox[\\/]actions\.ts$/.test(f)) assert.equal(anyStaff, 1, `${f}: exactly one any-staff action`);
@@ -88,7 +88,9 @@ test("navigation shows only links the context may see, and never invents a permi
   assert.deepEqual(navFor(ctx(["support.read"])).map((l) => l.label), ["Inbox", "Purchases and support"]);
   assert.deepEqual(navFor(ctx(["ops.read"])).map((l) => l.label), ["Inbox", "Email and SMS", "Integration health", "Notification settings"]);
   assert.deepEqual(navFor(ctx(["overview.read"])).map((l) => l.label), ["Inbox", "Overview"]);
-  assert.deepEqual(navFor(ctx(["hc.read"])).map((l) => l.label), ["Inbox", "Hosting Collective", "Campaigns", "Tiers and terms", "Payouts"]);
+  // Founder decision A: a manager with only hc.read must not even see the Payouts link; hc.payout (owner, authorized financial staff) does.
+  assert.deepEqual(navFor(ctx(["hc.read"])).map((l) => l.label), ["Inbox", "Hosting Collective", "Campaigns", "Tiers and terms"]);
+  assert.deepEqual(navFor(ctx(["hc.payout"])).map((l) => l.label), ["Inbox", "Payouts"]);
   const all = navFor(ctx([...STAFF_PERMISSIONS]));
   assert.ok(all.length >= 9);
 });

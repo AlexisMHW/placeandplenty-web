@@ -1,12 +1,12 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/admin/server";
+import { requirePayoutOwner } from "@/lib/admin/server";
 import { parsePayoutActionForm, parseTermsForm } from "@/lib/admin/cc";
 import { knownCode } from "@/lib/admin/messages";
 import { parsePaidSwitchForm } from "@/lib/admin/tiers";
 import { settleClawbackWith } from "@/lib/hc/clawback";
 
-// MANUAL PAYOUT ACTIONS (founder decision D3). Owner only: hc.payout is checked here AND inside every database function, each of which writes an audit row.
+// MANUAL PAYOUT ACTIONS (founder decisions D3 and A). OWNER ONLY: hc.payout plus the owner role are checked here (requirePayoutOwner) AND inside every database function, each of which writes an audit row.
 // NOTHING HERE MOVES MONEY, EVER. "Record external payment" only RECORDS a transfer the owner already made elsewhere (bank, PayPal, etc.),
 // with that transfer's reference, the date sent, and an explicit confirmation. Approved is not paid. A paid payout can be reversed with a reason.
 // The database error text is never forwarded; only a short known code is returned (lib/admin/messages.ts).
@@ -14,7 +14,7 @@ const PATH = "/command-center/hosting-collective/payouts";
 type State = { ok: boolean; code: string };
 
 export async function payoutAction(formData: FormData): Promise<State> {
-  const { supabase } = await requireStaff("hc.payout", PATH);
+  const { supabase } = await requirePayoutOwner(PATH);
   const parsed = parsePayoutActionForm(formData);
   if (!parsed.ok) return { ok: false, code: parsed.error };
   const v = parsed.value;
@@ -34,7 +34,7 @@ export async function payoutAction(formData: FormData): Promise<State> {
 }
 
 export async function addTermsVersion(formData: FormData): Promise<State> {
-  const { supabase } = await requireStaff("hc.payout", PATH);
+  const { supabase } = await requirePayoutOwner(PATH);
   const parsed = parseTermsForm(formData, new Date());
   if (!parsed.ok) return { ok: false, code: parsed.error };
   const v = parsed.value;
@@ -48,7 +48,7 @@ export async function addTermsVersion(formData: FormData): Promise<State> {
 
 // Paid-referrals switch (owner only). Activation needs the typed phrase and a reason; both are re-checked in the database. Local code never turns it on by itself.
 export async function paidReferralsSwitch(formData: FormData): Promise<{ ok: boolean; code: string }> {
-  const { supabase } = await requireStaff("hc.payout", PATH);
+  const { supabase } = await requirePayoutOwner(PATH);
   const parsed = parsePaidSwitchForm(formData);
   if (!parsed.ok) return { ok: false, code: parsed.error };
   const v = parsed.value;
@@ -62,7 +62,7 @@ export async function paidReferralsSwitch(formData: FormData): Promise<{ ok: boo
 
 // Clawback settlement (owner only). RECORDS that a clawback was recovered outside this system or waived. Moves no money and nets nothing automatically.
 export async function settleClawback(formData: FormData): Promise<State> {
-  const { supabase } = await requireStaff("hc.payout", PATH);
+  const { supabase } = await requirePayoutOwner(PATH);
   const r = await settleClawbackWith(supabase, formData);
   if (r.ok) revalidatePath(PATH);
   return r;

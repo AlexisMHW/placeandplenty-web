@@ -2,7 +2,8 @@ import { test, describe, before } from "node:test";
 import assert from "node:assert/strict";
 import { register } from "node:module";
 import { readFileSync, readdirSync } from "node:fs";
-import { gatheringWriteBlock, GATHERING_READ_ONLY_MESSAGE, GATHERING_STATUS_UNKNOWN_MESSAGE } from "../lib/gathering-write-guard.ts";
+import { gatheringWriteBlock, photoWriteBlock, GATHERING_READ_ONLY_MESSAGE, GATHERING_STATUS_UNKNOWN_MESSAGE } from "../lib/gathering-write-guard.ts";
+import { photoControlsOpen } from "../lib/gathering-photo-window.ts";
 import { READ_ONLY_COMMS_MESSAGE } from "../lib/comms/readonly-guard.ts";
 import { makeFakeSupabase } from "./helpers/fake-supabase.ts";
 
@@ -237,7 +238,7 @@ describe("static coverage of server-action files", () => {
         const [, name, params] = m;
         const scoped = /^\s*(\{[^}]*)?gatheringId\b/.test(params) || /\bgatheringId\s*:/.test(params.split(",")[0] ?? "");
         if (!scoped || LIFECYCLE_OR_READ.has(name)) continue;
-        const guarded = /gatheringWriteBlock\(/.test(p) || /effective_gathering_status/.test(p) || /assertWritable|ensureWritable|ensureEditable|readOnlyBlock|commsReadOnlyBlock/.test(p);
+        const guarded = /gatheringWriteBlock\(|photoWriteBlock\(/.test(p) || /effective_gathering_status/.test(p) || /assertWritable|ensureWritable|ensureEditable|readOnlyBlock|commsReadOnlyBlock/.test(p);
         if (guarded) continue;
         unguarded.push(`${f}:${name}`);
       }
@@ -247,5 +248,115 @@ describe("static coverage of server-action files", () => {
   test("lifecycle operations are NOT routed through the write guard (archive/finish/cancel/gather-again preserved)", () => {
     const src = readFileSync(new URL("host-lifecycle-actions.ts", dir), "utf8");
     assert.ok(!/gatheringWriteBlock/.test(src));
+  });
+});
+
+// ---- Founder decision B: the photo actions are the ONLY exception, and only inside the photo-sharing window ----------
+// The window is the database's own (gathering_lifecycle_ends_at = event end + retention, strict `now() < ends_at`, surfaced by
+// gathering_photo_workspace as expiresAt). These tests mirror that definition only to build fixtures; production code invents no length.
+const PHOTO_ACTIONS = new Set(["uploadGatheringPhotoWeb", "setGatheringPhotoHiddenWeb", "deleteGatheringPhotoWeb"]);
+const DAY = 24 * 60 * 60 * 1000;
+const WINDOW_DAYS = 30; // fixture only: mirrors supabase gathering_lifecycle_ends_at (event end + 30 days)
+const eventEnd = Date.parse("2026-06-01T20:00:00Z");
+const windowEnd = new Date(eventEnd + WINDOW_DAYS * DAY).toISOString();
+
+describe("photoWriteBlock window boundary (injected clock)", () => {
+  const ws = { expiresAt: windowEnd, editable: true };
+  const at = (ms: number) => photoWriteBlock(makeFakeSupabase({ status: "completed", photoWorkspace: ws }), "g-1", new Date(ms));
+  test("completed, day 29 after the event: allowed", async () => assert.equal(await at(eventEnd + 29 * DAY), null));
+  test("completed, 1 ms before the window end: allowed", async () => assert.equal(await at(eventEnd + WINDOW_DAYS * DAY - 1), null));
+  test("completed, exactly at the window end (day 30 boundary, database uses strict <): refused", async () => assert.deepEqual(await at(eventEnd + WINDOW_DAYS * DAY), { ok: false, message: GATHERING_READ_ONLY_MESSAGE }));
+  test("completed, day 31: refused", async () => assert.deepEqual(await at(eventEnd + 31 * DAY), { ok: false, message: GATHERING_READ_ONLY_MESSAGE }));
+  test("cancelled inside the window: refused (no exception)", async () => {
+    const r = await photoWriteBlock(makeFakeSupabase({ status: "cancelled", photoWorkspace: ws }), "g-1", new Date(eventEnd + 5 * DAY));
+    assert.deepEqual(r, { ok: false, message: GATHERING_READ_ONLY_MESSAGE });
+  });
+  test("archived inside the window: refused (no exception)", async () => {
+    const r = await photoWriteBlock(makeFakeSupabase({ status: "archived", photoWorkspace: ws }), "g-1", new Date(eventEnd + 5 * DAY));
+    assert.deepEqual(r, { ok: false, message: GATHERING_READ_ONLY_MESSAGE });
+  });
+  test("completed but the server says not editable, window unreadable or missing: refused (server can only restrict, fails closed)", async () => {
+    for (const photoWorkspace of [{ expiresAt: windowEnd, editable: false }, { expiresAt: "", editable: true }, { expiresAt: "not-a-date", editable: true }, null]) {
+      const r = await photoWriteBlock(makeFakeSupabase({ status: "completed", photoWorkspace }), "g-1", new Date(eventEnd + DAY));
+      assert.deepEqual(r, { ok: false, message: GATHERING_READ_ONLY_MESSAGE });
+    }
+  });
+  test("live gatherings are not affected and the status stays fail-closed", async () => {
+    assert.equal(await photoWriteBlock(makeFakeSupabase({ status: "active" }), "g-1"), null);
+    assert.equal((await photoWriteBlock(makeFakeSupabase({ status: null }), "g-1"))?.message, GATHERING_STATUS_UNKNOWN_MESSAGE);
+  });
+});
+
+describe("read-only sweep: photo actions are the ONLY exception, only on completed gatherings inside the window", () => {
+  const scenarios: { label: string; status: string; daysAfterEvent: number; photosAllowed: boolean }[] = [
+    { label: "completed, day 29", status: "completed", daysAfterEvent: 29, photosAllowed: true },
+    { label: "completed, day 30 boundary", status: "completed", daysAfterEvent: 30, photosAllowed: false },
+    { label: "completed, day 31", status: "completed", daysAfterEvent: 31, photosAllowed: false },
+    { label: "cancelled, day 5", status: "cancelled", daysAfterEvent: 5, photosAllowed: false },
+    { label: "archived, day 5", status: "archived", daysAfterEvent: 5, photosAllowed: false },
+  ];
+  for (const sc of scenarios) {
+    for (const caller of CALLERS) {
+      test(`${sc.label} / ${caller.label}: every non-photo action refused with zero writes; photo actions ${sc.photosAllowed ? "allowed" : "refused"}`, async () => {
+        const failures: string[] = [];
+        // "now" is the real clock; the window end is placed so that today is `daysAfterEvent` days after the event.
+        const expiresAt = new Date(Date.now() + (WINDOW_DAYS - sc.daysAfterEvent) * DAY).toISOString();
+        for (const a of loaded) {
+          const fake = makeFakeSupabase({ status: sc.status, userId: caller.userId, photoWorkspace: { expiresAt, editable: true } });
+          (globalThis as any).__fakeSupabase = fake;
+          const res: any = await a.fn(...argsFor(a.fn)).catch((e: Error) => ({ ok: false, message: `threw ${e.message}` }));
+          const writes = fake.calls.filter(isWrite);
+          if (PHOTO_ACTIONS.has(a.name) && sc.photosAllowed) {
+            if (res?.ok !== true) failures.push(`${a.name}: should be allowed, got ${res?.message}`);
+            continue;
+          }
+          if (res?.ok !== false) failures.push(`${a.name}: ok=${res?.ok}`);
+          else if (writes.length) failures.push(`${a.name}: WROTE ${writes.map((w: any) => w.name).join(",")}`);
+          else if (PHOTO_ACTIONS.has(a.name) && res?.message !== GATHERING_READ_ONLY_MESSAGE) failures.push(`${a.name}: wrong message "${res?.message}"`);
+        }
+        assert.deepEqual(failures, []);
+      });
+    }
+  }
+  test("the three photo actions all exist in the swept set", () => {
+    for (const n of PHOTO_ACTIONS) assert.ok(loaded.some((a) => a.name === n), n);
+  });
+});
+
+describe("photoWriteBlock is used ONLY by the three photo actions", () => {
+  test("no other server-action file or function references photoWriteBlock", () => {
+    const dir = new URL("../lib/", import.meta.url);
+    const users: string[] = [];
+    for (const f of readdirSync(dir)) {
+      if (!f.endsWith(".ts") || f === "gathering-write-guard.ts") continue;
+      const src = readFileSync(new URL(f, dir), "utf8");
+      if (/photoWriteBlock/.test(src)) users.push(f);
+    }
+    assert.deepEqual(users, ["gathering-photos-actions.ts"]);
+    const src = readFileSync(new URL("gathering-photos-actions.ts", dir), "utf8");
+    const parts = src.split(/^(?=export async function )/m).slice(1);
+    const using = parts.filter((p) => /photoWriteBlock\(/.test(p)).map((p) => p.match(/^export async function (\w+)/)![1]);
+    assert.deepEqual(using.sort(), [...PHOTO_ACTIONS].sort());
+    for (const p of parts) assert.ok(!/gatheringWriteBlock\(/.test(p), "photo actions must not mix guards");
+  });
+  test("photo page offers controls only through photoControlsOpen (server flag can only restrict)", () => {
+    const page = readFileSync(new URL("../app/(host)/host/g/[id]/photos/page.tsx", import.meta.url), "utf8");
+    assert.match(page, /workspace\.editable && photoControlsOpen\(/);
+    assert.ok(!/editable=\{workspace\.editable\}/.test(page));
+  });
+});
+
+describe("photoControlsOpen (page helper)", () => {
+  const end = windowEnd;
+  test("window states", () => {
+    const at = (s: string, ms: number) => photoControlsOpen({ effectiveStatus: s, expiresAt: end }, new Date(ms));
+    assert.equal(at("completed", eventEnd + 29 * DAY), true);
+    assert.equal(at("completed", eventEnd + 30 * DAY), false);
+    assert.equal(at("completed", eventEnd + 31 * DAY), false);
+    assert.equal(at("cancelled", eventEnd + DAY), false);
+    assert.equal(at("archived", eventEnd + DAY), false);
+    assert.equal(at("active", eventEnd - DAY), true);
+    assert.equal(photoControlsOpen({ effectiveStatus: "completed", expiresAt: null }), false);
+    assert.equal(photoControlsOpen({ effectiveStatus: "", expiresAt: end }), false);
   });
 });

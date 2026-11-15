@@ -2,14 +2,16 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/admin/server";
 import { clampDays } from "@/lib/admin/overview";
 import { parseFinancial } from "@/lib/admin/cc";
-import { dollars } from "@/lib/admin/hc";
+import { dollars, hcCapabilities } from "@/lib/admin/hc";
 
 // FINANCIAL REPORTING (read-only). Shows only what the database stores: purchase counts by product, referred-purchase amounts and the
 // Hosting Collective commission and payout ledger. Gross revenue is NOT stored here (Stripe and the app stores hold it), and this page
 // says so instead of estimating it.
 export default async function FinancePage({ searchParams }: { searchParams: { days?: string | string[] } }) {
   const days = clampDays(searchParams.days);
-  const { supabase } = await requireStaff("revenue.read", "/command-center/finance");
+  const { context, supabase } = await requireStaff("revenue.read", "/command-center/finance");
+  // Commission and payout figures are payout data: only hc.payout (owner and authorized financial staff) sees them (founder decision A).
+  const showPayoutData = hcCapabilities(context).canViewPayouts;
   const { data, error } = await supabase.rpc("admin_financial_summary", { p_days: days });
   const f = error ? null : parseFinancial(data);
   return (
@@ -30,8 +32,8 @@ export default async function FinancePage({ searchParams }: { searchParams: { da
           <section aria-labelledby="r"><h2 id="r" className="mb-2 font-display text-xl text-forest">Referred purchases and creator commissions</h2>
             {!f.referred ? <p className="text-sm text-charcoal/70">Not available until the referral package is applied.</p> : (
               <ul className="space-y-1 text-sm"><li>Referred purchases recorded: <span className="tabular-nums">{f.referred.purchases ?? "n/a"}</span> (pre-tax subtotal {dollars(f.referred.subtotalCents)})</li>
-                {(f.commissionStates ?? []).map((c) => <li key={c.state}>Commissions {c.state}: {c.n} / {dollars(c.cents)}</li>)}
-                {(f.payoutStatuses ?? []).map((c) => <li key={c.status}>Payouts {c.status}: {c.n} / {dollars(c.cents)}</li>)}</ul>)}</section>
+                {showPayoutData ? (f.commissionStates ?? []).map((c) => <li key={c.state}>Commissions {c.state}: {c.n} / {dollars(c.cents)}</li>) : <li>Commission and payout figures are visible to the owner and authorized financial staff only.</li>}
+                {showPayoutData ? (f.payoutStatuses ?? []).map((c) => <li key={c.status}>Payouts {c.status}: {c.n} / {dollars(c.cents)}</li>) : null}</ul>)}</section>
         </>)}
     </div>
   );

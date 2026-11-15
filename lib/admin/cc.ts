@@ -12,7 +12,7 @@ export type AlertSeverity = "action" | "review";
 export interface AlertRow { key: string; severity: AlertSeverity; count: number; text: string; href: string }
 // Permission needed to open each alert target; used to hide links a staff member could not open anyway (they would only see a 404).
 export const ALERT_HREF_PERMISSION: Record<string, string> = {
-  "/command-center/purchases": "support.read", "/command-center/hosting-collective/payouts": "hc.read",
+  "/command-center/purchases": "support.read", "/command-center/hosting-collective/payouts": "hc.payout",
   "/command-center/hosting-collective/applications": "hc.read", "/command-center/comms": "ops.read",
 };
 export function visibleAlerts(alerts: AlertRow[], permissions: readonly string[]): AlertRow[] {

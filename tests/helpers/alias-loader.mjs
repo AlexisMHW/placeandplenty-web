@@ -7,6 +7,7 @@ import path from "node:path";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const stubs = {
   "next/cache": path.join(root, "tests/helpers/stub-next-cache.mjs"),
+  "next/navigation": path.join(root, "tests/helpers/stub-next-navigation.mjs"),
   "next/headers": path.join(root, "tests/helpers/stub-next-headers.mjs"),
   "@/lib/supabase-server": path.join(root, "tests/helpers/stub-supabase-server.mjs"),
 };

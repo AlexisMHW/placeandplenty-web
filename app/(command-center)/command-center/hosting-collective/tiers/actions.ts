@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/admin/server";
+import { requireStaff, requirePayoutOwner } from "@/lib/admin/server";
 import { parseAssignTierForm, parseStatusForm } from "@/lib/admin/tiers";
 import { saveTierWith, setTierEligibilityWith } from "@/lib/hc/tier-write";
 import { knownCode } from "@/lib/admin/messages";
@@ -19,7 +19,7 @@ export async function saveTier(formData: FormData): Promise<R> {
 }
 // Owner only (hc.payout checked here and in the database). The only way to change paid-referral eligibility: explicit yes/no, reason and confirmation.
 export async function setTierEligibility(formData: FormData): Promise<R> {
-  const { supabase } = await requireStaff("hc.payout", PATH);
+  const { supabase } = await requirePayoutOwner(PATH);
   return finish(await setTierEligibilityWith(supabase, formData));
 }
 export async function assignTier(formData: FormData): Promise<R> {

@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { decideAccess, type StaffContext, type StaffPermission } from "@/lib/admin/access";
+import { canActOnPayouts } from "@/lib/admin/payout-access";
 
 // THE SERVER-SIDE GATE for every Command Center page and action.
 //
@@ -30,4 +31,14 @@ export async function requireStaff(
   if (decision.kind === "login") redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   if (decision.kind === "not_found") notFound();
   return { context: decision.context, supabase };
+}
+
+/**
+ * Gate for every payout ACTION (founder decision A): hc.payout AND the owner role. Anyone else gets a 404, exactly like a missing page.
+ * The database functions repeat the owner check; this layer only decides first.
+ */
+export async function requirePayoutOwner(nextPath: string): Promise<{ context: StaffContext; supabase: ReturnType<typeof createClient> }> {
+  const r = await requireStaff("hc.payout", nextPath);
+  if (!canActOnPayouts(r.context)) notFound();
+  return r;
 }

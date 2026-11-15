@@ -3,6 +3,8 @@ export interface FakeOptions {
   status: string | null;            // value effective_gathering_status returns (null => error)
   statusError?: boolean;
   userId?: string;                  // caller identity (owner / co-host / anyone)
+  staffContext?: unknown;           // get_my_staff_context answer (Command Center gate tests)
+  photoWorkspace?: { expiresAt: string; editable?: boolean; effectiveStatus?: string } | null; // gathering_photo_workspace answer (null => no answer)
 }
 export function makeFakeSupabase(opts: FakeOptions) {
   const calls: { kind: string; name: string; args?: unknown }[] = [];
@@ -30,6 +32,12 @@ export function makeFakeSupabase(opts: FakeOptions) {
         return { data: opts.status, error: null };
       }
       if (fn === "resolve_gathering_is_premium") return { data: true, error: null };
+      if (fn === "get_my_staff_context") { calls.push({ kind: "read", name: `rpc:${fn}` }); return { data: opts.staffContext ?? null, error: null }; }
+      if (fn === "gathering_photo_workspace") {
+        calls.push({ kind: "write", name: `rpc:${fn}`, args }); // classified as a READ by the tests (READ_RPCS)
+        const w = opts.photoWorkspace;
+        return { data: w ? { effectiveStatus: w.effectiveStatus ?? opts.status, expiresAt: w.expiresAt, editable: w.editable ?? true } : null, error: null };
+      }
       calls.push({ kind: "write", name: `rpc:${fn}`, args });
       return { data: null, error: null };
     },

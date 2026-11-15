@@ -19,6 +19,7 @@ import {
 import { getMyEntitlementState } from "@/lib/entitlement-data";
 import { createClient, getUser } from "@/lib/supabase-server";
 import { getMyGatherings } from "@/lib/host-data";
+import { splitPurchasable } from "@/lib/purchase-permission";
 import {
   MULTI_DAY_NOTE,
   MULTI_DAY_PRICING,
@@ -96,7 +97,7 @@ export default async function CheckoutPage({
   const state = user ? await getMyEntitlementState() : null;
 
   // A Pass has to name its gathering before an intent can exist.
-  const gatherings =
+  const allGatherings =
     user && product.requiresGathering
       ? (await getMyGatherings()).filter((g) => {
           if (!["draft", "active", "hosting"].includes(g.status)) return false;
@@ -109,6 +110,11 @@ export default async function CheckoutPage({
           return true;
         })
       : [];
+
+  // Founder decision C: only the owner and a full-access co-host may start a purchase. Gatherings where this person is a planner or manager
+  // co-host are not offered as purchase targets; they are listed so the page can say "ask the host".
+  const { allowed: gatherings, blocked: notPurchasable } =
+    user && allGatherings.length > 0 ? await splitPurchasable(createClient(), allGatherings) : { allowed: allGatherings, blocked: [] as typeof allGatherings };
 
   const requestedGatheringId = searchParams.gatheringId;
   if (
@@ -227,7 +233,8 @@ export default async function CheckoutPage({
             signedIn={Boolean(user)}
             email={user?.email ?? null}
             alreadyHasPlus={alreadyHasPlus}
-            notice={searchParams.purchase === "cancelled" || searchParams.purchase === "error" ? searchParams.purchase : null}
+            notice={searchParams.purchase === "cancelled" || searchParams.purchase === "error" || searchParams.purchase === "not-allowed" ? searchParams.purchase : null}
+            notPurchasable={notPurchasable.map((g) => ({ id: g.id, name: g.name }))}
             checkoutConfigured={isCheckoutAvailableFor(product, user?.id)}
             pendingNote={
               product.canonicalProductId === "multi_day_pass" ||

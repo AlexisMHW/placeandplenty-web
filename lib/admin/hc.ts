@@ -116,7 +116,9 @@ export function hcCapabilities(ctx: StaffContext) {
     canManage: has("hc.manage"),
     canReviewApplications: has("hc.applications.review"),
     canReviewContent: has("hc.content.review"),
-    canSeePayoutActions: has("hc.payout"), // no payout action is built; shown only as an explanation
+    // Decision A: hc.payout lets staff READ payout history; only the OWNER gets action forms. A manager with only hc.read sees no payout data.
+    canViewPayouts: has("hc.payout"),
+    canSeePayoutActions: ctx.role === "owner" && has("hc.payout"),
   };
 }
 
