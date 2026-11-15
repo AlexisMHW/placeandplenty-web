@@ -21,3 +21,6 @@ tsconfig.tsbuildinfo
 # Playwright
 /test-results/
 /playwright-report/
+
+# Preview isolation marker (written by scripts/check-preview-isolation.mjs, verified by next.config.js)
+.preview-isolation-ok.json

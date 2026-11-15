@@ -2,7 +2,10 @@
 // Build-time guard: fail a Vercel *Preview* build that resolves Supabase to production.
 // No-op for production builds, local builds and CI (VERCEL_ENV not "preview").
 // Prints reasons only, never env values. Run first in `npm run build`.
+import { createRequire } from "node:module";
 import { checkPreviewIsolation, QA_THIRD_PARTY_OVERRIDE_VAR } from "./lib/preview-isolation.mjs";
+
+const { writeMarker, clearMarker } = createRequire(import.meta.url)("./lib/preview-marker.cjs");
 
 const r = checkPreviewIsolation({
   vercelEnv: process.env.VERCEL_ENV,
@@ -14,14 +17,17 @@ const r = checkPreviewIsolation({
   thirdPartyKeys: { GELATO_API_KEY: process.env.GELATO_API_KEY, MAILERLITE_API_KEY: process.env.MAILERLITE_API_KEY, BREVO_API_KEY: process.env.BREVO_API_KEY },
   qaThirdPartyOverride: process.env[QA_THIRD_PARTY_OVERRIDE_VAR],
   serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  scanEnv: process.env, // every variable is scanned for live-key-shaped values; only names are ever reported
   checkoutTesterIds: process.env.WEB_CHECKOUT_TESTER_USER_IDS,
 });
 
+clearMarker(); // never trust a marker from an earlier run: only a pass in THIS run may leave one behind (next.config.js verifies it)
 if (!r.applies) {
   console.log("preview-isolation: not a Preview build (VERCEL_ENV != preview); skipped.");
   process.exit(0);
 }
 if (r.ok) {
+  writeMarker(process.env);
   console.log("preview-isolation: OK, Preview build targets only the approved QA Supabase project with analytics off and no live/real server-side secrets.");
   process.exit(0);
 }

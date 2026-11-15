@@ -1,3 +1,5 @@
+const { assertPreviewIsolationRan } = require("./scripts/lib/preview-marker.cjs");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -64,4 +66,10 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Build-time self-check (A8 n5): on a Vercel Preview production build, refuse to continue unless the isolation guard
+// (scripts/check-preview-isolation.mjs, first step of `npm run build`) ran and passed in this same build. This keeps an
+// overridden Build Command from silently skipping the guard. No effect on dev, `next start`, production or local builds.
+module.exports = (phase) => {
+  assertPreviewIsolationRan(phase, process.env);
+  return nextConfig;
+};
