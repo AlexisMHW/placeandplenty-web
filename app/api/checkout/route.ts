@@ -1,3 +1,4 @@
+import { siteUrl as resolveSiteUrl, siteUrlRefusal } from "@/lib/site-url";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getUser } from "@/lib/supabase-server";
 import { findWebProduct, isCheckoutAvailableFor } from "@/lib/checkout";
@@ -28,8 +29,9 @@ function configuredStripePrice(
   return undefined;
 }
 
+// FOLLOW-UP J: production keeps the production default; a preview / QA / local deployment needs an explicit non-production NEXT_PUBLIC_SITE_URL (lib/site-url.ts) and otherwise REFUSES.
 function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://placeandplenty.com").replace(/\/$/, "");
+  return resolveSiteUrl();
 }
 
 function safeSameOrigin(req: NextRequest): boolean {
@@ -65,6 +67,7 @@ async function createStripeCheckoutSession(params: URLSearchParams) {
 }
 
 export async function POST(req: NextRequest) {
+  if (siteUrlRefusal()) return NextResponse.json({ error: "site_url_not_configured" }, { status: 503 });
   if (!safeSameOrigin(req)) {
     return NextResponse.json({ error: "invalid_origin" }, { status: 403 });
   }

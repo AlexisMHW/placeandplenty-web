@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
+import { referralSiteUrl } from "@/lib/site-url";
 import { assignmentActionable, closedAssignmentCopy, dollars, earningsView, parsePortal, referralUrl, referralsLive, sessionExpired } from "@/lib/creator-portal";
 import { applicationCopy, canWithdraw, memberStatusCopy, parseProgramStatus, REFERRAL_REASON_COPY } from "@/lib/hc/lifecycle";
 import { PLATFORMS } from "@/lib/hc/creator-forms";
@@ -78,7 +79,7 @@ export default async function CreatorPortal() {
       <section aria-labelledby="ref">
         <h2 id="ref" className="mb-2 font-display text-xl text-forest">Your referral link</h2>
         {d.codes.length === 0 ? <p className="text-sm text-charcoal/70">Your link has not been created yet.</p> : (
-          <ul className="space-y-1 text-sm">{d.codes.map((c) => { const u = referralUrl(c); return u ? <li key={c}><code className="rounded bg-cream px-2 py-1">{u}</code></li> : null; })}</ul>
+          <ul className="space-y-1 text-sm">{d.codes.map((c) => { const u = referralUrl(c, referralSiteUrl()); return u ? <li key={c}><code className="rounded bg-cream px-2 py-1">{u}</code></li> : null; })}</ul>
         )}
         {!paidLive ? <p className="mt-2 rounded-lg border border-forest/20 bg-cream p-3 text-sm">Referral tracking is not switched on for your account yet. Please do not share your link publicly until we tell you it is live. Nothing is being tracked.{refReason ? ` (${refReason})` : ""}</p> : (
           <p className="mt-2 text-sm text-charcoal/70">Always disclose near your link that you may earn a commission.</p>)}

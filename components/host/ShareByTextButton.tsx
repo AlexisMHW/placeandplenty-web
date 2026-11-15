@@ -23,8 +23,8 @@ interface Props {
   gatheringName: string;
   gatheringDate?: string | null;
   arrivalTime?: string | null;
-  /** Origin + /invite for this deployment; defaults to the production guest page. */
-  baseUrl?: string;
+  /** Origin + /invite for this deployment; omitted = the production guest page (legacy); null = no base is configured for this (non-production) environment, so no link is built (follow-up J). */
+  baseUrl?: string | null;
   locale?: ShareLocale;
 }
 

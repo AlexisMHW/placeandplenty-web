@@ -1,3 +1,4 @@
+import { siteUrl as resolveSiteUrl, siteUrlRefusal } from "@/lib/site-url";
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase-server";
 import { getGathering, getMenuItems } from "@/lib/host-data";
@@ -24,8 +25,9 @@ const TEMPLATES = new Set<PaperTemplate>([
   "warm-celebration",
 ]);
 
-function siteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://placeandplenty.com").replace(/\/$/, "");
+// FOLLOW-UP J: production keeps the production default; a preview / QA / local deployment needs an explicit non-production NEXT_PUBLIC_SITE_URL (lib/site-url.ts) and otherwise REFUSES.
+function siteUrl(): string {
+  return resolveSiteUrl();
 }
 
 function formatDate(value: string) {
@@ -48,6 +50,7 @@ function formatTime(value: string | null) {
 }
 
 export async function POST(req: NextRequest) {
+  if (siteUrlRefusal()) return NextResponse.json({ error: "site_url_not_configured" }, { status: 503 });
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 

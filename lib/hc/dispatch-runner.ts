@@ -1,3 +1,5 @@
+import { siteContext } from "../site-url.ts";
+import { strictBaseUrl } from "../base-url-guard.ts";
 // HC NOTIFICATION DISPATCH WIRING (web). The enqueue half is atomic in the database: hc_review_application emits the approved/declined event
 // and queues exactly one applicant_email delivery in the same transaction (DB suite t215003 C15/C16). This module is the DISPATCH half: it
 // drains queued applicant_email deliveries through dispatchDeliveries() (lib/hc/events.ts) and the injected mailer.
@@ -41,6 +43,8 @@ export async function runHcDispatch(deps: RunnerDeps, limit = 20): Promise<Dispa
   if (!mailer) return { ...none, reason: "mailer_not_configured" };
   const siteUrl = (deps.env.SITE_URL ?? deps.env.NEXT_PUBLIC_SITE_URL ?? "").trim().replace(/\/+$/, "");
   if (!siteUrl) return { ...none, reason: "site_url_missing" };
+  // Follow-up J: in a non-production environment the site URL (used in every applicant/founder email link) must not be placeandplenty.com in any disguise.
+  if (siteContext(deps.env) !== "production" && !strictBaseUrl(siteUrl, { allowPath: false }).ok) return { ...none, reason: "site_url_refused" };
   let client: RpcClient | null = null;
   try { client = deps.serviceClient(); } catch { client = null; }
   if (!client) return { ...none, reason: "service_client_unavailable" };

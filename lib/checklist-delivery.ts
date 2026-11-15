@@ -2,7 +2,7 @@ import { getChecklist, checklistPdf } from "./checklists.ts";
 
 import { checklistSignupUrl } from "./checklist-flow.ts";
 
-type Config = { supabaseUrl?: string; anonKey?: string; brevoKey?: string; sender?: string; listIds?: Partial<Record<string, string>>; mailerliteKey?: string; mailerliteGroupIds?: Partial<Record<string, string>> };
+type Config = { /** Origin used in emailed links. undefined = production default; null = none is safe here (non-production without an explicit one): no email is sent. */ siteUrl?: string | null; supabaseUrl?: string; anonKey?: string; brevoKey?: string; sender?: string; listIds?: Partial<Record<string, string>>; mailerliteKey?: string; mailerliteGroupIds?: Partial<Record<string, string>> };
 const htmlEscape = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -15,7 +15,8 @@ export async function deliverChecklist(body: unknown, ip: string, config: Config
   const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
   if (!kit || !firstName || firstName.length > 120 || email.length > 320 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || typeof data.consent !== "boolean") return reply({ message: "Please add your first name and a valid email address." }, 400);
   const download = checklistPdf(kit.slug);
-  const signupUrl = `https://placeandplenty.com${checklistSignupUrl(kit.slug)}`;
+  const site = config.siteUrl === undefined ? "https://placeandplenty.com" : config.siteUrl;
+  const signupUrl = site ? `${site}${checklistSignupUrl(kit.slug)}` : "";
   if (typeof data.website === "string" && data.website.trim()) return reply({ download, emailSent: false });
   if (!config.supabaseUrl || !config.anonKey) return reply({ message: "Checklist signup is temporarily unavailable. Please try again shortly." }, 503);
 
@@ -34,9 +35,9 @@ export async function deliverChecklist(body: unknown, ip: string, config: Config
   // Downloads remain available if the email provider is unavailable.
   let emailSent = false;
   let newsletterSynced = false;
-  if (config.brevoKey && config.sender) {
+  if (config.brevoKey && config.sender && site) {
     const headers = { "Content-Type": "application/json", "api-key": config.brevoKey };
-    const url = `https://placeandplenty.com${download}`;
+    const url = `${site}${download}`;
     try {
       const sent = await transport("https://api.brevo.com/v3/smtp/email", {
         method: "POST", signal: AbortSignal.timeout(10000), headers,

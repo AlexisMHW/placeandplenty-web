@@ -1,3 +1,4 @@
+import { siteUrl as resolveSiteUrl, siteUrlRefusal } from "@/lib/site-url";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getUser } from "@/lib/supabase-server";
 import { getGathering } from "@/lib/host-data";
@@ -23,8 +24,9 @@ type CheckoutBody = {
   recipient?: GelatoQuoteRequest["recipient"];
 };
 
-function siteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://placeandplenty.com").replace(/\/$/, "");
+// FOLLOW-UP J: production keeps the production default; a preview / QA / local deployment needs an explicit non-production NEXT_PUBLIC_SITE_URL (lib/site-url.ts) and otherwise REFUSES.
+function siteUrl(): string {
+  return resolveSiteUrl();
 }
 
 function validPrintUrl(value: unknown): value is string {
@@ -117,6 +119,7 @@ async function createStripeCustomer(
 }
 
 export async function POST(req: NextRequest) {
+  if (siteUrlRefusal()) return NextResponse.json({ error: "site_url_not_configured" }, { status: 503 });
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 

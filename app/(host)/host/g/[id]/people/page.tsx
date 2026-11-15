@@ -20,7 +20,7 @@ import { rsvpLabel } from "@/lib/host-format";
 import { deliveryCopy, resolveDeliveryLabel } from "@/lib/invitation-delivery";
 import ShareByTextButton from "@/components/host/ShareByTextButton";
 import ShareStepThrough from "@/components/host/ShareStepThrough";
-import { DEFAULT_GUEST_INVITE_BASE_URL } from "@/lib/share-by-text";
+import { guestInviteBaseUrl } from "@/lib/site-url";
 
 const RSVP_OPTIONS = ["yes", "maybe", "no", "invited", "no_response"].map(
   (value) => ({ value, label: rsvpLabel(value) })
@@ -79,7 +79,8 @@ export default async function PeoplePage({ params }: { params: { id: string } })
     phonesByParty.set(row.invitation_party_id, [...(phonesByParty.get(row.invitation_party_id) ?? []), row.guest.phone]);
   }
   const hostName = String((user?.user_metadata as { full_name?: string } | undefined)?.full_name ?? "").trim() || null;
-  const inviteBaseUrl = process.env.GUEST_PAGE_BASE_URL || DEFAULT_GUEST_INVITE_BASE_URL;
+  // FOLLOW-UP J: production keeps the production default; preview / QA / local needs an explicit non-production GUEST_PAGE_BASE_URL, else null = no share link is built (lib/site-url.ts).
+  const inviteBaseUrl = guestInviteBaseUrl();
   // Bulk share by text: one entry per household (the party lead), never per person.
   const stepHouseholds = guests
     .filter((row) => !!row.invitation_party_id && leadByParty.get(row.invitation_party_id as string) === row.id && !!row.party)

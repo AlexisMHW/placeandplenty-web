@@ -61,8 +61,9 @@ export function pickPartyPhone(phones: Array<string | null | undefined>): string
 /** Builds `<base>/<token>`; null if the token is not a UUID (never guess a link). */
 export function buildInvitationUrl(
   token: string | null | undefined,
-  baseUrl: string = DEFAULT_GUEST_INVITE_BASE_URL
+  baseUrl: string | null = DEFAULT_GUEST_INVITE_BASE_URL
 ): string | null {
+  if (baseUrl === null) return null; // an explicit null base = "no configured base for this environment": refuse, never fall back to production
   if (!token || !TOKEN_PATTERN.test(token.trim())) return null;
   const base = (baseUrl || DEFAULT_GUEST_INVITE_BASE_URL).trim().replace(/\/+$/, '');
   if (!/^https:\/\//i.test(base)) return null;
@@ -195,7 +196,7 @@ export interface ShareQueueItem {
  */
 export function planShareQueue(
   candidates: ShareCandidate[],
-  baseUrl: string = DEFAULT_GUEST_INVITE_BASE_URL
+  baseUrl: string | null = DEFAULT_GUEST_INVITE_BASE_URL
 ): { queue: ShareQueueItem[]; skipped: Array<{ partyId: string; reason: ShareSkipReason }>; withoutPhone: number } {
   const seen = new Set<string>();
   const queue: ShareQueueItem[] = [];

@@ -1,4 +1,5 @@
 import { deliverChecklist } from "@/lib/checklist-delivery";
+import { decideSiteUrl, siteContext } from "@/lib/site-url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +15,9 @@ export async function POST(request: Request) {
   try { body = JSON.parse(text); } catch { return Response.json({ message: "Invalid request." }, { status: 400 }); }
   // Vercel sets x-forwarded-for. Unknown hosts share a conservative limiter key.
   const ip = process.env.VERCEL === "1" ? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown" : "unknown";
+  const siteEnv = decideSiteUrl(process.env.NEXT_PUBLIC_SITE_URL, siteContext());
   return deliverChecklist(body, ip, {
+    siteUrl: siteEnv.url,
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL, anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     brevoKey: process.env.BREVO_API_KEY, sender: process.env.BREVO_CHECKLIST_SENDER,
     mailerliteKey: process.env.MAILERLITE_API_KEY,

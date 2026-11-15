@@ -54,7 +54,9 @@ export function parsePortal(raw: unknown): PortalState {
 }
 
 /** Referral URL for display. Only a well-formed code produces a link; anything else returns null. */
-export function referralUrl(code: string, site = SITE): string | null {
+export function referralUrl(code: string, site: string | null = SITE): string | null {
+  // site === null means "no safe base URL in this environment" (non-production without an explicit one): no link, never a silent production link.
+  if (site === null) return null;
   return /^[a-z0-9-]{3,32}$/.test(code) ? `${site}/r/${code}` : null;
 }
 

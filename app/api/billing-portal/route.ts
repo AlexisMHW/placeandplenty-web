@@ -1,3 +1,4 @@
+import { siteUrl as resolveSiteUrl, siteUrlRefusal } from "@/lib/site-url";
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase-server";
 import { getMyEntitlements } from "@/lib/entitlement-data";
@@ -5,8 +6,9 @@ import { isLive } from "@/lib/entitlements";
 
 export const runtime = "nodejs";
 
+// FOLLOW-UP J: production keeps the production default; a preview / QA / local deployment needs an explicit non-production NEXT_PUBLIC_SITE_URL (lib/site-url.ts) and otherwise REFUSES.
 function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://placeandplenty.com").replace(/\/$/, "");
+  return resolveSiteUrl();
 }
 
 function safeSameOrigin(req: NextRequest): boolean {
@@ -20,6 +22,7 @@ function safeSameOrigin(req: NextRequest): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  if (siteUrlRefusal()) return NextResponse.json({ error: "site_url_not_configured" }, { status: 503 });
   if (!safeSameOrigin(req)) {
     return NextResponse.json({ error: "invalid_origin" }, { status: 403 });
   }

@@ -22,7 +22,7 @@ interface Props {
   gatheringDate?: string | null;
   arrivalTime?: string | null;
   hostName?: string | null;
-  baseUrl?: string;
+  baseUrl?: string | null;
   households: StepHousehold[];
   locale?: ShareLocale;
 }

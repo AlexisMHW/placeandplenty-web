@@ -1,0 +1,3 @@
+step	file	sha256_12	phase	rollback
+1	src/20261114217490_hc_partial_refund_hold_resolution.sql	4cb689d5fc7a	F1 follow-up J (owner-controlled partial-refund hold resolution: release|reverse, sweep respects it; Gate 8 prerequisite)	ROLLBACK_217490.sql
+2	src/20261114217491_hc_payout_draft_owner_only.sql	506023783990	F2 follow-up J (hc_create_payout_draft owner-only at the database; hc.payout stays view-only)	ROLLBACK_217491.sql
