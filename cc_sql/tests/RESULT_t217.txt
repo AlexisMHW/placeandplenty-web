@@ -1,4 +1,11 @@
-chain applied OK (18 files)
+note: step not applicable on stub schema: 20261113202001_qa_cohost_capability_functions_r1.sql
+note: step not applicable on stub schema: 20261113202002_qa_cohost_capability_enforcement_rpcs_r1.sql
+note: step not applicable on stub schema: 20261113202003_qa_cohost_capability_enforcement_policies.sql
+note: step not applicable on stub schema: 20261113202004_qa_cohost_invitation_artwork_storage_policies_r1.sql
+note: step not applicable on stub schema: 20261114205005_qa_purchase_intent_duplicate_guard_b5.sql
+note: step not applicable on stub schema: 20261113213000_qa_email_delivery_events_and_suppression_tables.sql
+note: step not applicable on stub schema: 20261113213001_qa_email_delivery_event_and_suppression_functions.sql
+note: step not applicable on stub schema: 20261114213003_qa_email_reconcile_orphan_events.sql
 PASS A0 owner defines a paid-eligible tier (owner-only eligibility)
 PASS A1 paid referrals start DISABLED
 PASS A1b cpm cannot activate paid referrals
