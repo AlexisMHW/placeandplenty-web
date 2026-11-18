@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { lookupShareInvite, submitShareRsvp, type ShareInviteData } from "@/lib/guest-api";
 import { formatShareDate, formatShareTime } from "@/lib/share-invite";
+import { SmsHelpLine } from "@/components/guest/SmsOptIn";
 
 type Status = "yes" | "maybe" | "no";
 
@@ -195,6 +196,8 @@ export default function ShareInviteClient({ token, data }: { token: string; data
           </p>
         </div>
       )}
+      {/* Opt-out / HELP line only (renders nothing unless NEXT_PUBLIC_SMS_GUEST_OPT_IN === "true"). The share link has no household, so the opt-in box lives on the personal /invite link. */}
+      <SmsHelpLine />
     </div>
   );
 }

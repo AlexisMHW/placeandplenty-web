@@ -16,6 +16,7 @@ import {
   type RsvpResponseInput,
 } from "@/lib/guest-api";
 import { toUploadableJpeg } from "@/lib/image";
+import SmsOptIn from "@/components/guest/SmsOptIn";
 
 type LoadState =
   | { kind: "loading" }
@@ -663,6 +664,9 @@ export default function GuestPageClient({
           )}
         </section>
       )}
+
+      {/* --- Optional SMS opt-in (renders nothing unless NEXT_PUBLIC_SMS_GUEST_OPT_IN === "true") --- */}
+      {!isCancelled && !data.isArchived && <SmsOptIn publicToken={token} />}
 
       {/* --- Multi-Day guest schedule --- */}
       {data.showSchedule && data.schedule.length > 0 && (
