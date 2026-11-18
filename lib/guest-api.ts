@@ -408,8 +408,15 @@ export interface ShareInviteData {
   displayDate: string | null;
   displayEndDate: string | null;
   displayTime: string | null;
-  /** Present only when the host chose to show the location. */
+  /**
+   * Present only when the host's address mode allows this viewer to see it: "visible", or "after_approval" for a
+   * requester whose request the host approved. Never part of server-rendered HTML or link-preview metadata.
+   */
   displayLocation: string | null;
+  /** "after_approval" when the address is withheld until the host approves the viewer's RSVP request. */
+  locationNote: "after_approval" | null;
+  /** Status of the viewer's own request (only when their private request token was supplied). */
+  requestStatus: "pending" | "approved" | "unavailable" | null;
   displayDescription: string | null;
   rsvpDeadline: string | null;
   artwork: { url: string; mimeType: string } | null;
@@ -419,8 +426,8 @@ export interface ShareInviteData {
   canRsvp: boolean;
 }
 
-export async function lookupShareInvite(token: string) {
-  return call<ShareInviteData>("share-invite-lookup", { token });
+export async function lookupShareInvite(token: string, requestToken?: string) {
+  return call<ShareInviteData>("share-invite-lookup", requestToken ? { token, requestToken } : { token });
 }
 
 export interface ShareRsvpInput {
@@ -430,6 +437,8 @@ export interface ShareRsvpInput {
   adults: number;
   children: number;
   note?: string;
+  /** Honeypot: real visitors never see this field; leave empty. */
+  website?: string;
 }
 
 /**
@@ -438,5 +447,5 @@ export interface ShareRsvpInput {
  * already on the guest list.
  */
 export async function submitShareRsvp(token: string, input: ShareRsvpInput) {
-  return call<{ success: boolean; error?: string }>("share-invite-rsvp", { token, ...input });
+  return call<{ success: boolean; error?: string; requestToken?: string }>("share-invite-rsvp", { token, ...input });
 }

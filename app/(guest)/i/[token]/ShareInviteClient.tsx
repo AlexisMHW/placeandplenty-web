@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { submitShareRsvp, type ShareInviteData } from "@/lib/guest-api";
+import { useEffect, useState } from "react";
+import { lookupShareInvite, submitShareRsvp, type ShareInviteData } from "@/lib/guest-api";
 import { formatShareDate, formatShareTime } from "@/lib/share-invite";
 
 type Status = "yes" | "maybe" | "no";
@@ -16,6 +16,26 @@ export default function ShareInviteClient({ token, data }: { token: string; data
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [website, setWebsite] = useState(""); // honeypot
+  const [location, setLocation] = useState<string | null>(data.displayLocation);
+  const [requestStatus, setRequestStatus] = useState<ShareInviteData["requestStatus"]>(data.requestStatus);
+  const storageKey = `pp-share-request-${token}`;
+
+  // "After host approval" address: the private request token lives only in this browser, and the address is fetched
+  // client-side, so it is never in server-rendered HTML or Open Graph metadata.
+  useEffect(() => {
+    if (data.locationNote !== "after_approval") return;
+    let rt: string | null = null;
+    try { rt = window.localStorage.getItem(storageKey); } catch { /* storage unavailable */ }
+    if (!rt) return;
+    let cancelled = false;
+    lookupShareInvite(token, rt).then((res) => {
+      if (cancelled || !res.ok || !res.data) return;
+      setRequestStatus(res.data.requestStatus);
+      if (res.data.displayLocation) setLocation(res.data.displayLocation);
+    });
+    return () => { cancelled = true; };
+  }, [data.locationNote, token, storageKey]);
 
   const date = formatShareDate(data.displayDate);
   const endDate = formatShareDate(data.displayEndDate);
@@ -33,9 +53,16 @@ export default function ShareInviteClient({ token, data }: { token: string; data
       adults: status === "no" ? 0 : adults,
       children: status === "no" ? 0 : children,
       note: note.trim() || undefined,
+      website,
     });
     setBusy(false);
-    if (res.ok) setDone(true);
+    if (res.ok) {
+      setDone(true);
+      if (res.data?.requestToken) {
+        try { window.localStorage.setItem(storageKey, res.data.requestToken); } catch { /* storage unavailable */ }
+        setRequestStatus("pending");
+      }
+    } else if (res.status === 429) setError("Too many attempts. Please wait a few minutes and try again.");
     else if (res.status === 409) setError("RSVPs are closed for this gathering.");
     else if (res.status === 400) setError("Please check your name and email.");
     else setError("Something went wrong. Please try again.");
@@ -69,7 +96,14 @@ export default function ShareInviteClient({ token, data }: { token: string; data
       <div className="mt-4 space-y-1 font-body text-forest/80">
         {date && <p>{endDate ? `${date} – ${endDate}` : date}</p>}
         {time && <p>{time}</p>}
-        {data.displayLocation && <p>{data.displayLocation}</p>}
+        {location && <p>{location}</p>}
+        {!location && data.locationNote === "after_approval" && (
+          <p className="text-forest/70">
+            {requestStatus === "pending"
+              ? "The address will appear here once the host approves your RSVP. Check back on this page."
+              : "The host shares the address with guests after they approve an RSVP."}
+          </p>
+        )}
       </div>
       {data.displayDescription && <p className="mt-4 font-body text-forest/80">{data.displayDescription}</p>}
 
@@ -138,6 +172,9 @@ export default function ShareInviteClient({ token, data }: { token: string; data
             <textarea maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} rows={3}
               className="mt-1 w-full rounded-md border border-sage/40 bg-white px-3 py-2 text-forest" />
           </label>
+          <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
+            <label>Leave this empty<input tabIndex={-1} autoComplete="off" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} /></label>
+          </div>
           {error && <p role="alert" className="font-body text-sm text-red-700">{error}</p>}
           <button
             type="submit"
