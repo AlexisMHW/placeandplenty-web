@@ -49,7 +49,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="13 November 2026"
+      lastUpdated="18 November 2026"
       intro={
         <p>
           Place &amp; Plenty helps you get ready for people coming over. To
@@ -248,6 +248,39 @@ export default function PrivacyPage() {
       <p>
         We do not sell personal information, and we do not share it for
         cross-context behavioural advertising.
+      </p>
+
+      <h2>Optional SMS invitations and gathering updates</h2>
+      <p>
+        Place &amp; Plenty is preparing an optional SMS feature for invitations,
+        RSVP reminders and important gathering updates. SMS sending is not
+        currently enabled. If and when this feature is available, we will send
+        texts only to recipients who have separately opted in to receive
+        Place &amp; Plenty messages. A host adding a phone number does not, by
+        itself, authorize us to text that person.
+      </p>
+      <p>
+        For SMS, we may process a mobile number, the related gathering and
+        invitation details, the recipient&apos;s consent choice and its
+        timestamp and source, message and delivery records, and opt-out or
+        help requests. We use these records to send requested gathering
+        communications, honor preferences, troubleshoot delivery, prevent
+        unwanted messages and meet messaging compliance obligations.
+      </p>
+      <p>
+        <strong>Telnyx</strong> is our intended SMS delivery provider. If SMS
+        is activated, Telnyx and participating mobile carriers will process
+        the phone numbers, message contents and delivery information needed
+        to route texts. We do not sell phone numbers or share SMS opt-in
+        information with third parties for their own marketing.
+      </p>
+      <p>
+        SMS consent is optional and is not a condition of purchasing or using
+        Place &amp; Plenty. Message frequency varies by gathering. Message
+        and data rates may apply. Recipients can reply <strong>STOP</strong>
+        to opt out or <strong>HELP</strong> for assistance. We may retain
+        limited suppression records after an opt-out so that the number is not
+        contacted again without valid renewed consent.
       </p>
 
       <h2>Guest links and what they reveal</h2>
