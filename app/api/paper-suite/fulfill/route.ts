@@ -171,7 +171,11 @@ export async function POST(req: NextRequest) {
           : null;
 
     if (!gelatoOrderId) {
-      console.error("Gelato order response missing id", created);
+      // Never log the Gelato response itself: it carries the recipient's name, address and email.
+      console.error("Gelato order response missing id", {
+        paperOrderId: String(order.id),
+        responseKeys: Object.keys(created ?? {}).slice(0, 20),
+      });
       return NextResponse.json({ error: "gelato_order_id_missing" }, { status: 502 });
     }
 
@@ -199,7 +203,13 @@ export async function POST(req: NextRequest) {
       draft: gelatoOrderType === "draft",
     });
   } catch (fulfillmentError) {
-    console.error("Gelato Paper Suite fulfillment failed", fulfillmentError);
+    // Log only the error type, message and HTTP status. GelatoApiError.details is the provider response body, which can echo the
+    // recipient name, address and email from the request, so it must not reach the logs.
+    console.error("Gelato Paper Suite fulfillment failed", {
+      name: fulfillmentError instanceof Error ? fulfillmentError.name : "unknown",
+      message: fulfillmentError instanceof Error ? fulfillmentError.message : String(fulfillmentError),
+      status: fulfillmentError instanceof GelatoApiError ? fulfillmentError.status : undefined,
+    });
 
     // Only release the claim for a definite client/request rejection.
     // For network failures or provider 5xx responses we keep the order

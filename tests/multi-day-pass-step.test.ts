@@ -1,6 +1,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import {
   MULTI_DAY_PASS_REQUIRED_CODE,
@@ -41,11 +42,16 @@ function row(over: Partial<Entitlement> = {}): Entitlement {
 }
 
 describe("203001 error string", () => {
-  test("literal matches the migration", () => {
-    const sql = readFileSync(
-      "/home/claude/pp-recovery-ws/docs/recovery/proposed/20261111203001_qa_OPTIONAL_require_multi_day_pass_at_lock_in.sql",
-      "utf8"
-    );
+  // The migration lives in the native repo (supabase/qa_package/src). It used to be read from a machine-local recovery workspace,
+  // which does not exist on other checkouts. Look in PP_NATIVE_REPO or a sibling checkout instead; skip (visibly) if neither exists.
+  const MIGRATION = "supabase/qa_package/src/20261111203001_qa_OPTIONAL_require_multi_day_pass_at_lock_in.sql";
+  const candidates = [process.env.PP_NATIVE_REPO, resolve(process.cwd(), "..", "placeandplenty-native")]
+    .filter((d): d is string => Boolean(d))
+    .map((d) => resolve(d, MIGRATION));
+  const migrationPath = candidates.find((c) => existsSync(c));
+
+  test("literal matches the migration", { skip: migrationPath ? false : "native repo checkout not found (set PP_NATIVE_REPO)" }, () => {
+    const sql = readFileSync(migrationPath as string, "utf8");
     assert.ok(sql.includes(`'${MULTI_DAY_PASS_REQUIRED_CODE}'`));
   });
   test("detects in message forms", () => {

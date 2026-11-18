@@ -38,7 +38,6 @@ const WHOLE = /^(session|user|profile|guest|guests|contact|contacts|payload|head
 // file -> args regex -> reason. DEFECT entries are tracked in A8_DEFECTS.md and must be fixed by the owner, then removed here.
 const ALLOWED: Array<{ file: RegExp; args: RegExp; why: string }> = [
   { file: /^lib\/analytics\.ts$/, args: /"\[analytics\]", event, cleanMeta/, why: "dev-only, and meta already scrubbed by scrubEventProperties" },
-  { file: /^app\/api\/paper-suite\/fulfill\/route\.ts$/, args: /"Gelato order response missing id", created/, why: "DEFECT A8-W1: logs the whole Gelato order response (recipient name/address/email)" },
 ];
 
 test("no console call logs an email, phone, token, password, address, or a whole customer/order/session object", () => {
