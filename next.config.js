@@ -36,6 +36,11 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/:path*",
+        has: [{ type: "host", value: "canva-qa\\.placeandplenty\\.com" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
         // Apple fetches this from the bare apex and will not follow a
         // redirect, so the canonical host must serve it directly —
         // placeandplenty.com is the Production domain and www 308s to
