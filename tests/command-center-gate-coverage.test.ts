@@ -86,7 +86,7 @@ test("navigation shows only links the context may see, and never invents a permi
   // The Inbox is the one link every active staff member sees (rows are filtered per permission in the database).
   assert.deepEqual(navFor(ctx([])).map((l) => l.label), ["Inbox"]);
   assert.deepEqual(navFor(ctx(["support.read"])).map((l) => l.label), ["Inbox", "Purchases and support"]);
-  assert.deepEqual(navFor(ctx(["ops.read"])).map((l) => l.label), ["Inbox", "Email and SMS", "Integration health", "Notification settings"]);
+  assert.deepEqual(navFor(ctx(["ops.read"])).map((l) => l.label), ["Inbox", "Email and SMS", "SMS reporting", "Integration health", "Notification settings"]);
   assert.deepEqual(navFor(ctx(["overview.read"])).map((l) => l.label), ["Inbox", "Overview"]);
   // Founder decision A: a manager with only hc.read must not even see the Payouts link; hc.payout (owner, authorized financial staff) does.
   assert.deepEqual(navFor(ctx(["hc.read"])).map((l) => l.label), ["Inbox", "Hosting Collective", "Campaigns", "Tiers and terms"]);

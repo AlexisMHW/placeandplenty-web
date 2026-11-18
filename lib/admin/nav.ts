@@ -12,6 +12,7 @@ export const NAV_LINKS: NavLink[] = [
   { href: "/command-center/purchases", label: "Purchases and support", needs: "support.read" },
   { href: "/command-center/finance", label: "Finance", needs: "revenue.read" },
   { href: "/command-center/comms", label: "Email and SMS", needs: "ops.read" },
+  { href: "/command-center/sms", label: "SMS reporting", needs: "ops.read" },
   { href: "/command-center/health", label: "Integration health", needs: "ops.read" },
   { href: "/command-center/hosting-collective", label: "Hosting Collective", needs: "hc.read" },
   { href: "/command-center/hosting-collective/campaigns", label: "Campaigns", needs: "hc.read" },
