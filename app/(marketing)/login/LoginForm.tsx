@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getBrowserClient } from "@/lib/supabase-browser";
-import { callbackUrl, safeNext } from "@/lib/auth-redirects";
+import { authLinkErrorMessage, callbackUrl, safeNext } from "@/lib/auth-redirects";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import ResendConfirmation from "@/components/auth/ResendConfirmation";
 import { authEmailErrorMessage, classifyAuthEmailError, isEmailNotConfirmed } from "@/lib/resend-cooldown";
@@ -37,7 +37,7 @@ import { authEmailErrorMessage, classifyAuthEmailError, isEmailNotConfirmed } fr
 // /login?next=https://evil.example could bounce a freshly authenticated
 // host straight off the site.
 
-export default function LoginForm({ next }: { next?: string }) {
+export default function LoginForm({ next, linkError }: { next?: string; linkError?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [email, setEmail] = useState("");
@@ -49,6 +49,8 @@ export default function LoginForm({ next }: { next?: string }) {
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   const destination = safeNext(next);
+  // A dead email link (expired, already used, cut off) sends people here with ?error=... They get a plain explanation and a way to ask for a new one.
+  const linkErrorText = authLinkErrorMessage(linkError);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -127,6 +129,18 @@ export default function LoginForm({ next }: { next?: string }) {
       onSubmit={handleSubmit}
       className="rounded-card border border-sage/30 bg-offwhite p-8 shadow-soft"
     >
+      {linkErrorText && status !== "error" && (
+        <div role="alert" className="mb-6 rounded-md border border-sage/40 bg-cream p-4 font-body text-sm text-forest">
+          <p>{linkErrorText}</p>
+          <p className="mt-2 text-forest/80">
+            Already confirmed? Just log in below. Still waiting to confirm a new account? Type your email below and we&rsquo;ll send a
+            fresh confirmation link. For a login link, choose &ldquo;Send me a link&rdquo; again. Forgot your password?{" "}
+            <Link href="/forgot-password" className="underline decoration-gold underline-offset-4">Reset it</Link>.
+          </p>
+          <ResendConfirmation email={email} next={destination} />
+        </div>
+      )}
+
       <SocialAuthButtons next={destination} context="login" />
 
       <div className="flex gap-1 rounded-full border border-sage/30 p-1">

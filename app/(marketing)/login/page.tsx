@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: { next?: string };
+  searchParams: { next?: string; error?: string };
 }) {
   return (
     <section className="bg-parchment py-16 md:py-24">
@@ -40,7 +40,7 @@ export default function LoginPage({
           </p>
         </div>
 
-        <LoginForm next={searchParams.next} />
+        <LoginForm next={searchParams.next} linkError={searchParams.error} />
       </div>
     </section>
   );

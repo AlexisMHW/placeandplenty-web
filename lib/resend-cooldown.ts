@@ -69,6 +69,14 @@ export function isEmailNotConfirmed(error: unknown): boolean {
   return code === "email_not_confirmed" || message.includes("email not confirmed") || message.includes("email_not_confirmed");
 }
 
+/** True for Supabase's "this address already has an account" sign-up error (only returned when email confirmation is off). */
+export function isExistingAccountError(error: unknown): boolean {
+  const e = (error ?? {}) as { message?: unknown; code?: unknown };
+  const message = typeof e.message === "string" ? e.message.toLowerCase() : "";
+  const code = typeof e.code === "string" ? e.code.toLowerCase() : "";
+  return code === "user_already_exists" || code === "email_exists" || message.includes("already registered") || message.includes("already exists");
+}
+
 /** Person-facing wording for a failed auth email. Raw provider text is never shown. */
 export function authEmailErrorMessage(error: unknown): string {
   switch (classifyAuthEmailError(error)) {

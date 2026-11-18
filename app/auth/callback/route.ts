@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
-import { safeNext, RESET_PASSWORD_PATH } from "@/lib/auth-redirects";
+import { safeNext, isTokenHashType, COMPLETE_PATH, RESET_PASSWORD_PATH } from "@/lib/auth-redirects";
 import { REFERRAL_COOKIE } from "@/lib/referral";
 import { claimReferralFromCookie } from "@/lib/claimReferral";
 
@@ -28,7 +28,15 @@ export async function GET(request: NextRequest) {
     );
 
   if (authError) return failure("link_expired");
-  if (!code && !tokenHash) return failure("missing_code");
+  if (!code && !tokenHash) {
+    // Links requested from the native app use the implicit flow: the session (or the error) is in the URL FRAGMENT, which a server
+    // never sees. Browsers keep the fragment across a redirect, so hand the link to the client page that can read it. It sends the
+    // person to the same failure screens below when the fragment is missing or reports a dead link.
+    const forward = new URL(`${origin}${COMPLETE_PATH}`);
+    forward.searchParams.set("next", next);
+    if (isRecovery) forward.searchParams.set("recovery", "1");
+    return NextResponse.redirect(forward.toString());
+  }
 
   const cookieStore = cookies();
   const supabase = createServerClient(
@@ -49,18 +57,17 @@ export async function GET(request: NextRequest) {
   );
 
   if (tokenHash) {
-    // Branded recovery emails use token_hash so the email can point at the
-    // Place & Plenty callback directly. Recovery is the only supported type
-    // here for token-hash verification; other auth flows continue to use PKCE.
-    if (type !== "recovery") return failure("invalid_type");
+    // Branded auth emails use token_hash so the email can point at the Place & Plenty callback directly. Only a known set of
+    // types is verified (recovery, signup/email confirmation, magic link, invite, email change); anything else is refused.
+    if (!isTokenHashType(type)) return failure("invalid_type");
 
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
-      type: "recovery",
+      type,
     });
 
     if (error) return failure("link_expired");
-    return NextResponse.redirect(`${origin}${RESET_PASSWORD_PATH}`);
+    return NextResponse.redirect(`${origin}${type === "recovery" ? RESET_PASSWORD_PATH : next}`);
   }
 
   const { error } = await supabase.auth.exchangeCodeForSession(code!);

@@ -34,6 +34,15 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function ShareInvitePage({ params }: Params) {
   const result = isShareToken(params.token) ? await lookupShareInvite(params.token) : null;
+  // A busy or briefly unavailable service must not read as "your link is wrong".
+  if (result && !result.ok && (result.status === 429 || result.status >= 500)) {
+    return (
+      <div className="mx-auto max-w-prose px-6 py-24 text-center">
+        <p className="font-display text-2xl text-forest">This invitation is taking a moment to load.</p>
+        <p className="mt-3 font-body text-forest/70">Please wait a minute and refresh the page. Your link is fine.</p>
+      </div>
+    );
+  }
   if (!result || !result.ok || !result.data) {
     return (
       <div className="mx-auto max-w-prose px-6 py-24 text-center">

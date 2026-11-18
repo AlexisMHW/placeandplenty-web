@@ -26,4 +26,9 @@ describe("share link address privacy", () => {
     assert.match(client, /website,\n\s*\}\);/);
   });
   test("rate limited submissions get a clear message", () => assert.match(client, /res\.status === 429/));
+  test("a busy or briefly unavailable service never reads as 'your link is wrong'", () => {
+    assert.match(page, /result\.status === 429 \|\| result\.status >= 500/);
+    assert.match(page, /taking a moment to load/);
+  });
+  test("guest-count validation failure is explained (SQL allows up to 20 adults and 20 children)", () => assert.match(client, /up to 20 adults and 20 children/));
 });

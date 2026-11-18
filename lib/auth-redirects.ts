@@ -71,3 +71,59 @@ export function safeNext(next: string | null | undefined): string {
     return parsed.pathname + parsed.search + parsed.hash;
   } catch { return "/host"; }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// EMAIL-LINK COMPLETION (signup confirmation, magic link, recovery) for links that did not carry a PKCE `code`.
+//
+// WHY. The native app's Supabase client uses the implicit flow, so a confirmation or reset email requested FROM THE APP comes back with
+// the session in the URL FRAGMENT (#access_token=...&refresh_token=...), and an expired or used link comes back as #error=...&error_code=...
+// A server route never receives a fragment, so /auth/callback used to answer "missing_code" and the person landed on a screen that said
+// nothing. Browsers keep the fragment across a redirect, so the callback now forwards such links to /auth/complete (a small client page),
+// which reads the fragment, sets the session, and shows a clear message for dead links.
+
+/** A signed-in landing for people who confirmed their email from the app: tells them to return to the app. */
+export const CONFIRMED_PATH = "/auth/confirmed";
+/** Client page that finishes a link whose credentials arrived in the URL fragment. */
+export const COMPLETE_PATH = "/auth/complete";
+
+/** token_hash types the callback may verify. Anything else is refused rather than passed to the auth server. */
+export const TOKEN_HASH_TYPES = ["recovery", "signup", "email", "magiclink", "invite", "email_change"] as const;
+export type TokenHashType = (typeof TOKEN_HASH_TYPES)[number];
+export function isTokenHashType(value: string | null | undefined): value is TokenHashType {
+  return !!value && (TOKEN_HASH_TYPES as readonly string[]).includes(value);
+}
+
+export type FragmentResult =
+  | { kind: "tokens"; accessToken: string; refreshToken: string; type: string | null }
+  | { kind: "error"; reason: "link_expired" | "link_error" }
+  | { kind: "none" };
+
+/** Reads the credentials (or the error) an auth email link left in the URL fragment. Never throws. */
+export function parseAuthFragment(hash: string | null | undefined): FragmentResult {
+  const raw = (hash ?? "").replace(/^#/, "");
+  if (!raw) return { kind: "none" };
+  let p: URLSearchParams;
+  try { p = new URLSearchParams(raw); } catch { return { kind: "none" }; }
+  if (p.get("error") || p.get("error_code")) {
+    const code = (p.get("error_code") ?? "").toLowerCase();
+    return { kind: "error", reason: code === "otp_expired" || code === "" || code.includes("expired") ? "link_expired" : "link_error" };
+  }
+  const accessToken = p.get("access_token");
+  const refreshToken = p.get("refresh_token");
+  if (accessToken && refreshToken) return { kind: "tokens", accessToken, refreshToken, type: p.get("type") };
+  return { kind: "none" };
+}
+
+/** Plain-language text for the reason code the callback puts on /login?error=... or /reset-password?error=... */
+export function authLinkErrorMessage(reason: string | null | undefined): string | null {
+  switch (reason) {
+    case "link_expired":
+      return "That link has expired or was already used. Links like this work once and don't last long.";
+    case "missing_code":
+    case "link_error":
+    case "invalid_type":
+      return "We couldn't finish that link. It may have been cut off or opened in a different browser.";
+    default:
+      return null;
+  }
+}

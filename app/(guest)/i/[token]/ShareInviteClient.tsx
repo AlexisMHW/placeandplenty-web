@@ -64,7 +64,7 @@ export default function ShareInviteClient({ token, data }: { token: string; data
       }
     } else if (res.status === 429) setError("Too many attempts. Please wait a few minutes and try again.");
     else if (res.status === 409) setError("RSVPs are closed for this gathering.");
-    else if (res.status === 400) setError("Please check your name and email.");
+    else if (res.status === 400) setError("Please check your name, email and the number of guests (up to 20 adults and 20 children).");
     else setError("Something went wrong. Please try again.");
   }
 

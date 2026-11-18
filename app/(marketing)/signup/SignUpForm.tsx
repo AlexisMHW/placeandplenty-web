@@ -7,7 +7,7 @@ import { getBrowserClient } from "@/lib/supabase-browser";
 import { callbackUrl, safeNext } from "@/lib/auth-redirects";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import ResendConfirmation from "@/components/auth/ResendConfirmation";
-import { authEmailErrorMessage, classifyAuthEmailError } from "@/lib/resend-cooldown";
+import { authEmailErrorMessage, classifyAuthEmailError, isExistingAccountError } from "@/lib/resend-cooldown";
 
 // WEB ACCOUNT CREATION. Founder requirement, 28 Aug 2026: a person must
 // be able to create an account on the website and use Place & Plenty
@@ -90,6 +90,15 @@ export default function SignUpForm({ next }: { next?: string }) {
       },
     });
 
+    // PRIVACY: with confirmations OFF, Supabase answers a sign-up for an address that already has an account with an error. Showing
+    // it would let anyone discover which emails have accounts, so it gets the same "check your email" screen as a new address (which
+    // already offers sign-in and reset). Any other error is shown as before.
+    if (error && isExistingAccountError(error)) {
+      setSentAt(Date.now());
+      setStatus("check-inbox");
+      return;
+    }
+
     if (error) {
       // Rate limits and outages get plain wording; real validation text (weak password, bad email) is kept.
       setMessage(
@@ -125,12 +134,19 @@ export default function SignUpForm({ next }: { next?: string }) {
           Nothing there after a minute or two? Check the spam folder, or send
           it again below. Already have an account? You can{" "}
           <Link
-            href="/login"
+            href={`/login?next=${encodeURIComponent(destination)}`}
             className="underline decoration-gold underline-offset-4"
           >
             sign in
           </Link>{" "}
-          or reset your password instead.
+          or{" "}
+          <Link
+            href="/forgot-password"
+            className="underline decoration-gold underline-offset-4"
+          >
+            reset your password
+          </Link>{" "}
+          instead.
         </p>
         <ResendConfirmation email={email} next={destination} justSentAt={sentAt} />
         <p className="mt-4 font-body text-sm leading-relaxed text-forest/65">
