@@ -11,6 +11,22 @@ import { claimReferralFromCookie } from "@/lib/claimReferral";
 // Supporting both keeps the recovery flow reliable across branded auth emails
 // without changing any account, entitlement, or product behavior.
 
+type CallbackSupabase = { rpc: (fn: string, args?: Record<string, unknown>) => unknown };
+
+// Hosting Collective referral claim. Inert unless NEXT_PUBLIC_HC_REFERRALS === "true". It can never block or change a sign-in: any
+// failure is swallowed, the outcome is never shown to the user, and the database decides everything (first touch, window, self-referral).
+async function claimReferralIfAny(request: NextRequest, supabase: CallbackSupabase, response: NextResponse): Promise<void> {
+  if (process.env.NEXT_PUBLIC_HC_REFERRALS !== "true") return;
+  try {
+    const cookie = request.cookies.get(REFERRAL_COOKIE)?.value;
+    if (!cookie) return;
+    const result = await claimReferralFromCookie(cookie, (fn, args) => supabase.rpc(fn, args) as Promise<{ data: unknown; error: unknown }>);
+    if (result.clear) response.cookies.set(REFERRAL_COOKIE, "", { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 0 });
+  } catch {
+    /* attribution must never affect sign-in */
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
@@ -67,25 +83,17 @@ export async function GET(request: NextRequest) {
     });
 
     if (error) return failure("link_expired");
-    return NextResponse.redirect(`${origin}${type === "recovery" ? RESET_PASSWORD_PATH : next}`);
+    const tokenResponse = NextResponse.redirect(`${origin}${type === "recovery" ? RESET_PASSWORD_PATH : next}`);
+    // Branded confirmation emails use this branch, so the referral claim must run here too (it used to run only for the PKCE `code` branch,
+    // silently dropping the referral for anyone who confirmed through a token_hash link). Never for password recovery: that is not a signup.
+    if (type !== "recovery") await claimReferralIfAny(request, supabase, tokenResponse);
+    return tokenResponse;
   }
 
   const { error } = await supabase.auth.exchangeCodeForSession(code!);
   if (error) return failure("link_expired");
 
   const response = NextResponse.redirect(`${origin}${next}`);
-  // Hosting Collective referral claim. Inert unless NEXT_PUBLIC_HC_REFERRALS === "true". It can never block or change a sign-in: any
-  // failure is swallowed, the outcome is never shown to the user, and the database decides everything (first touch, window, self-referral).
-  if (process.env.NEXT_PUBLIC_HC_REFERRALS === "true") {
-    try {
-      const cookie = request.cookies.get(REFERRAL_COOKIE)?.value;
-      if (cookie) {
-        const result = await claimReferralFromCookie(cookie, (fn, args) => supabase.rpc(fn, args) as unknown as Promise<{ data: unknown; error: unknown }>);
-        if (result.clear) response.cookies.set(REFERRAL_COOKIE, "", { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 0 });
-      }
-    } catch {
-      /* attribution must never affect sign-in */
-    }
-  }
+  await claimReferralIfAny(request, supabase, response);
   return response;
 }

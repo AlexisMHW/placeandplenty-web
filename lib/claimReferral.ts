@@ -1,4 +1,4 @@
-// Call once from the auth callback after a session exists (PROPOSED). Server-side only.
+// Called from the auth callback (both the code and token_hash branches) after a session exists. Server-side only.
 // Never surfaces the outcome to the user (no partner identity leaks); clears the cookie on any definitive answer.
 import { REFERRAL_COOKIE, parseCookieValue } from './referral.ts';
 

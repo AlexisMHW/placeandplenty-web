@@ -1,4 +1,4 @@
-// Referral attribution helpers (pure, no deps). PROPOSED PATCH: not applied to wt-web.
+// Referral attribution helpers (pure, no deps). Wired: /r/[code] sets the cookie, /auth/callback claims it (inert unless NEXT_PUBLIC_HC_REFERRALS === "true").
 // First-touch: an existing unexpired referral cookie is never overwritten.
 export const REFERRAL_COOKIE = 'pp_ref';
 export const WINDOW_DAYS = 30;
