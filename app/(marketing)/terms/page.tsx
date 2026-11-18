@@ -21,7 +21,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Use"
-      lastUpdated="13 November 2026"
+      lastUpdated="18 November 2026"
       intro={
         <p>
           These terms cover the Place &amp; Plenty app and this website,
@@ -72,6 +72,32 @@ export default function TermsPage() {
       <p>
         Invitation and gallery links contain a token. Anyone who has the link
         can open the page, so share them the way you would share an invitation.
+      </p>
+
+      <h2>Optional text invitations and updates</h2>
+      <p>
+        SMS invitations and gathering updates are a planned, optional
+        feature and are not yet enabled. When available, SMS may be used
+        only for legitimate gathering invitations, RSVP reminders and
+        relevant gathering updates, not unsolicited promotions or bulk
+        marketing. Adding a guest&apos;s phone number is not proof of
+        permission to send them texts.
+      </p>
+      <p>
+        Guests must separately and affirmatively agree to receive Place
+        &amp; Plenty SMS messages before texts are sent. Consent is
+        voluntary and is not required to use or purchase the service.
+        Message frequency varies by gathering, and message and data rates
+        may apply. Recipients may reply <strong>STOP</strong> to opt out or
+        <strong>HELP</strong> for assistance. Hosts must not circumvent
+        opt-outs or enter consent on another person&apos;s behalf.
+      </p>
+      <p>
+        SMS availability may depend on carrier requirements, verification,
+        destination and plan limits. We may block messages or suspend SMS
+        access to prevent abuse, comply with law or honor recipient
+        preferences. See our <Link href="/privacy">Privacy Policy</Link>
+        for details on phone numbers, consent records and messaging providers.
       </p>
 
       <h2>Acceptable use</h2>
