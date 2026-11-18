@@ -3,7 +3,8 @@ import { dollars, hcCapabilities, parseCommissionReport, parsePayoutEligibility 
 import { parsePayouts } from "@/lib/admin/cc";
 import { BUCKET_LABEL, LEDGER_BUCKETS, eventLabel, parseHistory, parseLedger, payoutStatusLabel } from "@/lib/admin/payout-ledger";
 import { ActionForm } from "../../_components/action-form";
-import { addTermsVersion, paidReferralsSwitch, payoutAction, settleClawback } from "./actions";
+import { parsePartialRefundHolds } from "@/lib/hc/partial-refund-hold";
+import { addTermsVersion, paidReferralsSwitch, payoutAction, resolvePartialRefundHold, settleClawback } from "./actions";
 
 // MANUAL PAYOUTS (founder decisions D3 and A). The page needs hc.payout: the owner and authorized financial staff read the history and ledger; a manager with only hc.read gets a 404 and no data.
 // Every form and button renders ONLY for the OWNER (caps.canSeePayoutActions) and is re-checked on the server and in the database. Financial staff who are not the owner see a read-only view.
@@ -12,13 +13,14 @@ import { addTermsVersion, paidReferralsSwitch, payoutAction, settleClawback } fr
 export default async function PayoutsPage() {
   const { context, supabase } = await requireStaff("hc.payout", "/command-center/hosting-collective/payouts");
   const caps = hcCapabilities(context);
-  const [elig, report, payoutsRes, termsRes, ledgerRes, histRes] = await Promise.all([
+  const [elig, report, payoutsRes, termsRes, ledgerRes, histRes, holdsRes] = await Promise.all([
     supabase.rpc("hc_admin_payout_eligibility"),
     supabase.rpc("hc_admin_commission_report"),
     supabase.rpc("hc_admin_list_payouts", { p_limit: 50 }),
     supabase.rpc("hc_admin_current_terms"),
     supabase.rpc("hc_admin_payout_ledger"),
     supabase.rpc("hc_admin_payout_history", { p_partner_id: null, p_limit: 50 }),
+    supabase.rpc("hc_admin_list_partial_refund_holds", { p_limit: 100 }),
   ]);
   const payouts = payoutsRes.error ? null : parsePayouts(payoutsRes.data);
   const terms = termsRes.error ? null : (termsRes.data as { version?: number; validation_days?: number; min_payout_cents?: number } | null);
@@ -26,6 +28,7 @@ export default async function PayoutsPage() {
   const r = report.error ? null : parseCommissionReport(report.data);
   const ledger = ledgerRes.error ? null : parseLedger(ledgerRes.data);
   const history = histRes.error ? null : parseHistory(histRes.data);
+  const holds = holdsRes.error ? null : parsePartialRefundHolds(holdsRes.data);
   const today = new Date().toISOString().slice(0, 10);
   const names = new Map((ledger?.partners ?? []).map((p) => [p.partnerId, p.displayName] as const));
   const input = "ml-1 rounded border border-forest/30 px-2 py-1";
@@ -49,6 +52,7 @@ export default async function PayoutsPage() {
                 <label>Reason<input name="reason" required minLength={3} maxLength={200} className={input} /></label>
               </ActionForm>) : <p className="mt-1 text-xs text-charcoal/70">Only the owner can change this switch.</p>}
           </section>
+          <p className="text-sm"><a className="text-forest underline" href="/command-center/hosting-collective/payouts/export?kind=ledger">Download ledger (CSV)</a> · <a className="text-forest underline" href="/command-center/hosting-collective/payouts/export?kind=history">Download payout history (CSV)</a> <span className="text-xs text-charcoal/70">(read only; no emails or tax details are included)</span></p>
           <section aria-labelledby="ledger">
             <h2 id="ledger" className="mb-2 font-display text-xl text-forest">Where the money stands (kept separate, never added together)</h2>
             {ledger === null ? <p role="status" className="text-sm text-charcoal/70">Ledger not available.</p> : (
@@ -112,6 +116,23 @@ export default async function PayoutsPage() {
                   <p>{(h.partnerId && names.get(h.partnerId)) || "Member"}: {dollars(h.totalCents)} — {payoutStatusLabel(h.status)}{h.commissionCount !== null ? ` · ${h.commissionCount} commission(s) attached` : ""}{h.paidOn ? ` · sent ${h.paidOn}` : ""}</p>
                   {h.events.length ? <ol className="mt-1 list-decimal pl-5 text-xs text-charcoal/70">{h.events.map((a, i) => <li key={i}>{eventLabel(a.event)}{a.at ? ` — ${a.at.slice(0, 16).replace("T", " ")} UTC` : ""}</li>)}</ol> : null}
                 </li>))}</ul>)}
+          </section>
+          <section aria-labelledby="prh">
+            <h2 id="prh" className="mb-1 font-display text-xl text-forest">Partial-refund reviews</h2>
+            <p className="mb-2 text-sm text-charcoal/70">A purchase that was partly refunded keeps its commission on hold until the owner decides. Releasing sends it back to the normal path (it is still validated after its original waiting period and paid only through the payout steps above). Reversing is final and nothing is ever paid for it. This only records your decision.</p>
+            {holds === null ? <p role="status" className="text-sm text-charcoal/70">Not available until the follow-up database step is applied.</p> : holds.holds.length === 0 ? <p className="text-sm text-charcoal/70">Nothing is waiting for review.</p> : (
+              <ul className="space-y-3 text-sm">{holds.holds.map((h) => (
+                <li key={h.commissionId} className="rounded-lg border border-forest/15 bg-parchment p-3">
+                  <p>{h.displayName}: commission {dollars(h.commissionCents)} on a {dollars(h.baseCents)} purchase, {dollars(h.refundedCents)} refunded.{h.releaseBlocker ? ` Cannot be released yet: ${h.releaseBlocker.replace(/_/g, " ")}.` : ""}</p>
+                  {caps.canSeePayoutActions ? (
+                    <ActionForm action={resolvePartialRefundHold} submitLabel="Record decision" className="mt-2 flex flex-wrap items-end gap-2 text-xs" successText="Decision recorded. No money was moved by this system.">
+                      <input type="hidden" name="commission_id" value={h.commissionId} />
+                      <label>Decision<select name="resolution" defaultValue="" required className={input}><option value="" disabled>choose</option>{h.canRelease ? <option value="release">Release to the normal path</option> : null}<option value="reverse">Reverse (final)</option></select></label>
+                      <label>Note<input name="note" required minLength={3} maxLength={300} className={input} /></label>
+                      <label><input type="checkbox" name="confirm" value="yes" required /> I have reviewed this refund.</label>
+                    </ActionForm>) : null}
+                </li>))}</ul>)}
+            {holds && holds.recent.length ? <ul className="mt-2 list-disc pl-5 text-xs text-charcoal/70">{holds.recent.slice(0, 10).map((r, i) => <li key={i}>{r.resolution === "release" ? "Released" : "Reversed"}{r.resolvedAt ? ` ${r.resolvedAt.slice(0, 10)}` : ""}{r.note ? `: ${r.note}` : ""}</li>)}</ul> : null}
           </section>
           {caps.canSeePayoutActions ? (
             <section aria-labelledby="claw">

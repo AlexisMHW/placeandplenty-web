@@ -5,6 +5,7 @@ import { parsePayoutActionForm, parseTermsForm } from "@/lib/admin/cc";
 import { knownCode } from "@/lib/admin/messages";
 import { parsePaidSwitchForm } from "@/lib/admin/tiers";
 import { settleClawbackWith } from "@/lib/hc/clawback";
+import { resolvePartialRefundHoldWith } from "@/lib/hc/partial-refund-hold";
 
 // MANUAL PAYOUT ACTIONS (founder decisions D3 and A). OWNER ONLY: hc.payout plus the owner role are checked here (requirePayoutOwner) AND inside every database function, each of which writes an audit row.
 // NOTHING HERE MOVES MONEY, EVER. "Record external payment" only RECORDS a transfer the owner already made elsewhere (bank, PayPal, etc.),
@@ -64,6 +65,14 @@ export async function paidReferralsSwitch(formData: FormData): Promise<{ ok: boo
 export async function settleClawback(formData: FormData): Promise<State> {
   const { supabase } = await requirePayoutOwner(PATH);
   const r = await settleClawbackWith(supabase, formData);
+  if (r.ok) revalidatePath(PATH);
+  return r;
+}
+
+// Partial-refund hold resolution (owner only, follow-up 217490). RECORDS a decision (release to the normal validation path, or reverse for good). Moves no money, pays nothing early.
+export async function resolvePartialRefundHold(formData: FormData): Promise<State> {
+  const { supabase } = await requirePayoutOwner(PATH);
+  const r = await resolvePartialRefundHoldWith(supabase, formData);
   if (r.ok) revalidatePath(PATH);
   return r;
 }

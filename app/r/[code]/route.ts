@@ -5,6 +5,8 @@
 // - First touch wins: an existing unexpired cookie is never overwritten.
 // COUNSEL REVIEW NEEDED before enabling: cookie disclosure on the privacy page, and whether a consent prompt is required in some regions.
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { countClick, shouldCountClick } from "@/lib/hc/click-capture";
 import { REFERRAL_COOKIE, buildCookieValue, cookieMaxAgeSeconds, nextTouch } from "@/lib/referral";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,10 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
   const touch = nextTouch(req.cookies.get(REFERRAL_COOKIE)?.value, params.code);
   if (touch) {
     res.cookies.set(REFERRAL_COOKIE, buildCookieValue(touch), { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: cookieMaxAgeSeconds() });
+  }
+  // Anonymous daily link-open count (follow-up 260000). Off unless HC_CLICK_COUNTING_ENABLED === "true"; only the public code is sent; failures never affect the redirect.
+  if (shouldCountClick(process.env, req.headers.get("sec-gpc"), params.code)) {
+    await countClick(() => { const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY; return url && key ? createClient(url, key, { auth: { persistSession: false } }) : null; }, params.code);
   }
   return res;
 }

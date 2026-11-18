@@ -60,6 +60,16 @@ const MESSAGES: Record<string, string> = {
   clawback_already_netted: "That clawback was already netted into a payout.",
   invalid_resolution: "Choose recovered outside the app, or waived.",
   below_minimum_payout: "The balance is below the minimum payout.",
+  owner_required: "Only the owner can do this.",
+  note_required: "Enter a note (at least 3 characters).",
+  commission_not_found: "That commission could not be found.",
+  commission_in_payout: "This commission is already in a payout. Use the payout controls (void, reverse or settle a clawback) instead.",
+  not_held_for_partial_refund: "This commission is not waiting on a partial-refund review.",
+  already_resolved_differently: "This hold was already resolved the other way.",
+  dispute_open: "A dispute is open on this purchase, so it cannot be released.",
+  dispute_lost: "The dispute was lost, so it cannot be released.",
+  fully_refunded: "The purchase was fully refunded, so it cannot be released.",
+  entitlement_not_valid: "The purchase is no longer valid, so it cannot be released.",
   failed: "That did not work. Nothing was changed. Try again, or ask the person who runs the site.",
 };
 export function messageFor(code: string | null | undefined): string {
