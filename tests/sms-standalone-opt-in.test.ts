@@ -93,3 +93,60 @@ test("UI/page contract: unchecked box, honeypot, flag-gated page, links, disclos
   for (const n of ["isStandaloneOptInEnabled", 'href="/privacy"', 'href="/terms"', "STOP", "HELP", "Message and data rates may apply", "Place &amp; Plenty", "sms-opt-in-coming-soon", "does not sign you up"]) assert.ok(page.includes(n), n);
   assert.doesNotMatch(read("app/api/sms-opt-in/route.ts"), /SERVICE_ROLE/);
 });
+
+// ---- Voluntary revoke ("Stop texts") -------------------------------------------------------------------------------
+import { REVOKE_MIN_FILL_MS, forwardStandaloneRevoke, validateRevokeInput } from "../lib/sms-standalone-opt-in.ts";
+const rgood = { action: "revoke", phone: "(202) 555-0123", website: "", startedAt: T0 };
+const rcfg = { ...cfg, now: () => T0 + REVOKE_MIN_FILL_MS + 500 };
+
+test("revoke: flag off -> 404, nothing forwarded", async () => {
+  let calls = 0;
+  const out = await forwardStandaloneRevoke(rgood, { ...rcfg, flagEnv: {} }, (async () => { calls++; return Response.json({ ok: true }); }) as typeof fetch);
+  assert.equal(out.status, 404); assert.equal(calls, 0);
+});
+
+test("revoke: validation needs a US-shaped phone only (no consent flag required); honeypot / too fast ignored; expired rejected", async () => {
+  assert.equal(validateRevokeInput(rgood).ok, true);
+  assert.deepEqual(validateRevokeInput({ ...rgood, phone: "123" }), { ok: false, error: "invalid_phone" });
+  assert.deepEqual(validateRevokeInput([]), { ok: false, error: "bad_request" });
+  let calls = 0; const tr = (async () => { calls++; return Response.json({ ok: true }); }) as typeof fetch;
+  assert.equal((await forwardStandaloneRevoke({ ...rgood, website: "http://spam" }, rcfg, tr)).body.ignored, true);
+  assert.equal((await forwardStandaloneRevoke(rgood, { ...rcfg, now: () => T0 + 200 }, tr)).body.ignored, true);
+  assert.equal((await forwardStandaloneRevoke(rgood, { ...rcfg, now: () => T0 + 7 * 3600_000 }, tr)).status, 400);
+  assert.equal(calls, 0);
+  // a revoke is allowed faster than an opt-in
+  assert.ok(REVOKE_MIN_FILL_MS < MIN_FILL_MS);
+});
+
+test("revoke: forwards source/action/phone/client_key only (no wording, no accepted); never echoes the number", async () => {
+  const seen: { url: string; init: RequestInit }[] = [];
+  const tr = (async (url: string, init: RequestInit) => { seen.push({ url, init }); return Response.json({ ok: true }); }) as unknown as typeof fetch;
+  const out = await forwardStandaloneRevoke(rgood, { ...rcfg, clientKey: "hash" }, tr);
+  assert.deepEqual(out, { status: 200, body: { ok: true } });
+  assert.equal(seen[0].url, "https://x.test/functions/v1/sms-consent");
+  const sent = JSON.parse(String(seen[0].init.body));
+  assert.deepEqual(Object.keys(sent).sort(), ["action", "client_key", "phone", "source"]);
+  assert.equal(sent.source, "standalone_page"); assert.equal(sent.action, "revoke");
+  assert.ok(!JSON.stringify(out).includes("555"));
+});
+
+test("revoke fails closed: an edge that rejects/does not know 'revoke' is 'unavailable', never done; 429 and invalid_phone surfaced", async () => {
+  for (const [s, b] of [[400, { error: "bad_request" }], [404, { error: "not_found" }], [500, {}], [503, { error: "consent_not_configured" }], [503, { error: "consent_unavailable" }]] as const)
+    assert.deepEqual(await forwardStandaloneRevoke(rgood, rcfg, mk(s, b)), { status: 503, body: { error: "unavailable" } }, String(s));
+  assert.equal((await forwardStandaloneRevoke(rgood, rcfg, mk(400, { error: "invalid_phone" }))).status, 400);
+  assert.equal((await forwardStandaloneRevoke(rgood, rcfg, mk(429, {}))).status, 429);
+  assert.equal((await forwardStandaloneRevoke(rgood, rcfg, (async () => { throw new Error("net"); }) as typeof fetch)).status, 503);
+  assert.equal((await forwardStandaloneRevoke(rgood, { ...rcfg, anonKey: undefined }, mk(200, { ok: true }))).status, 503);
+  assert.equal((await forwardStandaloneRevoke(rgood, rcfg, mk(200, { ok: false }))).status, 503);
+});
+
+test("revoke UI/route contract: Stop texts form on the page, states STOP reply, no secrets client-side, separate rate limiter, same-origin check kept", () => {
+  const ui = read("components/guest/SmsOptInStandalone.tsx");
+  assert.match(ui, /export function SmsStopTexts/); assert.match(ui, /action: "revoke"/); assert.match(ui, /name="website"/);
+  assert.doesNotMatch(ui, /SERVICE_ROLE|functions\/v1|ANON_KEY/);
+  const page = read("app/sms-opt-in/page.tsx");
+  for (const n of ["SmsStopTexts", "Stop texts", "Reply STOP to any Place &amp; Plenty text", "sms-stop-card", "will not turn texts back on"]) assert.ok(page.includes(n), n);
+  const route = read("app/api/sms-opt-in/route.ts");
+  assert.match(route, /forwardStandaloneRevoke/); assert.match(route, /allowRevoke/); assert.match(route, /origin !== new URL\(request\.url\)\.origin/); assert.doesNotMatch(route, /SERVICE_ROLE/);
+  assert.match(read("lib/sms-standalone-opt-in.ts"), /Reply START/);
+});

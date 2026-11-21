@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
-import SmsOptInStandalone from "@/components/guest/SmsOptInStandalone";
+import SmsOptInStandalone, { SmsStopTexts } from "@/components/guest/SmsOptInStandalone";
 import { isStandaloneOptInEnabled } from "@/lib/sms-standalone-opt-in";
 
 // Public, no-login page where a person can opt in to Place & Plenty texts with their OWN number.
@@ -51,6 +51,16 @@ export default function SmsOptInPage() {
             </p>
           )}
         </section>
+
+        {open && (
+          <section className="mt-8 rounded-card border border-sage/30 bg-white p-6" aria-labelledby="sms-stop-heading" data-testid="sms-stop-card">
+            <h2 id="sms-stop-heading" className="font-display text-xl text-forest">Stop texts</h2>
+            <p className="mt-2 font-body text-sm text-forest/80">
+              Want to stop? Reply STOP to any Place &amp; Plenty text, or enter your number here and we will stop texting it. This takes effect for everything Place &amp; Plenty sends, and signing up again on this page will not turn texts back on; replying START to a Place &amp; Plenty text will.
+            </p>
+            <div className="mt-4"><SmsStopTexts /></div>
+          </section>
+        )}
 
         <p className="mt-8 font-body text-sm text-forest/80">
           Read our <Link href="/privacy" className="underline decoration-gold underline-offset-2">Privacy Policy</Link> and <Link href="/terms" className="underline decoration-gold underline-offset-2">Terms</Link>.
