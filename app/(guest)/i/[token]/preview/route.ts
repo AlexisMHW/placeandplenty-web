@@ -6,6 +6,7 @@ import {
   PREVIEW_IMAGE_TYPES,
   PREVIEW_MAX_BYTES,
 } from "@/lib/share-invite";
+import { isClosedStatus } from "@/lib/invite-preview";
 
 // Link-preview image for /i/[token]. Serves the host's invitation
 // artwork through our own URL so the private storage link is never put
@@ -23,7 +24,9 @@ function fallback(request: Request) {
 export async function GET(request: Request, { params }: { params: { token: string } }) {
   if (!isShareToken(params.token)) return fallback(request);
   const result = await lookupShareInvite(params.token);
-  const artwork = result.ok ? result.data?.artwork : null;
+  // Closed (completed / cancelled / archived) gatherings and unknown links get the branded image, never the host's artwork.
+  const open = result.ok && !!result.data && !isClosedStatus(result.data.gatheringStatus, result.data.isArchived);
+  const artwork = open && result.ok ? result.data?.artwork : null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   if (!artwork || !isTrustedArtworkUrl(artwork.url, supabaseUrl)) return fallback(request);
   if (!(PREVIEW_IMAGE_TYPES as readonly string[]).includes(artwork.mimeType)) return fallback(request);

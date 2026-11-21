@@ -23,10 +23,10 @@ describe("share invite helpers", () => {
   });
   test("preview text never carries a location or guest data", () => {
     const text = buildPreviewDescription({ hostDisplayName: "Lexi", displayDate: "2026-12-12", displayTime: "14:00" });
-    assert.match(text, /Lexi invited you\./);
-    assert.match(text, /December 12, 2026 at 2:00 PM/);
-    assert.doesNotMatch(text, /street|address|location/i);
-    assert.equal(buildPreviewDescription({}), "You're invited. Open for details and to RSVP.");
+    assert.match(text, /^You have received an invitation from Lexi on Place & Plenty\./);
+    assert.match(text, /Saturday, December 12, 2026\./);
+    assert.doesNotMatch(text, /2:00|14:00|PM|street|address|location/i); // calendar date only: never the time of day
+    assert.equal(buildPreviewDescription({}), "You have received an invitation on Place & Plenty. Open it to view the invitation and RSVP.");
   });
   test("artwork fetch only from our own https Supabase host", () => {
     const base = "https://abc.supabase.co";

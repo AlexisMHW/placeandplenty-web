@@ -1,3 +1,5 @@
+import { cleanHostName } from "./share-by-text.ts";
+
 // Pure helpers for the gathering-wide invitation link (/i/[token]).
 // Kept free of network and React so they can be unit tested.
 
@@ -28,19 +30,19 @@ export function formatShareTime(time: string | null | undefined): string | null 
 }
 
 /**
- * Text for link previews. Deliberately contains the date and time only:
- * never the location, even when the page shows it, and never anything
- * about guests. A preview is copied into group chats and social apps.
+ * Text for link previews (kept for callers that only have the display fields): the host, the calendar date and a call to action.
+ * Deliberately NO time of day, never the location, never anything about guests. A preview is copied into group chats and social apps.
+ * See lib/invite-preview.ts for the full rule set (closed / unknown links get a generic preview).
  */
 export function buildPreviewDescription(input: {
   hostDisplayName?: string | null;
   displayDate?: string | null;
   displayTime?: string | null;
 }): string {
-  const when = [formatShareDate(input.displayDate), formatShareTime(input.displayTime)].filter(Boolean).join(" at ");
-  const host = input.hostDisplayName?.trim();
-  const parts = [host ? `${host} invited you.` : "You're invited.", when ? `${when}.` : null, "Open for details and to RSVP."];
-  return parts.filter(Boolean).join(" ");
+  const host = cleanHostName(input.hostDisplayName);
+  const date = formatShareDate(input.displayDate);
+  const opening = host ? `You have received an invitation from ${host} on Place & Plenty.` : "You have received an invitation on Place & Plenty.";
+  return [opening, date ? `${date}.` : null, "Open it to view the invitation and RSVP."].filter(Boolean).join(" ");
 }
 
 /**

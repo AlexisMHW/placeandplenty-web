@@ -1,16 +1,43 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import GuestPageClient from "./GuestPageClient";
 import GuestLivingPanel from "@/components/guest/GuestLivingPanel";
 import { lookupGuestPage } from "@/lib/guest-api";
 import { lookupGuestLivingPage } from "@/lib/guest-living-server";
+import { buildInvitePreview } from "@/lib/invite-preview";
 
-// This route must never be indexed — it's reached only via a
-// bearer-token link sent in an invitation. robots.txt also disallows
-// /invite/, but the per-page directive is the primary control.
-export const metadata: Metadata = {
-  title: "You're Invited",
-  robots: { index: false, follow: false },
-};
+// This route must never be indexed: it's reached only via a bearer-token link sent in an invitation. robots.txt also disallows
+// /invite/, but the per-page directive is the primary control (noindex stays on every branch below).
+//
+// Link preview (what iMessage / WhatsApp / Gmail show for the text or email link): the host's name, the gathering title and the host's
+// invitation artwork only (lib/invite-preview.ts). Never the address, the time of day, private notes, or anything about the household.
+// An unknown / revoked link, or a completed / cancelled / archived gathering, gets a generic preview that does not name the gathering.
+const getGuestPage = cache((token: string) => lookupGuestPage(token));
+
+export async function generateMetadata({ params }: { params: { token: string } }): Promise<Metadata> {
+  const noindex = { index: false, follow: false } as const;
+  const result = await getGuestPage(params.token);
+  const d = result.ok ? result.data : null;
+  const preview = buildInvitePreview({
+    found: !!d,
+    displayName: d?.displayName,
+    hostDisplayName: d?.hostDisplayName,
+    displayDate: d?.displayDate,
+    gatheringStatus: d?.gatheringStatus,
+    isArchived: d?.isArchived,
+    hasArtwork: !!d?.invitationArtwork && d.invitationMode === "uploaded",
+  });
+  if (preview.kind === "unknown") return { title: preview.title, robots: noindex };
+  const { title, description } = preview;
+  const images = preview.showArtwork ? [{ url: `/invite/${params.token}/preview` }] : undefined;
+  return {
+    title,
+    description,
+    robots: noindex,
+    openGraph: { title, description, type: "website", siteName: "Place & Plenty", ...(images ? { images } : {}) },
+    twitter: { card: images ? "summary_large_image" : "summary", title, description, ...(images ? { images: images.map((i) => i.url) } : {}) },
+  };
+}
 
 // Never prerendered, never cached. Guest surfaces resolve live so an
 // edited invitation or update cannot disagree with the host workspace.
@@ -22,7 +49,7 @@ export default async function InvitePage({
   params: { token: string };
 }) {
   const [result, livingResult] = await Promise.all([
-    lookupGuestPage(params.token),
+    getGuestPage(params.token),
     lookupGuestLivingPage(params.token),
   ]);
 

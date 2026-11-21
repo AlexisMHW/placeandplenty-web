@@ -455,7 +455,7 @@ export default function GuestPageClient({
       )}
 
       <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-goldInk">
-        {data.hostDisplayName} invited {data.partyName}
+        {data.hostDisplayName ? `${data.hostDisplayName} invited ${data.partyName}` : `Invitation for ${data.partyName}`}
       </p>
       <h1 className="mt-2 font-display text-3xl text-forest md:text-4xl">
         {data.displayName}
@@ -898,7 +898,7 @@ export default function GuestPageClient({
       {data.assignedContributions.length > 0 && (
         <section className="mt-8 rounded-card border border-gold bg-cream p-6 shadow-softer">
           <h2 className="font-display text-xl text-forest">
-            {data.hostDisplayName} asked you to bring
+            {data.hostDisplayName || "Your host"} asked you to bring
           </h2>
 
           {respondError && (
@@ -951,7 +951,7 @@ export default function GuestPageClient({
                         <li key={m.id} className="font-body text-sm">
                           <span className="font-semibold text-forest">
                             {m.senderType === "host"
-                              ? data.hostDisplayName
+                              ? data.hostDisplayName || "Host"
                               : "You"}
                             :
                           </span>{" "}
@@ -1106,7 +1106,7 @@ export default function GuestPageClient({
         <section className="mt-8 rounded-card border border-sage/30 bg-offwhite p-6 shadow-softer">
           <h2 className="font-display text-xl text-forest">Gifts</h2>
           <p className="mt-2 font-body text-sm text-forest/70">
-            If you&rsquo;d like to bring something, {data.hostDisplayName} put
+            If you&rsquo;d like to bring something, {data.hostDisplayName || "your host"} put
             these together. Never required.
           </p>
           <ul className="mt-4 space-y-3">

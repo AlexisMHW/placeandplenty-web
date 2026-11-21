@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import ShareInviteClient from "./ShareInviteClient";
 import { lookupShareInvite } from "@/lib/guest-api";
-import { buildPreviewDescription, isShareToken } from "@/lib/share-invite";
+import { isShareToken } from "@/lib/share-invite";
+import { buildInvitePreview } from "@/lib/invite-preview";
 
 // One stable link per gathering. Reached only by someone who was handed
 // the link, so it is noindex via the page directive (not robots.txt:
@@ -11,24 +12,32 @@ export const dynamic = "force-dynamic";
 type Params = { params: { token: string } };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const base: Metadata = { title: "You're Invited", robots: { index: false, follow: false } };
-  if (!isShareToken(params.token)) return base;
-  const result = await lookupShareInvite(params.token);
-  if (!result.ok || !result.data) return base;
-  const d = result.data;
-  const title = d.displayName || "You're invited";
-  const description = buildPreviewDescription(d);
-  // The preview image route serves the host's artwork when it is a
-  // supported image, else the branded fallback. No location or guest
-  // information is ever part of the metadata.
-  const image = `/i/${params.token}/preview`;
+  const noindex = { index: false, follow: false } as const;
+  const known = isShareToken(params.token);
+  const result = known ? await lookupShareInvite(params.token) : null;
+  const d = result && result.ok ? result.data : null;
+  // Host name + gathering title + invitation artwork only (lib/invite-preview.ts). No location, time of day, notes or guest information, ever.
+  // A revoked / unknown link, or a completed / cancelled / archived gathering, gets a generic preview that does not name the gathering.
+  const preview = buildInvitePreview({
+    found: !!d,
+    displayName: d?.displayName,
+    hostDisplayName: d?.hostDisplayName,
+    displayDate: d?.displayDate,
+    gatheringStatus: d?.gatheringStatus,
+    isArchived: d?.isArchived,
+    hasArtwork: !!d?.artwork,
+  });
+  if (preview.kind === "unknown") return { title: preview.title, robots: noindex };
+  const { title, description } = preview;
+  // The preview image route serves the host's artwork when it is a supported image, else the branded fallback.
+  const images = preview.showArtwork ? [{ url: `/i/${params.token}/preview` }] : undefined;
   return {
     title,
     description,
-    robots: { index: false, follow: false },
+    robots: noindex,
     alternates: { canonical: `/i/${params.token}` },
-    openGraph: { title, description, type: "website", url: `/i/${params.token}`, images: [{ url: image }] },
-    twitter: { card: "summary_large_image", title, description, images: [image] },
+    openGraph: { title, description, type: "website", siteName: "Place & Plenty", url: `/i/${params.token}`, ...(images ? { images } : {}) },
+    twitter: { card: images ? "summary_large_image" : "summary", title, description, ...(images ? { images: images.map((i) => i.url) } : {}) },
   };
 }
 

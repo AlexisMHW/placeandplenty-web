@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   buildInvitationUrl,
   buildInviteMessage,
+  cleanHostName,
   buildSmsUri,
   cleanText,
   detectWebPlatform,
@@ -56,23 +57,46 @@ describe("message", () => {
     gatheringDate: "2026-11-21",
     arrivalTime: "17:00:00",
   };
-  test("is branded and concise", () => {
+  test("is branded and concise: host, gathering name, then the unique link; nothing private", () => {
     const msg = buildInviteMessage(base);
     assert.equal(
       msg,
-      `Hi Maria! Alexis invited you to Fall Supper (Sat, Nov 21, 5 PM). See the invitation and RSVP here: ${URL_} - Place & Plenty`
+      `You have received an invitation from Alexis on Place & Plenty.\nFall Supper\nView the invitation and RSVP: ${URL_}`
     );
     assert.ok(msg.length <= MAX_SHARE_MESSAGE_LENGTH);
+    // no guest name, date or time in the shared text (the link page shows what the host chose to show)
+    assert.doesNotMatch(msg, /Maria|Nov|5 PM|17:00/);
   });
   test("never claims delivery", () => {
     assert.doesNotMatch(buildInviteMessage(base).toLowerCase(), /delivered|\bread\b|sent you/);
   });
   test("Spanish and missing fields", () => {
-    assert.match(buildInviteMessage({ ...base, locale: "es" }), /Hola Maria\. Alexis te invita a Fall Supper.*invitación/);
+    assert.equal(
+      buildInviteMessage({ ...base, locale: "es" }),
+      `Has recibido una invitación de Alexis en Place & Plenty.\nFall Supper\nVer la invitación y confirmar asistencia: ${URL_}`
+    );
     assert.equal(
       buildInviteMessage({ locale: "en", url: URL_, gatheringName: "Fall Supper" }),
-      `Hi! You are invited to Fall Supper. See the invitation and RSVP here: ${URL_} - Place & Plenty`
+      `You have received an invitation on Place & Plenty.\nFall Supper\nView the invitation and RSVP: ${URL_}`
     );
+  });
+  test("host name is never an email, id or the email local part; missing host is neutral", () => {
+    for (const hostName of ["jane@example.com", "3f2b8c1e-9a4d-4e6b-8f10-2c7d5a9b1e44", "   ", "!!!", null, undefined]) {
+      const msg = buildInviteMessage({ ...base, hostName });
+      assert.ok(msg.startsWith("You have received an invitation on Place & Plenty.\n"), String(hostName));
+    }
+    assert.equal(cleanHostName("jane.doe", "Jane.Doe@example.com"), null);
+    assert.equal(cleanHostName("Jane Doe", "jane.doe@example.com"), "Jane Doe");
+    assert.equal(cleanHostName('Al "The <Host>"\r\nBcc: x'), "Al The Host Bcc: x");
+    assert.equal(Array.from(cleanHostName("W".repeat(200)) ?? "").length, 40);
+  });
+  test("unicode, emoji and HTML stay inert text; truncation never splits an emoji", () => {
+    const emoji = buildInviteMessage({ ...base, gatheringName: "🎉".repeat(400) });
+    assert.ok(Array.from(emoji).length <= MAX_SHARE_MESSAGE_LENGTH);
+    assert.doesNotMatch(emoji, /[\ud800-\udbff](?![\udc00-\udfff])/);
+    assert.ok(emoji.endsWith(URL_));
+    const html = buildInviteMessage({ ...base, gatheringName: "<b>Tom & Jerry's</b> <script>x</script>" });
+    assert.ok(html.includes("<b>Tom & Jerry's</b>")); // plain text: SMS never interprets markup, so it is left as typed
   });
   test("long names shorten, link stays; control characters removed", () => {
     const msg = buildInviteMessage({ ...base, gatheringName: "A".repeat(400) });

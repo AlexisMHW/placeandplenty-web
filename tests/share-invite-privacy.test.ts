@@ -14,7 +14,7 @@ describe("share link address privacy", () => {
     assert.doesNotMatch(preview, /displayLocation/);
     assert.doesNotMatch(buildPreviewDescription({ hostDisplayName: "A", displayDate: "2026-12-12", displayTime: "14:00" }), /lane|street|address/i);
   });
-  test("page is noindex", () => assert.match(page, /robots: \{ index: false, follow: false \}/));
+  test("page is noindex", () => assert.match(page, /index: false, follow: false/));
   test("after-approval address is fetched client-side with the private request token, from this browser only", () => {
     assert.match(client, /lookupShareInvite\(token, rt\)/);
     assert.match(client, /localStorage\.getItem\(storageKey\)/);

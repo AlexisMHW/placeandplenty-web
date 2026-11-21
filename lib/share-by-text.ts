@@ -106,45 +106,79 @@ export interface InviteMessageInput {
   locale: ShareLocale;
   url: string;
   gatheringName: string;
+  /** The host's preferred display name (profile). Missing, an email address or an id => neutral wording, never shown raw. */
   hostName?: string | null;
+  /** The host's account email, used only to reject a "display name" that is really the email's local part. Never shown. */
+  accountEmail?: string | null;
+  /** @deprecated No longer part of the text (a shared message carries no date, time or guest name). Accepted so callers keep compiling. */
   guestFirstName?: string | null;
+  /** @deprecated see guestFirstName. */
   gatheringDate?: string | null;
+  /** @deprecated see guestFirstName. */
   arrivalTime?: string | null;
 }
 
+/** Longest host name shown in a shared message. */
+export const MAX_SHARE_HOST_NAME = 40;
+
 function truncate(value: string, max: number): string {
-  if (value.length <= max) return value;
-  return `${value.slice(0, Math.max(1, max - 1)).trimEnd()}…`;
+  // By code point: never splits an emoji / surrogate pair.
+  const chars = Array.from(value);
+  if (chars.length <= max) return value;
+  return `${chars.slice(0, Math.max(1, max - 1)).join('').trimEnd()}…`;
 }
 
 /**
- * The branded invitation text. Plain text, one link, no emoji, no claim
- * about delivery. Greeting uses the guest's first name only when known.
+ * The host's name as a guest should see it, or null. Same rules as supabase/functions/_shared/invitationPresentation.ts
+ * sanitizeHostName (parity-tested): cleaned, quotes / angle brackets removed, capped, and null for an email address, an id / UUID,
+ * the email's local part, or something with no letter or digit in it.
+ */
+export function cleanHostName(raw: string | null | undefined, accountEmail?: string | null): string | null {
+  const cleaned = cleanText(raw).replace(/["<>\\`]/g, '').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return null;
+  if (cleaned.includes('@')) return null;
+  if (/[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}/i.test(cleaned) || /^[0-9a-f]{20,}$/i.test(cleaned.replace(/[\s-]/g, ''))) return null;
+  const email = (accountEmail ?? '').trim();
+  const at = email.indexOf('@');
+  if (at > 0) {
+    // handle_new_user seeds display_name with the email's local part: exact (case-insensitive) match only.
+    const local = email.slice(0, at).toLowerCase();
+    if (local.length >= 3 && cleaned.toLowerCase() === local) return null;
+  }
+  if (!/[\p{L}\p{N}]/u.test(cleaned)) return null;
+  return truncate(cleaned, MAX_SHARE_HOST_NAME);
+}
+
+/**
+ * The branded invitation text for the host's own messaging app / share sheet. Plain text, one link, no emoji of ours, no claim about
+ * delivery, and nothing private: no date, time, address or guest name.
+ *
+ *   You have received an invitation from [Host] on Place & Plenty.
+ *   [Gathering name]
+ *   View the invitation and RSVP: [unique invitation URL]
+ *
+ * No usable host name => "You have received an invitation on Place & Plenty." Over MAX_SHARE_MESSAGE_LENGTH only the gathering
+ * name is shortened; the link is never cut.
  */
 export function buildInviteMessage(input: InviteMessageInput): string {
   const { locale, url } = input;
-  const host = cleanText(input.hostName);
-  const first = cleanText(input.guestFirstName).split(' ')[0] ?? '';
-  const when = formatInviteWhen(input.gatheringDate, input.arrivalTime, locale);
+  const host = cleanHostName(input.hostName, input.accountEmail);
 
   const compose = (name: string): string => {
     if (locale === 'es') {
-      const greeting = first ? `Hola ${first}.` : 'Hola.';
-      const who = host ? `${host} te invita a` : 'Te invitan a';
-      const whenPart = when ? ` (${when})` : '';
-      return `${greeting} ${who} ${name}${whenPart}. Mira la invitación y confirma tu asistencia aquí: ${url} - Place & Plenty`;
+      const opening = host ? `Has recibido una invitación de ${host} en Place & Plenty.` : 'Has recibido una invitación en Place & Plenty.';
+      return `${opening}\n${name}\nVer la invitación y confirmar asistencia: ${url}`;
     }
-    const greeting = first ? `Hi ${first}!` : 'Hi!';
-    const who = host ? `${host} invited you to` : 'You are invited to';
-    const whenPart = when ? ` (${when})` : '';
-    return `${greeting} ${who} ${name}${whenPart}. See the invitation and RSVP here: ${url} - Place & Plenty`;
+    const opening = host ? `You have received an invitation from ${host} on Place & Plenty.` : 'You have received an invitation on Place & Plenty.';
+    return `${opening}\n${name}\nView the invitation and RSVP: ${url}`;
   };
 
   let name = cleanText(input.gatheringName) || (locale === 'es' ? 'una reunión' : 'a gathering');
   let message = compose(name);
-  if (message.length > MAX_SHARE_MESSAGE_LENGTH) {
-    const overflow = message.length - MAX_SHARE_MESSAGE_LENGTH;
-    name = truncate(name, Math.max(12, name.length - overflow));
+  const length = (s: string) => Array.from(s).length;
+  if (length(message) > MAX_SHARE_MESSAGE_LENGTH) {
+    const overflow = length(message) - MAX_SHARE_MESSAGE_LENGTH;
+    name = truncate(name, Math.max(12, length(name) - overflow));
     message = compose(name);
   }
   return message;

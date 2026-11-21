@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getGathering, getGuestBook } from "@/lib/host-data";
 import { getPeopleWorkspace } from "@/lib/people-data";
-import { getUser } from "@/lib/supabase-server";
+import { createClient, getUser } from "@/lib/supabase-server";
 import { WorkspaceHeader, EmptyState } from "@/components/host/Workspace";
 import { AddForm, Field, StatusSelect, ActionButton } from "@/components/host/Editable";
 import { setRsvpStatus } from "@/lib/host-actions";
@@ -20,7 +20,7 @@ import { rsvpLabel } from "@/lib/host-format";
 import { deliveryCopy, resolveDeliveryLabel } from "@/lib/invitation-delivery";
 import ShareByTextButton from "@/components/host/ShareByTextButton";
 import ShareStepThrough from "@/components/host/ShareStepThrough";
-import { DEFAULT_GUEST_INVITE_BASE_URL } from "@/lib/share-by-text";
+import { DEFAULT_GUEST_INVITE_BASE_URL, cleanHostName } from "@/lib/share-by-text";
 
 const RSVP_OPTIONS = ["yes", "maybe", "no", "invited", "no_response"].map(
   (value) => ({ value, label: rsvpLabel(value) })
@@ -78,7 +78,12 @@ export default async function PeoplePage({ params }: { params: { id: string } })
     if (!row.invitation_party_id || !row.guest?.phone) continue;
     phonesByParty.set(row.invitation_party_id, [...(phonesByParty.get(row.invitation_party_id) ?? []), row.guest.phone]);
   }
-  const hostName = String((user?.user_metadata as { full_name?: string } | undefined)?.full_name ?? "").trim() || null;
+  // The name a guest sees as "the host": the signed-in person's preferred display name (profiles.display_name), then their auth full name.
+  // Never the email address / account id, nor the email's local part (handle_new_user can seed display_name with it); null => neutral wording.
+  const { data: ownProfile } = user ? await createClient().from("profiles").select("display_name").eq("id", user.id).maybeSingle() : { data: null };
+  const hostName =
+    cleanHostName((ownProfile as { display_name?: string | null } | null)?.display_name, user?.email) ??
+    cleanHostName((user?.user_metadata as { full_name?: string } | undefined)?.full_name, user?.email);
   const inviteBaseUrl = process.env.GUEST_PAGE_BASE_URL || DEFAULT_GUEST_INVITE_BASE_URL;
   // Bulk share by text: one entry per household (the party lead), never per person.
   const stepHouseholds = guests
