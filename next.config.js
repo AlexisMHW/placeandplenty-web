@@ -38,6 +38,12 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Invitation links are bearer-token pages: never indexed, never followed, even for the link-preview fetchers that robots.txt
+        // lets read them (lib/preview-crawlers.ts). The per-page meta robots is the first control; this header is the second.
+        source: "/invite/:token*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }],
+      },
+      {
         // Apple fetches this from the bare apex and will not follow a
         // redirect, so the canonical host must serve it directly —
         // placeandplenty.com is the Production domain and www 308s to
