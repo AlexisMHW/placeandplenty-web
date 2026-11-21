@@ -30,6 +30,17 @@ export const STANDALONE_COPY = {
   failed: "Something went wrong and nothing was saved. Please try again.",
 };
 
+export const STANDALONE_ACTION_REVOKE = "revoke";
+export const REVOKE_MIN_FILL_MS = 1000;   // a revoke is just a number; lower floor than opt-in so a real STOP request is never silently dropped
+
+export const REVOKE_COPY = {
+  needPhone: "Please enter a valid US mobile number.",
+  success: "Done. If this number was signed up, it is now opted out and Place & Plenty will send it no more texts. You can also reply STOP to any Place & Plenty text. To turn texts back on later, reply START to a Place & Plenty text.",
+  rateLimited: "Too many attempts. Please wait a few minutes and try again. You can also reply STOP to any Place & Plenty text.",
+  unavailable: "Stopping texts from this page isn't available right now. Nothing was saved. You can reply STOP to any Place & Plenty text to opt out.",
+  failed: "Something went wrong and nothing was saved. Please try again, or reply STOP to any Place & Plenty text.",
+};
+
 /** Anything other than the exact string "true" is OFF. */
 export function isStandaloneOptInEnabled(env: Record<string, string | undefined> = process.env): boolean {
   return env.NEXT_PUBLIC_SMS_STANDALONE_OPT_IN === "true";
@@ -101,4 +112,46 @@ export async function forwardStandaloneConsent(body: unknown, cfg: StandaloneCon
   if (res.status === 429) return { status: 429, body: { error: "rate_limited" } };
   if (res.status === 400 && data?.error === "invalid_phone") return { status: 400, body: { error: "invalid_phone" } };
   return { status: 503, body: { error: "unavailable" } };   // includes an edge that does not know this source yet: fail closed, never "success"
+}
+
+
+export interface RevokeInput { phone: string; honeypot: string; startedAt: number }
+export type RevokeValidation = { ok: true; value: RevokeInput } | { ok: false; error: "bad_request" | "invalid_phone" };
+
+export function validateRevokeInput(body: unknown): RevokeValidation {
+  const b = (body ?? {}) as Record<string, unknown>;
+  if (typeof b !== "object" || Array.isArray(b)) return { ok: false, error: "bad_request" };
+  if (typeof b.phone !== "string" || !looksLikeUsPhone(b.phone)) return { ok: false, error: "invalid_phone" };
+  const honeypot = typeof b.website === "string" ? b.website : "";
+  const startedAt = typeof b.startedAt === "number" && Number.isFinite(b.startedAt) ? b.startedAt : 0;
+  return { ok: true, value: { phone: b.phone.trim(), honeypot, startedAt } };
+}
+
+/** Voluntary revoke ("Stop texts"). Same flag, same fail-closed rules as opt-in. Carries ONLY the number (and the hashed client key); never wording or consent flags.
+ *  "Done" is shown ONLY when the edge answers 200 { ok: true }. The number is never echoed back. */
+export async function forwardStandaloneRevoke(body: unknown, cfg: StandaloneConfig, transport: typeof fetch = fetch): Promise<{ status: number; body: Record<string, unknown> }> {
+  if (!isStandaloneOptInEnabled(cfg.flagEnv ?? process.env)) return { status: 404, body: { error: "not_found" } };
+  const v = validateRevokeInput(body);
+  if (!v.ok) return { status: 400, body: { error: v.error } };
+  const age = (cfg.now ? cfg.now() : Date.now()) - v.value.startedAt;
+  if (v.value.honeypot.trim() !== "" || age < REVOKE_MIN_FILL_MS) return { status: 200, body: { ok: true, ignored: true } };
+  if (age > MAX_FORM_AGE_MS) return { status: 400, body: { error: "expired" } };
+  if (!cfg.supabaseUrl || !cfg.anonKey) return { status: 503, body: { error: "unavailable" } };
+  let res: Response;
+  try {
+    res = await transport(`${cfg.supabaseUrl}/functions/v1/sms-consent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: cfg.anonKey, Authorization: `Bearer ${cfg.anonKey}` },
+      body: JSON.stringify({ source: STANDALONE_SOURCE, action: STANDALONE_ACTION_REVOKE, phone: v.value.phone, client_key: cfg.clientKey ?? null }),
+      cache: "no-store",
+    });
+  } catch {
+    return { status: 503, body: { error: "unavailable" } };
+  }
+  let data: { ok?: boolean; error?: string } | null = null;
+  try { data = await res.json(); } catch { data = null; }
+  if (res.ok && data?.ok === true) return { status: 200, body: { ok: true } };
+  if (res.status === 429) return { status: 429, body: { error: "rate_limited" } };
+  if (res.status === 400 && data?.error === "invalid_phone") return { status: 400, body: { error: "invalid_phone" } };
+  return { status: 503, body: { error: "unavailable" } };   // an edge that does not know "revoke" yet fails closed: never "done"
 }

@@ -49,3 +49,7 @@ Approve, in this order, with QA first and SMS flags unchanged:
 1. (Native/DB agent) a new migration adding a gathering-less consent RPC (service-role only; nullable owner or a fixed system owner; `source='guest_page_opt_in'`, `wording_version='v3'`), `v3` in `CONSENT_WORDING`, and a `standalone_page` branch + hashed-`client_key` rate limit in `sms-consent`. Deploy to QA only; re-run the QA flow with synthetic numbers and roll back.
 2. After QA passes and counsel approves the wording: production migration of the SMS foundation set (SMS-A..SMS-5 plus step 1) and `sms-consent` deploy, then set `NEXT_PUBLIC_SMS_STANDALONE_OPT_IN=true` and publish the web app. Until then production keeps the "not open yet" page.
 Neither step is taken here.
+
+## 8. Update 2026-11-21 (WS-C)
+- Consent recording and the new voluntary "Stop texts" form on `/sms-opt-in` no longer depend on `SMS_ENABLED`; sending stays off. The page tells people they can reply STOP to any text or enter their number to stop texts; signing up again on the page never reverses a stop (only replying START does).
+- Publish requirements, approval gates and the exact live-screenshot procedure: `placeandplenty-native/docs/handoff/20261118/SMS_OPT_IN_PUBLISH_GATES.md`. The LOCAL_ screenshots above predate the Stop texts section and are not live evidence; a live capture is still required after publish.

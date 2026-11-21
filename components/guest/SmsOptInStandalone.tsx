@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  SMS_PRIVACY_URL_TEXT, SMS_TERMS_URL_TEXT, STANDALONE_CONSENT_WORDING, STANDALONE_COPY as t, looksLikeUsPhone,
+  SMS_PRIVACY_URL_TEXT, SMS_TERMS_URL_TEXT, STANDALONE_CONSENT_WORDING, STANDALONE_COPY as t, REVOKE_COPY as rc, looksLikeUsPhone,
 } from "@/lib/sms-standalone-opt-in";
 
 // Standalone guest-entered opt-in form. The checkbox starts UNCHECKED and is never pre-ticked. The honeypot ("website") is visually hidden and
@@ -70,6 +70,53 @@ export default function SmsOptInStandalone() {
       </div>
       <p id="sms-error" role="alert" className="min-h-[1.25rem] font-body text-sm text-red-700">{error}</p>
       <button type="submit" disabled={busy} className="w-full rounded-full bg-forest px-6 py-3 font-body font-semibold text-offwhite focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 disabled:opacity-60 sm:w-auto">{busy ? "Saving…" : "Sign me up for texts"}</button>
+    </form>
+  );
+}
+
+// "Stop texts": a person revokes their OWN consent by typing their number. No checkbox, no login. Works even if they never received a text.
+// "Done" is shown only after the server confirms. The only way back on is replying START to a Place & Plenty text (a later sign-up here never undoes a stop).
+export function SmsStopTexts() {
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const startedAt = useRef(0);
+  useEffect(() => { startedAt.current = Date.now(); }, []);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!looksLikeUsPhone(phone)) return setError(rc.needPhone);
+    setBusy(true);
+    try {
+      const res = await fetch("/api/sms-opt-in", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "revoke", phone, website, startedAt: startedAt.current }) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.ok === true) setDone(true);
+      else if (res.status === 429) setError(rc.rateLimited);
+      else if (res.status === 400 && data?.error === "invalid_phone") setError(rc.needPhone);
+      else if (res.status === 404 || res.status === 503) setError(rc.unavailable);
+      else setError(rc.failed);
+    } catch { setError(rc.failed); }
+    setBusy(false);
+  }
+
+  if (done) return <p role="status" className="rounded-card border border-sage/30 bg-white p-5 font-body text-forest" data-testid="sms-stop-success">{rc.success}</p>;
+  return (
+    <form onSubmit={submit} noValidate className="space-y-5" data-testid="sms-stop-form">
+      <div>
+        <label htmlFor="sms-stop-phone" className="block font-body text-sm font-bold text-forest">Mobile number to stop</label>
+        <input id="sms-stop-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national" maxLength={32} value={phone}
+          onChange={(e) => setPhone(e.target.value)} aria-describedby="sms-stop-hint sms-stop-error"
+          className="mt-1 w-full rounded-md border border-forest/40 bg-white px-3 py-3 font-body text-base text-forest focus:outline-none focus:ring-2 focus:ring-forest" />
+        <p id="sms-stop-hint" className="mt-1 font-body text-xs text-forest/70">US mobile numbers only. Enter your own number.</p>
+      </div>
+      <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
+        <label>Leave this field empty<input type="text" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} /></label>
+      </div>
+      <p id="sms-stop-error" role="alert" className="min-h-[1.25rem] font-body text-sm text-red-700">{error}</p>
+      <button type="submit" disabled={busy} className="w-full rounded-full border-2 border-forest px-6 py-3 font-body font-semibold text-forest focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 disabled:opacity-60 sm:w-auto">{busy ? "Saving…" : "Stop texts to this number"}</button>
     </form>
   );
 }
