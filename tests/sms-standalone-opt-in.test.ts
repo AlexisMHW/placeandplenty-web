@@ -57,9 +57,9 @@ test("honeypot, too-fast submit: nothing forwarded; expired form rejected", asyn
 
 test("forwards source/version/phone/consent only, never wording; never echoes the number", async () => {
   const seen: { url: string; init: RequestInit }[] = [];
-  const tr = (async (url: string, init: RequestInit) => { seen.push({ url, init }); return Response.json({ ok: true, still_opted_out: false }); }) as unknown as typeof fetch;
+  const tr = (async (url: string, init: RequestInit) => { seen.push({ url, init }); return Response.json({ ok: true, status: "pending" }); }) as unknown as typeof fetch;
   const out = await forwardStandaloneConsent(good, { ...cfg, clientKey: "hash" }, tr);
-  assert.deepEqual(out, { status: 200, body: { ok: true, stillOptedOut: false } });
+  assert.deepEqual(out, { status: 200, body: { ok: true, status: "pending" } });
   assert.equal(seen[0].url, "https://x.test/functions/v1/sms-consent");
   const sent = JSON.parse(String(seen[0].init.body));
   assert.deepEqual(Object.keys(sent).sort(), ["accepted", "client_key", "phone", "source", "wording_version"]);
@@ -74,7 +74,7 @@ test("fail closed: an edge that rejects/does not know this source is 'unavailabl
   assert.equal((await forwardStandaloneConsent(good, cfg, mk(429, {}))).status, 429);
   assert.equal((await forwardStandaloneConsent(good, cfg, (async () => { throw new Error("net"); }) as typeof fetch)).status, 503);
   assert.equal((await forwardStandaloneConsent(good, { ...cfg, anonKey: undefined }, mk(200, { ok: true }))).status, 503);
-  assert.deepEqual((await forwardStandaloneConsent(good, cfg, mk(200, { ok: true, still_opted_out: true }))).body, { ok: true, stillOptedOut: true });
+  assert.deepEqual((await forwardStandaloneConsent(good, cfg, mk(200, { ok: true, still_opted_out: true }))).body, { ok: true, status: "pending" });
   assert.equal((await forwardStandaloneConsent(good, cfg, mk(200, { ok: false }))).status, 503);
 });
 
@@ -148,5 +148,5 @@ test("revoke UI/route contract: Stop texts form on the page, states STOP reply, 
   for (const n of ["SmsStopTexts", "Stop texts", "Reply STOP to any Place &amp; Plenty text", "sms-stop-card", "will not turn texts back on"]) assert.ok(page.includes(n), n);
   const route = read("app/api/sms-opt-in/route.ts");
   assert.match(route, /forwardStandaloneRevoke/); assert.match(route, /allowRevoke/); assert.match(route, /origin !== new URL\(request\.url\)\.origin/); assert.doesNotMatch(route, /SERVICE_ROLE/);
-  assert.match(read("lib/sms-standalone-opt-in.ts"), /Reply START/);
+  assert.match(read("lib/sms-standalone-opt-in.ts"), /reply START/i);
 });
