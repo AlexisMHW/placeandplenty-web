@@ -27,7 +27,7 @@ export default function SmsOptInStandalone() {
   const [website, setWebsite] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<null | { stillOptedOut: boolean }>(null);
+  const [result, setResult] = useState<null | { pending: true }>(null);
   const startedAt = useRef(0);
   useEffect(() => { startedAt.current = Date.now(); }, []);
 
@@ -40,7 +40,7 @@ export default function SmsOptInStandalone() {
     try {
       const res = await fetch("/api/sms-opt-in", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone, accepted: true, website, startedAt: startedAt.current }) });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data?.ok === true) setResult({ stillOptedOut: data.stillOptedOut === true });
+      if (res.ok && data?.ok === true) setResult({ pending: true });
       else if (res.status === 429) setError(t.rateLimited);
       else if (res.status === 400 && data?.error === "invalid_phone") setError(t.needPhone);
       else if (res.status === 404 || res.status === 503) setError(t.unavailable);
@@ -50,7 +50,7 @@ export default function SmsOptInStandalone() {
   }
 
   if (result) {
-    return <p role="status" className="rounded-card border border-sage/30 bg-white p-5 font-body text-forest" data-testid="sms-opt-in-success">{result.stillOptedOut ? t.successStillOptedOut : t.success}</p>;
+    return <p role="status" className="rounded-card border border-sage/30 bg-white p-5 font-body text-forest" data-testid="sms-opt-in-success">{t.success}</p>;
   }
   return (
     <form onSubmit={submit} noValidate className="space-y-5" data-testid="sms-opt-in-form">

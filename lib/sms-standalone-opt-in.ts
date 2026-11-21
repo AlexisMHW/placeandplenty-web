@@ -5,7 +5,7 @@
 //
 // BACKEND DEPENDENCY (not in this repo): the sms-consent edge function must accept { source: "standalone_page", ... } and wording_version "v3",
 // and a gathering-less consent RPC must exist. Until then the edge answers an error and this module maps it to "unavailable" (never to success).
-// Success is shown ONLY when the edge function answers 200 { ok: true }. Consent is never inferred from a host-entered number: this path
+// "Almost done, reply YES" is shown ONLY when the edge function answers 200 { ok: true }; enrollment exists only after the handset replies YES. Consent is never inferred from a host-entered number: this path
 // carries only what the person typed into this page plus an explicit true checkbox.
 
 export const STANDALONE_WORDING_VERSION = "v3";
@@ -23,8 +23,8 @@ export const SMS_PRIVACY_URL_TEXT = "placeandplenty.com/privacy";
 export const STANDALONE_COPY = {
   needCheckbox: "Please tick the box to agree to texts.",
   needPhone: "Please enter a valid US mobile number.",
-  success: "You're signed up. Place & Plenty will text this number about invitations, RSVP reminders and gathering updates. Reply STOP to any text to opt out, or HELP for help.",
-  successStillOptedOut: "We saved your choice, but this number previously replied STOP, so no texts will be sent. Reply START to a Place & Plenty text to turn texts back on.",
+  // Identical for every number (new, repeat, already confirmed, previously opted out, rate limited): it must never reveal a number's state or claim enrollment.
+  success: "Almost done. If this number can receive texts from us, we'll send a message from Place & Plenty. Reply YES to that message to confirm. You are not signed up until you reply YES. Reply STOP at any time to opt out.",
   rateLimited: "Too many attempts. Please wait a few minutes and try again.",
   unavailable: "Signing up for texts isn't available right now. Nothing was saved. Your RSVPs and invitations are not affected.",
   failed: "Something went wrong and nothing was saved. Please try again.",
@@ -92,7 +92,7 @@ export async function forwardStandaloneConsent(body: unknown, cfg: StandaloneCon
   if (!v.ok) return { status: 400, body: { error: v.error } };
   const age = (cfg.now ? cfg.now() : Date.now()) - v.value.startedAt;
   // Bots: a filled honeypot or an implausibly fast submit. Nothing is stored or forwarded; answer neutrally so the bot learns nothing.
-  if (v.value.honeypot.trim() !== "" || age < MIN_FILL_MS) return { status: 200, body: { ok: true, stillOptedOut: false, ignored: true } };
+  if (v.value.honeypot.trim() !== "" || age < MIN_FILL_MS) return { status: 200, body: { ok: true, status: "pending", ignored: true } };
   if (age > MAX_FORM_AGE_MS) return { status: 400, body: { error: "expired" } };
   if (!cfg.supabaseUrl || !cfg.anonKey) return { status: 503, body: { error: "unavailable" } };
   let res: Response;
@@ -106,9 +106,9 @@ export async function forwardStandaloneConsent(body: unknown, cfg: StandaloneCon
   } catch {
     return { status: 503, body: { error: "unavailable" } };
   }
-  let data: { ok?: boolean; error?: string; still_opted_out?: boolean } | null = null;
+  let data: { ok?: boolean; error?: string } | null = null;
   try { data = await res.json(); } catch { data = null; }
-  if (res.ok && data?.ok === true) return { status: 200, body: { ok: true, stillOptedOut: data.still_opted_out === true } };
+  if (res.ok && data?.ok === true) return { status: 200, body: { ok: true, status: "pending" } };
   if (res.status === 429) return { status: 429, body: { error: "rate_limited" } };
   if (res.status === 400 && data?.error === "invalid_phone") return { status: 400, body: { error: "invalid_phone" } };
   return { status: 503, body: { error: "unavailable" } };   // includes an edge that does not know this source yet: fail closed, never "success"
