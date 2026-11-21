@@ -17,6 +17,8 @@ export const EVENT_LABELS: Record<string, { label: string; staffEmailSubject: st
   content_permission_revoked: { label: "Content permission revoked", staffEmailSubject: "A creator revoked a content permission" },
   member_suspended: { label: "Member suspended", staffEmailSubject: "A Hosting Collective member was suspended" },
   member_reinstated: { label: "Member reinstated", staffEmailSubject: "A Hosting Collective member was reinstated" },
+  member_left: { label: "Member left the Collective", staffEmailSubject: "A Hosting Collective member left the program" },
+  application_draft_expiring: { label: "Saved application draft will expire soon", staffEmailSubject: "A saved Hosting Collective application draft is about to expire" },
   payout_needs_approval: { label: "Payout draft needs your approval", staffEmailSubject: "A Hosting Collective payout needs your approval" },
 };
 export const eventLabel = (kind: string) => EVENT_LABELS[kind]?.label ?? "Notification";

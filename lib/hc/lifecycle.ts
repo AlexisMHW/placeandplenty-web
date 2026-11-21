@@ -3,7 +3,7 @@
 // No commission rate, referral promise or payout amount appears in any text here (D4: nothing is invented).
 
 export type ApplicationState = "received" | "in_review" | "approved" | "declined" | "withdrawn";
-export type MemberState = "applied" | "approved" | "declined" | "suspended";
+export type MemberState = "applied" | "approved" | "declined" | "suspended" | "left";
 
 export interface ProgramStatus {
   application: { status: ApplicationState; submittedAt: string | null; decidedAt: string | null } | null;
@@ -16,7 +16,7 @@ export interface ProgramStatus {
 }
 
 const APP: readonly string[] = ["received", "in_review", "approved", "declined", "withdrawn"];
-const MEM: readonly string[] = ["applied", "approved", "declined", "suspended"];
+const MEM: readonly string[] = ["applied", "approved", "declined", "suspended", "left"];
 const str = (v: unknown) => (typeof v === "string" ? v : null);
 
 export function parseProgramStatus(raw: unknown): ProgramStatus {
@@ -57,6 +57,7 @@ export function memberStatusCopy(s: MemberState): { title: string; body: string 
     case "suspended": return { title: "Your creator account is paused", body: "Your referral link and new campaigns are paused. Please contact Place & Plenty if you have questions." };
     case "applied": return { title: "Membership pending", body: "Your membership is not active yet." };
     case "declined": return { title: "Membership not active", body: "Your membership is not active. Please contact Place & Plenty if you have questions." };
+    case "left": return { title: "You have left the Hosting Collective", body: "Your Place & Plenty account and gatherings are not affected. If you have questions about outstanding commissions, please contact Place & Plenty." };
     default: return null;
   }
 }
@@ -90,6 +91,8 @@ const FEEDBACK: Record<string, string> = {
   not_offered: "That offer is no longer open.", disclosure_required: "Please confirm you disclosed the partnership.",
   expired: "That item has expired.", closed: "That campaign is closed.", not_found: "That item could not be found.",
   tier_assignments_disabled: "This member's tier does not allow campaign assignments.", campaign_not_found: "Campaign not found.", campaign_closed: "That campaign is closed.", invalid_status: "That status change is not allowed.",
+  left: "You have left the Hosting Collective. Your Place & Plenty account and gatherings are not affected.", not_a_member: "We could not find a membership for this account.",
+  application_not_declined: "Only a declined application can have a re-apply setting.", reason_required: "Please add a short reason (3-500 characters).",
   rate_limited: "You have submitted a lot today. Please try again tomorrow.", assignment_not_accepted: "Accept the campaign before submitting content for it.",
 };
 

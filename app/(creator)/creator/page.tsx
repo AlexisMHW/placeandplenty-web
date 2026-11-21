@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { assignmentActionable, closedAssignmentCopy, dollars, earningsView, parsePortal, referralUrl, referralsLive, sessionExpired } from "@/lib/creator-portal";
-import { applicationCopy, canWithdraw, memberStatusCopy, parseProgramStatus, REFERRAL_REASON_COPY } from "@/lib/hc/lifecycle";
+import { applicationCopy, canWithdraw, memberStatusCopy, parseProgramStatus, REFERRAL_REASON_COPY, type MemberState } from "@/lib/hc/lifecycle";
+import { LeaveCollective } from "@/components/hc/LeaveCollective";
 import { PLATFORMS } from "@/lib/hc/creator-forms";
 import { ActionForm } from "@/components/hc/ActionForm";
 import { completeOnboardingStep, respondToAssignment, submitContent, withdrawApplication } from "./actions";
@@ -48,7 +49,7 @@ export default async function CreatorPortal() {
     );
   }
   if (state.kind === "inactive" || (program.member && program.member.status !== "approved")) {
-    const c = memberStatusCopy((program.member?.status ?? "declined") as "applied" | "approved" | "declined" | "suspended");
+    const c = memberStatusCopy((program.member?.status ?? "declined") as MemberState);
     return <Note>{c ? <><strong>{c.title}.</strong> {c.body}</> : "Your creator account is not active right now. Please contact Place & Plenty if you have questions."}</Note>;
   }
 
@@ -143,6 +144,10 @@ export default async function CreatorPortal() {
           <h2 id="ann" className="mb-2 font-display text-xl text-forest">Announcements</h2>
           <ul className="space-y-3 text-sm">{d.announcements.map((a) => <li key={a.id}><p className="font-medium">{a.title}</p><p className="whitespace-pre-line text-charcoal/80">{a.body}</p></li>)}</ul>
         </section>) : null}
+
+      <section aria-label="Membership" className="border-t border-forest/10 pt-4">
+        <LeaveCollective />
+      </section>
     </div>
   );
 }
