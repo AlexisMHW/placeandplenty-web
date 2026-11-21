@@ -16,9 +16,11 @@ export const NAV_LINKS: NavLink[] = [
   { href: "/command-center/health", label: "Integration health", needs: "ops.read" },
   { href: "/command-center/hosting-collective", label: "Hosting Collective", needs: "hc.read" },
   { href: "/command-center/hosting-collective/campaigns", label: "Campaigns", needs: "hc.read" },
+  { href: "/command-center/hosting-collective/announcements", label: "Member announcements", needs: "hc.read" },
   { href: "/command-center/hosting-collective/tiers", label: "Tiers and terms", needs: "hc.read" },
   { href: "/command-center/hosting-collective/payouts", label: "Payouts", needs: "hc.payout" },
   { href: "/command-center/inbox/settings", label: "Notification settings", needs: "ops.read" },
+  { href: "/command-center/ops/controls", label: "Operational controls", needs: "hc.read" },
   { href: "/command-center/ops", label: "Staff and audit", needs: "audit.read" },
   { href: "/command-center/ops/staff", label: "Staff access", needs: "staff.manage" },
 ];

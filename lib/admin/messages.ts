@@ -2,6 +2,8 @@
 // internals); only a code from a known list is mapped here, everything else becomes the generic line. Pure, no imports.
 const MESSAGES: Record<string, string> = {
   saved: "Saved.",
+  invalid_title: "Enter a title (1 to 120 characters).",
+  invalid_body: "Enter a message (1 to 2000 characters).",
   not_authorized: "Your role is not allowed to do this.",
   confirmation_required: "Tick the confirmation box first.",
   invalid_id: "That item could not be found. Refresh and try again.",
@@ -70,6 +72,12 @@ const MESSAGES: Record<string, string> = {
   dispute_lost: "The dispute was lost, so it cannot be released.",
   fully_refunded: "The purchase was fully refunded, so it cannot be released.",
   entitlement_not_valid: "The purchase is no longer valid, so it cannot be released.",
+  terms_version_required: "Enter a terms version before opening applications.",
+  invalid_terms_version: "Terms version must be 40 characters or fewer, with no angle brackets.",
+  already_on: "That is already switched on.",
+  already_off: "That is already switched off.",
+  already_open: "Applications are already open.",
+  already_closed: "Applications are already closed.",
   failed: "That did not work. Nothing was changed. Try again, or ask the person who runs the site.",
 };
 export function messageFor(code: string | null | undefined): string {

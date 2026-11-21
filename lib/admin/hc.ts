@@ -225,3 +225,20 @@ export function parseCommissionReport(raw: unknown): { enabled: boolean; rateCon
     }),
   };
 }
+
+// ---- Announcements (member community access). Staff publish; members read them in /creator. ----
+export interface AnnouncementRow { id: string; title: string; body: string; tierSlug: string | null; published: boolean; createdAt: string }
+export function parseAnnouncements(raw: unknown): AnnouncementRow[] | null {
+  if (!Array.isArray(raw)) return null;
+  return raw.flatMap((r: any) => r && typeof r.id === "string" && typeof r.title === "string"
+    ? [{ id: r.id, title: r.title, body: typeof r.body === "string" ? r.body : "", tierSlug: typeof r.tier_slug === "string" ? r.tier_slug : null,
+         published: typeof r.published_at === "string", createdAt: typeof r.created_at === "string" ? r.created_at : "" }] : []);
+}
+export function parseAnnouncementForm(form: { get(name: string): unknown }): { ok: true; value: { title: string; body: string; tierSlug: string | null } } | { ok: false; error: string } {
+  const get = (k: string) => { const v = form.get(k); return typeof v === "string" ? v.trim() : ""; };
+  const title = get("title"), body = get("body"), tier = get("tier");
+  if (title.length < 1 || title.length > 120) return { ok: false, error: "invalid_title" };
+  if (body.length < 1 || body.length > 2000) return { ok: false, error: "invalid_body" };
+  if (tier && !/^[a-z0-9][a-z0-9-]{0,40}$/.test(tier)) return { ok: false, error: "invalid_slug" };
+  return { ok: true, value: { title, body, tierSlug: tier || null } };
+}
