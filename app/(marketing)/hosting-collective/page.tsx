@@ -19,7 +19,7 @@ import {
 // Not linked from navigation or the sitemap and marked noindex until the owner approves launch. QA only until separately approved.
 // The hidden Hosting Partners Facebook group is never referenced here (see lib/hc/community.ts).
 export const metadata: Metadata = {
-  title: "The Hosting Collective & Community | Place & Plenty",
+  title: { absolute: "The Hosting Collective & Community | Place & Plenty" },
   description:
     "Join a free community for practical hosting ideas, discover the Place & Plenty app and explore Hosting Partner opportunities. Real homes. More gathering.",
   robots: { index: false, follow: false },
