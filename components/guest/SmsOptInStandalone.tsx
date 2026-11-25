@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  SMS_PRIVACY_URL_TEXT, SMS_TERMS_URL_TEXT, STANDALONE_CONSENT_WORDING, STANDALONE_COPY as t, REVOKE_COPY as rc, looksLikeUsPhone,
+  PREVIEW_COPY, SMS_PRIVACY_URL_TEXT, SMS_TERMS_URL_TEXT, STANDALONE_CONSENT_WORDING, STANDALONE_COPY as t, REVOKE_COPY as rc, looksLikeUsPhone,
 } from "@/lib/sms-standalone-opt-in";
 
 // Standalone guest-entered opt-in form. The checkbox starts UNCHECKED and is never pre-ticked. The honeypot ("website") is visually hidden and
@@ -118,5 +118,26 @@ export function SmsStopTexts() {
       <p id="sms-stop-error" role="alert" className="min-h-[1.25rem] font-body text-sm text-red-700">{error}</p>
       <button type="submit" disabled={busy} className="w-full rounded-full border-2 border-forest px-6 py-3 font-body font-semibold text-forest focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 disabled:opacity-60 sm:w-auto">{busy ? "Saving…" : "Stop texts to this number"}</button>
     </form>
+  );
+}
+
+// Preview (not open): the same consent wording and form layout, but every control is disabled and nothing is sent anywhere.
+export function SmsOptInPreview() {
+  return (
+    <div data-testid="sms-opt-in-preview">
+      <p role="status" className="rounded-card border border-gold/40 bg-white p-4 font-body text-forest" data-testid="sms-opt-in-preview-banner">{PREVIEW_COPY.banner}</p>
+      <div className="mt-5 space-y-5" aria-disabled="true">
+        <div>
+          <label htmlFor="sms-preview-phone" className="block font-body text-sm font-bold text-forest">Mobile number</label>
+          <input id="sms-preview-phone" type="tel" disabled placeholder="Not accepting numbers yet" className="mt-1 w-full rounded-lg border border-sage/40 bg-offwhite px-4 py-3 font-body text-forest/60" />
+        </div>
+        <div className="flex items-start gap-3">
+          <input id="sms-preview-consent" type="checkbox" disabled checked={false} readOnly className="mt-1 h-5 w-5" />
+          <label htmlFor="sms-preview-consent" className="font-body text-sm text-forest/80"><WordingWithLinks text={STANDALONE_CONSENT_WORDING} /></label>
+        </div>
+        <button type="button" disabled className="w-full cursor-not-allowed rounded-full bg-forest/40 px-6 py-3 font-body font-semibold text-offwhite">{PREVIEW_COPY.button}</button>
+      </div>
+      <p className="mt-4 font-body text-sm text-forest/70">{PREVIEW_COPY.notice}</p>
+    </div>
   );
 }

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import {
-  STANDALONE_CONSENT_WORDING, MIN_FILL_MS, createRateLimiter, forwardStandaloneConsent, isStandaloneOptInEnabled, validateStandaloneInput,
+  STANDALONE_CONSENT_WORDING, MIN_FILL_MS, createRateLimiter, forwardStandaloneConsent, isStandaloneOptInEnabled, isStandalonePreview, PREVIEW_COPY, validateStandaloneInput,
 } from "../lib/sms-standalone-opt-in.ts";
 
 const ON = { NEXT_PUBLIC_SMS_STANDALONE_OPT_IN: "true" };
@@ -149,4 +149,28 @@ test("revoke UI/route contract: Stop texts form on the page, states STOP reply, 
   const route = read("app/api/sms-opt-in/route.ts");
   assert.match(route, /forwardStandaloneRevoke/); assert.match(route, /allowRevoke/); assert.match(route, /origin !== new URL\(request\.url\)\.origin/); assert.doesNotMatch(route, /SERVICE_ROLE/);
   assert.match(read("lib/sms-standalone-opt-in.ts"), /reply START/i);
+});
+
+test("preview mode: only exact 'true', never alongside the live flag, and the API stays closed", () => {
+  assert.equal(isStandalonePreview({}), false);
+  for (const v of ["", "1", "TRUE", " true", "false"]) assert.equal(isStandalonePreview({ NEXT_PUBLIC_SMS_STANDALONE_PREVIEW: v }), false, v);
+  assert.equal(isStandalonePreview({ NEXT_PUBLIC_SMS_STANDALONE_PREVIEW: "true" }), true);
+  assert.equal(isStandalonePreview({ NEXT_PUBLIC_SMS_STANDALONE_PREVIEW: "true", NEXT_PUBLIC_SMS_STANDALONE_OPT_IN: "true" }), false);
+  assert.equal(isStandaloneOptInEnabled({ NEXT_PUBLIC_SMS_STANDALONE_PREVIEW: "true" }), false);
+});
+
+test("preview copy is truthful: says not open, collects nothing, sends nothing, claims no confirmation text", () => {
+  const all = Object.values(PREVIEW_COPY).join(" ");
+  assert.match(all, /not open yet/i);
+  assert.match(all, /collects your number|not accepting/i);
+  assert.match(all, /not sending texts/i);
+  assert.doesNotMatch(all, /we(?:'ll| will) send|reply yes|confirm/i);
+});
+
+test("preview component is inert: disabled controls, no fetch, no form submit, shows the real consent wording", () => {
+  const src = readFileSync(new URL("../components/guest/SmsOptInStandalone.tsx", import.meta.url), "utf8");
+  const preview = src.slice(src.indexOf("export function SmsOptInPreview"));
+  assert.doesNotMatch(preview, /fetch\(|onSubmit|<form/);
+  assert.match(preview, /STANDALONE_CONSENT_WORDING/);
+  assert.equal((preview.match(/disabled/g) ?? []).length >= 3, true);
 });

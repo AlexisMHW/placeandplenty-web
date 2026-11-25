@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
-import SmsOptInStandalone, { SmsStopTexts } from "@/components/guest/SmsOptInStandalone";
-import { isStandaloneOptInEnabled } from "@/lib/sms-standalone-opt-in";
+import SmsOptInStandalone, { SmsOptInPreview, SmsStopTexts } from "@/components/guest/SmsOptInStandalone";
+import { PREVIEW_COPY, isStandaloneOptInEnabled, isStandalonePreview } from "@/lib/sms-standalone-opt-in";
 
 // Public, no-login page where a person can opt in to Place & Plenty texts with their OWN number.
 // Outside the (marketing) and (guest) groups on purpose: a self-contained, quiet page with no app-download push.
@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 
 export default function SmsOptInPage() {
   const open = isStandaloneOptInEnabled();
+  const preview = !open && isStandalonePreview();
   return (
     <div className="min-h-screen bg-offwhite">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-forest focus:px-5 focus:py-2.5 focus:font-body focus:text-sm focus:font-semibold focus:text-offwhite">Skip to content</a>
@@ -45,6 +46,8 @@ export default function SmsOptInPage() {
           <h2 id="sms-form-heading" className="font-display text-xl text-forest">Sign up for texts</h2>
           {open ? (
             <div className="mt-4"><SmsOptInStandalone /></div>
+          ) : preview ? (
+            <div className="mt-4"><SmsOptInPreview /></div>
           ) : (
             <p className="mt-3 font-body text-forest/80" data-testid="sms-opt-in-coming-soon">
               Text sign-up is not open yet. We will turn it on here once it is ready. Nothing on this page collects your number right now, and you will not receive texts from Place &amp; Plenty until you sign up.
@@ -59,6 +62,13 @@ export default function SmsOptInPage() {
               Want to stop? Reply STOP to any Place &amp; Plenty text, or enter your number here and we will stop texting it. This takes effect for everything Place &amp; Plenty sends, and signing up again on this page will not turn texts back on; replying START to a Place &amp; Plenty text will.
             </p>
             <div className="mt-4"><SmsStopTexts /></div>
+          </section>
+        )}
+
+        {preview && (
+          <section className="mt-8 rounded-card border border-sage/30 bg-white p-6" aria-labelledby="sms-stop-heading" data-testid="sms-stop-preview">
+            <h2 id="sms-stop-heading" className="font-display text-xl text-forest">Stop texts</h2>
+            <p className="mt-2 font-body text-sm text-forest/80">{PREVIEW_COPY.stop}</p>
           </section>
         )}
 

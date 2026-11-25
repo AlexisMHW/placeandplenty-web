@@ -42,6 +42,19 @@ export const REVOKE_COPY = {
 };
 
 /** Anything other than the exact string "true" is OFF. */
+/** Preview mode (founder decision P1): the real consent disclosures are shown, but the form is inert: no number is accepted, stored or texted.
+ *  Active only when NEXT_PUBLIC_SMS_STANDALONE_PREVIEW is exactly "true" AND the real flag is not "true". The API stays closed (404) in preview. */
+export function isStandalonePreview(env: Record<string, string | undefined> = process.env): boolean {
+  return env.NEXT_PUBLIC_SMS_STANDALONE_PREVIEW === "true" && env.NEXT_PUBLIC_SMS_STANDALONE_OPT_IN !== "true";
+}
+
+export const PREVIEW_COPY = {
+  banner: "Text sign-up is not open yet. We are waiting for carrier approval of our messaging number. This page shows exactly what you will agree to when sign-up opens.",
+  notice: "Nothing on this page collects your number, and Place & Plenty is not sending texts right now. You will not receive any text from Place & Plenty until sign-up opens and you choose to join.",
+  button: "Sign-up not open yet",
+  stop: "Place & Plenty is not sending texts yet, so there is nothing to stop. Once texts begin, you can reply STOP to any message to opt out, or HELP for help.",
+};
+
 export function isStandaloneOptInEnabled(env: Record<string, string | undefined> = process.env): boolean {
   return env.NEXT_PUBLIC_SMS_STANDALONE_OPT_IN === "true";
 }
