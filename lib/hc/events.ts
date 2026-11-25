@@ -60,7 +60,7 @@ export function parseHealth(raw: unknown): DeliveryHealth | null {
 
 // ---------------- dispatcher ----------------
 export interface ClaimedDelivery { id: number; event_id: number; channel: "staff_email" | "applicant_email"; destination_id: string | null; attempts: number; kind: string; ref_type: string; ref_id: string; severity: string; }
-export interface Recipient { email: string; display_name?: string | null; kind: string; tier?: string | null }
+export interface Recipient { email: string; display_name?: string | null; kind: string; tier?: string | null; expires_at?: string | null }
 export type SendResult = { ok: true; providerId?: string | null } | { ok: false; code: string };
 /** Implemented by the email stream (A4) behind its own on/off flags. This file never talks to a provider. */
 export interface Mailer { send(to: string, message: { subject: string; text: string }, opts: { idempotencyKey: string }): Promise<SendResult>; }
@@ -82,7 +82,7 @@ export function composeMessage(d: ClaimedDelivery, r: Recipient, siteUrl: string
     if (d.kind === "application_receipt") return applicationReceiptMessage(r.display_name ?? "");
     if (d.kind === "member_left") return memberLeftMessage(r.display_name ?? "", `${siteUrl}/creator`);
     if (d.kind === "member_rejoined") return memberRejoinedMessage(r.display_name ?? "", `${siteUrl}/creator`);
-    if (d.kind === "application_draft_expiring") return applicationDraftExpiringMessage(`${siteUrl}/creator`, 7);
+    if (d.kind === "application_draft_expiring") return applicationDraftExpiringMessage(`${siteUrl}/creator`, r.expires_at ?? null);
     return null;
   }
   const meta = EVENT_LABELS[d.kind];

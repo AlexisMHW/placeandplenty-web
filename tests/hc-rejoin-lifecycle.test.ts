@@ -49,7 +49,7 @@ test("lifecycle emails compose for every queued applicant kind and unknown kinds
 });
 
 test("lifecycle emails contain no money terms, no social links and no private-group invitation", () => {
-  const all = [applicationReceiptMessage("Ada"), memberLeftMessage("Ada", `${SITE}/creator`), memberRejoinedMessage("Ada", `${SITE}/creator`), applicationDraftExpiringMessage(`${SITE}/creator`, 7)];
+  const all = [applicationReceiptMessage("Ada"), memberLeftMessage("Ada", `${SITE}/creator`), memberRejoinedMessage("Ada", `${SITE}/creator`), applicationDraftExpiringMessage(`${SITE}/creator`, "2026-12-20T15:00:00Z")];
   for (const m of all) {
     const t = m.subject + "\n" + m.text;
     assert.doesNotMatch(t, /\$\s?\d|\d+\s?%|commission|payout|referral link/i, m.subject);
@@ -114,4 +114,19 @@ test("public marketing routes link only to the PUBLIC Collective group, and neve
     for (const m of code.matchAll(/facebook\.com\/groups\/([^/"'\s?)]+)/gi)) assert.equal(m[1], PUBLIC_GROUP_ID, `${f}: ${m[0]}`);
     assert.doesNotMatch(code, /hosting[- ]partners? (facebook )?group/i, f);
   }
+});
+
+test("leave email distinguishes free-tier self rejoin from staff-reviewed Hosting Partner reinstatement", () => {
+  const t = memberLeftMessage("Ada", `${SITE}/creator`).text;
+  assert.match(t, /Collective Members and Contributors can rejoin/);
+  assert.match(t, /Hosting Partners cannot rejoin on their own/);
+  assert.match(t, /not restored automatically/);
+});
+
+test("draft expiry email shows the real date, and falls back to a day count only when no date is known", () => {
+  assert.match(applicationDraftExpiringMessage(`${SITE}/creator`, "2026-12-20T15:00:00Z").text, /on December 20, 2026 \(Eastern Time\)/);
+  assert.match(applicationDraftExpiringMessage(`${SITE}/creator`, null).text, /in about 7 days/);
+  assert.match(applicationDraftExpiringMessage(`${SITE}/creator`, "not a date", 3).text, /in about 3 days/);
+  const m = composeMessage(del("application_draft_expiring"), { email: "a@example.test", kind: "application_draft_expiring", expires_at: "2026-12-20T15:00:00Z" }, SITE)!;
+  assert.match(m.text, /December 20, 2026/);
 });

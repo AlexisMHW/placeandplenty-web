@@ -3,7 +3,7 @@
 // (COMMS stream) and is OFF until it is wired and approved; these are only the words.
 export type CreatorMessage = { subject: string; text: string };
 const clean = (s: string) => s.replace(/[\r\n]+/g, " ").trim().slice(0, 80);
-export const SUPPORT_NOTE = "Reply to this email if you have a question."; // replaced by the approved support@ wording once decided (see P2_FOOTER_SUPPORT_PROPOSAL)
+export const SUPPORT_NOTE = "Questions? Reply to this email or write to support@placeandplenty.com."; // replaced by the approved support@ wording once decided (see P2_FOOTER_SUPPORT_PROPOSAL)
 
 export function applicationApprovedMessage(displayName: string, portalUrl: string): CreatorMessage {
   const n = clean(displayName) || "there";
@@ -36,7 +36,8 @@ export function memberLeftMessage(displayName: string, portalUrl: string): Creat
   const n = clean(displayName) || "there";
   return {
     subject: "You have left the Hosting Collective",
-    text: [`Hi ${n},`, "", "You have left the Place & Plenty Hosting Collective. Your Place & Plenty account and your gatherings are not affected.", "", `If you change your mind, you can rejoin from your creator page, or we may need to review the request first: ${portalUrl}`, "", SUPPORT_NOTE].join("\n"),
+    text: [`Hi ${n},`, "", "You have left the Place & Plenty Hosting Collective. Your Place & Plenty account and your gatherings are not affected.", "",
+      "If you change your mind:", "- Collective Members and Contributors can rejoin from their creator page at any time.", "- Hosting Partners cannot rejoin on their own. A member of our team reviews every Hosting Partner request, and partner access is not restored automatically.", "", portalUrl, "", SUPPORT_NOTE].join("\n"),
   };
 }
 
@@ -48,10 +49,14 @@ export function memberRejoinedMessage(displayName: string, portalUrl: string): C
   };
 }
 
-export function applicationDraftExpiringMessage(portalUrl: string, daysLeft: number): CreatorMessage {
-  const d = Number.isFinite(daysLeft) ? Math.max(1, Math.min(30, Math.round(daysLeft))) : 7;
+/** expiresOn: the real expiry timestamp (ISO) from the database. If it is missing or unreadable the text falls back to "about N days". */
+export function applicationDraftExpiringMessage(portalUrl: string, expiresOn: string | null | undefined, fallbackDays = 7): CreatorMessage {
+  const t = expiresOn ? Date.parse(expiresOn) : NaN;
+  const when = Number.isFinite(t)
+    ? `on ${new Date(t).toLocaleDateString("en-US", { timeZone: "America/New_York", year: "numeric", month: "long", day: "numeric" })} (Eastern Time)`
+    : `in about ${Number.isFinite(fallbackDays) ? Math.max(1, Math.min(30, Math.round(fallbackDays))) : 7} days`;
   return {
     subject: "Your saved Hosting Collective application is about to expire",
-    text: ["Hi there,", "", `Your saved, unfinished Hosting Collective application will be removed in about ${d} days if it is not submitted. Nothing has been sent to our team yet.`, "", `Finish and submit it here: ${portalUrl}`, "", SUPPORT_NOTE].join("\n"),
+    text: ["Hi there,", "", `Your saved, unfinished Hosting Collective application will be removed ${when} if it is not submitted. Nothing has been sent to our team yet.`, "", `Finish and submit it here: ${portalUrl}`, "", SUPPORT_NOTE].join("\n"),
   };
 }
