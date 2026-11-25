@@ -135,6 +135,7 @@ export default function SupportPage() {
               <p><Link href="/terms" className="underline decoration-gold underline-offset-4">Refunds, cancellations &amp; Terms</Link></p>
               <p><Link href="/delete-account" className="underline decoration-gold underline-offset-4">Delete your account</Link></p>
               <p><Link href="/privacy" className="underline decoration-gold underline-offset-4">Privacy Policy</Link></p>
+              <p><Link href="/sms-opt-in" className="underline decoration-gold underline-offset-4">Text updates (optional; sign-up not open yet)</Link></p>
             </nav>
           </aside>
 

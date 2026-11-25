@@ -174,3 +174,11 @@ test("preview component is inert: disabled controls, no fetch, no form submit, s
   assert.match(preview, /STANDALONE_CONSENT_WORDING/);
   assert.equal((preview.match(/disabled/g) ?? []).length >= 3, true);
 });
+
+// Navigation: the public preview must be reachable from the legal/support pages (Telnyx digital opt-in path).
+test("terms, privacy and support link to the SMS opt-in preview", () => {
+  for (const f of ["app/(marketing)/terms/page.tsx", "app/(marketing)/privacy/page.tsx", "app/(marketing)/support/page.tsx"]) {
+    assert.match(read(f), /href="\/sms-opt-in"/, f);
+  }
+  assert.match(read("app/(marketing)/terms/page.tsx"), /<\/Link>\{" "\}\s*\(sign-up is not open yet\)/);
+});

@@ -280,7 +280,10 @@ export default function PrivacyPage() {
         and data rates may apply. Recipients can reply <strong>STOP</strong>
         to opt out or <strong>HELP</strong> for assistance. We may retain
         limited suppression records after an opt-out so that the number is not
-        contacted again without valid renewed consent.
+        contacted again without valid renewed consent. The consent wording
+        is shown on our{" "}
+        <Link href="/sms-opt-in">text updates sign-up preview</Link>{" "}
+        (sign-up is not open yet).
       </p>
 
       <h2>Guest links and what they reveal</h2>

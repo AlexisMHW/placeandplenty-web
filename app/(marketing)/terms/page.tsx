@@ -81,7 +81,10 @@ export default function TermsPage() {
         only for legitimate gathering invitations, RSVP reminders and
         relevant gathering updates, not unsolicited promotions or bulk
         marketing. Adding a guest&apos;s phone number is not proof of
-        permission to send them texts.
+        permission to send them texts. You can see exactly what a guest
+        would agree to on our{" "}
+        <Link href="/sms-opt-in">text updates sign-up preview</Link>{" "}
+        (sign-up is not open yet).
       </p>
       <p>
         Guests must separately and affirmatively agree to receive Place
