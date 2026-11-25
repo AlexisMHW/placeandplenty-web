@@ -90,3 +90,18 @@ export function parseReapplyForm(f: FormLike): { ok: true; value: { applicationI
   if (reason.length < 3 || reason.length > 500) return { ok: false, error: "reason_required" };
   return { ok: true, value: { applicationId: id, mode, reason } };
 }
+
+/** Staff reinstatement of a member who left (WS-R). The database re-checks everything; this only shapes the form. Checkbox values arrive as "yes". */
+export function parseReinstateForm(f: FormLike): { ok: true; value: { partnerId: string; reason: string; ackSuspension: boolean; ackTerms: boolean } } | { ok: false; error: string } {
+  const id = field(f, "partner_id");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, error: "invalid_id" };
+  if (field(f, "confirm") !== "yes") return { ok: false, error: "invalid_form" };
+  const reason = field(f, "reason");
+  if (reason.length < 3 || reason.length > 500) return { ok: false, error: "reason_required" };
+  return { ok: true, value: { partnerId: id, reason, ackSuspension: field(f, "ack_suspension") === "yes", ackTerms: field(f, "ack_terms") === "yes" } };
+}
+
+/** Whether the staff form must show the extra acknowledgements for a left member (the database enforces both). */
+export function reinstateNeeds(m: { leftFromStatus: string | null; tier: string | null }, referralEligibleTiers: readonly string[]): { suspension: boolean; terms: boolean } {
+  return { suspension: m.leftFromStatus === "suspended", terms: m.tier !== null && referralEligibleTiers.includes(m.tier) };
+}

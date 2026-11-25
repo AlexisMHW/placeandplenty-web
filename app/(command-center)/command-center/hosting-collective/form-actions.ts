@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/admin/server";
 import { codeFrom, type ActionResult } from "@/lib/hc/lifecycle";
-import { parseReapplyForm } from "@/lib/hc/membership";
+import { parseReapplyForm, parseReinstateForm } from "@/lib/hc/membership";
 import { parseTierForm, parseMemberTierForm, parseMemberStatusForm } from "@/lib/hc/tiers";
 import { reviewApplication, reviewSubmission, acknowledgeNotification } from "./actions";
 import { createCampaign, assignCampaign, closeCampaign } from "./campaigns/actions";
@@ -61,6 +61,14 @@ export async function setReapplyForm(_p: ActionResult | null, fd: FormData): Pro
   const { supabase } = await requireStaff("hc.manage", `${BASE}/members`);
   const p = parseReapplyForm(fd); if (!p.ok) return { ok: false, code: p.error };
   const { error } = await supabase.rpc("hc_admin_set_reapply", { p_application_id: p.value.applicationId, p_mode: p.value.mode, p_reason: p.value.reason });
+  if (error) return { ok: false, code: codeFrom(error.message) };
+  revalidatePath(`${BASE}/members`); return { ok: true, code: "saved" };
+}
+
+export async function reinstateLeftMemberForm(_p: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  const { supabase } = await requireStaff("hc.manage", `${BASE}/members`);
+  const p = parseReinstateForm(fd); if (!p.ok) return { ok: false, code: p.error };
+  const { error } = await supabase.rpc("hc_admin_reinstate_left_member", { p_partner_id: p.value.partnerId, p_reason: p.value.reason, p_ack_suspension: p.value.ackSuspension, p_ack_terms: p.value.ackTerms });
   if (error) return { ok: false, code: codeFrom(error.message) };
   revalidatePath(`${BASE}/members`); return { ok: true, code: "saved" };
 }

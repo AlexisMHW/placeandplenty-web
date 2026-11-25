@@ -104,3 +104,14 @@ test("staff and audit parsers drop malformed rows and cap the detail text", () =
   assert.ok(!/nested/.test(rows[0].detail));
   assert.ok(rows[0].detail.length < 160);
 });
+
+test("hosting-collective form actions: reinstating a member who left needs hc.manage and calls only its own RPC", () => {
+  const f = join(root, "app", "(command-center)", "command-center", "hosting-collective", "form-actions.ts");
+  const src = readFileSync(f, "utf8");
+  const i = src.indexOf("export async function reinstateLeftMemberForm");
+  assert.ok(i > 0);
+  const body = src.slice(i, src.indexOf("export async function sweepDraftsForm"));
+  assert.match(body, /requireStaff\(\s*"hc\.manage"/);
+  assert.equal((body.match(/\.rpc\(/g) ?? []).length, 1);
+  assert.match(body, /\.rpc\(\s*"hc_admin_reinstate_left_member"/);
+});

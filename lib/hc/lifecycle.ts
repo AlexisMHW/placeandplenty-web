@@ -91,6 +91,8 @@ const FEEDBACK: Record<string, string> = {
   not_offered: "That offer is no longer open.", disclosure_required: "Please confirm you disclosed the partnership.",
   expired: "That item has expired.", closed: "That campaign is closed.", not_found: "That item could not be found.",
   tier_assignments_disabled: "This member's tier does not allow campaign assignments.", campaign_not_found: "Campaign not found.", campaign_closed: "That campaign is closed.", invalid_status: "That status change is not allowed.",
+  suspension_ack_required: "This member left while suspended. Tick the box to confirm you reviewed the suspension.", terms_ack_required: "Tick the box to confirm the member will accept the current terms before the tier is restored.",
+  no_current_terms: "There is no current terms version yet, so this member cannot be reinstated.", tier_inactive: "The member's earlier tier is no longer active. Choose an active tier first.", use_reinstatement: "This member left the Collective. Use the reinstatement form under Members who left.",
   rejoined: "Welcome back. You are a member of the Hosting Collective again.", requires_staff_review: "Your request to rejoin needs a quick review by our team. We will be in touch.", not_left: "Your membership is not in a state that can be rejoined.",
   left: "You have left the Hosting Collective. Your Place & Plenty account and gatherings are not affected.", not_a_member: "We could not find a membership for this account.",
   application_not_declined: "Only a declined application can have a re-apply setting.", reason_required: "Please add a short reason (3-500 characters).",

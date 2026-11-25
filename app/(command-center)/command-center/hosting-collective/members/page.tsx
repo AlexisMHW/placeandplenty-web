@@ -3,8 +3,8 @@ import { hcCapabilities, parseMembers } from "@/lib/admin/hc";
 import { parseCampaigns } from "@/lib/admin/campaigns";
 import { parseTiers } from "@/lib/hc/tiers";
 import { ActionForm } from "@/components/hc/ActionForm";
-import { parseMembershipOverview } from "@/lib/hc/membership";
-import { assignCampaignForm, setMemberStatusForm, setMemberTierForm, setReapplyForm, sweepDraftsForm } from "../form-actions";
+import { parseMembershipOverview, reinstateNeeds } from "@/lib/hc/membership";
+import { assignCampaignForm, setMemberStatusForm, reinstateLeftMemberForm, setMemberTierForm, setReapplyForm, sweepDraftsForm } from "../form-actions";
 
 // MEMBERS. hc.read to see. Tier, suspend/reinstate and campaign-assignment controls render only for hc.manage, and the database checks it again,
 // writes the audit row, and emits the inbox event. A member with no tier is a "basic member": portal and code, no paid terms (commissions held).
@@ -17,7 +17,9 @@ export default async function MembersPage() {
   const overview = overviewRes.error ? null : parseMembershipOverview(overviewRes.data);
   const day = (iso: string | null) => (iso ? iso.slice(0, 10) : "n/a");
   const rows = membersRes.error ? null : parseMembers(membersRes.data);
-  const tiers = tiersRes.error ? [] : (parseTiers(tiersRes.data) ?? []).filter((t) => t.active);
+  const allTiers = tiersRes.error ? [] : (parseTiers(tiersRes.data) ?? []);
+  const tiers = allTiers.filter((t) => t.active);
+  const referralTiers = allTiers.filter((t) => t.referralEligible).map((t) => t.slug);
   const openCamps = campsRes.error ? [] : (parseCampaigns(campsRes.data) ?? []).filter((c) => c.status === "open");
   return (
     <div className="space-y-4">
@@ -59,8 +61,19 @@ export default async function MembersPage() {
           <div>
             <h3 className="font-medium">Members who left the Collective ({overview.leftMembers.length})</h3>
             {overview.leftMembers.length === 0 ? <p className="text-charcoal/70">None.</p> : (
-              <ul className="list-disc pl-5">{overview.leftMembers.map((m) => (
-                <li key={m.partnerId}>{m.displayName} left on {day(m.leftAt)}{m.tier ? ` (was ${m.tier})` : ""}{m.leftFromStatus === "suspended" || m.tier === "hosting_partner" ? "; rejoining needs staff review" : ""}. {m.outstandingCommissions ? "Has commissions not yet paid out; they stay on the ledger under the program terms. No payout can be drafted while the member is not active." : "No unpaid commissions."}</li>))}</ul>)}
+              <ul className="space-y-3">{overview.leftMembers.map((m) => (
+                <li key={m.partnerId} className="rounded border border-forest/15 p-2">{m.displayName} left on {day(m.leftAt)}{m.tier ? ` (was ${m.tier})` : ""}{m.leftFromStatus === "suspended" || m.tier === "hosting_partner" ? "; rejoining needs staff review" : ""}. {m.outstandingCommissions ? "Has commissions not yet paid out; they stay on the ledger under the program terms. No payout can be drafted while the member is not active." : "No unpaid commissions."}
+                  {caps.canManage ? (() => { const need = reinstateNeeds(m, referralTiers); return (
+                    <ActionForm action={reinstateLeftMemberForm} buttons={[{ label: "Reinstate after review" }]} className="mt-2 space-y-2 text-xs">
+                      <input type="hidden" name="partner_id" value={m.partnerId} />
+                      <p className="text-charcoal/70">Staff review only. Reinstating returns the member to approved. It never turns on paid referrals, restores commissions or brings back an earlier agreement.{need.terms ? " This member's earlier tier earns commission, so it is cleared: assign the tier again under Members only after they accept the current terms." : ""}</p>
+                      {need.suspension ? <p role="alert" className="rounded border border-gold/60 bg-cream p-2">Warning: this member left while suspended. Reinstating lifts that suspension.</p> : null}
+                      <label className="block">Reason (required, 3-500 characters)<textarea name="reason" required minLength={3} maxLength={500} rows={2} className="mt-1 block w-full rounded border border-forest/30 px-2 py-1" /></label>
+                      {need.suspension ? <label className="block"><input type="checkbox" name="ack_suspension" value="yes" required /> I reviewed the suspension and agree it can be lifted.</label> : null}
+                      {need.terms ? <label className="block"><input type="checkbox" name="ack_terms" value="yes" required /> The member must accept the current terms before their tier is restored.</label> : null}
+                      <label className="block"><input type="checkbox" name="confirm" value="yes" required /> I confirm I am reinstating this member.</label>
+                    </ActionForm>); })() : null}
+                </li>))}</ul>)}
           </div>
           <div>
             <h3 className="font-medium">Members who rejoined ({overview.rejoinedMembers.length})</h3>
