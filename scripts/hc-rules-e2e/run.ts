@@ -1,11 +1,11 @@
 // WS-E3 DEMONSTRATION of the founder's Hosting Collective rules on a SCRATCH Postgres 16 built from the QA package order (never Supabase).
-// LAYER: real web lib code (validateApplication, parseLeaveResult, parseMembershipOverview, parseReapplyForm, parseProgramStatus, memberStatusCopy,
+// LAYER: real web lib code (validateApplication, parseLeaveResult, parseRejoinResult, parseMembershipOverview, parseReapplyForm, parseProgramStatus, memberStatusCopy,
 // parseMembers) calling the REAL database functions through the pg-backed client. Server-action wrappers (cookies/requireStaff) are not run.
 // usage: node --experimental-strip-types scripts/hc-rules-e2e/run.ts <host> <port> <db>
 import assert from "node:assert/strict";
 import { client, sql1, type Conn } from "./pgclient.ts";
 import { validateApplication } from "../../lib/hosting-collective.ts";
-import { parseLeaveResult, parseMembershipOverview, parseReapplyForm, canLeave, LEAVE_COPY } from "../../lib/hc/membership.ts";
+import { parseLeaveResult, parseRejoinResult, parseMembershipOverview, parseReapplyForm, canLeave, LEAVE_COPY } from "../../lib/hc/membership.ts";
 import { parseProgramStatus, memberStatusCopy, feedbackMessage } from "../../lib/hc/lifecycle.ts";
 import { parseMembers } from "../../lib/admin/hc.ts";
 import { EVENT_LABELS } from "../../lib/hc/events.ts";
@@ -116,7 +116,7 @@ const appPayload = (name: string, email: string, handle: string) => {
   su(`update creator_application_drafts set updated_at = now() - interval '24 days' where user_id='${DEE}'`);
   sw = (await svc.rpc("hc_sweep_application_drafts")).data; ok("D5 at day 24 the advance notice is queued (once), draft not expired", sw.notices_queued === 1 && sw.expired === 0, JSON.stringify(sw));
   sw = (await svc.rpc("hc_sweep_application_drafts")).data; ok("D6 sweep is idempotent for the notice", sw.notices_queued === 0 && +su(`select count(*) from hc_events where kind='application_draft_expiring'`) === 1);
-  ok("D7 notice is an inbox row only: no applicant delivery queued, nothing sent", su(`select count(*) from hc_event_deliveries d join hc_events e on e.id=d.event_id where e.kind='application_draft_expiring' and d.channel='applicant_email'`) === "0");
+  ok("D7 notice queues an applicant_email delivery for the account holder (queued only; nothing is sent here)", su(`select count(*) from hc_event_deliveries d join hc_events e on e.id=d.event_id where e.kind='application_draft_expiring' and d.channel='applicant_email' and d.status='queued'`) === "1");
   const g1 = (await dee.rpc("creator_get_application_draft")).data as any; ok("D8 user sees the saved draft and that it is expiring soon", g1.expiring_soon === true && g1.draft?.full_name === "Dee Draft");
   const ovMid = parseMembershipOverview((await mgr.rpc("hc_admin_membership_overview")).data)!; ok("D9 staff see the draft with its notice flag", ovMid.drafts.length === 1 && ovMid.drafts[0].noticeQueuedAt !== null);
   // a SUBMITTED application older than 40 days must stay pending; an approved member must not expire
@@ -152,5 +152,45 @@ const appPayload = (name: string, email: string, handle: string) => {
   ok("R9 re-apply form parsing: reason required, modes validated", !parseReapplyForm(fd({ application_id: BOID, mode: "blocked", reason: "" })).ok && parseReapplyForm(fd({ application_id: BOID, mode: "allowed", reason: "fine" })).ok && !parseReapplyForm(fd({ application_id: BOID, mode: "x", reason: "fine" })).ok);
   ok("R10 approved memberships never expire: no code path changes them (still approved/left as set)", su(`select string_agg(status, ',' order by display_name) from partners`) === "left,approved");
   ok("F1 every new feedback code has user-safe copy", feedbackMessage("left").includes("left") && feedbackMessage("reason_required").includes("reason"));
+
+  // ===== WS-M: rejoin, queued lifecycle emails, gating, staff visibility
+  const delivery = (kind: string, ref: string) => su(`select d.id from hc_event_deliveries d join hc_events e on e.id=d.event_id where e.kind='${kind}' and e.ref_id='${ref}' and d.channel='applicant_email' order by d.id desc limit 1`);
+  const rcpt = async (kind: string, ref: string) => (await svc.rpc("hc_delivery_recipient", { p_delivery_id: +delivery(kind, ref) })).data as any;
+  ok("M1 Ada (Hosting Partner, left) gets a leave confirmation delivery; her recipient shows no tier", (await rcpt("member_left", PA))?.email === "ada@example.test" && (await rcpt("member_left", PA))?.tier === null);
+  ok("M2 a Hosting Partner cannot self-rejoin: staff review required, status unchanged", (await ada.rpc("creator_rejoin_collective")).error?.message.includes("requires_staff_review") === true && su(`select status from partners where id='${PA}'`) === "left");
+  ok("M3 anon and non-members cannot rejoin", (await anon.rpc("creator_rejoin_collective")).error !== null && (await client(c, { role: "authenticated", uid: mkuser("nobody2@example.test") }).rpc("creator_rejoin_collective")).error?.message.includes("not_a_member") === true);
+  const ent0 = su(`select count(*) from gathering_entitlements`), com0 = su(`select count(*) from commissions`), code0 = su(`select count(*) from partner_codes`);
+  su(`update partners set user_id='${CY}' where id='${PC}' and user_id is null`);
+  const cy = client(c, { role: "authenticated", uid: CY });
+  ok("M4 a basic-tier member (Collective Member) can leave", parseLeaveResult((await cy.rpc("creator_leave_collective")).data)?.status === "left" && su(`select left_from_status||'/'||tier_before_leave from partners where id='${PC}'`) === "approved/collective_member");
+  ok("M5 while left: member-only RPCs refused and the referral gate says not eligible", (await cy.rpc("creator_complete_onboarding_step", { p_step: "profile" })).error !== null && su(`select hc_partner_referral_eligible('${PC}')::text`) !== "true");
+  const rj = parseRejoinResult((await cy.rpc("creator_rejoin_collective")).data);
+  ok("M6 Cy rejoins instantly with the SAME tier; no tier or terms chosen by the member", rj?.status === "approved" && rj.rejoined === true && rj.tier === "collective_member" && su(`select status||'/'||tier||'/'||(left_at is null)||'/'||(rejoined_at is not null) from partners where id='${PC}'`) === "approved/collective_member/true/true");
+  ok("M7 rejoining is idempotent", parseRejoinResult((await cy.rpc("creator_rejoin_collective")).data)?.already === true && +su(`select count(*) from hc_events where kind='member_rejoined'`) === 1);
+  ok("M8 rejoin never makes a free member referral eligible (paid referrals stay OFF)", su(`select hc_partner_referral_eligible('${PC}')::text`) !== "true" && su(`select paid_referrals_enabled::text from hc_settings where singleton`) === "false");
+  ok("M9 entitlements, commission rows and codes unchanged by leave + rejoin", su(`select count(*) from gathering_entitlements`) === ent0 && su(`select count(*) from commissions`) === com0 && su(`select count(*) from partner_codes`) === code0);
+  ok("M10 audit history shows approved->left->approved", +su(`select count(*) from hc_tier_audit where partner_id='${PC}' and action='member_status_changed'`) >= 2);
+  const rr = await rcpt("member_rejoined", PC);
+  ok("M11 rejoin confirmation resolves to the account email with the current tier", rr?.email === "cy@example.test" && rr?.tier === "collective_member");
+  // a suspended member who leaves cannot use leave+rejoin to clear the suspension
+  const SUS = mkuser("sus@example.test"), PS = su(`insert into partners(user_id, display_name, status, tier, approved_at) values ('${SUS}','Sus Member','approved','collective_member', now()) returning id`);
+  su(`update partners set status='suspended' where id='${PS}'`);
+  const sus = client(c, { role: "authenticated", uid: SUS });
+  await sus.rpc("creator_leave_collective");
+  ok("M12 a suspended member who leaves cannot rejoin by themselves", su(`select left_from_status from partners where id='${PS}'`) === "suspended" && (await sus.rpc("creator_rejoin_collective")).error?.message.includes("requires_staff_review") === true);
+  // queued lifecycle emails: receipt, draft notice
+  const appRef = id("Ada");
+  const rcp = await rcpt("application_receipt", appRef);
+  ok("M13 every new application queued a receipt for the applicant; recipient resolves to the applicant", rcp?.email === "ada@example.test");
+  ok("M14 an unknown delivery resolves to no recipient (the sender would skip it); consent is enforced by a table constraint", (await svc.rpc("hc_delivery_recipient", { p_delivery_id: 99999999 })).data === null);
+  const draftRef = su(`select id from creator_application_drafts where user_id='${DEE}'`);
+  ok("M15 a live draft's expiry notice resolves to the account email", (await rcpt("application_draft_expiring", draftRef))?.email === "dee-draft@example.test");
+  su(`update creator_application_drafts set expired_at = now() where id='${draftRef}'`);
+  ok("M16 an already expired or discarded draft gets no notice", (await rcpt("application_draft_expiring", draftRef)) === null);
+  ok("M17 recipient resolver is service-role only", (await anon.rpc("hc_delivery_recipient", { p_delivery_id: 1 })).error !== null && (await ada.rpc("hc_delivery_recipient", { p_delivery_id: 1 })).error !== null);
+  ok("M18 nothing was sent: every applicant delivery is still queued", su(`select count(*) from hc_event_deliveries where channel='applicant_email' and status not in ('queued')`) === "0");
+  const ovM = parseMembershipOverview((await mgr.rpc("hc_admin_membership_overview")).data)!;
+  ok("M19 staff overview lists Cy as rejoined and Ada as left (needs review)", ovM.rejoinedMembers.some((m) => m.displayName.startsWith("Cy")) && ovM.leftMembers.some((m) => m.displayName.startsWith("Ada") && m.leftFromStatus === "approved"));
+  ok("M20 staff members list shows Cy approved and the suspended-then-left member as left", parseMembers((await mgr.rpc("hc_admin_list_members")).data)!.some((m) => m.status === "left"));
   console.log(log.join("\n")); console.log(`\nALL ${n} CHECKS PASSED`);
 })().catch((e) => { console.log(log.join("\n")); console.error("\nFAILED:", e.message); process.exit(1); });

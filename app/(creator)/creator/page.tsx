@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase-server";
 import { assignmentActionable, closedAssignmentCopy, dollars, earningsView, parsePortal, referralUrl, referralsLive, sessionExpired } from "@/lib/creator-portal";
 import { applicationCopy, canWithdraw, memberStatusCopy, parseProgramStatus, REFERRAL_REASON_COPY, type MemberState } from "@/lib/hc/lifecycle";
 import { LeaveCollective } from "@/components/hc/LeaveCollective";
+import { RejoinCollective } from "@/components/hc/RejoinCollective";
+import { canRejoin } from "@/lib/hc/membership";
 import { PLATFORMS } from "@/lib/hc/creator-forms";
 import { ActionForm } from "@/components/hc/ActionForm";
 import { completeOnboardingStep, respondToAssignment, submitContent, withdrawApplication } from "./actions";
@@ -50,7 +52,8 @@ export default async function CreatorPortal() {
   }
   if (state.kind === "inactive" || (program.member && program.member.status !== "approved")) {
     const c = memberStatusCopy((program.member?.status ?? "declined") as MemberState);
-    return <Note>{c ? <><strong>{c.title}.</strong> {c.body}</> : "Your creator account is not active right now. Please contact Place & Plenty if you have questions."}</Note>;
+    const note = <Note>{c ? <><strong>{c.title}.</strong> {c.body}</> : "Your creator account is not active right now. Please contact Place & Plenty if you have questions."}</Note>;
+    return canRejoin(program.member?.status) ? <div className="space-y-3">{note}<RejoinCollective /></div> : note;
   }
 
   const d = state.data;

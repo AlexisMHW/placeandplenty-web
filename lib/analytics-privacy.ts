@@ -71,12 +71,14 @@ export const ANALYTICS_EVENT_NAMES = [
   "signup_started", "account_created", "app_store_click", "play_store_click", "gathering_started",
   "gathering_created", "paywall_viewed", "checkout_started", "purchase_completed", "paper_suite_viewed",
   "paper_suite_preview_generated", "paper_suite_quote_received", "paper_suite_checkout_started",
+  // Hosting Collective community landing: observable outbound/handoff clicks and one verified successful submit. No personal data.
+  "community_join_click", "partner_application_click", "partner_application_submit",
 ] as const;
 
 // Custom event properties that may be sent (allowlist). Values must also pass isSafeValue.
 export const SAFE_EVENT_PROPERTY_KEYS = new Set([
   "client_platform", "product", "topic", "entry_point", "gathering_type", "piece_type", "size_id",
-  "matched_invitation", "quantity", "email_confirmation_required", "edition",
+  "matched_invitation", "quantity", "email_confirmation_required", "edition", "store",
 ]);
 
 // Hosts treated as "ours". Anything else (a referrer such as google.com) is reduced to its origin.

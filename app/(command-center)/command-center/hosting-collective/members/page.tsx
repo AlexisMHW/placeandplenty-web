@@ -60,7 +60,13 @@ export default async function MembersPage() {
             <h3 className="font-medium">Members who left the Collective ({overview.leftMembers.length})</h3>
             {overview.leftMembers.length === 0 ? <p className="text-charcoal/70">None.</p> : (
               <ul className="list-disc pl-5">{overview.leftMembers.map((m) => (
-                <li key={m.partnerId}>{m.displayName} left on {day(m.leftAt)}{m.tier ? ` (was ${m.tier})` : ""}. {m.outstandingCommissions ? "Has commissions not yet paid out; they stay on the ledger under the program terms. No payout can be drafted while the member is not active." : "No unpaid commissions."}</li>))}</ul>)}
+                <li key={m.partnerId}>{m.displayName} left on {day(m.leftAt)}{m.tier ? ` (was ${m.tier})` : ""}{m.leftFromStatus === "suspended" || m.tier === "hosting_partner" ? "; rejoining needs staff review" : ""}. {m.outstandingCommissions ? "Has commissions not yet paid out; they stay on the ledger under the program terms. No payout can be drafted while the member is not active." : "No unpaid commissions."}</li>))}</ul>)}
+          </div>
+          <div>
+            <h3 className="font-medium">Members who rejoined ({overview.rejoinedMembers.length})</h3>
+            {overview.rejoinedMembers.length === 0 ? <p className="text-charcoal/70">None.</p> : (
+              <ul className="list-disc pl-5">{overview.rejoinedMembers.map((m) => (
+                <li key={m.partnerId}>{m.displayName} rejoined on {day(m.rejoinedAt)}{m.tier ? ` as ${m.tier}` : ""}. Rejoining never changes the tier or turns on paid referrals.</li>))}</ul>)}
           </div>
           <div>
             <h3 className="font-medium">Saved application drafts ({overview.drafts.length})</h3>

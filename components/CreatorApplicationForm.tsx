@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { track } from "@/lib/analytics";
 import { COLLABORATIONS, NICHES, PLATFORMS, validateApplication } from "@/lib/hosting-collective";
 
 // Application form. Client validation is a convenience; the server route and the database repeat every check.
@@ -27,7 +28,7 @@ export default function CreatorApplicationForm() {
       const res = await fetch("/api/hosting-collective/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
       const out = await res.json().catch(() => ({}));
       setMessage(typeof out.message === "string" ? out.message : "");
-      if (res.ok && out.status === "received") setStatus("done");
+      if (res.ok && out.status === "received") { setStatus("done"); track("partner_application_submit", { entry_point: "application_form" }); }
       else if (res.ok && out.status === "closed") setStatus("closed");
       else { if (out.errors) setErrors(out.errors); setStatus("error"); }
     } catch { setMessage("We couldn't send that. Please try again."); setStatus("error"); }

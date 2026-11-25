@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { codeFrom, type ActionResult } from "@/lib/hc/lifecycle";
-import { parseLeaveResult } from "@/lib/hc/membership";
+import { parseLeaveResult, parseRejoinResult } from "@/lib/hc/membership";
 import { parseSubmissionForm, parseAssignmentResponse, parseOnboardingStep } from "@/lib/hc/creator-forms";
 
 // CREATOR ACTIONS. Each one requires a signed-in user and calls ONE database function that only ever touches the caller's own rows
@@ -26,6 +26,14 @@ export async function leaveCollective(_prev: ActionResult | null, _fd: FormData)
   if (error) return { ok: false, code: codeFrom(error.message) };
   if (!parseLeaveResult(data)) return { ok: false, code: "failed" };
   revalidatePath("/creator"); return { ok: true, code: "left" };
+}
+
+export async function rejoinCollective(_prev: ActionResult | null, _fd: FormData): Promise<ActionResult> {
+  const supabase = await authed(); if (!supabase) return { ok: false, code: "not_signed_in" };
+  const { data, error } = await supabase.rpc("creator_rejoin_collective");
+  if (error) return { ok: false, code: codeFrom(error.message) };
+  if (!parseRejoinResult(data)) return { ok: false, code: "failed" };
+  revalidatePath("/creator"); return { ok: true, code: "rejoined" };
 }
 
 export async function respondToAssignment(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {

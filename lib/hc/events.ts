@@ -2,7 +2,7 @@
 // payouts and content); this file only reads them and drives delivery. Pure except for the injected deps. No addresses are hardcoded:
 // staff email destinations are rows owned by the owner (verified before use) and applicant addresses come from the database resolver.
 // Statuses are kept honest: "sent" means the provider accepted it, never "delivered". Only a provider confirmation records "delivered".
-import { applicationApprovedMessage, applicationDeclinedMessage } from "./notifications.ts";
+import { applicationApprovedMessage, applicationDeclinedMessage, applicationReceiptMessage, memberLeftMessage, memberRejoinedMessage, applicationDraftExpiringMessage } from "./notifications.ts";
 
 export type EventSeverity = "info" | "action" | "critical";
 export const EVENT_LABELS: Record<string, { label: string; staffEmailSubject: string }> = {
@@ -19,6 +19,8 @@ export const EVENT_LABELS: Record<string, { label: string; staffEmailSubject: st
   member_reinstated: { label: "Member reinstated", staffEmailSubject: "A Hosting Collective member was reinstated" },
   member_left: { label: "Member left the Collective", staffEmailSubject: "A Hosting Collective member left the program" },
   application_draft_expiring: { label: "Saved application draft will expire soon", staffEmailSubject: "A saved Hosting Collective application draft is about to expire" },
+  member_rejoined: { label: "Member rejoined the Collective", staffEmailSubject: "A Hosting Collective member rejoined" },
+  application_receipt: { label: "Application receipt queued for the applicant", staffEmailSubject: "A Hosting Collective application was received" },
   payout_needs_approval: { label: "Payout draft needs your approval", staffEmailSubject: "A Hosting Collective payout needs your approval" },
 };
 export const eventLabel = (kind: string) => EVENT_LABELS[kind]?.label ?? "Notification";
@@ -58,7 +60,7 @@ export function parseHealth(raw: unknown): DeliveryHealth | null {
 
 // ---------------- dispatcher ----------------
 export interface ClaimedDelivery { id: number; event_id: number; channel: "staff_email" | "applicant_email"; destination_id: string | null; attempts: number; kind: string; ref_type: string; ref_id: string; severity: string; }
-export interface Recipient { email: string; display_name?: string; kind: string }
+export interface Recipient { email: string; display_name?: string | null; kind: string; tier?: string | null }
 export type SendResult = { ok: true; providerId?: string | null } | { ok: false; code: string };
 /** Implemented by the email stream (A4) behind its own on/off flags. This file never talks to a provider. */
 export interface Mailer { send(to: string, message: { subject: string; text: string }, opts: { idempotencyKey: string }): Promise<SendResult>; }
@@ -77,6 +79,10 @@ export function composeMessage(d: ClaimedDelivery, r: Recipient, siteUrl: string
   if (d.channel === "applicant_email") {
     if (d.kind === "application_approved") return applicationApprovedMessage(r.display_name ?? "", `${siteUrl}/creator`);
     if (d.kind === "application_declined") return applicationDeclinedMessage(r.display_name ?? "", null);   // internal review notes are never sent
+    if (d.kind === "application_receipt") return applicationReceiptMessage(r.display_name ?? "");
+    if (d.kind === "member_left") return memberLeftMessage(r.display_name ?? "", `${siteUrl}/creator`);
+    if (d.kind === "member_rejoined") return memberRejoinedMessage(r.display_name ?? "", `${siteUrl}/creator`);
+    if (d.kind === "application_draft_expiring") return applicationDraftExpiringMessage(`${siteUrl}/creator`, 7);
     return null;
   }
   const meta = EVENT_LABELS[d.kind];

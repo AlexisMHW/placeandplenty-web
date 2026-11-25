@@ -29,6 +29,21 @@ export const LEAVE_COPY: Record<Lang, { open: string; title: string; body: strin
 /** Only an approved or paused member can leave; anyone else has nothing to leave. */
 export const canLeave = (status: string | null | undefined) => status === "approved" || status === "suspended";
 
+export const REJOIN_COPY: Record<Lang, { title: string; body: string; button: string }> = {
+  en: { title: "Want to come back?", body: "You can rejoin the Hosting Collective. Your Place & Plenty account was not affected. Some memberships need a quick review by our team first.", button: "Rejoin the Collective" },
+  es: { title: "¿Quieres volver?", body: "Puedes volver a unirte al Hosting Collective. Tu cuenta de Place & Plenty no se vio afectada. Algunas membresías requieren una revisión rápida de nuestro equipo.", button: "Volver al Collective" },
+};
+
+/** A member who left can ask to rejoin. Whether it is instant or needs staff review is decided by the database, never here. */
+export const canRejoin = (status: string | null | undefined) => status === "left";
+export interface RejoinResult { status: "approved"; already: boolean; rejoined: boolean; tier: string | null }
+export function parseRejoinResult(raw: unknown): RejoinResult | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (r.status !== "approved") return null;
+  return { status: "approved", already: r.already === true, rejoined: r.rejoined === true, tier: typeof r.tier === "string" ? r.tier : null };
+}
+
 export interface LeaveResult { status: "left"; already: boolean; outstandingCommissions: boolean }
 export function parseLeaveResult(raw: unknown): LeaveResult | null {
   if (!raw || typeof raw !== "object") return null;
@@ -39,7 +54,8 @@ export function parseLeaveResult(raw: unknown): LeaveResult | null {
 
 const str = (v: unknown) => (typeof v === "string" ? v : null);
 export interface MembershipOverview {
-  leftMembers: { partnerId: string; displayName: string; tier: string | null; leftAt: string | null; outstandingCommissions: boolean }[];
+  leftMembers: { partnerId: string; displayName: string; tier: string | null; leftAt: string | null; leftFromStatus: string | null; outstandingCommissions: boolean }[];
+  rejoinedMembers: { partnerId: string; displayName: string; tier: string | null; rejoinedAt: string | null }[];
   drafts: { draftId: string; updatedAt: string | null; expiresAt: string | null; noticeQueuedAt: string | null; expiredAt: string | null }[];
   declined: { applicationId: string; fullName: string; decidedAt: string | null; eligibleAfter: string | null; override: "blocked" | "allowed" | null }[];
   settings: { reapplyWaitDays: number; draftExpiryDays: number; draftNoticeDays: number };
@@ -51,7 +67,9 @@ export function parseMembershipOverview(raw: unknown): MembershipOverview | null
   const n = (v: unknown, d: number) => (typeof v === "number" ? v : d);
   return {
     leftMembers: r.left_members.flatMap((m: any) => m && typeof m.partner_id === "string"
-      ? [{ partnerId: m.partner_id, displayName: str(m.display_name) ?? "(no name)", tier: str(m.tier), leftAt: str(m.left_at), outstandingCommissions: m.outstanding_commissions === true }] : []),
+      ? [{ partnerId: m.partner_id, displayName: str(m.display_name) ?? "(no name)", tier: str(m.tier), leftAt: str(m.left_at), leftFromStatus: str(m.left_from_status), outstandingCommissions: m.outstanding_commissions === true }] : []),
+    rejoinedMembers: (Array.isArray(r.rejoined_members) ? r.rejoined_members : []).flatMap((m: any) => m && typeof m.partner_id === "string"
+      ? [{ partnerId: m.partner_id, displayName: str(m.display_name) ?? "(no name)", tier: str(m.tier), rejoinedAt: str(m.rejoined_at) }] : []),
     drafts: r.drafts.flatMap((d: any) => d && typeof d.draft_id === "string"
       ? [{ draftId: d.draft_id, updatedAt: str(d.updated_at), expiresAt: str(d.expires_at), noticeQueuedAt: str(d.notice_queued_at), expiredAt: str(d.expired_at) }] : []),
     declined: r.declined.flatMap((a: any) => a && typeof a.application_id === "string"
